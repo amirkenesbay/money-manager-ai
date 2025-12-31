@@ -1,0 +1,21 @@
+chat-machinist:
+  visualize: true
+  persistence:
+    type: mongodb
+  bot:
+    name: moneyManagerAIbot
+    token: 8554230883:AAEd8GKlX2k_lgsOKdfeP7UbOXGxpfbujXc
+
+debug: false
+spring:
+  mongodb:
+    database: moneyManagerBot
+    host: ${MONGO_HOST:localhost}
+    username: moneyManagerUser
+    password: vfaZPswtZePqyABJ
+    port: 27019
+  data:
+    mongodb:
+      auto-index-creation: true
+  main:
+    banner-mode: off

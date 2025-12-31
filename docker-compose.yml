@@ -1,0 +1,10 @@
+version: "3.9"
+services:
+  mongodb:
+    container_name: mongodb-money-manager-ai
+    image: mongo:8.2.3
+    restart: always
+    ports:
+      - "27019:27017"
+    volumes:
+      - ./docker-entrypoint-initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
