@@ -8,7 +8,8 @@ import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType
 
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.groupDialogTransitions(
-    groupService: GroupService
+    groupService: GroupService,
+    categoryService: ai.moneymanager.service.CategoryService
 ) {
     // Открыть меню управления группами
     openGroupManagementTransition()
@@ -26,7 +27,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.groupDialogTransitions
     editGroupTransitions(groupService)
 
     // Удаление группы
-    deleteGroupTransitions(groupService)
+    deleteGroupTransitions(groupService, categoryService)
 
     // Возврат в главное меню
     backToMenuTransition()
@@ -452,7 +453,8 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.editGroupTrans
  * Удаление группы
  */
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.deleteGroupTransitions(
-    groupService: GroupService
+    groupService: GroupService,
+    categoryService: ai.moneymanager.service.CategoryService
 ) {
     // Открыть выбор группы для удаления
     transition {
@@ -494,7 +496,18 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.deleteGroupTra
             }
 
             // Устанавливаем выбранную группу
-            context.currentGroup = ownedGroups[groupIndex]
+            val selectedGroup = ownedGroups[groupIndex]
+            context.currentGroup = selectedGroup
+
+            // Получаем количество категорий группы для отображения в предупреждении
+            val groupId = selectedGroup.id
+            if (groupId != null) {
+                val categories = categoryService.getCategoriesByGroup(groupId)
+                context.categoriesCountToDelete = categories.size
+                println("📊 Group ${selectedGroup.name} has ${categories.size} categories that will be deleted")
+            } else {
+                context.categoriesCountToDelete = 0
+            }
         }
 
         then {

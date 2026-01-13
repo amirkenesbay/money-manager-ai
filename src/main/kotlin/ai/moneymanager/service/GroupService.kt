@@ -12,7 +12,8 @@ import java.security.SecureRandom
 @Service
 class GroupService(
     private val groupRepository: MoneyGroupRepository,
-    private val userRepository: UserInfoRepository
+    private val userRepository: UserInfoRepository,
+    private val categoryService: CategoryService
 ) {
 
     /**
@@ -62,6 +63,7 @@ class GroupService(
         )
 
         val savedGroup = groupRepository.save(groupEntity)
+        println("✅ Personal group created: id=${savedGroup.id}, ownerId=$userId")
 
         // Устанавливаем как активную группу
         val userEntity = userRepository.findUserInfoEntityByTelegramUserId(userId)
@@ -71,6 +73,10 @@ class GroupService(
                 activeGroupId = savedGroup.id
             )
             userRepository.save(updatedUser)
+
+            // Создаем дефолтные категории для личной группы
+            categoryService.createDefaultCategories(savedGroup.id!!)
+            println("📋 Created default categories for personal group")
         }
 
         return mapToModel(savedGroup)
@@ -178,6 +184,10 @@ class GroupService(
         if (groupEntity.ownerId != userId) {
             return false
         }
+
+        // Удаляем все категории группы (каскадное удаление)
+        val deletedCategoriesCount = categoryService.deleteAllCategoriesForGroup(groupId)
+        println("🗑 Deleted $deletedCategoriesCount categories for group $groupId")
 
         // Удаляем группу
         groupRepository.delete(groupEntity)

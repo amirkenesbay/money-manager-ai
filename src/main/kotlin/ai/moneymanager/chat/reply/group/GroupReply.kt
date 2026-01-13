@@ -337,18 +337,26 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupDeleteConfirmRep
         message {
             val group = context.currentGroup
             val userInfo = context.userInfo
+            val categoriesCount = context.categoriesCountToDelete
 
             if (group != null) {
                 val isOwner = group.ownerId == userInfo?.telegramUserId
 
                 if (isOwner) {
+                    val categoriesWarning = if (categoriesCount > 0) {
+                        "\n🗑 Будет удалено категорий: $categoriesCount\n"
+                    } else {
+                        "\n📋 В группе нет категорий.\n"
+                    }
+
                     text = """
                         |⚠️ Удаление группы "${group.name}"
                         |
                         |Вы уверены, что хотите удалить эту группу?
-                        |
+                        |$categoriesWarning
                         |⚠️ Это действие нельзя отменить!
                         |Все участники потеряют доступ к группе.
+                        |Все категории группы будут удалены безвозвратно.
                     """.trimMargin()
 
                     keyboard {

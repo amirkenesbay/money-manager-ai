@@ -23,6 +23,12 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.menuReply() {
                         type = MoneyManagerButtonType.SHARED_ACCOUNTING
                     }
                 }
+                buttonRow {
+                    button {
+                        text = "📂 Категории"
+                        type = MoneyManagerButtonType.CATEGORIES
+                    }
+                }
             }
         }
     }

@@ -20,6 +20,17 @@ enum class MoneyManagerState {
     GROUP_EDIT_ENTER_NAME,
     GROUP_DELETE_SELECT,
     GROUP_DELETE_CONFIRM,
+
+    // -------- CATEGORIES --------
+    CATEGORY_MANAGEMENT,
+    CATEGORY_NO_GROUP_WARNING,
+    CATEGORY_CREATE_SELECT_TYPE,
+    CATEGORY_CREATE_ENTER_NAME,
+    CATEGORY_LIST,
+    CATEGORY_ACTIONS,
+    CATEGORY_EDIT_NAME,
+    CATEGORY_DELETE_CONFIRM,
+    CATEGORY_DELETE_ALL_CONFIRM,
 }
 
 enum class MoneyManagerButtonType {
@@ -43,6 +54,17 @@ enum class MoneyManagerButtonType {
     QUICK_GROUP_WORK,
     QUICK_GROUP_TRIP,
 
+    // Categories
+    CATEGORIES,
+    CREATE_CATEGORY,
+    MY_CATEGORIES,
+    CATEGORY_TYPE_EXPENSE,
+    CATEGORY_TYPE_INCOME,
+    CATEGORY_ITEM,
+    EDIT_CATEGORY,
+    DELETE_CATEGORY_BUTTON,
+    DELETE_ALL_CATEGORIES,
+
     // Actions
     CONFIRM_JOIN,
     CONFIRM_DELETE,
@@ -61,4 +83,12 @@ class MoneyManagerContext {
     var groupNameInput: String? = null
     var userGroups: List<MoneyGroup> = emptyList()
     var isQuickGroupCreation: Boolean = false
+    var categoriesCountToDelete: Int = 0
+
+    // -------- CATEGORIES --------
+    var categoryNameInput: String? = null
+    var categoryIconInput: String? = null
+    var categoryTypeInput: CategoryType? = null
+    var currentCategory: Category? = null
+    var categories: List<Category> = emptyList()
 }

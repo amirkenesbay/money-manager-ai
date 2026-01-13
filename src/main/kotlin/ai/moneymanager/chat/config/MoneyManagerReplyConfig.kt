@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.config
 
+import ai.moneymanager.chat.reply.category.*
 import ai.moneymanager.chat.reply.group.*
 import ai.moneymanager.chat.reply.money.menuReply
 import ai.moneymanager.domain.model.MoneyManagerContext
@@ -30,6 +31,17 @@ class MoneyManagerReplyConfig {
             groupEditEnterNameReply()
             groupDeleteSelectReply()
             groupDeleteConfirmReply()
+
+            // Category replies
+            categoryManagementReply()
+            categoryNoGroupWarningReply()
+            categoryCreateSelectTypeReply()
+            categoryCreateEnterNameReply()
+            categoryListReply()
+            categoryActionsReply()
+            categoryEditNameReply()
+            categoryDeleteConfirmReply()
+            categoryDeleteAllConfirmReply()
         }
     }
 }
