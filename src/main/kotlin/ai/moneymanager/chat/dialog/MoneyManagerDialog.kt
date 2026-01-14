@@ -52,7 +52,13 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
                 if (parts.size == 2 && parts[1].startsWith("join_")) {
                     val token = parts[1].removePrefix("join_")
                     context.pendingInviteToken = token
-                    context.pendingGroup = groupService.getGroupByToken(token)
+                    val group = groupService.getGroupByToken(token)
+                    context.pendingGroup = group
+
+                    // Получаем информацию о создателе группы
+                    if (group != null) {
+                        context.pendingGroupOwnerInfo = userInfoService.getUserInfoByTelegramId(group.ownerId)
+                    }
                 }
             }
         }
@@ -151,6 +157,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.joinGroupDialo
             // Очищаем данные о приглашении
             context.pendingInviteToken = null
             context.pendingGroup = null
+            context.pendingGroupOwnerInfo = null
         }
 
         then {

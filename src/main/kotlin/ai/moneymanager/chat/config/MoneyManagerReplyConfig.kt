@@ -24,6 +24,7 @@ class MoneyManagerReplyConfig {
             groupManagementReply()
             groupCreateEnterNameReply()
             groupInviteShowReply()
+            groupInviteSelectReply()
             groupJoinConfirmReply()
             groupListReply()
             groupMembersReply()

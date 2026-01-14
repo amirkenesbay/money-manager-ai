@@ -29,6 +29,11 @@ class UserInfoService(
         return mapEntity(userInfo)
     }
 
+    fun getUserInfoByTelegramId(telegramUserId: Long): UserInfo? {
+        val entity = userRepository.findUserInfoEntityByTelegramUserId(telegramUserId)
+        return entity?.let { mapEntity(it) }
+    }
+
     private fun findUser(user: User): UserInfoEntity? {
         if (user.userName != null) {
             getByUsername(user.userName)

@@ -12,6 +12,7 @@ enum class MoneyManagerState {
     GROUP_MANAGEMENT,
     GROUP_CREATE_ENTER_NAME,
     GROUP_INVITE_SHOW,
+    GROUP_INVITE_SELECT,
     GROUP_JOIN_CONFIRM,
     GROUP_LIST,
     GROUP_MEMBERS,
@@ -47,6 +48,7 @@ enum class MoneyManagerButtonType {
     SWITCH_GROUP,
     EDIT_GROUP,
     DELETE_GROUP,
+    INVITE_TO_GROUP,
 
     // Quick group names
     QUICK_GROUP_FAMILY,
@@ -79,6 +81,7 @@ class MoneyManagerContext {
     // -------- GROUPS --------
     var pendingInviteToken: String? = null
     var pendingGroup: MoneyGroup? = null
+    var pendingGroupOwnerInfo: UserInfo? = null
     var currentGroup: MoneyGroup? = null
     var groupNameInput: String? = null
     var userGroups: List<MoneyGroup> = emptyList()

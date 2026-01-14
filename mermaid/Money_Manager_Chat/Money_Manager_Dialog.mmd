@@ -14,6 +14,7 @@ MENU --o diamond3{MENU branching}
    diamond3 ==>|"button CATEGORIES"| CATEGORY_MANAGEMENT
 GROUP_MANAGEMENT --o diamond4{GROUP_MANAGEMENT branching}
    diamond4 ==>|"button CREATE_GROUP"| GROUP_CREATE_ENTER_NAME
+   diamond4 ==>|"button INVITE_TO_GROUP"| GROUP_INVITE_SELECT
    diamond4 ==>|"button MY_GROUPS"| GROUP_LIST
    diamond4 ==>|"button GROUP_MEMBERS"| GROUP_MEMBERS
    diamond4 ==>|"button BACK_TO_MENU"| MENU
@@ -25,53 +26,56 @@ GROUP_CREATE_ENTER_NAME --o diamond5{GROUP_CREATE_ENTER_NAME branching}
    diamond5 ==>|"button QUICK_GROUP_TRIP"| GROUP_INVITE_SHOW
    diamond5 ==>|"text "| GROUP_INVITE_SHOW
    GROUP_INVITE_SHOW ==>|"button BACK_TO_MENU"| GROUP_MANAGEMENT
-GROUP_LIST --o diamond6{GROUP_LIST branching}
-   diamond6 ==>|"button SWITCH_GROUP"| GROUP_LIST
-   diamond6 ==>|"button EDIT_GROUP"| GROUP_EDIT_SELECT
-   diamond6 ==>|"button DELETE_GROUP"| GROUP_DELETE_SELECT
-   diamond6 ==>|"button BACK_TO_MENU"| GROUP_MANAGEMENT
-GROUP_EDIT_SELECT --o diamond7{GROUP_EDIT_SELECT branching}
-   diamond7 ==>|"button EDIT_GROUP"| GROUP_EDIT_ENTER_NAME
-   diamond7 ==>|"button CANCEL"| GROUP_LIST
-GROUP_EDIT_ENTER_NAME --o diamond8{GROUP_EDIT_ENTER_NAME branching}
-   diamond8 ==>|"text "| GROUP_LIST
-   diamond8 ==>|"button CANCEL"| GROUP_EDIT_SELECT
-GROUP_DELETE_SELECT --o diamond9{GROUP_DELETE_SELECT branching}
-   diamond9 ==>|"button DELETE_GROUP"| GROUP_DELETE_CONFIRM
-   diamond9 ==>|"button CANCEL"| GROUP_LIST
-GROUP_DELETE_CONFIRM --o diamond10{GROUP_DELETE_CONFIRM branching}
-   diamond10 ==>|"button CONFIRM_DELETE"| GROUP_LIST
-   diamond10 ==>|"button CANCEL"| GROUP_DELETE_SELECT
+GROUP_INVITE_SELECT --o diamond6{GROUP_INVITE_SELECT branching}
+   diamond6 ==>|"button INVITE_TO_GROUP"| GROUP_INVITE_SHOW
+   diamond6 ==>|"button CANCEL"| GROUP_MANAGEMENT
+GROUP_LIST --o diamond7{GROUP_LIST branching}
+   diamond7 ==>|"button SWITCH_GROUP"| GROUP_LIST
+   diamond7 ==>|"button EDIT_GROUP"| GROUP_EDIT_SELECT
+   diamond7 ==>|"button DELETE_GROUP"| GROUP_DELETE_SELECT
+   diamond7 ==>|"button BACK_TO_MENU"| GROUP_MANAGEMENT
+GROUP_EDIT_SELECT --o diamond8{GROUP_EDIT_SELECT branching}
+   diamond8 ==>|"button EDIT_GROUP"| GROUP_EDIT_ENTER_NAME
+   diamond8 ==>|"button CANCEL"| GROUP_LIST
+GROUP_EDIT_ENTER_NAME --o diamond9{GROUP_EDIT_ENTER_NAME branching}
+   diamond9 ==>|"text "| GROUP_LIST
+   diamond9 ==>|"button CANCEL"| GROUP_EDIT_SELECT
+GROUP_DELETE_SELECT --o diamond10{GROUP_DELETE_SELECT branching}
+   diamond10 ==>|"button DELETE_GROUP"| GROUP_DELETE_CONFIRM
+   diamond10 ==>|"button CANCEL"| GROUP_LIST
+GROUP_DELETE_CONFIRM --o diamond11{GROUP_DELETE_CONFIRM branching}
+   diamond11 ==>|"button CONFIRM_DELETE"| GROUP_LIST
+   diamond11 ==>|"button CANCEL"| GROUP_DELETE_SELECT
    GROUP_MEMBERS ==>|"button BACK_TO_MENU"| GROUP_MANAGEMENT
-CATEGORY_MANAGEMENT --o diamond11{CATEGORY_MANAGEMENT branching}
-   diamond11 ==>|"button CREATE_CATEGORY guarded"| CATEGORY_CREATE_SELECT_TYPE
-   diamond11 ==>|"button CREATE_CATEGORY guarded"| CATEGORY_NO_GROUP_WARNING
-   diamond11 ==>|"button MY_CATEGORIES"| CATEGORY_LIST
-   diamond11 ==>|"button DELETE_ALL_CATEGORIES"| CATEGORY_DELETE_ALL_CONFIRM
-   diamond11 ==>|"button BACK_TO_MENU"| MENU
-CATEGORY_CREATE_SELECT_TYPE --o diamond12{CATEGORY_CREATE_SELECT_TYPE branching}
-   diamond12 ==>|"button CATEGORY_TYPE_EXPENSE"| CATEGORY_CREATE_ENTER_NAME
-   diamond12 ==>|"button CATEGORY_TYPE_INCOME"| CATEGORY_CREATE_ENTER_NAME
-   diamond12 ==>|"button CANCEL"| CATEGORY_MANAGEMENT
-CATEGORY_CREATE_ENTER_NAME --o diamond13{CATEGORY_CREATE_ENTER_NAME branching}
-   diamond13 ==>|"button CANCEL"| CATEGORY_CREATE_SELECT_TYPE
-   diamond13 ==>|"text "| CATEGORY_MANAGEMENT
-CATEGORY_NO_GROUP_WARNING --o diamond14{CATEGORY_NO_GROUP_WARNING branching}
-   diamond14 ==>|"button CREATE_GROUP"| GROUP_MANAGEMENT
-   diamond14 ==>|"button BACK_TO_MENU"| CATEGORY_MANAGEMENT
-CATEGORY_LIST --o diamond15{CATEGORY_LIST branching}
-   diamond15 ==>|"button CATEGORY_ITEM"| CATEGORY_ACTIONS
+CATEGORY_MANAGEMENT --o diamond12{CATEGORY_MANAGEMENT branching}
+   diamond12 ==>|"button CREATE_CATEGORY guarded"| CATEGORY_CREATE_SELECT_TYPE
+   diamond12 ==>|"button CREATE_CATEGORY guarded"| CATEGORY_NO_GROUP_WARNING
+   diamond12 ==>|"button MY_CATEGORIES"| CATEGORY_LIST
+   diamond12 ==>|"button DELETE_ALL_CATEGORIES"| CATEGORY_DELETE_ALL_CONFIRM
+   diamond12 ==>|"button BACK_TO_MENU"| MENU
+CATEGORY_CREATE_SELECT_TYPE --o diamond13{CATEGORY_CREATE_SELECT_TYPE branching}
+   diamond13 ==>|"button CATEGORY_TYPE_EXPENSE"| CATEGORY_CREATE_ENTER_NAME
+   diamond13 ==>|"button CATEGORY_TYPE_INCOME"| CATEGORY_CREATE_ENTER_NAME
+   diamond13 ==>|"button CANCEL"| CATEGORY_MANAGEMENT
+CATEGORY_CREATE_ENTER_NAME --o diamond14{CATEGORY_CREATE_ENTER_NAME branching}
+   diamond14 ==>|"button CANCEL"| CATEGORY_CREATE_SELECT_TYPE
+   diamond14 ==>|"text "| CATEGORY_MANAGEMENT
+CATEGORY_NO_GROUP_WARNING --o diamond15{CATEGORY_NO_GROUP_WARNING branching}
+   diamond15 ==>|"button CREATE_GROUP"| GROUP_MANAGEMENT
    diamond15 ==>|"button BACK_TO_MENU"| CATEGORY_MANAGEMENT
-CATEGORY_ACTIONS --o diamond16{CATEGORY_ACTIONS branching}
-   diamond16 ==>|"button EDIT_CATEGORY"| CATEGORY_EDIT_NAME
-   diamond16 ==>|"button DELETE_CATEGORY_BUTTON"| CATEGORY_DELETE_CONFIRM
-   diamond16 ==>|"button BACK_TO_MENU"| CATEGORY_LIST
-CATEGORY_EDIT_NAME --o diamond17{CATEGORY_EDIT_NAME branching}
-   diamond17 ==>|"button CANCEL"| CATEGORY_ACTIONS
-   diamond17 ==>|"text "| CATEGORY_ACTIONS
-CATEGORY_DELETE_CONFIRM --o diamond18{CATEGORY_DELETE_CONFIRM branching}
-   diamond18 ==>|"button CONFIRM_DELETE"| CATEGORY_LIST
+CATEGORY_LIST --o diamond16{CATEGORY_LIST branching}
+   diamond16 ==>|"button CATEGORY_ITEM"| CATEGORY_ACTIONS
+   diamond16 ==>|"button BACK_TO_MENU"| CATEGORY_MANAGEMENT
+CATEGORY_ACTIONS --o diamond17{CATEGORY_ACTIONS branching}
+   diamond17 ==>|"button EDIT_CATEGORY"| CATEGORY_EDIT_NAME
+   diamond17 ==>|"button DELETE_CATEGORY_BUTTON"| CATEGORY_DELETE_CONFIRM
+   diamond17 ==>|"button BACK_TO_MENU"| CATEGORY_LIST
+CATEGORY_EDIT_NAME --o diamond18{CATEGORY_EDIT_NAME branching}
    diamond18 ==>|"button CANCEL"| CATEGORY_ACTIONS
-CATEGORY_DELETE_ALL_CONFIRM --o diamond19{CATEGORY_DELETE_ALL_CONFIRM branching}
-   diamond19 ==>|"button CONFIRM_DELETE"| CATEGORY_MANAGEMENT
-   diamond19 ==>|"button CANCEL"| CATEGORY_MANAGEMENT
+   diamond18 ==>|"text "| CATEGORY_ACTIONS
+CATEGORY_DELETE_CONFIRM --o diamond19{CATEGORY_DELETE_CONFIRM branching}
+   diamond19 ==>|"button CONFIRM_DELETE"| CATEGORY_LIST
+   diamond19 ==>|"button CANCEL"| CATEGORY_ACTIONS
+CATEGORY_DELETE_ALL_CONFIRM --o diamond20{CATEGORY_DELETE_ALL_CONFIRM branching}
+   diamond20 ==>|"button CONFIRM_DELETE"| CATEGORY_MANAGEMENT
+   diamond20 ==>|"button CANCEL"| CATEGORY_MANAGEMENT

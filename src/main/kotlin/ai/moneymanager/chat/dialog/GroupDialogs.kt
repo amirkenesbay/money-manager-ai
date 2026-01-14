@@ -17,6 +17,9 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.groupDialogTransitions
     // Создание группы
     createGroupDialogTransitions(groupService)
 
+    // Приглашение в группу
+    inviteGroupTransitions(groupService)
+
     // Просмотр списка групп
     viewGroupsListTransition(groupService)
 
@@ -228,6 +231,83 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createGroupDia
 
         then {
             to = MoneyManagerState.GROUP_INVITE_SHOW
+        }
+    }
+}
+
+/**
+ * Диалог приглашения в группу
+ */
+private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.inviteGroupTransitions(
+    groupService: GroupService
+) {
+    // Открыть выбор группы для получения ссылки приглашения
+    transition {
+        name = "Open invite group selection"
+
+        condition {
+            from = MoneyManagerState.GROUP_MANAGEMENT
+            button = MoneyManagerButtonType.INVITE_TO_GROUP
+        }
+
+        action {
+            val userId = user.id
+            val groups = groupService.getUserGroups(userId)
+            context.userGroups = groups
+        }
+
+        then {
+            to = MoneyManagerState.GROUP_INVITE_SELECT
+        }
+    }
+
+    // Выбрать группу для получения ссылки приглашения
+    transition {
+        name = "Select group to get invite link"
+
+        condition {
+            from = MoneyManagerState.GROUP_INVITE_SELECT
+            button = MoneyManagerButtonType.INVITE_TO_GROUP
+        }
+
+        action {
+            val buttonText = buttonText ?: return@action
+            val userInfo = context.userInfo
+
+            // Извлекаем номер группы
+            val groupNumber = buttonText.trim().toIntOrNull() ?: return@action
+
+            // Фильтруем только группы, где пользователь - владелец
+            val ownedGroups = context.userGroups.filter { it.ownerId == userInfo?.telegramUserId }
+            val groupIndex = groupNumber - 1
+
+            // Проверяем валидность индекса
+            if (groupIndex < 0 || groupIndex >= ownedGroups.size) {
+                return@action
+            }
+
+            // Устанавливаем выбранную группу
+            context.currentGroup = ownedGroups[groupIndex]
+            // Сбрасываем флаг быстрого создания для корректного отображения
+            context.isQuickGroupCreation = false
+        }
+
+        then {
+            to = MoneyManagerState.GROUP_INVITE_SHOW
+        }
+    }
+
+    // Отмена выбора группы для приглашения
+    transition {
+        name = "Cancel invite selection"
+
+        condition {
+            from = MoneyManagerState.GROUP_INVITE_SELECT
+            button = MoneyManagerButtonType.CANCEL
+        }
+
+        then {
+            to = MoneyManagerState.GROUP_MANAGEMENT
         }
     }
 }

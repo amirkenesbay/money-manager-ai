@@ -31,6 +31,12 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupManagementReply(
                 }
                 buttonRow {
                     button {
+                        text = "🔗 Пригласить в группу"
+                        type = MoneyManagerButtonType.INVITE_TO_GROUP
+                    }
+                }
+                buttonRow {
+                    button {
                         text = "⬅️ Назад в меню"
                         type = MoneyManagerButtonType.BACK_TO_MENU
                     }
@@ -98,22 +104,88 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupInviteShowReply(
             if (group != null) {
                 val botUsername = "moneyManagerAIbot"
                 text = """
-                    ✅ Группа "${group.name}" создана!
-
-                    Пригласите участников, отправив им эту ссылку:
-                    https://t.me/$botUsername?start=join_${group.inviteToken}
-
-                    Или они могут отправить код: ${group.inviteToken}
-                """.trimIndent()
+                    |🔗 Ссылка для приглашения в группу "${group.name}"
+                    |
+                    |Отправьте участникам эту ссылку:
+                    |https://t.me/$botUsername?start=join_${group.inviteToken}
+                """.trimMargin()
             } else {
-                text = "Ошибка при создании группы"
+                text = "Ошибка: группа не найдена"
             }
 
             keyboard {
                 buttonRow {
                     button {
-                        text = "⬅️ Назад в меню"
+                        text = "⬅️ Назад"
                         type = MoneyManagerButtonType.BACK_TO_MENU
+                    }
+                }
+            }
+        }
+    }
+}
+
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupInviteSelectReply() {
+    reply {
+        state = MoneyManagerState.GROUP_INVITE_SELECT
+
+        message {
+            val userInfo = context.userInfo
+            val userGroups = context.userGroups
+
+            // Фильтруем только те группы, где пользователь является владельцем
+            val ownedGroups = userGroups.filter { it.ownerId == userInfo?.telegramUserId }
+
+            if (ownedGroups.isNotEmpty()) {
+                val groupsList = ownedGroups.mapIndexed { index, group ->
+                    "${index + 1} - ${group.name}"
+                }.joinToString("\n")
+
+                text = """
+                    |🔗 Пригласить в группу
+                    |
+                    |Выберите группу, для которой хотите получить ссылку приглашения:
+                    |
+                    |$groupsList
+                    |
+                    |💡 Ссылку могут получить только владельцы групп.
+                """.trimMargin()
+
+                keyboard {
+                    // Создаем кнопки только для групп, где пользователь - владелец
+                    ownedGroups.chunked(3).forEach { groupsInRow ->
+                        buttonRow {
+                            groupsInRow.forEach { group ->
+                                button {
+                                    val index = ownedGroups.indexOf(group) + 1
+                                    text = "$index"
+                                    type = MoneyManagerButtonType.INVITE_TO_GROUP
+                                }
+                            }
+                        }
+                    }
+
+                    buttonRow {
+                        button {
+                            text = "❌ Отмена"
+                            type = MoneyManagerButtonType.CANCEL
+                        }
+                    }
+                }
+            } else {
+                text = """
+                    |❌ Нет доступных групп
+                    |
+                    |У вас нет групп, где вы являетесь владельцем.
+                    |Только владелец может получить ссылку для приглашения.
+                """.trimMargin()
+
+                keyboard {
+                    buttonRow {
+                        button {
+                            text = "⬅️ Назад"
+                            type = MoneyManagerButtonType.BACK_TO_MENU
+                        }
                     }
                 }
             }
@@ -127,16 +199,35 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupJoinConfirmReply
 
         message {
             val group = context.pendingGroup
+            val ownerInfo = context.pendingGroupOwnerInfo
 
             if (group != null) {
+                // Формируем имя создателя
+                val ownerName = when {
+                    ownerInfo != null -> {
+                        val firstName = ownerInfo.firstName ?: ""
+                        val lastName = ownerInfo.lastName ?: ""
+                        val fullName = "$firstName $lastName".trim()
+
+                        if (fullName.isNotEmpty()) {
+                            fullName
+                        } else if (!ownerInfo.username.isNullOrEmpty()) {
+                            "@${ownerInfo.username}"
+                        } else {
+                            "ID ${group.ownerId}"
+                        }
+                    }
+                    else -> "ID ${group.ownerId}"
+                }
+
                 text = """
-                    👥 Приглашение в группу "${group.name}"
-
-                    Участников: ${group.memberIds.size}
-                    Создатель: ID ${group.ownerId}
-
-                    Присоединиться к этой группе?
-                """.trimIndent()
+                    |👥 Приглашение в группу "${group.name}"
+                    |
+                    |Участников: ${group.memberIds.size}
+                    |Создатель: $ownerName
+                    |
+                    |Присоединиться к этой группе?
+                """.trimMargin()
 
                 keyboard {
                     buttonRow {
