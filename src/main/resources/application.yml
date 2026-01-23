@@ -4,7 +4,7 @@ chat-machinist:
     type: mongodb
   bot:
     name: moneyManagerAIbot
-    token: 8554230883:AAEd8GKlX2k_lgsOKdfeP7UbOXGxpfbujXc
+    token: secret
 
 gemini:
   api-key: ${GEMINI_API_KEY:secret}
@@ -16,7 +16,7 @@ spring:
     database: moneyManagerBot
     host: ${MONGO_HOST:localhost}
     username: moneyManagerUser
-    password: vfaZPswtZePqyABJ
+    password: secret
     port: 27019
   data:
     mongodb:
