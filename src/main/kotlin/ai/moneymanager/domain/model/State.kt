@@ -22,6 +22,10 @@ enum class MoneyManagerState {
     GROUP_DELETE_SELECT,
     GROUP_DELETE_CONFIRM,
 
+    // -------- NLP --------
+    NLP_CONFIRM_CREATE_GROUP,
+    NLP_RESPONSE,
+
     // -------- CATEGORIES --------
     CATEGORY_MANAGEMENT,
     CATEGORY_NO_GROUP_WARNING,
@@ -72,6 +76,9 @@ enum class MoneyManagerButtonType {
     CONFIRM_DELETE,
     CANCEL,
     BACK_TO_MENU,
+
+    // NLP
+    CONFIRM_NLP_ACTION,
 }
 
 class MoneyManagerContext {
@@ -94,4 +101,8 @@ class MoneyManagerContext {
     var categoryTypeInput: CategoryType? = null
     var currentCategory: Category? = null
     var categories: List<Category> = emptyList()
+
+    // -------- NLP --------
+    var nlpGroupName: String? = null
+    var nlpResponse: String? = null
 }

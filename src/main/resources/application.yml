@@ -6,6 +6,10 @@ chat-machinist:
     name: moneyManagerAIbot
     token: 8554230883:AAEd8GKlX2k_lgsOKdfeP7UbOXGxpfbujXc
 
+gemini:
+  api-key: ${GEMINI_API_KEY:secret}
+  model: gemini-2.5-flash
+
 debug: false
 spring:
   mongodb:

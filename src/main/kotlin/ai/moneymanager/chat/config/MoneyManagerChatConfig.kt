@@ -5,7 +5,9 @@ import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.GroupService
+import ai.moneymanager.service.TelegramFileService
 import ai.moneymanager.service.UserInfoService
+import ai.moneymanager.service.nlp.CommandParserService
 import kz.rmr.chatmachinist.api.transition.ChatBuilder
 import kz.rmr.chatmachinist.api.transition.chat
 import org.springframework.context.annotation.Bean
@@ -19,7 +21,9 @@ import org.springframework.scheduling.annotation.EnableScheduling
 class MoneyManagerChatConfig(
     private val userInfoService: UserInfoService,
     private val groupService: GroupService,
-    private val categoryService: CategoryService
+    private val categoryService: CategoryService,
+    private val commandParserService: CommandParserService,
+    private val telegramFileService: TelegramFileService
 ) {
 
     @Bean
@@ -38,6 +42,6 @@ class MoneyManagerChatConfig(
                 }
             }
 
-            moneyManagerDialog(userInfoService, groupService, categoryService)
+            moneyManagerDialog(userInfoService, groupService, categoryService, commandParserService, telegramFileService)
         }
 }

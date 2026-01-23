@@ -5,7 +5,9 @@ import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.GroupService
+import ai.moneymanager.service.TelegramFileService
 import ai.moneymanager.service.UserInfoService
+import ai.moneymanager.service.nlp.CommandParserService
 import kz.rmr.chatmachinist.api.transition.ChatBuilder
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType
@@ -13,7 +15,9 @@ import kz.rmr.chatmachinist.model.EventType
 fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
     userInfoService: UserInfoService,
     groupService: GroupService,
-    categoryService: CategoryService
+    categoryService: CategoryService,
+    commandParserService: CommandParserService,
+    telegramFileService: TelegramFileService
 ) {
     dialog {
         name = "Money Manager Dialog"
@@ -22,6 +26,7 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
         joinGroupDialogTransitions(groupService, userInfoService)
         groupDialogTransitions(groupService, categoryService)
         categoryDialogTransitions(categoryService)
+        nlpDialogTransitions(commandParserService, groupService, userInfoService, telegramFileService)
     }
 }
 

@@ -46,6 +46,12 @@ dependencies {
     implementation("com.chatmachinist:chat-machinist:$chatMachinistVersion")
     implementation("com.chatmachinist:chat-machinist-mongo-persistence-starter:$chatMachinistMongoVersion")
 
+    // Google Gemini AI SDK
+    implementation("com.google.genai:google-genai:1.34.0")
+
+    // Jackson Kotlin module for data class deserialization
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
@@ -54,6 +60,7 @@ tasks.withType<KotlinCompile> {
     compilerOptions {
         freeCompilerArgs.add("-Xjsr305=strict")
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+        javaParameters.set(true) // Required for Gemini function calling
     }
 }
 
