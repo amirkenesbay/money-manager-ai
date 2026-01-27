@@ -10,56 +10,110 @@ import ai.moneymanager.service.TelegramFileService
 import ai.moneymanager.service.nlp.CommandParserService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType
+import org.slf4j.LoggerFactory
 import org.telegram.telegrambots.meta.api.objects.Voice
 
+private val log = LoggerFactory.getLogger("NlpDialogs")
+
+// ========== Extension Properties ==========
+
 /**
- * Обрабатывает команду NLP и заполняет context
+ * Возвращает целевое состояние для команды NLP
+ */
+private val BotCommand.targetState: MoneyManagerState
+    get() = when (this) {
+        is BotCommand.CreateGroup -> MoneyManagerState.NLP_CONFIRM_CREATE_GROUP
+        is BotCommand.OutOfContext,
+        is BotCommand.AddExpense,
+        is BotCommand.AddIncome,
+        is BotCommand.ParseError -> MoneyManagerState.NLP_RESPONSE
+    }
+
+// ========== Constants ==========
+
+private const val OUT_OF_CONTEXT_MESSAGE = """Я бот для учета финансов. Могу помочь:
+• Создать группу ("создай группу друзья")
+• Добавить расход ("кофе 500")
+• Добавить доход ("зарплата 500000")"""
+
+private const val VOICE_TOO_LONG_MESSAGE = "⚠️ Голосовое сообщение слишком длинное (%dс). Максимум 3 минуты."
+private const val VOICE_DOWNLOAD_ERROR_MESSAGE = "❌ Не удалось загрузить голосовое сообщение. Попробуйте еще раз."
+private const val PARSE_ERROR_MESSAGE = "Не удалось обработать сообщение. Попробуйте еще раз."
+
+private const val MAX_VOICE_DURATION_SECONDS = 180
+
+// ========== Command Processing ==========
+
+/**
+ * Обрабатывает команду NLP и заполняет контекст
  */
 private fun processNlpCommand(
     command: BotCommand,
     context: MoneyManagerContext
 ) {
-    // Очищаем предыдущие NLP данные
-    context.nlpResponse = null
-    context.nlpGroupName = null
+    clearNlpContext(context)
+    context.parsedCommand = command
 
     when (command) {
-        is BotCommand.CreateGroup -> {
-            context.nlpGroupName = command.groupName
-            println("✅ NLP parsed: CreateGroup(${command.groupName})")
-        }
-        is BotCommand.OutOfContext -> {
-            context.nlpResponse = "Я бот для учета финансов. Могу помочь:\n" +
-                    "• Создать группу (\"создай группу друзья\")\n" +
-                    "• Добавить расход (\"кофе 500\")\n" +
-                    "• Добавить доход (\"зарплата 500000\")"
-            println("⚠️ NLP: Out of context message")
-        }
-        is BotCommand.AddExpense -> {
-            context.nlpResponse = "Функция добавления расходов скоро будет доступна!\n" +
-                    "Распознано: ${command.category ?: "без категории"}, ${command.amount} тг"
-            println("✅ NLP parsed: AddExpense(${command.amount}, ${command.category})")
-        }
-        is BotCommand.AddIncome -> {
-            context.nlpResponse = "Функция добавления доходов скоро будет доступна!\n" +
-                    "Распознано: ${command.category ?: "без категории"}, ${command.amount} тг"
-            println("✅ NLP parsed: AddIncome(${command.amount}, ${command.category})")
-        }
-        is BotCommand.ParseError -> {
-            context.nlpResponse = "Не удалось обработать сообщение. Попробуйте еще раз."
-            println("❌ NLP error: ${command.error}")
-        }
+        is BotCommand.CreateGroup -> handleCreateGroupCommand(command, context)
+        is BotCommand.OutOfContext -> handleOutOfContextCommand(context)
+        is BotCommand.AddExpense -> handleAddExpenseCommand(command, context)
+        is BotCommand.AddIncome -> handleAddIncomeCommand(command, context)
+        is BotCommand.ParseError -> handleParseErrorCommand(command, context)
     }
+}
+
+private fun clearNlpContext(context: MoneyManagerContext) {
+    context.nlpResponse = null
+    context.nlpGroupName = null
+    context.nlpTargetState = null
+}
+
+private fun handleCreateGroupCommand(command: BotCommand.CreateGroup, context: MoneyManagerContext) {
+    context.nlpGroupName = command.groupName
+    context.nlpTargetState = MoneyManagerState.NLP_CONFIRM_CREATE_GROUP
+    log.info("✅ NLP parsed: CreateGroup(${command.groupName})")
+}
+
+private fun handleOutOfContextCommand(context: MoneyManagerContext) {
+    context.nlpResponse = OUT_OF_CONTEXT_MESSAGE
+    context.nlpTargetState = MoneyManagerState.NLP_RESPONSE
+    log.info("⚠️ NLP: Out of context message")
+}
+
+private fun handleAddExpenseCommand(command: BotCommand.AddExpense, context: MoneyManagerContext) {
+    context.nlpResponse = """
+        |Функция добавления расходов скоро будет доступна!
+        |Распознано: ${command.category ?: "без категории"}, ${command.amount} тг
+    """.trimMargin()
+    context.nlpTargetState = MoneyManagerState.NLP_RESPONSE
+    log.info("✅ NLP parsed: AddExpense(${command.amount}, ${command.category})")
+}
+
+private fun handleAddIncomeCommand(command: BotCommand.AddIncome, context: MoneyManagerContext) {
+    context.nlpResponse = """
+        |Функция добавления доходов скоро будет доступна!
+        |Распознано: ${command.category ?: "без категории"}, ${command.amount} тг
+    """.trimMargin()
+    context.nlpTargetState = MoneyManagerState.NLP_RESPONSE
+    log.info("✅ NLP parsed: AddIncome(${command.amount}, ${command.category})")
+}
+
+private fun handleParseErrorCommand(command: BotCommand.ParseError, context: MoneyManagerContext) {
+    context.nlpResponse = PARSE_ERROR_MESSAGE
+    context.nlpTargetState = MoneyManagerState.NLP_RESPONSE
+    log.info("❌ NLP error: ${command.error}")
 }
 
 /**
  * Обрабатывает текстовое сообщение через NLP
  */
-private fun processNlpMessage(
+private fun processTextMessage(
     userMessage: String,
     context: MoneyManagerContext,
     commandParserService: CommandParserService
 ) {
+    log.info("🧠 Processing NLP: $userMessage")
     val command = commandParserService.parseCommand(userMessage)
     processNlpCommand(command, context)
 }
@@ -72,18 +126,119 @@ private fun processVoiceMessage(
     context: MoneyManagerContext,
     commandParserService: CommandParserService,
     telegramFileService: TelegramFileService
-) {
-    println("🎤 Processing voice message: ${voice.duration}s")
+): Boolean {
+    log.info("🎤 Processing voice message: ${voice.duration}s")
 
     val audioBytes = telegramFileService.downloadVoice(voice)
     if (audioBytes == null) {
-        context.nlpResponse = "Не удалось загрузить голосовое сообщение. Попробуйте еще раз."
-        return
+        context.nlpResponse = if (voice.duration > MAX_VOICE_DURATION_SECONDS) {
+            VOICE_TOO_LONG_MESSAGE.format(voice.duration)
+        } else {
+            VOICE_DOWNLOAD_ERROR_MESSAGE
+        }
+        return false
     }
 
     val command = commandParserService.parseVoiceCommand(audioBytes)
     processNlpCommand(command, context)
+    return true
 }
+
+// ========== Transition Builders ==========
+
+/**
+ * Создает transition для обработки текстовых сообщений
+ */
+private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createTextInputTransition(
+    sourceState: MoneyManagerState,
+    commandParserService: CommandParserService
+) {
+    transition {
+        name = "Process text from ${sourceState.name}"
+
+        condition {
+            from = sourceState
+            eventType = EventType.TEXT
+            guard {
+                update.message?.text?.let { !it.startsWith("/") } ?: false
+            }
+        }
+
+        action {
+            val userMessage = update.message?.text ?: return@action
+            processTextMessage(userMessage, context, commandParserService)
+        }
+
+        then {
+            to = MoneyManagerState.MENU
+            noReply = true
+            trigger { sameDialog = true }
+        }
+    }
+}
+
+/**
+ * Создает transition для обработки голосовых сообщений
+ */
+private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createVoiceInputTransition(
+    sourceState: MoneyManagerState,
+    commandParserService: CommandParserService,
+    telegramFileService: TelegramFileService
+) {
+    transition {
+        name = "Process voice from ${sourceState.name}"
+
+        condition {
+            from = sourceState
+            eventType = EventType.VOICE
+        }
+
+        action {
+            val voice = update.message?.voice ?: return@action
+            log.info("🎤 Processing voice from ${sourceState.name}: ${voice.duration}s")
+            processVoiceMessage(voice, context, commandParserService, telegramFileService)
+        }
+
+        then {
+            to = MoneyManagerState.MENU
+            noReply = true
+            trigger { sameDialog = true }
+        }
+    }
+}
+
+/**
+ * Создает transition для роутинга NLP команд
+ */
+private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createNlpRouter(
+    sourceState: MoneyManagerState,
+    targetState: MoneyManagerState
+) {
+    transition {
+        name = "Route NLP: ${sourceState.name} → ${targetState.name}"
+
+        condition {
+            from = sourceState
+            eventType = EventType.TRIGGERED
+            guard {
+                val matches = context.parsedCommand?.targetState == targetState
+                log.info("🔍 NLP Router (${sourceState.name}→${targetState.name}): command=${context.parsedCommand}, match=$matches")
+                matches
+            }
+        }
+
+        action {
+            log.info("🎯 Routing from ${sourceState.name} to ${targetState.name}")
+            context.parsedCommand = null
+        }
+
+        then {
+            to = targetState
+        }
+    }
+}
+
+// ========== Main Dialog Builder ==========
 
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.nlpDialogTransitions(
     commandParserService: CommandParserService,
@@ -91,138 +246,19 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.nlpDialogTransitions(
     userInfoService: UserInfoService,
     telegramFileService: TelegramFileService
 ) {
-    // Обработка произвольного текста из меню через NLP
-    transition {
-        name = "Process text message via NLP"
-
-        condition {
-            from = MoneyManagerState.MENU
-            eventType = EventType.TEXT
-
-            guard {
-                val text = update.message?.text
-                // Обрабатываем только текстовые сообщения, не команды
-                text != null && !text.startsWith("/")
-            }
-        }
-
-        action {
-            val userMessage = update.message?.text ?: return@action
-            println("🧠 Processing NLP: $userMessage")
-            processNlpMessage(userMessage, context, commandParserService)
-        }
-
-        then {
-            to = MoneyManagerState.MENU
-            noReply = true
-            trigger { sameDialog = true }
-        }
+    // Input transitions (текст и голос из MENU и NLP_RESPONSE)
+    listOf(MoneyManagerState.MENU, MoneyManagerState.NLP_RESPONSE).forEach { state ->
+        createTextInputTransition(state, commandParserService)
+        createVoiceInputTransition(state, commandParserService, telegramFileService)
     }
 
-    // Обработка текста из NLP_RESPONSE (продолжение диалога без нажатия "Назад")
-    transition {
-        name = "Process text message from NLP response"
+    // NLP роутеры для всех комбинаций источников и целей
+    val sourceStates = listOf(MoneyManagerState.MENU, MoneyManagerState.NLP_RESPONSE)
+    val targetStates = listOf(MoneyManagerState.NLP_CONFIRM_CREATE_GROUP, MoneyManagerState.NLP_RESPONSE)
 
-        condition {
-            from = MoneyManagerState.NLP_RESPONSE
-            eventType = EventType.TEXT
-
-            guard {
-                val text = update.message?.text
-                text != null && !text.startsWith("/")
-            }
-        }
-
-        action {
-            val userMessage = update.message?.text ?: return@action
-            println("🧠 Processing NLP (from response): $userMessage")
-            processNlpMessage(userMessage, context, commandParserService)
-        }
-
-        then {
-            to = MoneyManagerState.MENU
-            noReply = true
-            trigger { sameDialog = true }
-        }
-    }
-
-    // Обработка голосового сообщения из меню
-    transition {
-        name = "Process voice message via NLP"
-
-        condition {
-            from = MoneyManagerState.MENU
-            eventType = EventType.VOICE
-        }
-
-        action {
-            val voice = update.message?.voice ?: return@action
-            println("🎤 Processing voice from MENU: ${voice.duration}s")
-            processVoiceMessage(voice, context, commandParserService, telegramFileService)
-        }
-
-        then {
-            to = MoneyManagerState.MENU
-            noReply = true
-            trigger { sameDialog = true }
-        }
-    }
-
-    // Обработка голосового сообщения из NLP_RESPONSE
-    transition {
-        name = "Process voice message from NLP response"
-
-        condition {
-            from = MoneyManagerState.NLP_RESPONSE
-            eventType = EventType.VOICE
-        }
-
-        action {
-            val voice = update.message?.voice ?: return@action
-            println("🎤 Processing voice from NLP_RESPONSE: ${voice.duration}s")
-            processVoiceMessage(voice, context, commandParserService, telegramFileService)
-        }
-
-        then {
-            to = MoneyManagerState.MENU
-            noReply = true
-            trigger { sameDialog = true }
-        }
-    }
-
-    // Если NLP распознал команду создания группы — показываем подтверждение
-    transition {
-        name = "Show NLP create group confirmation"
-
-        condition {
-            from = MoneyManagerState.MENU
-            eventType = EventType.TRIGGERED
-
-            guard {
-                context.nlpGroupName != null
-            }
-        }
-
-        then {
-            to = MoneyManagerState.NLP_CONFIRM_CREATE_GROUP
-        }
-    }
-
-    // Если NLP вернул ответ (out of context или другое) — показываем сообщение
-    transition {
-        name = "Show NLP response"
-
-        condition {
-            from = MoneyManagerState.MENU
-            eventType = EventType.TRIGGERED
-
-            guard {
-                context.nlpResponse != null && context.nlpGroupName == null
-            }
-        }
-
-        then {
-            to = MoneyManagerState.NLP_RESPONSE
+    sourceStates.forEach { source ->
+        targetStates.forEach { target ->
+            createNlpRouter(source, target)
         }
     }
 
@@ -259,14 +295,10 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.nlpDialogTransitions(
 
             val createdGroup = groupService.createGroup(userId, groupName)
             context.currentGroup = createdGroup
-
-            // Обновляем userInfo
             context.userInfo = userInfoService.getUserInfo(user)
-
-            // Очищаем NLP данные
             context.nlpGroupName = null
 
-            println("✅ Group created via NLP: ${createdGroup?.name}")
+            log.info("✅ Group created via NLP: ${createdGroup.name}")
         }
 
         then {

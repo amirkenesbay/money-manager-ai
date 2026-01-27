@@ -1,5 +1,6 @@
 package ai.moneymanager.domain.model
 
+import ai.moneymanager.domain.model.nlp.BotCommand
 import com.fasterxml.jackson.annotation.JsonFormat
 
 @JsonFormat(shape = JsonFormat.Shape.BINARY)
@@ -105,4 +106,6 @@ class MoneyManagerContext {
     // -------- NLP --------
     var nlpGroupName: String? = null
     var nlpResponse: String? = null
+    var nlpTargetState: MoneyManagerState? = null
+    var parsedCommand: BotCommand? = null
 }

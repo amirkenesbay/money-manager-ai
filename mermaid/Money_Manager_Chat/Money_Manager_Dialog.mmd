@@ -13,6 +13,7 @@ MENU --o diamond3{MENU branching}
    diamond3 ==>|"button SHARED_ACCOUNTING"| GROUP_MANAGEMENT
    diamond3 ==>|"button CATEGORIES"| CATEGORY_MANAGEMENT
    diamond3 ==>|"text  guarded"| MENU
+   diamond3 ==>|"voice"| MENU
    diamond3 ==>|"trigger guarded"| NLP_CONFIRM_CREATE_GROUP
    diamond3 ==>|"trigger guarded"| NLP_RESPONSE
 GROUP_MANAGEMENT --o diamond4{GROUP_MANAGEMENT branching}
@@ -87,4 +88,7 @@ NLP_CONFIRM_CREATE_GROUP --o diamond21{NLP_CONFIRM_CREATE_GROUP branching}
    diamond21 ==>|"button CANCEL"| MENU
 NLP_RESPONSE --o diamond22{NLP_RESPONSE branching}
    diamond22 ==>|"text  guarded"| MENU
+   diamond22 ==>|"voice"| MENU
+   diamond22 ==>|"trigger guarded"| NLP_CONFIRM_CREATE_GROUP
+   diamond22 ==>|"trigger guarded"| NLP_RESPONSE
    diamond22 ==>|"button BACK_TO_MENU"| MENU
