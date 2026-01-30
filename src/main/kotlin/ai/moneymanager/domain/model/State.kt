@@ -62,7 +62,6 @@ enum class MoneyManagerButtonType {
     QUICK_GROUP_WITH_FRIEND,
     QUICK_GROUP_WORK,
     QUICK_GROUP_TRIP,
-    QUICK_GROUP_YOU_OWN_NAME,
 
     // Categories
     CATEGORIES,
@@ -103,8 +102,6 @@ enum class MoneyManagerButtonType {
 
     // AI hints
     WHAT_TO_ASK,
-
-    EXPENSE_OR_INCOME
 }
 
 class MoneyManagerContext {

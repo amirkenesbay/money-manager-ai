@@ -351,12 +351,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryListReply() {
 
                 buttonRow {
                     button {
-                        text = "➕ Создать категорию"
-                        type = MoneyManagerButtonType.CREATE_CATEGORY
-                    }
-                }
-                buttonRow {
-                    button {
                         text = "⬅️ Назад"
                         type = MoneyManagerButtonType.BACK_TO_MENU
                     }

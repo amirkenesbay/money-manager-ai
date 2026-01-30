@@ -72,12 +72,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupCreateEnterNameR
                 }
                 buttonRow {
                     button {
-                        text = "➕ Задать свое название"
-                        type = MoneyManagerButtonType.QUICK_GROUP_YOU_OWN_NAME
-                    }
-                }
-                buttonRow {
-                    button {
                         text = "💼 Работа"
                         type = MoneyManagerButtonType.QUICK_GROUP_WORK
                     }

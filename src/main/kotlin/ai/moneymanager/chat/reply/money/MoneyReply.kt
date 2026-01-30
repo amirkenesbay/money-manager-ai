@@ -40,12 +40,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.menuReply() {
                         type = MoneyManagerButtonType.WHAT_TO_ASK
                     }
                 }
-                buttonRow {
-                    button {
-                        text = "\uD83D\uDCB5 Расход/Доход"
-                        type = MoneyManagerButtonType.EXPENSE_OR_INCOME
-                    }
-                }
             }
         }
     }
