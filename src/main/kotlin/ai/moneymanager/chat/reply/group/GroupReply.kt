@@ -71,6 +71,12 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupCreateEnterNameR
                 }
                 buttonRow {
                     button {
+                        text = "➕ Задать свое название"
+                        type = MoneyManagerButtonType.QUICK_GROUP_YOU_OWN_NAME
+                    }
+                }
+                buttonRow {
+                    button {
                         text = "💼 Работа"
                         type = MoneyManagerButtonType.QUICK_GROUP_WORK
                     }
@@ -102,7 +108,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupInviteShowReply(
 
             val group = context.currentGroup
             if (group != null) {
-                val botUsername = "moneyManagerAIbot"
+                val botUsername = "my_first_practice_with_bot"
                 text = """
                     |🔗 Ссылка для приглашения в группу "${group.name}"
                     |

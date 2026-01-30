@@ -60,6 +60,7 @@ enum class MoneyManagerButtonType {
     QUICK_GROUP_WITH_FRIEND,
     QUICK_GROUP_WORK,
     QUICK_GROUP_TRIP,
+    QUICK_GROUP_YOU_OWN_NAME,
 
     // Categories
     CATEGORIES,
@@ -80,6 +81,8 @@ enum class MoneyManagerButtonType {
 
     // NLP
     CONFIRM_NLP_ACTION,
+
+    EXPENSE_OR_INCOME
 }
 
 class MoneyManagerContext {
