@@ -113,7 +113,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createGroupDia
         }
 
         then {
-            to = MoneyManagerState.GROUP_INVITE_SHOW
+            to = MoneyManagerState.FINANCE_OPERATION_EXPENSE_OR_INCOME
         }
     }
 

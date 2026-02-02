@@ -32,7 +32,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.menuReply() {
                 buttonRow {
                     button {
                         text = "\uD83D\uDCB5 Расход/Доход"
-                        type = MoneyManagerButtonType.EXPENSE_OR_INCOME
+                        type = MoneyManagerButtonType.FINANCE_OPERATION_EXPENSE_OR_INCOME
                     }
                 }
             }

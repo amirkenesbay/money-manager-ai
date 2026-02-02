@@ -6,7 +6,7 @@ import org.springframework.data.mongodb.core.mapping.Document
 
 @Document(collection = "money_manager_user")
 data class UserInfoEntity(
-    val id: ObjectId? = null,
+    val id: String,
     val username: String?,
     val firstName: String?,
     val lastName: String?,

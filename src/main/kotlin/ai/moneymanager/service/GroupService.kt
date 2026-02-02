@@ -8,6 +8,7 @@ import ai.moneymanager.repository.entity.MoneyGroupEntity
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Service
 import java.security.SecureRandom
+import java.util.UUID
 
 @Service
 class GroupService(
@@ -21,7 +22,16 @@ class GroupService(
      */
     fun createGroup(ownerId: Long, name: String): MoneyGroup {
         val inviteToken = generateInviteToken()
+        val allowedNames = setOf("Family", "Friends", "Work", "Trip")
+
+        val id: String = if (name in allowedNames) {
+            name.lowercase() + UUID.randomUUID().toString().replace("-", "").take(6)
+        } else {
+            UUID.randomUUID().toString()
+        }
+
         val groupEntity = MoneyGroupEntity(
+            id = id,
             name = name,
             inviteToken = inviteToken,
             ownerId = ownerId,
@@ -55,6 +65,7 @@ class GroupService(
      */
     fun createPersonalGroup(userId: Long, userName: String?): MoneyGroup {
         val groupEntity = MoneyGroupEntity(
+            id = UUID.randomUUID().toString(),
             name = "Личный учет",
             inviteToken = generateInviteToken(), // Не используется для личных групп
             ownerId = userId,
