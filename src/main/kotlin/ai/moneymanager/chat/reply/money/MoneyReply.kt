@@ -29,6 +29,12 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.menuReply() {
                         type = MoneyManagerButtonType.CATEGORIES
                     }
                 }
+                buttonRow {
+                    button {
+                        text = "🔔 Уведомления"
+                        type = MoneyManagerButtonType.NOTIFICATIONS
+                    }
+                }
             }
         }
     }
