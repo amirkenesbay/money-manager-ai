@@ -158,16 +158,16 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupJoinConfirmReply
                         } else if (!ownerInfo.username.isNullOrEmpty()) {
                             "@${ownerInfo.username}"
                         } else {
-                            "ID ${group.ownerId}"
+                            "ID ${group.ownerTelegramUserId}"
                         }
                     }
-                    else -> "ID ${group.ownerId}"
+                    else -> "ID ${group.ownerTelegramUserId}"
                 }
 
                 text = """
                     |👥 Приглашение в совместный учёт "${group.name}"
                     |
-                    |Участников: ${group.memberIds.size}
+                    |Участников: ${group.memberTelegramUserIds.size}
                     |Создатель: $ownerName
                     |
                     |Присоединиться?
@@ -370,7 +370,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupDeleteConfirmRep
             val categoriesCount = context.categoriesCountToDelete
 
             if (group != null) {
-                val isOwner = group.ownerId == userInfo?.telegramUserId
+                val isOwner = group.ownerTelegramUserId == userInfo?.telegramUserId
 
                 if (isOwner) {
                     val categoriesWarning = if (categoriesCount > 0) {
@@ -435,6 +435,75 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupDeleteConfirmRep
     }
 }
 
+<<<<<<< HEAD
+=======
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupEditSelectReply() {
+    reply {
+        state = MoneyManagerState.GROUP_EDIT_SELECT
+
+        message {
+            val userInfo = context.userInfo
+            val userGroups = context.userGroups
+
+            // Фильтруем только те группы, где пользователь является владельцем
+            val ownedGroups = userGroups.filter { it.ownerTelegramUserId == userInfo?.telegramUserId }
+
+            if (ownedGroups.isNotEmpty()) {
+                val groupsList = ownedGroups.mapIndexed { index, group ->
+                    "${index + 1} - ${group.name}"
+                }.joinToString("\n")
+
+                text = """
+                    |✏️ Редактирование группы
+                    |
+                    |Выберите группу для редактирования:
+                    |
+                    |$groupsList
+                    |
+                    |⚠️ Вы можете редактировать только те группы, где вы являетесь владельцем.
+                """.trimMargin()
+
+                keyboard {
+                    // Создаем кнопки только для групп, где пользователь - владелец
+                    ownedGroups.chunked(3).forEach { groupsInRow ->
+                        buttonRow {
+                            groupsInRow.forEach { group ->
+                                button {
+                                    val index = ownedGroups.indexOf(group) + 1
+                                    text = "$index"
+                                    type = MoneyManagerButtonType.EDIT_GROUP
+                                }
+                            }
+                        }
+                    }
+
+                    buttonRow {
+                        button {
+                            text = "❌ Отмена"
+                            type = MoneyManagerButtonType.CANCEL
+                        }
+                    }
+                }
+            } else {
+                text = """
+                    ❌ Нет групп для редактирования
+
+                    У вас нет групп, где вы являетесь владельцем.
+                """.trimIndent()
+
+                keyboard {
+                    buttonRow {
+                        button {
+                            text = "⬅️ Назад"
+                            type = MoneyManagerButtonType.BACK_TO_MENU
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+>>>>>>> 7472de4 (modify create finance operation)
 
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupEditEnterNameReply() {
     reply {
@@ -504,6 +573,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupMembersReply() {
                 }
 
                 text = """
+<<<<<<< HEAD
                     |👥 Участники группы "${group.name}"
                     |
                     |Всего участников: ${group.memberIds.size}
@@ -511,6 +581,15 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupMembersReply() {
                     |
                     |$membersText
                 """.trimMargin()
+=======
+                    👥 Участники группы "${group.name}"
+
+                    Всего участников: ${group.memberTelegramUserIds.size}
+                    Создатель: ID ${group.ownerTelegramUserId}
+
+                    ${group.memberTelegramUserIds.joinToString("\n") { "• Пользователь ID: $it" }}
+                """.trimIndent()
+>>>>>>> 7472de4 (modify create finance operation)
             } else {
                 text = "Группа не найдена"
             }
