@@ -140,7 +140,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupInviteSelectRepl
             val userGroups = context.userGroups
 
             // Фильтруем только те группы, где пользователь является владельцем
-            val ownedGroups = userGroups.filter { it.ownerId == userInfo?.telegramUserId }
+            val ownedGroups = userGroups.filter { it.ownerTelegramUserId == userInfo?.telegramUserId }
 
             if (ownedGroups.isNotEmpty()) {
                 val groupsList = ownedGroups.mapIndexed { index, group ->
@@ -220,16 +220,16 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupJoinConfirmReply
                         } else if (!ownerInfo.username.isNullOrEmpty()) {
                             "@${ownerInfo.username}"
                         } else {
-                            "ID ${group.ownerId}"
+                            "ID ${group.ownerTelegramUserId}"
                         }
                     }
-                    else -> "ID ${group.ownerId}"
+                    else -> "ID ${group.ownerTelegramUserId}"
                 }
 
                 text = """
                     |👥 Приглашение в группу "${group.name}"
                     |
-                    |Участников: ${group.memberIds.size}
+                    |Участников: ${group.memberTelegramUserIds.size}
                     |Создатель: $ownerName
                     |
                     |Присоединиться к этой группе?
@@ -276,7 +276,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupListReply() {
             if (userGroups.isNotEmpty()) {
                 // Формируем список групп с номерами
                 val groupsList = userGroups.mapIndexed { index, group ->
-                    val ownerMark = if (group.ownerId == userInfo?.telegramUserId) " 👑" else ""
+                    val ownerMark = if (group.ownerTelegramUserId == userInfo?.telegramUserId) " 👑" else ""
                     "${index + 1} - ${group.name}$ownerMark"
                 }.joinToString("\n")
 
@@ -369,7 +369,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupDeleteSelectRepl
             val userGroups = context.userGroups
 
             // Фильтруем только те группы, где пользователь является владельцем
-            val ownedGroups = userGroups.filter { it.ownerId == userInfo?.telegramUserId }
+            val ownedGroups = userGroups.filter { it.ownerTelegramUserId == userInfo?.telegramUserId }
 
             if (ownedGroups.isNotEmpty()) {
                 val groupsList = ownedGroups.mapIndexed { index, group ->
@@ -437,7 +437,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupDeleteConfirmRep
             val categoriesCount = context.categoriesCountToDelete
 
             if (group != null) {
-                val isOwner = group.ownerId == userInfo?.telegramUserId
+                val isOwner = group.ownerTelegramUserId == userInfo?.telegramUserId
 
                 if (isOwner) {
                     val categoriesWarning = if (categoriesCount > 0) {
@@ -511,7 +511,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupEditSelectReply(
             val userGroups = context.userGroups
 
             // Фильтруем только те группы, где пользователь является владельцем
-            val ownedGroups = userGroups.filter { it.ownerId == userInfo?.telegramUserId }
+            val ownedGroups = userGroups.filter { it.ownerTelegramUserId == userInfo?.telegramUserId }
 
             if (ownedGroups.isNotEmpty()) {
                 val groupsList = ownedGroups.mapIndexed { index, group ->
@@ -617,10 +617,10 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupMembersReply() {
                 text = """
                     👥 Участники группы "${group.name}"
 
-                    Всего участников: ${group.memberIds.size}
-                    Создатель: ID ${group.ownerId}
+                    Всего участников: ${group.memberTelegramUserIds.size}
+                    Создатель: ID ${group.ownerTelegramUserId}
 
-                    ${group.memberIds.joinToString("\n") { "• Пользователь ID: $it" }}
+                    ${group.memberTelegramUserIds.joinToString("\n") { "• Пользователь ID: $it" }}
                 """.trimIndent()
             } else {
                 text = "Группа не найдена"

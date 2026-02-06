@@ -25,13 +25,13 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.selectFinanceOperatio
                 buttonRow {
                     button {
                         text = "Перейти в раздел 'Доходы'"
-                        type = MoneyManagerButtonType.FINANCE_OPERATION_CREATE_INCOME_BUTTON
+                        type = MoneyManagerButtonType.FINANCE_OPERATION_CREATE_INCOME
                     }
                 }
                 buttonRow {
                     button {
                         text = "Перейти в раздел 'Расходы'"
-                        type = MoneyManagerButtonType.FINANCE_OPERATION_CREATE_EXPENSE_BUTTON
+                        type = MoneyManagerButtonType.FINANCE_OPERATION_CREATE_EXPENSE
                     }
                 }
                 buttonRow {
@@ -64,7 +64,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.selectFinanceOperatio
                     buttonRow {
                         button {
                             text = "Перейти в раздел 'Расходы'"
-                            type = MoneyManagerButtonType.FINANCE_OPERATION_CREATE_EXPENSE_BUTTON
+                            type = MoneyManagerButtonType.FINANCE_OPERATION_CREATE_EXPENSE
                         }
                     }
                     buttonRow {
@@ -85,7 +85,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.selectFinanceOperatio
     }
     fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.createFinanceOperationExpenseReply() {
         reply {
-            state = MoneyManagerState.FINANCE_OPERATION_CREATE_INCOME
+            state = MoneyManagerState.FINANCE_OPERATION_CREATE_EXPENSE
 
             message {
                 text = """
@@ -96,7 +96,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.selectFinanceOperatio
                     buttonRow {
                         button {
                             text = "Перейти в раздел 'Доходы'"
-                            type = MoneyManagerButtonType.FINANCE_OPERATION_CREATE_INCOME_BUTTON
+                            type = MoneyManagerButtonType.FINANCE_OPERATION_CREATE_INCOME
                         }
                     }
                     buttonRow {

@@ -62,7 +62,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
 
                     // Получаем информацию о создателе группы
                     if (group != null) {
-                        context.pendingGroupOwnerInfo = userInfoService.getUserInfoByTelegramId(group.ownerId)
+                        context.pendingGroupOwnerInfo = userInfoService.getUserInfoByTelegramId(group.ownerTelegramUserId)
                     }
                 }
             }
