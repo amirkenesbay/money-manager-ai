@@ -1,6 +1,9 @@
 package ai.moneymanager.chat.config
 
 import ai.moneymanager.chat.reply.category.*
+import ai.moneymanager.chat.reply.financeOperation.createFinanceOperationExpenseReply
+import ai.moneymanager.chat.reply.financeOperation.createFinanceOperationIncomeReply
+import ai.moneymanager.chat.reply.financeOperation.selectFinanceOperationReply
 import ai.moneymanager.chat.reply.group.*
 import ai.moneymanager.chat.reply.money.menuReply
 import ai.moneymanager.chat.reply.nlp.nlpConfirmCreateGroupReply
@@ -49,6 +52,11 @@ class MoneyManagerReplyConfig {
             // NLP replies
             nlpConfirmCreateGroupReply()
             nlpResponseReply()
+
+            // Finance operation
+            selectFinanceOperationReply()
+            createFinanceOperationIncomeReply()
+            createFinanceOperationExpenseReply()
         }
     }
 }

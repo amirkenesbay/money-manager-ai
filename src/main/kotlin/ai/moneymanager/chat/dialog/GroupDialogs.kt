@@ -113,7 +113,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createGroupDia
         }
 
         then {
-            to = MoneyManagerState.GROUP_INVITE_SHOW
+            to = MoneyManagerState.FINANCE_OPERATION_EXPENSE_OR_INCOME
         }
     }
 
@@ -278,7 +278,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.inviteGroupTra
             val groupNumber = buttonText.trim().toIntOrNull() ?: return@action
 
             // Фильтруем только группы, где пользователь - владелец
-            val ownedGroups = context.userGroups.filter { it.ownerId == userInfo?.telegramUserId }
+            val ownedGroups = context.userGroups.filter { it.ownerTelegramUserId == userInfo?.telegramUserId }
             val groupIndex = groupNumber - 1
 
             // Проверяем валидность индекса
@@ -452,7 +452,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.editGroupTrans
             val groupNumber = buttonText.trim().toIntOrNull() ?: return@action
 
             // Фильтруем только группы, где пользователь - владелец
-            val ownedGroups = context.userGroups.filter { it.ownerId == userInfo?.telegramUserId }
+            val ownedGroups = context.userGroups.filter { it.ownerTelegramUserId == userInfo?.telegramUserId }
             val groupIndex = groupNumber - 1
 
             // Проверяем валидность индекса
@@ -567,7 +567,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.deleteGroupTra
             val groupNumber = buttonText.trim().toIntOrNull() ?: return@action
 
             // Фильтруем только группы, где пользователь - владелец
-            val ownedGroups = context.userGroups.filter { it.ownerId == userInfo?.telegramUserId }
+            val ownedGroups = context.userGroups.filter { it.ownerTelegramUserId == userInfo?.telegramUserId }
             val groupIndex = groupNumber - 1
 
             // Проверяем валидность индекса

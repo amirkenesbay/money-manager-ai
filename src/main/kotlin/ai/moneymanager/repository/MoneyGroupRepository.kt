@@ -9,5 +9,5 @@ import org.springframework.stereotype.Repository
 interface MoneyGroupRepository : MongoRepository<MoneyGroupEntity, ObjectId> {
     fun findByInviteToken(inviteToken: String): MoneyGroupEntity?
     fun findByIdIn(ids: Set<ObjectId>): List<MoneyGroupEntity>
-    fun findByMemberIdsContaining(memberId: Long): List<MoneyGroupEntity>
+    fun findByMemberTelegramUserIdsContaining(memberId: Long): List<MoneyGroupEntity>
 }

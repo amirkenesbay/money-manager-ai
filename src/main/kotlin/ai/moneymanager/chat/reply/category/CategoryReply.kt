@@ -153,14 +153,14 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryListReply() {
 
             text = if (categories.isEmpty()) {
                 """
-                    📋 Список категорий
+                    📋 Список категорий:
 
                     У вас пока нет категорий.
                     Создайте первую категорию!
                 """.trimIndent()
             } else {
                 """
-                    📋 Список категорий
+                    📋 Список категорий:
 
                     Выберите категорию для редактирования:
                 """.trimIndent()
@@ -181,6 +181,12 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryListReply() {
                     }
                 }
 
+                buttonRow {
+                    button {
+                        text = "➕ Создать категорию"
+                        type = MoneyManagerButtonType.CREATE_CATEGORY
+                    }
+                }
                 buttonRow {
                     button {
                         text = "⬅️ Назад"

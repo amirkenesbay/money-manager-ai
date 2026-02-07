@@ -29,6 +29,12 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.menuReply() {
                         type = MoneyManagerButtonType.CATEGORIES
                     }
                 }
+                buttonRow {
+                    button {
+                        text = "\uD83D\uDCB5 Расход/Доход"
+                        type = MoneyManagerButtonType.FINANCE_OPERATION_EXPENSE_OR_INCOME
+                    }
+                }
             }
         }
     }
