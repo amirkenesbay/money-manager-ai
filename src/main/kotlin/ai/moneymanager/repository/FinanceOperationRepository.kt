@@ -5,6 +5,7 @@ import ai.moneymanager.repository.entity.FinanceOperationEntity
 import org.bson.types.ObjectId
 import org.springframework.data.mongodb.repository.Aggregation
 import org.springframework.data.mongodb.repository.MongoRepository
+import org.springframework.data.mongodb.repository.Query
 import org.springframework.stereotype.Repository
 import java.math.BigDecimal
 import java.time.LocalDateTime
@@ -12,12 +13,26 @@ import java.time.LocalDateTime
 @Repository
 interface FinanceOperationRepository : MongoRepository<FinanceOperationEntity, ObjectId> {
 
-    @Aggregation(
-        pipeline = [
-            "{ '\$match': { 'groupId': ?0 } }",
-            "{ '\$group': { '_id': null, 'balance': { '\$sum': '\$amount' } } }"
-        ]
-    )
+    @Aggregation(pipeline = [
+        "{ '\$match': { 'groupId': ?0, 'operationType': 'INCOME' } }",
+        "{ '\$group': { '_id': null, 'balance': { '\$sum': '\$amount' } } }",
+        "{ '\$project': { '_id': 0, 'balance': 1 } }"
+    ])
+    fun getIncomeBalanceByGroupId(groupId: ObjectId): BigDecimal?
+
+    @Aggregation(pipeline = [
+        "{ '\$match': { 'groupId': ?0, 'operationType': 'EXPENSE' } }",
+        "{ '\$group': { '_id': null, 'balance': { '\$sum': '\$amount' } } }",
+        "{ '\$project': { '_id': 0, 'balance': 1 } }"
+    ])
+    fun getExpenseBalanceByGroupId(groupId: ObjectId): BigDecimal?
+
+    @Aggregation(pipeline = [
+        "{ '\$match': { 'groupId': ?0 } }",
+        "{'\$group': {'_id': null,'balance': {'\$sum': {'\$cond': [ { '\$eq': [ '\$operationType', 'INCOME' ] }," +
+                "'\$amount', { '\$multiply': [ '\$amount', -1 ] }] } } }}",
+        "{ '\$project': { '_id': 0, 'balance': 1 } }"
+    ])
     fun getBalanceByGroupId(groupId: ObjectId): BigDecimal?
 
     @Aggregation(
