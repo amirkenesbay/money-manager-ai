@@ -8,7 +8,7 @@ import java.math.BigDecimal
 
 data class CreateFinanceOperationRequestDto(
     val telegramUserId: Long,
-    val groupId: ObjectId? = null,
+    val groupId: ObjectId,
     val categoryId: ObjectId? = null,
     val day: DayType,
     val amount: BigDecimal,
