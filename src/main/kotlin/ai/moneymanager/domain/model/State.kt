@@ -25,6 +25,7 @@ enum class MoneyManagerState {
 
     // -------- NLP --------
     NLP_CONFIRM_CREATE_GROUP,
+    NLP_CONFIRM_DELETE_GROUP,
     NLP_RESPONSE,
 
     // -------- CATEGORIES --------
@@ -105,6 +106,7 @@ class MoneyManagerContext {
 
     // -------- NLP --------
     var nlpGroupName: String? = null
+    var nlpGroupToDelete: MoneyGroup? = null
     var nlpResponse: String? = null
     var nlpTargetState: MoneyManagerState? = null
     var parsedCommand: BotCommand? = null

@@ -8,12 +8,34 @@ import ai.moneymanager.service.UserInfoService
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.service.TelegramFileService
 import ai.moneymanager.service.nlp.CommandParserService
+import gcardone.junidecode.Junidecode
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType
 import org.slf4j.LoggerFactory
 import org.telegram.telegrambots.meta.api.objects.Voice
 
 private val log = LoggerFactory.getLogger("NlpDialogs")
+
+// ========== Helper Functions ==========
+
+/**
+ * Проверка совпадения названий с учетом транслитерации
+ * Использует библиотеку Junidecode для транслитерации в ASCII
+ */
+private fun matchesGroupName(groupName: String, searchName: String): Boolean {
+    val normalizedGroupName = groupName.lowercase()
+    val normalizedSearchName = searchName.lowercase()
+
+    // Точное совпадение
+    if (normalizedGroupName == normalizedSearchName) return true
+
+    // Транслитерация обеих строк в латиницу и сравнение
+    // "тест" -> "test", "test" -> "test", "семья" -> "sem'a"
+    val translitGroupName = Junidecode.unidecode(normalizedGroupName).lowercase()
+    val translitSearchName = Junidecode.unidecode(normalizedSearchName).lowercase()
+
+    return translitGroupName == translitSearchName
+}
 
 // ========== Extension Properties ==========
 
@@ -23,6 +45,7 @@ private val log = LoggerFactory.getLogger("NlpDialogs")
 private val BotCommand.targetState: MoneyManagerState
     get() = when (this) {
         is BotCommand.CreateGroup -> MoneyManagerState.NLP_CONFIRM_CREATE_GROUP
+        is BotCommand.DeleteGroup -> MoneyManagerState.NLP_CONFIRM_DELETE_GROUP
         is BotCommand.OutOfContext,
         is BotCommand.AddExpense,
         is BotCommand.AddIncome,
@@ -56,6 +79,7 @@ private fun processNlpCommand(
 
     when (command) {
         is BotCommand.CreateGroup -> handleCreateGroupCommand(command, context)
+        is BotCommand.DeleteGroup -> handleDeleteGroupCommand(command, context)
         is BotCommand.OutOfContext -> handleOutOfContextCommand(context)
         is BotCommand.AddExpense -> handleAddExpenseCommand(command, context)
         is BotCommand.AddIncome -> handleAddIncomeCommand(command, context)
@@ -67,12 +91,19 @@ private fun clearNlpContext(context: MoneyManagerContext) {
     context.nlpResponse = null
     context.nlpGroupName = null
     context.nlpTargetState = null
+    context.nlpGroupToDelete = null
 }
 
 private fun handleCreateGroupCommand(command: BotCommand.CreateGroup, context: MoneyManagerContext) {
     context.nlpGroupName = command.groupName
     context.nlpTargetState = MoneyManagerState.NLP_CONFIRM_CREATE_GROUP
     log.info("✅ NLP parsed: CreateGroup(${command.groupName})")
+}
+
+private fun handleDeleteGroupCommand(command: BotCommand.DeleteGroup, context: MoneyManagerContext) {
+    context.nlpGroupName = command.groupName
+    context.nlpTargetState = MoneyManagerState.NLP_CONFIRM_DELETE_GROUP
+    log.info("✅ NLP parsed: DeleteGroup(${command.groupName})")
 }
 
 private fun handleOutOfContextCommand(context: MoneyManagerContext) {
@@ -254,7 +285,11 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.nlpDialogTransitions(
 
     // NLP роутеры для всех комбинаций источников и целей
     val sourceStates = listOf(MoneyManagerState.MENU, MoneyManagerState.NLP_RESPONSE)
-    val targetStates = listOf(MoneyManagerState.NLP_CONFIRM_CREATE_GROUP, MoneyManagerState.NLP_RESPONSE)
+    val targetStates = listOf(
+        MoneyManagerState.NLP_CONFIRM_CREATE_GROUP,
+        MoneyManagerState.NLP_CONFIRM_DELETE_GROUP,
+        MoneyManagerState.NLP_RESPONSE
+    )
 
     sourceStates.forEach { source ->
         targetStates.forEach { target ->
@@ -312,6 +347,85 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.nlpDialogTransitions(
 
         condition {
             from = MoneyManagerState.NLP_CONFIRM_CREATE_GROUP
+            button = MoneyManagerButtonType.CANCEL
+        }
+
+        action {
+            context.nlpGroupName = null
+        }
+
+        then {
+            to = MoneyManagerState.MENU
+        }
+    }
+
+    // Подтверждение удаления группы через NLP
+    transition {
+        name = "Confirm NLP delete group"
+
+        condition {
+            from = MoneyManagerState.NLP_CONFIRM_DELETE_GROUP
+            button = MoneyManagerButtonType.CONFIRM_NLP_ACTION
+        }
+
+        action {
+            val groupName = context.nlpGroupName ?: return@action
+            val userId = user.id
+            val userInfo = context.userInfo ?: return@action
+
+            // Находим группу по имени среди групп пользователя (с учетом транслитерации)
+            val group = groupService.getUserGroups(userId).find {
+                matchesGroupName(it.name, groupName)
+            }
+
+            if (group == null) {
+                context.nlpResponse = "❌ Группа \"$groupName\" не найдена среди ваших групп."
+                context.nlpGroupName = null
+                log.info("❌ Group not found for deletion: $groupName")
+                return@action
+            }
+
+            // Проверяем, является ли пользователь владельцем
+            if (group.ownerId != userId) {
+                context.nlpResponse = "❌ Только владелец может удалить группу \"${group.name}\"."
+                context.nlpGroupName = null
+                log.info("❌ User ${userId} is not owner of group ${group.name}")
+                return@action
+            }
+
+            // Проверяем наличие ID группы
+            val groupId = group.id ?: run {
+                context.nlpResponse = "❌ Ошибка: группа не имеет ID."
+                context.nlpGroupName = null
+                log.info("❌ Group has no ID: ${group.name}")
+                return@action
+            }
+
+            // Удаляем группу
+            val deleted = groupService.deleteGroup(userId, groupId)
+            context.userInfo = userInfoService.getUserInfo(user)
+            context.nlpGroupName = null
+
+            if (deleted) {
+                context.nlpResponse = "✅ Группа \"${group.name}\" успешно удалена."
+                log.info("✅ Group deleted via NLP: ${group.name}")
+            } else {
+                context.nlpResponse = "❌ Не удалось удалить группу \"${group.name}\"."
+                log.info("❌ Failed to delete group: ${group.name}")
+            }
+        }
+
+        then {
+            to = MoneyManagerState.NLP_RESPONSE
+        }
+    }
+
+    // Отмена удаления группы через NLP
+    transition {
+        name = "Cancel NLP delete group"
+
+        condition {
+            from = MoneyManagerState.NLP_CONFIRM_DELETE_GROUP
             button = MoneyManagerButtonType.CANCEL
         }
 

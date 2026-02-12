@@ -6,6 +6,7 @@ import ai.moneymanager.domain.model.nlp.BotFunctions
 import ai.moneymanager.domain.model.nlp.arguments.AddExpenseArgs
 import ai.moneymanager.domain.model.nlp.arguments.AddIncomeArgs
 import ai.moneymanager.domain.model.nlp.arguments.CreateGroupArgs
+import ai.moneymanager.domain.model.nlp.arguments.DeleteGroupArgs
 import ai.moneymanager.domain.model.nlp.enum.GeminiFunction
 import ai.moneymanager.mapper.GeminiArgsMapper
 import com.google.genai.Client
@@ -39,6 +40,7 @@ class CommandParserService(
 
         // Получаем методы из BotFunctions для function calling
         val createGroupMethod = BotFunctions::class.java.getMethod("createGroup", String::class.java)
+        val deleteGroupMethod = BotFunctions::class.java.getMethod("deleteGroup", String::class.java)
         val addExpenseMethod = BotFunctions::class.java.getMethod("addExpense", Double::class.java, String::class.java, String::class.java)
         val addIncomeMethod = BotFunctions::class.java.getMethod("addIncome", Double::class.java, String::class.java, String::class.java)
         val outOfContextMethod = BotFunctions::class.java.getMethod("outOfContext", String::class.java)
@@ -48,7 +50,7 @@ class CommandParserService(
         config = GenerateContentConfig.builder()
             .tools(
                 Tool.builder()
-                    .functions(createGroupMethod, addExpenseMethod, addIncomeMethod, outOfContextMethod)
+                    .functions(createGroupMethod, deleteGroupMethod, addExpenseMethod, addIncomeMethod, outOfContextMethod)
                     .build()
             )
             .systemInstruction(systemContent)
@@ -145,6 +147,12 @@ class CommandParserService(
                     BotCommand.CreateGroup(dto.groupName)
                 }
 
+                GeminiFunction.DELETE_GROUP -> {
+                    val dto = argsMapper.map<DeleteGroupArgs>(args)
+                    if (dto.groupName.isBlank()) return BotCommand.ParseError("groupName is blank")
+                    BotCommand.DeleteGroup(dto.groupName)
+                }
+
                 GeminiFunction.ADD_EXPENSE -> {
                     val dto = argsMapper.map<AddExpenseArgs>(args)
                     BotCommand.AddExpense(dto.amount, dto.category, dto.description)
@@ -175,10 +183,11 @@ class CommandParserService(
         private val SYSTEM_PROMPT = """
             Ты — ассистент Telegram бота для учета финансов. Твоя задача — понять намерение пользователя и вызвать соответствующую функцию.
             
-            Примеры сообщений:                                                                                                                                             
-            - создать группу для совместного учета. Примеры: "создай группу друзья", "новая группа семья" → createGroup                                                                                                                         
-            - добавить расход. Примеры: "купил кофе 500", "потратил 1000 на такси" → addExpense (amount=500, category="Кофе")                                                                                                  
-            - добавить доход. Примеры: "получил зарплату 500000", "подарили 10000" → addIncome                                                                                                                        
+            Примеры сообщений:
+            - создать группу для совместного учета. Примеры: "создай группу друзья", "новая группа семья" → createGroup
+            - удалить группу. Примеры: "удали группу друзья", "убери группу семья" → deleteGroup
+            - добавить расход. Примеры: "купил кофе 500", "потратил 1000 на такси" → addExpense (amount=500, category="Кофе")
+            - добавить доход. Примеры: "получил зарплату 500000", "подарили 10000" → addIncome
             - если сообщение НЕ относится к финансам или управлению группами → outOfContext 
 
             ВАЖНО:

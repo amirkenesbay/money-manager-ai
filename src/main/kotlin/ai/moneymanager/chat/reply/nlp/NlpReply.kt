@@ -36,6 +36,38 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.nlpConfirmCreateGroup
     }
 }
 
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.nlpConfirmDeleteGroupReply() {
+    reply {
+        state = MoneyManagerState.NLP_CONFIRM_DELETE_GROUP
+
+        message {
+            newMessage = true
+
+            text = """
+                |⚠️ Удаление группы
+                |
+                |📝 Группа: ${context.nlpGroupName}
+                |
+                |Вы уверены, что хотите удалить эту группу?
+                |Все данные группы будут удалены безвозвратно.
+            """.trimMargin()
+
+            keyboard {
+                buttonRow {
+                    button {
+                        text = "🗑️ Удалить"
+                        type = MoneyManagerButtonType.CONFIRM_NLP_ACTION
+                    }
+                    button {
+                        text = "❌ Отмена"
+                        type = MoneyManagerButtonType.CANCEL
+                    }
+                }
+            }
+        }
+    }
+}
+
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.nlpResponseReply() {
     reply {
         state = MoneyManagerState.NLP_RESPONSE

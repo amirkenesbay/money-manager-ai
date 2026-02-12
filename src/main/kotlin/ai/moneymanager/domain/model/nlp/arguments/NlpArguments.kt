@@ -16,6 +16,10 @@ data class AddIncomeArgs(
     val description: String? = null
 )
 
+data class DeleteGroupArgs(
+    val groupName: String
+)
+
 data class OutOfContextArgs(
     val originalMessage: String
 )

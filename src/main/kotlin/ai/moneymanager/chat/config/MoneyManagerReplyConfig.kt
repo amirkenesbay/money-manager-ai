@@ -4,6 +4,7 @@ import ai.moneymanager.chat.reply.category.*
 import ai.moneymanager.chat.reply.group.*
 import ai.moneymanager.chat.reply.money.menuReply
 import ai.moneymanager.chat.reply.nlp.nlpConfirmCreateGroupReply
+import ai.moneymanager.chat.reply.nlp.nlpConfirmDeleteGroupReply
 import ai.moneymanager.chat.reply.nlp.nlpResponseReply
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
@@ -48,6 +49,7 @@ class MoneyManagerReplyConfig {
 
             // NLP replies
             nlpConfirmCreateGroupReply()
+            nlpConfirmDeleteGroupReply()
             nlpResponseReply()
         }
     }

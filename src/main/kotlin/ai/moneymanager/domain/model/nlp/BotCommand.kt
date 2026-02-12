@@ -13,6 +13,13 @@ sealed class BotCommand {
     ) : BotCommand()
 
     /**
+     * Команда удаления группы
+     */
+    data class DeleteGroup(
+        val groupName: String
+    ) : BotCommand()
+
+    /**
      * Команда добавления расхода
      */
     data class AddExpense(

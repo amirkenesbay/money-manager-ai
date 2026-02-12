@@ -52,6 +52,9 @@ dependencies {
     // Jackson Kotlin module for data class deserialization
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 
+    // Transliteration library
+    implementation("com.github.sps.junidecode:junidecode:0.3")
+
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
