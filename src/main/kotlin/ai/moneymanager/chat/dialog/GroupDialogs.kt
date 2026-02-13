@@ -3,13 +3,14 @@ package ai.moneymanager.chat.dialog
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
+import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.GroupService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType
 
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.groupDialogTransitions(
     groupService: GroupService,
-    categoryService: ai.moneymanager.service.CategoryService
+    categoryService: CategoryService,
 ) {
     // Открыть меню управления группами
     openGroupManagementTransition()
@@ -534,7 +535,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.editGroupTrans
  */
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.deleteGroupTransitions(
     groupService: GroupService,
-    categoryService: ai.moneymanager.service.CategoryService
+    categoryService: CategoryService
 ) {
     // Открыть выбор группы для удаления
     transition {
