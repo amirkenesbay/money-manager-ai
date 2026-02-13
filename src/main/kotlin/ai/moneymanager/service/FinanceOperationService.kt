@@ -1,6 +1,7 @@
 package ai.moneymanager.service
 
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.FinanceOperation
 import ai.moneymanager.domain.model.financeOperation.OperationType
 import ai.moneymanager.dto.CreateFinanceOperationRequestDto
 import ai.moneymanager.dto.HistoryFinanceOperationDto
@@ -41,9 +42,7 @@ class FinanceOperationService(
 
         if (!userInfoRepository.existsByTelegramUserId(createDto.telegramUserId)) throw IllegalStateException("User not found")
 
-        if (!moneyGroupRepository.existsById(createDto.groupId)) throw IllegalStateException("Group not found")
-
-        checkingAccessToTheGroup(createDto.groupId, createDto.telegramUserId)
+        checkAccessToTheGroup(createDto.groupId, createDto.telegramUserId)
 
         createDto.categoryId?.let { categoryId ->
             val category = categoryRepository.findById(categoryId)
@@ -59,8 +58,7 @@ class FinanceOperationService(
             if (operationType != createDto.operationType) throw IllegalStateException("Incorrect category type")
         }
 
-        val entity = FinanceOperationEntity(
-            id = null,
+        val financeOperation = FinanceOperation.create(
             telegramUserId = createDto.telegramUserId,
             groupId = createDto.groupId,
             categoryId = createDto.categoryId,
@@ -68,12 +66,14 @@ class FinanceOperationService(
             amount = createDto.amount,
             operationType = createDto.operationType,
             currency = createDto.currency,
-            description = createDto.description?.trim()?.takeIf { it.isNotBlank() }
+            description = createDto.description
         )
 
-        log.info("The financial transaction has been successfully created: {}", entity)
+        val financeOperationEntity = FinanceOperationEntity.from(financeOperation)
 
-        return financeOperationRepository.save(entity)
+        log.info("The financial transaction has been successfully created: {}", financeOperationEntity)
+
+        return financeOperationRepository.save(financeOperationEntity)
     }
 
     /**
@@ -82,7 +82,7 @@ class FinanceOperationService(
     fun getBalanceGroupFromGroupEntity(groupId: ObjectId, telegramUserId: Long): BigDecimal {
         log.info("Get balance for group: {}", groupId)
 
-        checkingAccessToTheGroup(groupId, telegramUserId)
+        checkAccessToTheGroup(groupId, telegramUserId)
 
         return financeOperationRepository.getBalanceByGroupIdFromGroupEntity(groupId) ?: BigDecimal.ZERO
     }
@@ -95,7 +95,7 @@ class FinanceOperationService(
 
         log.info("Get history finance operation by period: {} - {}", fromDate, toDate)
 
-        checkingAccessToTheGroup(groupId, telegramUserId)
+        checkAccessToTheGroup(groupId, telegramUserId)
 
         if (fromDate.isAfter(toDate)) throw IllegalStateException("fromDate must be <= toDate")
 
@@ -108,7 +108,7 @@ class FinanceOperationService(
     fun getAllHistoryFinanceOperationFromGroupEntity(groupId: ObjectId, telegramUserId: Long): List<HistoryFinanceOperationDto> {
         log.info("Get all history finance operation for group: {}", groupId)
 
-        checkingAccessToTheGroup(groupId, telegramUserId)
+        checkAccessToTheGroup(groupId, telegramUserId)
 
         return financeOperationRepository.getAllHistoryFinanceOperationFromGroupEntity(groupId)
     }
@@ -119,7 +119,7 @@ class FinanceOperationService(
     fun getIncomeOperationBalanceForAllTimeFromGroup(groupId: ObjectId, telegramUserId: Long): BigDecimal {
         log.info("Get income operation for group: {}", groupId)
 
-        checkingAccessToTheGroup(groupId, telegramUserId)
+        checkAccessToTheGroup(groupId, telegramUserId)
 
         return financeOperationRepository.getIncomeBalanceByGroupIdFromGroupEntity(groupId) ?: BigDecimal.ZERO
     }
@@ -130,7 +130,7 @@ class FinanceOperationService(
     fun getExpenseOperationBalanceForAllTimeFromGroupEntity(groupId: ObjectId, telegramUserId: Long): BigDecimal {
         log.info("Get expense operation for group: {}", groupId)
 
-        checkingAccessToTheGroup(groupId, telegramUserId)
+        checkAccessToTheGroup(groupId, telegramUserId)
 
         return financeOperationRepository.getExpenseBalanceByGroupIdFromGroupEntity(groupId) ?: BigDecimal.ZERO
     }
@@ -200,7 +200,7 @@ class FinanceOperationService(
     /**
      * Проверить, что пользователь является owner или member группы.
      */
-    private fun checkingAccessToTheGroup(groupId: ObjectId, telegramUserId: Long) {
+    private fun checkAccessToTheGroup(groupId: ObjectId, telegramUserId: Long) {
         if (!moneyGroupRepository.existsByIdAndOwnerOrMemberTelegramUserId(groupId, telegramUserId))
             throw IllegalStateException("User is not a member of the group")
     }
@@ -225,7 +225,7 @@ class FinanceOperationService(
      */
     private fun checkCategory(groupId: ObjectId, telegramUserId: Long, categoryId: ObjectId, categoryType: CategoryType? = null) {
 
-        checkingAccessToTheGroup(groupId, telegramUserId)
+        checkAccessToTheGroup(groupId, telegramUserId)
 
         val category = getCategoryOrThrow(categoryId)
 

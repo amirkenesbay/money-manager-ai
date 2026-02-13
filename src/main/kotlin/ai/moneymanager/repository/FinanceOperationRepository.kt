@@ -49,7 +49,7 @@ interface FinanceOperationRepository : MongoRepository<FinanceOperationEntity, O
                     "'telegramUserId': 1, " +
                     "'amount': 1, " +
                     "'currency': 1, " +
-                    //"'day': 1, " +
+                    "'day': 1, " +
                     "'description': 1, " +
                     "'createdAt': '\$auditInfo.created_at' } }"
         ]
@@ -66,7 +66,7 @@ interface FinanceOperationRepository : MongoRepository<FinanceOperationEntity, O
                     "'telegramUserId': 1, " +
                     "'amount': 1, " +
                     "'currency': 1, " +
-                    //"'day': 1, " +
+                    "'day': 1, " +
                     "'description': 1, " +
                     "'createdAt': '\$auditInfo.created_at' } }"]
     )
@@ -113,7 +113,7 @@ interface FinanceOperationRepository : MongoRepository<FinanceOperationEntity, O
                     "'telegramUserId': 1, " +
                     "'amount': 1, " +
                     "'currency': 1, " +
-                    //"'day': 1, " +
+                    "'day': 1, " +
                     "'description': 1, " +
                     "'createdAt': '\$auditInfo.created_at' } }"
         ]
@@ -130,7 +130,7 @@ interface FinanceOperationRepository : MongoRepository<FinanceOperationEntity, O
                     "'telegramUserId': 1, " +
                     "'amount': 1, " +
                     "'currency': 1, " +
-                    //"'day': 1, " +
+                    "'day': 1, " +
                     "'description': 1, " +
                     "'createdAt': '\$auditInfo.created_at' } }"]
     )
