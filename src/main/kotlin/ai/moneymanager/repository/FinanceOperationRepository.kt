@@ -1,0 +1,142 @@
+package ai.moneymanager.repository
+
+import ai.moneymanager.dto.HistoryFinanceOperationDto
+import ai.moneymanager.repository.entity.FinanceOperationEntity
+import org.bson.types.ObjectId
+import org.springframework.data.mongodb.repository.Aggregation
+import org.springframework.data.mongodb.repository.MongoRepository
+import org.springframework.stereotype.Repository
+import java.math.BigDecimal
+import java.time.LocalDateTime
+
+@Repository
+interface FinanceOperationRepository : MongoRepository<FinanceOperationEntity, ObjectId> {
+
+    @Aggregation(
+        pipeline = [
+            "{ '\$match': { 'groupId': ?0, 'operationType': 'INCOME' } }",
+            "{ '\$group': { '_id': null, 'balance': { '\$sum': '\$amount' } } }",
+            "{ '\$project': { '_id': 0, 'balance': 1 } }"
+        ]
+    )
+    fun getIncomeBalanceByGroupIdFromGroupEntity(groupId: ObjectId): BigDecimal?
+
+    @Aggregation(
+        pipeline = [
+            "{ '\$match': { 'groupId': ?0, 'operationType': 'EXPENSE' } }",
+            "{ '\$group': { '_id': null, 'balance': { '\$sum': '\$amount' } } }",
+            "{ '\$project': { '_id': 0, 'balance': 1 } }"
+        ]
+    )
+    fun getExpenseBalanceByGroupIdFromGroupEntity(groupId: ObjectId): BigDecimal?
+
+    @Aggregation(
+        pipeline = [
+            "{ '\$match': { 'groupId': ?0 } }",
+            "{'\$group': {'_id': null,'balance': {'\$sum': {'\$cond': [ { '\$eq': [ '\$operationType', 'INCOME' ] }," +
+                    "'\$amount', { '\$multiply': [ '\$amount', -1 ] }] } } }}",
+            "{ '\$project': { '_id': 0, 'balance': 1 } }"
+        ]
+    )
+    fun getBalanceByGroupIdFromGroupEntity(groupId: ObjectId): BigDecimal?
+
+    @Aggregation(
+        pipeline = [
+            "{ '\$match': { 'groupId': ?0 } }",
+            "{ '\$sort': { 'auditInfo.created_at': 1 } }",
+            "{ '\$project': { " +
+                    "'_id': 0, " +
+                    "'telegramUserId': 1, " +
+                    "'amount': 1, " +
+                    "'currency': 1, " +
+                    "'day': 1, " +
+                    "'description': 1, " +
+                    "'createdAt': '\$auditInfo.created_at' } }"
+        ]
+    )
+    fun getAllHistoryFinanceOperationFromGroupEntity(groupId: ObjectId): List<HistoryFinanceOperationDto>
+
+    @Aggregation(
+        pipeline = [
+            "{ '\$match': { " +
+                    "'groupId': ?0,'auditInfo.created_at': { '\$gte': ?1, '\$lte': ?2 } } }",
+            "{ '\$sort': { 'auditInfo.created_at': 1 } }",
+            "{ '\$project': { " +
+                    "'_id': 0, " +
+                    "'telegramUserId': 1, " +
+                    "'amount': 1, " +
+                    "'currency': 1, " +
+                    "'day': 1, " +
+                    "'description': 1, " +
+                    "'createdAt': '\$auditInfo.created_at' } }"]
+    )
+    fun getHistoryFinanceOperationByPeriodFromGroupEntity(
+        groupId: ObjectId,
+        from: LocalDateTime,
+        to: LocalDateTime
+    ): List<HistoryFinanceOperationDto>
+
+    @Aggregation(
+        pipeline = [
+            "{ '\$match': { 'categoryId': ?0, 'operationType': 'INCOME' } }",
+            "{ '\$group': { '_id': null, 'balance': { '\$sum': '\$amount' } } }",
+            "{ '\$project': { '_id': 0, 'balance': 1 } }"
+        ]
+    )
+    fun getIncomeBalanceByCategoryIdFromCategoryEntity(categoryId: ObjectId): BigDecimal?
+
+    @Aggregation(
+        pipeline = [
+            "{ '\$match': { 'categoryId': ?0, 'operationType': 'EXPENSE' } }",
+            "{ '\$group': { '_id': null, 'balance': { '\$sum': '\$amount' } } }",
+            "{ '\$project': { '_id': 0, 'balance': 1 } }"
+        ]
+    )
+    fun getExpenseBalanceByCategoryIdFromCategoryEntity(categoryId: ObjectId): BigDecimal?
+
+    @Aggregation(
+        pipeline = [
+            "{ '\$match': { 'categoryId': ?0 } }",
+            "{'\$group': {'_id': null,'balance': {'\$sum': {'\$cond': [ { '\$eq': [ '\$operationType', 'INCOME' ] }," +
+                    "'\$amount', { '\$multiply': [ '\$amount', -1 ] }] } } }}",
+            "{ '\$project': { '_id': 0, 'balance': 1 } }"
+        ]
+    )
+    fun getBalanceByCategoryIdFromCategoryEntity(categoryId: ObjectId): BigDecimal?
+
+    @Aggregation(
+        pipeline = [
+            "{ '\$match': { 'categoryId': ?0 } }",
+            "{ '\$sort': { 'auditInfo.created_at': 1 } }",
+            "{ '\$project': { " +
+                    "'_id': 0, " +
+                    "'telegramUserId': 1, " +
+                    "'amount': 1, " +
+                    "'currency': 1, " +
+                    "'day': 1, " +
+                    "'description': 1, " +
+                    "'createdAt': '\$auditInfo.created_at' } }"
+        ]
+    )
+    fun getAllHistoryFinanceOperationFromCategoryEntity(categoryId: ObjectId): List<HistoryFinanceOperationDto>
+
+    @Aggregation(
+        pipeline = [
+            "{ '\$match': { " +
+                    "'categoryId': ?0,'auditInfo.created_at': { '\$gte': ?1, '\$lte': ?2 } } }",
+            "{ '\$sort': { 'auditInfo.created_at': 1 } }",
+            "{ '\$project': { " +
+                    "'_id': 0, " +
+                    "'telegramUserId': 1, " +
+                    "'amount': 1, " +
+                    "'currency': 1, " +
+                    "'day': 1, " +
+                    "'description': 1, " +
+                    "'createdAt': '\$auditInfo.created_at' } }"]
+    )
+    fun getHistoryFinanceOperationByPeriodFromCategoryEntity(
+        categoryId: ObjectId,
+        from: LocalDateTime,
+        to: LocalDateTime
+    ): List<HistoryFinanceOperationDto>
+}

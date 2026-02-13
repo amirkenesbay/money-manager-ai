@@ -9,8 +9,8 @@ data class MoneyGroup(
     val id: ObjectId? = null,
     val name: String,
     val inviteToken: String,
-    val ownerId: Long,
-    val memberIds: Set<Long>,
+    val ownerTelegramUserId: Long,
+    val memberTelegramUserIds: Set<Long>,
     val type: GroupType
 )
 

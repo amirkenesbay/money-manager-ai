@@ -24,8 +24,8 @@ class GroupService(
         val groupEntity = MoneyGroupEntity(
             name = name,
             inviteToken = inviteToken,
-            ownerId = ownerId,
-            memberIds = setOf(ownerId),
+            ownerTelegramUserId = ownerId,
+            memberTelegramUserIds = setOf(ownerId),
             type = GroupType.SHARED
         )
 
@@ -57,8 +57,8 @@ class GroupService(
         val groupEntity = MoneyGroupEntity(
             name = "Личный учет",
             inviteToken = generateInviteToken(), // Не используется для личных групп
-            ownerId = userId,
-            memberIds = setOf(userId),
+            ownerTelegramUserId = userId,
+            memberTelegramUserIds = setOf(userId),
             type = GroupType.PERSONAL
         )
 
@@ -89,13 +89,13 @@ class GroupService(
         val groupEntity = groupRepository.findByInviteToken(inviteToken) ?: return null
 
         // Проверяем, не состоит ли пользователь уже в группе
-        if (groupEntity.memberIds.contains(userId)) {
+        if (groupEntity.memberTelegramUserIds.contains(userId)) {
             return mapToModel(groupEntity)
         }
 
         // Добавляем пользователя в группу
         val updatedGroup = groupEntity.copy(
-            memberIds = groupEntity.memberIds + userId
+            memberTelegramUserIds = groupEntity.memberTelegramUserIds + userId
         )
         val savedGroup = groupRepository.save(updatedGroup)
 
@@ -132,7 +132,7 @@ class GroupService(
      * Получить все группы пользователя
      */
     fun getUserGroups(userId: Long): List<MoneyGroup> {
-        return groupRepository.findByMemberIdsContaining(userId)
+        return groupRepository.findByMemberTelegramUserIdsContaining(userId)
             .map { mapToModel(it) }
     }
 
@@ -163,7 +163,7 @@ class GroupService(
         val groupEntity = groupRepository.findById(groupId).orElse(null) ?: return null
 
         // Проверяем, является ли пользователь владельцем
-        if (groupEntity.ownerId != userId) {
+        if (groupEntity.ownerTelegramUserId != userId) {
             return null
         }
 
@@ -181,7 +181,7 @@ class GroupService(
         val groupEntity = groupRepository.findById(groupId).orElse(null) ?: return false
 
         // Проверяем, является ли пользователь владельцем
-        if (groupEntity.ownerId != userId) {
+        if (groupEntity.ownerTelegramUserId != userId) {
             return false
         }
 
@@ -193,7 +193,7 @@ class GroupService(
         groupRepository.delete(groupEntity)
 
         // Удаляем группу из всех пользователей
-        groupEntity.memberIds.forEach { memberId ->
+        groupEntity.memberTelegramUserIds.forEach { memberId ->
             val memberEntity = userRepository.findUserInfoEntityByTelegramUserId(memberId)
             if (memberEntity != null) {
                 val updatedGroupIds = memberEntity.groupIds - groupId
@@ -234,8 +234,8 @@ class GroupService(
             id = entity.id,
             name = entity.name,
             inviteToken = entity.inviteToken,
-            ownerId = entity.ownerId,
-            memberIds = entity.memberIds,
+            ownerTelegramUserId = entity.ownerTelegramUserId,
+            memberTelegramUserIds = entity.memberTelegramUserIds,
             type = entity.type
         )
     }

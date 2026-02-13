@@ -38,6 +38,11 @@ enum class MoneyManagerState {
     CATEGORY_EDIT_NAME,
     CATEGORY_DELETE_CONFIRM,
     CATEGORY_DELETE_ALL_CONFIRM,
+
+    // -------- FINANCE OPERATION --------
+    FINANCE_OPERATION_EXPENSE_OR_INCOME,
+    FINANCE_OPERATION_CREATE_EXPENSE,
+    FINANCE_OPERATION_CREATE_INCOME,
 }
 
 enum class MoneyManagerButtonType {
@@ -61,6 +66,7 @@ enum class MoneyManagerButtonType {
     QUICK_GROUP_WITH_FRIEND,
     QUICK_GROUP_WORK,
     QUICK_GROUP_TRIP,
+    QUICK_GROUP_YOU_OWN_NAME,
 
     // Categories
     CATEGORIES,
@@ -81,6 +87,11 @@ enum class MoneyManagerButtonType {
 
     // NLP
     CONFIRM_NLP_ACTION,
+
+    // FINANCE OPERATION
+    FINANCE_OPERATION_EXPENSE_OR_INCOME,
+    FINANCE_OPERATION_CREATE_EXPENSE,
+    FINANCE_OPERATION_CREATE_INCOME
 }
 
 class MoneyManagerContext {

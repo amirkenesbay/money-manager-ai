@@ -9,4 +9,5 @@ import org.springframework.stereotype.Repository
 interface UserInfoRepository : MongoRepository<UserInfoEntity, ObjectId> {
     fun findUserInfoEntityByUsername(username: String): UserInfoEntity?
     fun findUserInfoEntityByTelegramUserId(id: Long): UserInfoEntity?
+    fun existsByTelegramUserId(id: Long): Boolean
 }
