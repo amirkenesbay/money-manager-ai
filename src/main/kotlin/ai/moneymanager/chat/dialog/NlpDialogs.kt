@@ -3,6 +3,7 @@ package ai.moneymanager.chat.dialog
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
+import ai.moneymanager.service.GeminiService
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.UserInfoService
 import ai.moneymanager.domain.model.nlp.BotCommand
@@ -54,10 +55,19 @@ private val BotCommand.targetState: MoneyManagerState
 
 // ========== Constants ==========
 
-private const val OUT_OF_CONTEXT_MESSAGE = """Я бот для учета финансов. Могу помочь:
+private const val OUT_OF_CONTEXT_FALLBACK = """Я бот для учета финансов. Могу помочь:
 • Создать группу ("создай группу друзья")
 • Добавить расход ("кофе 500")
 • Добавить доход ("зарплата 500000")"""
+
+private const val WHAT_TO_ASK_MESSAGE = """💡 Вот что можно написать:
+
+💸 Расходы: «кофе 500», «такси 1200», «продукты 3500»
+💰 Доходы: «зарплата 250 000», «подарок 10 000»
+👥 Группы: «создай группу Семья», «удали группу Работа»
+🤔 Вопросы: «как сэкономить?», «что такое бюджет?»
+
+Просто напиши — отвечу!"""
 
 private const val VOICE_TOO_LONG_MESSAGE = "⚠️ Голосовое сообщение слишком длинное (%dс). Максимум 3 минуты."
 private const val VOICE_DOWNLOAD_ERROR_MESSAGE = "❌ Не удалось загрузить голосовое сообщение. Попробуйте еще раз."
@@ -72,7 +82,8 @@ private const val MAX_VOICE_DURATION_SECONDS = 180
  */
 private fun processNlpCommand(
     command: BotCommand,
-    context: MoneyManagerContext
+    context: MoneyManagerContext,
+    geminiService: GeminiService
 ) {
     clearNlpContext(context)
     context.parsedCommand = command
@@ -80,7 +91,7 @@ private fun processNlpCommand(
     when (command) {
         is BotCommand.CreateGroup -> handleCreateGroupCommand(command, context)
         is BotCommand.DeleteGroup -> handleDeleteGroupCommand(command, context)
-        is BotCommand.OutOfContext -> handleOutOfContextCommand(context)
+        is BotCommand.OutOfContext -> handleOutOfContextCommand(command, context, geminiService)
         is BotCommand.AddExpense -> handleAddExpenseCommand(command, context)
         is BotCommand.AddIncome -> handleAddIncomeCommand(command, context)
         is BotCommand.ParseError -> handleParseErrorCommand(command, context)
@@ -89,6 +100,7 @@ private fun processNlpCommand(
 
 private fun clearNlpContext(context: MoneyManagerContext) {
     context.nlpResponse = null
+    context.nlpNewMessage = true
     context.nlpGroupName = null
     context.nlpTargetState = null
     context.nlpGroupToDelete = null
@@ -106,10 +118,19 @@ private fun handleDeleteGroupCommand(command: BotCommand.DeleteGroup, context: M
     log.info("✅ NLP parsed: DeleteGroup(${command.groupName})")
 }
 
-private fun handleOutOfContextCommand(context: MoneyManagerContext) {
-    context.nlpResponse = OUT_OF_CONTEXT_MESSAGE
+private fun handleOutOfContextCommand(
+    command: BotCommand.OutOfContext,
+    context: MoneyManagerContext,
+    geminiService: GeminiService
+) {
+    val prompt = """Ты — дружелюбный ассистент Telegram-бота по учёту финансов.
+Пользователь написал: "${command.originalMessage}"
+Ответь кратко и по-дружески. Если вопрос не по финансам — мягко объясни, что можешь помочь с учётом расходов, доходов и групп.
+Используй эмодзи. Максимум 3-4 предложения. Не используй markdown."""
+    val response = geminiService.generateText(prompt)
+    context.nlpResponse = response ?: OUT_OF_CONTEXT_FALLBACK
     context.nlpTargetState = MoneyManagerState.NLP_RESPONSE
-    log.info("⚠️ NLP: Out of context message")
+    log.info("⚠️ NLP: Out of context, dynamic=${response != null}")
 }
 
 private fun handleAddExpenseCommand(command: BotCommand.AddExpense, context: MoneyManagerContext) {
@@ -142,11 +163,12 @@ private fun handleParseErrorCommand(command: BotCommand.ParseError, context: Mon
 private fun processTextMessage(
     userMessage: String,
     context: MoneyManagerContext,
-    commandParserService: CommandParserService
+    commandParserService: CommandParserService,
+    geminiService: GeminiService
 ) {
     log.info("🧠 Processing NLP: $userMessage")
     val command = commandParserService.parseCommand(userMessage)
-    processNlpCommand(command, context)
+    processNlpCommand(command, context, geminiService)
 }
 
 /**
@@ -156,7 +178,8 @@ private fun processVoiceMessage(
     voice: Voice,
     context: MoneyManagerContext,
     commandParserService: CommandParserService,
-    telegramFileService: TelegramFileService
+    telegramFileService: TelegramFileService,
+    geminiService: GeminiService
 ): Boolean {
     log.info("🎤 Processing voice message: ${voice.duration}s")
 
@@ -171,7 +194,7 @@ private fun processVoiceMessage(
     }
 
     val command = commandParserService.parseVoiceCommand(audioBytes)
-    processNlpCommand(command, context)
+    processNlpCommand(command, context, geminiService)
     return true
 }
 
@@ -182,7 +205,8 @@ private fun processVoiceMessage(
  */
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createTextInputTransition(
     sourceState: MoneyManagerState,
-    commandParserService: CommandParserService
+    commandParserService: CommandParserService,
+    geminiService: GeminiService
 ) {
     transition {
         name = "Process text from ${sourceState.name}"
@@ -197,7 +221,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createTextInpu
 
         action {
             val userMessage = update.message?.text ?: return@action
-            processTextMessage(userMessage, context, commandParserService)
+            processTextMessage(userMessage, context, commandParserService, geminiService)
         }
 
         then {
@@ -214,7 +238,8 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createTextInpu
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createVoiceInputTransition(
     sourceState: MoneyManagerState,
     commandParserService: CommandParserService,
-    telegramFileService: TelegramFileService
+    telegramFileService: TelegramFileService,
+    geminiService: GeminiService
 ) {
     transition {
         name = "Process voice from ${sourceState.name}"
@@ -227,7 +252,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createVoiceInp
         action {
             val voice = update.message?.voice ?: return@action
             log.info("🎤 Processing voice from ${sourceState.name}: ${voice.duration}s")
-            processVoiceMessage(voice, context, commandParserService, telegramFileService)
+            processVoiceMessage(voice, context, commandParserService, telegramFileService, geminiService)
         }
 
         then {
@@ -275,12 +300,32 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.nlpDialogTransitions(
     commandParserService: CommandParserService,
     groupService: GroupService,
     userInfoService: UserInfoService,
-    telegramFileService: TelegramFileService
+    telegramFileService: TelegramFileService,
+    geminiService: GeminiService
 ) {
+    // Кнопка "Что спросить?" — показывает подсказки
+    transition {
+        name = "Show what to ask hints"
+
+        condition {
+            from = MoneyManagerState.MENU
+            button = MoneyManagerButtonType.WHAT_TO_ASK
+        }
+
+        action {
+            context.nlpResponse = WHAT_TO_ASK_MESSAGE
+            context.nlpNewMessage = false
+        }
+
+        then {
+            to = MoneyManagerState.NLP_RESPONSE
+        }
+    }
+
     // Input transitions (текст и голос из MENU и NLP_RESPONSE)
     listOf(MoneyManagerState.MENU, MoneyManagerState.NLP_RESPONSE).forEach { state ->
-        createTextInputTransition(state, commandParserService)
-        createVoiceInputTransition(state, commandParserService, telegramFileService)
+        createTextInputTransition(state, commandParserService, geminiService)
+        createVoiceInputTransition(state, commandParserService, telegramFileService, geminiService)
     }
 
     // NLP роутеры для всех комбинаций источников и целей

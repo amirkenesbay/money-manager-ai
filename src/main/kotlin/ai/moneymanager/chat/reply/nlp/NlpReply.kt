@@ -73,7 +73,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.nlpResponseReply() {
         state = MoneyManagerState.NLP_RESPONSE
 
         message {
-            newMessage = true
+            newMessage = context.nlpNewMessage
 
             text = """
                 |🤖 ${context.nlpResponse ?: ""}

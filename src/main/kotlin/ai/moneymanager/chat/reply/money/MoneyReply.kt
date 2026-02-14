@@ -11,10 +11,15 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.menuReply() {
 
         message {
             text = """
-                Салем, 👋🏼
-                Давай научимся грамотно управлять личными финансами! 💵
-                Выбери необходимые пункты ниже 👇🏼
-                """.trimIndent()
+                |Салем! 👋
+                |
+                |Я помогу управлять финансами. Просто напиши мне:
+                |• «кофе 500» — добавить расход
+                |• «зарплата 150 000» — добавить доход
+                |• «создай группу семья» — создать группу
+                |
+                |Или используй кнопки 👇
+            """.trimMargin()
 
             keyboard {
                 buttonRow {
@@ -27,6 +32,12 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.menuReply() {
                     button {
                         text = "📂 Категории"
                         type = MoneyManagerButtonType.CATEGORIES
+                    }
+                }
+                buttonRow {
+                    button {
+                        text = "💡 Что спросить?"
+                        type = MoneyManagerButtonType.WHAT_TO_ASK
                     }
                 }
             }

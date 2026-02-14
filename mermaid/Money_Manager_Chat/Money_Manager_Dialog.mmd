@@ -12,6 +12,7 @@ GROUP_JOIN_CONFIRM --o diamond2{GROUP_JOIN_CONFIRM branching}
 MENU --o diamond3{MENU branching}
    diamond3 ==>|"button SHARED_ACCOUNTING"| GROUP_MANAGEMENT
    diamond3 ==>|"button CATEGORIES"| CATEGORY_MANAGEMENT
+   diamond3 ==>|"button WHAT_TO_ASK"| NLP_RESPONSE
    diamond3 ==>|"text  guarded"| MENU
    diamond3 ==>|"voice"| MENU
    diamond3 ==>|"trigger guarded"| NLP_CONFIRM_CREATE_GROUP
@@ -84,16 +85,16 @@ CATEGORY_DELETE_CONFIRM --o diamond19{CATEGORY_DELETE_CONFIRM branching}
 CATEGORY_DELETE_ALL_CONFIRM --o diamond20{CATEGORY_DELETE_ALL_CONFIRM branching}
    diamond20 ==>|"button CONFIRM_DELETE"| CATEGORY_MANAGEMENT
    diamond20 ==>|"button CANCEL"| CATEGORY_MANAGEMENT
-NLP_CONFIRM_CREATE_GROUP --o diamond21{NLP_CONFIRM_CREATE_GROUP branching}
-   diamond21 ==>|"button CONFIRM_NLP_ACTION"| GROUP_INVITE_SHOW
-   diamond21 ==>|"button CANCEL"| MENU
-NLP_CONFIRM_DELETE_GROUP --o diamond22{NLP_CONFIRM_DELETE_GROUP branching}
-   diamond22 ==>|"button CONFIRM_NLP_ACTION"| NLP_RESPONSE
+NLP_RESPONSE --o diamond21{NLP_RESPONSE branching}
+   diamond21 ==>|"text  guarded"| MENU
+   diamond21 ==>|"voice"| MENU
+   diamond21 ==>|"trigger guarded"| NLP_CONFIRM_CREATE_GROUP
+   diamond21 ==>|"trigger guarded"| NLP_CONFIRM_DELETE_GROUP
+   diamond21 ==>|"trigger guarded"| NLP_RESPONSE
+   diamond21 ==>|"button BACK_TO_MENU"| MENU
+NLP_CONFIRM_CREATE_GROUP --o diamond22{NLP_CONFIRM_CREATE_GROUP branching}
+   diamond22 ==>|"button CONFIRM_NLP_ACTION"| GROUP_INVITE_SHOW
    diamond22 ==>|"button CANCEL"| MENU
-NLP_RESPONSE --o diamond23{NLP_RESPONSE branching}
-   diamond23 ==>|"text  guarded"| MENU
-   diamond23 ==>|"voice"| MENU
-   diamond23 ==>|"trigger guarded"| NLP_CONFIRM_CREATE_GROUP
-   diamond23 ==>|"trigger guarded"| NLP_CONFIRM_DELETE_GROUP
-   diamond23 ==>|"trigger guarded"| NLP_RESPONSE
-   diamond23 ==>|"button BACK_TO_MENU"| MENU
+NLP_CONFIRM_DELETE_GROUP --o diamond23{NLP_CONFIRM_DELETE_GROUP branching}
+   diamond23 ==>|"button CONFIRM_NLP_ACTION"| NLP_RESPONSE
+   diamond23 ==>|"button CANCEL"| MENU

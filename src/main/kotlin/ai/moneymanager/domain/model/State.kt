@@ -81,6 +81,9 @@ enum class MoneyManagerButtonType {
 
     // NLP
     CONFIRM_NLP_ACTION,
+
+    // AI hints
+    WHAT_TO_ASK,
 }
 
 class MoneyManagerContext {
@@ -108,6 +111,7 @@ class MoneyManagerContext {
     var nlpGroupName: String? = null
     var nlpGroupToDelete: MoneyGroup? = null
     var nlpResponse: String? = null
+    var nlpNewMessage: Boolean = true
     var nlpTargetState: MoneyManagerState? = null
     var parsedCommand: BotCommand? = null
 }

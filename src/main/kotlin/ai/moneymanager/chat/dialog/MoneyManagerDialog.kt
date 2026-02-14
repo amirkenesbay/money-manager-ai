@@ -4,6 +4,7 @@ import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.service.CategoryService
+import ai.moneymanager.service.GeminiService
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.TelegramFileService
 import ai.moneymanager.service.UserInfoService
@@ -17,7 +18,8 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
     groupService: GroupService,
     categoryService: CategoryService,
     commandParserService: CommandParserService,
-    telegramFileService: TelegramFileService
+    telegramFileService: TelegramFileService,
+    geminiService: GeminiService
 ) {
     dialog {
         name = "Money Manager Dialog"
@@ -26,7 +28,7 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
         joinGroupDialogTransitions(groupService, userInfoService)
         groupDialogTransitions(groupService, categoryService)
         categoryDialogTransitions(categoryService)
-        nlpDialogTransitions(commandParserService, groupService, userInfoService, telegramFileService)
+        nlpDialogTransitions(commandParserService, groupService, userInfoService, telegramFileService, geminiService)
     }
 }
 

@@ -4,6 +4,7 @@ import ai.moneymanager.chat.dialog.moneyManagerDialog
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.service.CategoryService
+import ai.moneymanager.service.GeminiService
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.TelegramFileService
 import ai.moneymanager.service.UserInfoService
@@ -23,7 +24,8 @@ class MoneyManagerChatConfig(
     private val groupService: GroupService,
     private val categoryService: CategoryService,
     private val commandParserService: CommandParserService,
-    private val telegramFileService: TelegramFileService
+    private val telegramFileService: TelegramFileService,
+    private val geminiService: GeminiService
 ) {
 
     @Bean
@@ -42,6 +44,6 @@ class MoneyManagerChatConfig(
                 }
             }
 
-            moneyManagerDialog(userInfoService, groupService, categoryService, commandParserService, telegramFileService)
+            moneyManagerDialog(userInfoService, groupService, categoryService, commandParserService, telegramFileService, geminiService)
         }
 }
