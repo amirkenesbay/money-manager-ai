@@ -1,8 +1,9 @@
 package ai.moneymanager.service
 
+import ai.moneymanager.domain.model.FinanceOperation
 import ai.moneymanager.dto.CreateFinanceOperationRequestDto
 import ai.moneymanager.dto.HistoryFinanceOperationDto
-import ai.moneymanager.repository.entity.FinanceOperationEntity
+import ai.moneymanager.dto.UpdateFinanceOperationRequestDto
 import org.bson.types.ObjectId
 import java.math.BigDecimal
 import java.time.LocalDateTime
@@ -11,7 +12,7 @@ interface FinanceOperationService {
     /**
      * Создать финансовую операцию
      */
-    fun create(createDto: CreateFinanceOperationRequestDto): FinanceOperationEntity
+    fun create(createDto: CreateFinanceOperationRequestDto): FinanceOperation
 
     /**
      * Получить полную сумму всей группы
@@ -64,4 +65,14 @@ interface FinanceOperationService {
      * Получить всю историю финансовых операций категории
      */
     fun getAllHistoryFinanceOperationFromCategoryEntity(groupId: ObjectId, telegramUserId: Long, categoryId: ObjectId): List<HistoryFinanceOperationDto>
+
+    /**
+     * Изменить запись
+     */
+    fun updateFinanceOperation(id: ObjectId, updateDto: UpdateFinanceOperationRequestDto): FinanceOperation
+
+    /**
+     * Удалить запись
+     */
+    fun deleteFinanceOperation(id: ObjectId, telegramUserId: Long)
 }

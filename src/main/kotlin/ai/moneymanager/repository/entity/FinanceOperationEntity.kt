@@ -1,6 +1,5 @@
 package ai.moneymanager.repository.entity
 
-import ai.moneymanager.domain.model.FinanceOperation
 import ai.moneymanager.domain.model.financeOperation.CurrencyType
 import ai.moneymanager.domain.model.financeOperation.DayType
 import ai.moneymanager.domain.model.financeOperation.OperationType
@@ -24,7 +23,7 @@ data class FinanceOperationEntity(
     val telegramUserId: Long,
 
     @Indexed
-    val groupId: ObjectId? = null,
+    val groupId: ObjectId,
 
     @Indexed
     val categoryId: ObjectId? = null,
@@ -35,18 +34,4 @@ data class FinanceOperationEntity(
     val currency: CurrencyType,
     val description: String? = null,
     val auditInfo: AuditInfo = AuditInfo()
-) {
-    companion object {
-        fun from(financeOperation: FinanceOperation) = FinanceOperationEntity(
-            id = financeOperation.id,
-            telegramUserId = financeOperation.telegramUserId,
-            groupId = financeOperation.groupId,
-            categoryId = financeOperation.categoryId,
-            day = financeOperation.day,
-            amount = financeOperation.amount,
-            operationType = financeOperation.operationType,
-            currency = financeOperation.currency,
-            description = financeOperation.description
-        )
-    }
-}
+)

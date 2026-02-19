@@ -9,7 +9,7 @@ import java.math.BigDecimal
 data class FinanceOperation(
     val id: ObjectId? = null,
     val telegramUserId: Long,
-    val groupId: ObjectId? = null,
+    val groupId: ObjectId,
     val categoryId: ObjectId? = null,
     val day: DayType,
     val amount: BigDecimal,
@@ -24,17 +24,14 @@ data class FinanceOperation(
     }
 
     companion object {
-        fun create(
-            telegramUserId: Long,
-            groupId: ObjectId? = null,
+        fun create(telegramUserId: Long,
+            groupId: ObjectId,
             categoryId: ObjectId?,
             day: DayType,
             amount: BigDecimal,
             operationType: OperationType,
             currency: CurrencyType,
-            description: String?
-        ): FinanceOperation =
-            FinanceOperation(
+            description: String?): FinanceOperation = FinanceOperation(
                 telegramUserId = telegramUserId,
                 groupId = groupId,
                 categoryId = categoryId,
@@ -44,5 +41,22 @@ data class FinanceOperation(
                 currency = currency,
                 description = description?.trim()?.takeIf { it.isNotBlank() }
             )
+        fun update(telegramUserId: Long,
+                   groupId: ObjectId,
+                   categoryId: ObjectId,
+                   day: DayType,
+                   amount: BigDecimal,
+                   operationType: OperationType,
+                   currency: CurrencyType,
+                   description: String?): FinanceOperation = FinanceOperation(
+            telegramUserId = telegramUserId,
+            groupId = groupId,
+            categoryId = categoryId,
+            day = day,
+            amount = amount,
+            operationType = operationType,
+            currency = currency,
+            description = description?.trim()?.takeIf { it.isNotBlank() }
+        )
     }
 }
