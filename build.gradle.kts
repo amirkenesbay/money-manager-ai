@@ -55,6 +55,9 @@ dependencies {
     // Transliteration library
     implementation("com.github.sps.junidecode:junidecode:0.3")
 
+    // Test
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }

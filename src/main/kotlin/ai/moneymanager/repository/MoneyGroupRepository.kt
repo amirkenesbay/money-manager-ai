@@ -14,5 +14,8 @@ interface MoneyGroupRepository : MongoRepository<MoneyGroupEntity, ObjectId> {
     fun findByOwnerIdAndName(ownerId: Long, name: String): MoneyGroupEntity?
 
     @Query("{ '_id': ?0, '\$or': [ { 'ownerTelegramUserId': ?1 }, { 'memberTelegramUserIds': ?1 } ] }", exists = true)
-    fun existsByIdAndOwnerOrMemberTelegramUserId(groupId: ObjectId, telegramUserId: Long): Boolean
+    fun existsByIdAndOwnerOrMemberTelegramUserId(groupId: ObjectId?, telegramUserId: Long): Boolean
+
+    @Query(value = "{ '_id': ?0, 'ownerTelegramUserId': ?1 }", exists = true)
+    fun existsByIdAndOwnerTelegramUserId(groupId: ObjectId, telegramUserId: Long): Boolean
 }
