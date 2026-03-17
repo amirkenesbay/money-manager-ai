@@ -8,19 +8,23 @@ import ai.moneymanager.repository.entity.MoneyGroupEntity
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.GroupService
 import org.bson.types.ObjectId
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.security.SecureRandom
 
 @Service
 class GroupServiceImpl(
     private val groupRepository: MoneyGroupRepository,
     private val userRepository: UserInfoRepository,
-    private val categoryService: CategoryService
-): GroupService {
+    private val categoryService: CategoryService,
+) : GroupService {
+    private val log = LoggerFactory.getLogger(this::class.java)
 
     /**
      * Создает новую группу для совместного учета
      */
+    @Transactional
     override fun createGroup(ownerId: Long, name: String): MoneyGroup {
         val inviteToken = generateInviteToken()
         val groupEntity = MoneyGroupEntity(
@@ -32,21 +36,26 @@ class GroupServiceImpl(
         )
 
         val savedGroup = groupRepository.save(groupEntity)
-        println("✅ Group created: id=${savedGroup.id}, name=$name, ownerId=$ownerId")
+        log.info("Group created: id={}, name={}, ownerId={}", savedGroup.id, name, ownerId)
 
         // Добавляем группу к пользователю
         val userEntity = userRepository.findUserInfoEntityByTelegramUserId(ownerId)
         if (userEntity != null) {
-            println("📝 Found user entity: id=${userEntity.id}, groupIds=${userEntity.groupIds}")
+            log.debug("Found user entity: id={}, groupIds={}", userEntity.id, userEntity.groupIds)
             val updatedGroupIds = userEntity.groupIds + savedGroup.id!!
             val updatedUser = userEntity.copy(
                 groupIds = updatedGroupIds,
                 activeGroupId = savedGroup.id
             )
             val savedUser = userRepository.save(updatedUser)
-            println("💾 Updated user: id=${savedUser.id}, groupIds=${savedUser.groupIds}, activeGroupId=${savedUser.activeGroupId}")
+            log.debug(
+                "Updated user: id={}, groupIds={}, activeGroupId={}",
+                savedUser.id,
+                savedUser.groupIds,
+                savedUser.activeGroupId
+            )
         } else {
-            println("❌ User entity NOT FOUND for ownerId=$ownerId")
+            log.warn("User entity not found for ownerId={}", ownerId)
         }
 
         return mapToModel(savedGroup)
@@ -65,7 +74,7 @@ class GroupServiceImpl(
         )
 
         val savedGroup = groupRepository.save(groupEntity)
-        println("✅ Personal group created: id=${savedGroup.id}, ownerId=$userId")
+        log.info("Personal group created: id={}, ownerId={}", savedGroup.id, userId)
 
         // Устанавливаем как активную группу
         val userEntity = userRepository.findUserInfoEntityByTelegramUserId(userId)
@@ -78,7 +87,7 @@ class GroupServiceImpl(
 
             // Создаем дефолтные категории для личной группы
             categoryService.createDefaultCategories(savedGroup.id!!)
-            println("📋 Created default categories for personal group")
+            log.debug("Created default categories for personal group id={}", savedGroup.id)
         }
 
         return mapToModel(savedGroup)
@@ -87,6 +96,7 @@ class GroupServiceImpl(
     /**
      * Присоединение к группе по invite token
      */
+    @Transactional
     override fun joinGroup(userId: Long, inviteToken: String): MoneyGroup? {
         val groupEntity = groupRepository.findByInviteToken(inviteToken) ?: return null
 
@@ -189,7 +199,7 @@ class GroupServiceImpl(
 
         // Удаляем все категории группы (каскадное удаление)
         val deletedCategoriesCount = categoryService.deleteAllCategoriesForGroup(groupId)
-        println("🗑 Deleted $deletedCategoriesCount categories for group $groupId")
+        log.info("Deleted {} categories for group {}", deletedCategoriesCount, groupId)
 
         // Удаляем группу
         groupRepository.delete(groupEntity)

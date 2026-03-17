@@ -17,6 +17,12 @@ telegram:
     api-url: "https://api.telegram.org/file/bot"
 
 debug: false
+
+logging:
+  level:
+    root: INFO
+    ai.moneymanager: DEBUG
+
 spring:
   mongodb:
     database: moneyManagerBot

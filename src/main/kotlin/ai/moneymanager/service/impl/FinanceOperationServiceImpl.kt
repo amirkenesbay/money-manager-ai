@@ -38,21 +38,34 @@ class FinanceOperationServiceImpl(
     @Transactional
     override fun create(createDto: CreateFinanceOperationRequestDto): FinanceOperation {
 
-        log.info("Create finance operation: {}", createDto)
+        log.info(
+            "Create finance operation: telegramUserId={}, groupId={}, categoryId={}, operationType={}, amount={}, currency={}",
+            createDto.telegramUserId,
+            createDto.groupId,
+            createDto.categoryId,
+            createDto.operationType,
+            createDto.amount,
+            createDto.currency
+        )
 
-        if (!userInfoRepository.existsByTelegramUserId(createDto.telegramUserId)) throw IllegalStateException("User not found")
+        if (!userInfoRepository.existsByTelegramUserId(createDto.telegramUserId))
+            throw IllegalStateException("User with telegramUserId=${createDto.telegramUserId} not found")
 
-        checkAccessToTheGroup(createDto.groupId, createDto.telegramUserId)
+        checkUserIsOwnerOrMember(createDto.groupId, createDto.telegramUserId)
 
         createDto.categoryId?.let { categoryId ->
             val category = categoryRepository.findById(categoryId)
-                .orElseThrow { IllegalStateException("Category not found") }
+                .orElseThrow { IllegalStateException("Category with id=$categoryId not found") }
 
             if (category.groupId != createDto.groupId) throw IllegalStateException("Category doesn't belong to this group")
 
             val operationType = category.toOperationType()
 
-            if (operationType != createDto.operationType) throw IllegalStateException("Incorrect category type")
+            if (operationType != createDto.operationType)
+                throw IllegalStateException(
+                    "Category with id=${category.id} has type=${category.type}," +
+                            " expected operationType=${createDto.operationType}"
+                )
         }
 
         val financeOperation = FinanceOperation.create(
@@ -74,9 +87,9 @@ class FinanceOperationServiceImpl(
      * Получить баланс группы
      */
     override fun getBalanceGroupFromGroupEntity(groupId: ObjectId, telegramUserId: Long): BigDecimal {
-        log.info("Get balance for group: {}", groupId)
+        log.info("Get balance for group: groupId={}, telegramUserId={}", groupId, telegramUserId)
 
-        checkAccessToTheGroup(groupId, telegramUserId)
+        checkUserIsOwnerOrMember(groupId, telegramUserId)
 
         return financeOperationRepository.getBalanceByGroupIdFromGroupEntity(groupId) ?: BigDecimal.ZERO
     }
@@ -89,11 +102,18 @@ class FinanceOperationServiceImpl(
         toDate: LocalDateTime
     ): List<HistoryFinanceOperationDto> {
 
-        log.info("Get history finance operation by period: {} - {}", fromDate, toDate)
+        log.info(
+            "Get finance operation history for group: groupId={}, telegramUserId={}, fromDate={}, toDate={}",
+            groupId,
+            telegramUserId,
+            fromDate,
+            toDate
+        )
 
-        checkAccessToTheGroup(groupId, telegramUserId)
+        checkUserIsOwnerOrMember(groupId, telegramUserId)
 
-        if (fromDate.isAfter(toDate)) throw IllegalStateException("fromDate must be <= toDate")
+        if (fromDate.isAfter(toDate))
+            throw IllegalStateException("Invalid period: fromDate=$fromDate is after toDate=$toDate")
 
         return financeOperationRepository.getHistoryFinanceOperationByPeriodFromGroupEntity(groupId, fromDate, toDate)
     }
@@ -105,9 +125,9 @@ class FinanceOperationServiceImpl(
         groupId: ObjectId,
         telegramUserId: Long
     ): List<HistoryFinanceOperationDto> {
-        log.info("Get all history finance operation for group: {}", groupId)
+        log.info("Get all finance operation history for group: groupId={}, telegramUserId={}", groupId, telegramUserId)
 
-        checkAccessToTheGroup(groupId, telegramUserId)
+        checkUserIsOwnerOrMember(groupId, telegramUserId)
 
         return financeOperationRepository.getAllHistoryFinanceOperationFromGroupEntity(groupId)
     }
@@ -116,9 +136,9 @@ class FinanceOperationServiceImpl(
      * Получить баланс группы за всю историю доходов группы
      */
     override fun getIncomeOperationBalanceForAllTimeFromGroup(groupId: ObjectId, telegramUserId: Long): BigDecimal {
-        log.info("Get income operation for group: {}", groupId)
+        log.info("Get income balance for group: groupId={}, telegramUserId={}", groupId, telegramUserId)
 
-        checkAccessToTheGroup(groupId, telegramUserId)
+        checkUserIsOwnerOrMember(groupId, telegramUserId)
 
         return financeOperationRepository.getIncomeBalanceByGroupIdFromGroupEntity(groupId) ?: BigDecimal.ZERO
     }
@@ -130,9 +150,9 @@ class FinanceOperationServiceImpl(
         groupId: ObjectId,
         telegramUserId: Long
     ): BigDecimal {
-        log.info("Get expense operation for group: {}", groupId)
+        log.info("Get expense balance for group: groupId={}, telegramUserId={}", groupId, telegramUserId)
 
-        checkAccessToTheGroup(groupId, telegramUserId)
+        checkUserIsOwnerOrMember(groupId, telegramUserId)
 
         return financeOperationRepository.getExpenseBalanceByGroupIdFromGroupEntity(groupId) ?: BigDecimal.ZERO
     }
@@ -145,7 +165,12 @@ class FinanceOperationServiceImpl(
         telegramUserId: Long,
         categoryId: ObjectId
     ): BigDecimal {
-        log.info("Get income balance for category: {}", categoryId)
+        log.info(
+            "Get income balance by category: groupId={}, telegramUserId={}, categoryId={}",
+            groupId,
+            telegramUserId,
+            categoryId
+        )
 
         checkCategory(groupId, telegramUserId, categoryId, CategoryType.INCOME)
 
@@ -160,7 +185,12 @@ class FinanceOperationServiceImpl(
         telegramUserId: Long,
         categoryId: ObjectId
     ): BigDecimal {
-        log.info("Get expense balance for category: {}", categoryId)
+        log.info(
+            "Get expense balance by category: groupId={}, telegramUserId={}, categoryId={}",
+            groupId,
+            telegramUserId,
+            categoryId
+        )
 
         checkCategory(groupId, telegramUserId, categoryId, CategoryType.EXPENSE)
         return financeOperationRepository.getExpenseBalanceByCategoryIdFromCategoryEntity(categoryId) ?: BigDecimal.ZERO
@@ -174,7 +204,12 @@ class FinanceOperationServiceImpl(
         telegramUserId: Long,
         categoryId: ObjectId
     ): BigDecimal {
-        log.info("Get balance category for group: {}", groupId)
+        log.info(
+            "Get category balance: groupId={}, telegramUserId={}, categoryId={}",
+            groupId,
+            telegramUserId,
+            categoryId
+        )
         checkCategory(groupId, telegramUserId, categoryId)
         return financeOperationRepository.getBalanceByCategoryIdFromCategoryEntity(categoryId) ?: BigDecimal.ZERO
     }
@@ -187,7 +222,14 @@ class FinanceOperationServiceImpl(
         fromDate: LocalDateTime, toDate: LocalDateTime
     ): List<HistoryFinanceOperationDto> {
 
-        log.info("Get history finance operation by period: {} - {}", fromDate, toDate)
+        log.info(
+            "Get finance operation history for category: groupId={}, telegramUserId={}, categoryId={}, fromDate={}, toDate={}",
+            groupId,
+            telegramUserId,
+            categoryId,
+            fromDate,
+            toDate
+        )
 
         checkCategory(groupId, telegramUserId, categoryId)
 
@@ -208,7 +250,12 @@ class FinanceOperationServiceImpl(
         telegramUserId: Long,
         categoryId: ObjectId
     ): List<HistoryFinanceOperationDto> {
-        log.info("Get history finance operation by category: {}", categoryId)
+        log.info(
+            "Get all finance operation history for category: groupId={}, telegramUserId={}, categoryId={}",
+            groupId,
+            telegramUserId,
+            categoryId
+        )
 
         checkCategory(groupId, telegramUserId, categoryId)
 
@@ -220,7 +267,16 @@ class FinanceOperationServiceImpl(
      */
     @Transactional
     override fun updateFinanceOperation(id: ObjectId, updateDto: UpdateFinanceOperationRequestDto): FinanceOperation {
-        log.info("Update finance operation id={}, dto={}", id, updateDto)
+        log.info(
+            "Update finance operation: id={}, telegramUserId={}, groupId={}, categoryId={}, day={}, amount={}, currency={}",
+            id,
+            updateDto.telegramUserId,
+            updateDto.groupId,
+            updateDto.categoryId,
+            updateDto.day,
+            updateDto.amount,
+            updateDto.currency
+        )
 
         val currentFinanceOperation = getFinanceOperation(id)
 
@@ -228,14 +284,14 @@ class FinanceOperationServiceImpl(
 
         val groupId = updateDto.groupId ?: currentFinanceOperation.groupId
 
-        checkAccessToTheGroup(currentFinanceOperation.groupId, updateDto.telegramUserId)
+        checkUserIsOwnerOrMember(currentFinanceOperation.groupId, updateDto.telegramUserId)
 
         if (updateDto.groupId != null && groupId != currentFinanceOperation.groupId) {
-            checkAccessToTheGroup(groupId, updateDto.telegramUserId)
+            checkUserIsOwnerOrMember(groupId, updateDto.telegramUserId)
         }
 
         val categoryId = updateDto.categoryId ?: currentFinanceOperation.categoryId
-        ?: throw IllegalStateException("Category is required")
+        ?: throw IllegalStateException("Category is required for finance operation id=$id")
 
         val category = getCategory(categoryId)
         validateCategoryBelongsToGroup(groupId, category)
@@ -254,7 +310,16 @@ class FinanceOperationServiceImpl(
 
         val saved = financeOperationRepository.save(financeOperationMapper.fromModel(updatedDomain))
 
-        log.info("Updated finance operation: {}", updatedDomain)
+        log.info(
+            "Finance operation updated: id={}, telegramUserId={}, groupId={}, categoryId={}, operationType={}, amount={}, currency={}",
+            updatedDomain.id,
+            updatedDomain.telegramUserId,
+            updatedDomain.groupId,
+            updatedDomain.categoryId,
+            updatedDomain.operationType,
+            updatedDomain.amount,
+            updatedDomain.currency
+        )
 
         return financeOperationMapper.fromDocument(saved)
     }
@@ -263,15 +328,15 @@ class FinanceOperationServiceImpl(
      * Удалить запись
      */
     override fun deleteFinanceOperation(id: ObjectId, telegramUserId: Long) {
-        log.info("Delete finance operation: {}", id)
+        log.info("Delete finance operation: id={}, telegramUserId={}", id, telegramUserId)
 
         val currentFinanceOperation = getFinanceOperation(id)
 
         validUser(currentFinanceOperation, telegramUserId)
 
-        checkAccessToTheGroup(currentFinanceOperation.groupId, telegramUserId)
+        checkUserIsOwnerOrMember(currentFinanceOperation.groupId, telegramUserId)
 
-        log.info("The financial transaction was successfully deleted.")
+        log.info("Finance operation deleted successfully: id={}, telegramUserId={}", id, telegramUserId)
 
         financeOperationRepository.delete(currentFinanceOperation)
     }
@@ -280,14 +345,15 @@ class FinanceOperationServiceImpl(
      * Получить категорию по categoryId.
      */
     private fun getCategory(categoryId: ObjectId) =
-        categoryRepository.findById(categoryId).orElseThrow { IllegalStateException("Category not found") }
+        categoryRepository.findById(categoryId)
+            .orElseThrow { IllegalStateException("Category with id=$categoryId not found") }
 
     /**
      * Проверить, что пользователь является owner или member группы.
      */
-    private fun checkAccessToTheGroup(groupId: ObjectId, telegramUserId: Long) {
+    private fun checkUserIsOwnerOrMember(groupId: ObjectId, telegramUserId: Long) {
         if (!moneyGroupRepository.existsByIdAndOwnerOrMemberTelegramUserId(groupId, telegramUserId)) {
-            throw IllegalStateException("User is not a member of the group")
+            throw IllegalStateException("User with telegramUserId=$telegramUserId is not a member of groupId=$groupId")
         }
     }
 
@@ -295,14 +361,18 @@ class FinanceOperationServiceImpl(
      * Проверяет, что категория принадлежит указанной группе.
      */
     private fun validateCategoryBelongsToGroup(groupId: ObjectId, category: CategoryEntity) {
-        if (category.groupId != groupId) throw IllegalStateException("Category doesn't belong to this group")
+        if (category.groupId != groupId)
+            throw IllegalStateException("Category with id=${category.id} does not belong to groupId=$groupId")
     }
 
     /**
      * Проверяет, что категория (INCOME/EXPENSE).
      */
     private fun validateCategoryType(categoryEntity: CategoryEntity, categoryType: CategoryType) {
-        if (categoryEntity.type != categoryType) throw IllegalStateException("Category is not $categoryType type")
+        if (categoryEntity.type != categoryType)
+            throw IllegalStateException(
+                "Category with id=${categoryEntity.id} has type=${categoryEntity.type}, expected=$categoryType"
+            )
     }
 
     /**
@@ -314,7 +384,7 @@ class FinanceOperationServiceImpl(
         categoryType: CategoryType? = null
     ) {
 
-        checkAccessToTheGroup(groupId, telegramUserId)
+        checkUserIsOwnerOrMember(groupId, telegramUserId)
 
         val category = getCategory(categoryId)
 
@@ -328,14 +398,16 @@ class FinanceOperationServiceImpl(
      */
     private fun getFinanceOperation(id: ObjectId) =
         financeOperationRepository.findById(id)
-            .orElseThrow { IllegalStateException("Finance operation not found") }
+            .orElseThrow { IllegalStateException("Finance operation with id=$id not found") }
 
     /**
      * Проверка, что юзер является автором записи
      */
     private fun validUser(financeOperationEntity: FinanceOperationEntity, telegramUserId: Long) {
         if (financeOperationEntity.telegramUserId != telegramUserId) {
-            throw IllegalStateException("Operation doesn't belong to this user")
+            throw IllegalStateException(
+                "Finance operation id=${financeOperationEntity.id} does not belong to telegramUserId=$telegramUserId"
+            )
         }
     }
 
