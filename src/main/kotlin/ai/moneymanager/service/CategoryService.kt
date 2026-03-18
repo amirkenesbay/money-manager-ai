@@ -5,12 +5,15 @@ import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.repository.CategoryRepository
 import ai.moneymanager.repository.entity.CategoryEntity
 import org.bson.types.ObjectId
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
 class CategoryService(
     private val categoryRepository: CategoryRepository
 ) {
+
+    private val log = LoggerFactory.getLogger(CategoryService::class.java)
 
     /**
      * Создать новую категорию
@@ -97,13 +100,12 @@ class CategoryService(
      * @param groupId ID группы
      * @return количество удаленных категорий
      */
-    fun deleteAllCategoriesForGroup(groupId: ObjectId): Int {
+    fun deleteAllCategoriesForGroup(groupId: ObjectId): Long {
         return try {
-            val deletedCount = categoryRepository.deleteByGroupId(groupId)
-            deletedCount.toInt()
+            categoryRepository.deleteByGroupId(groupId)
         } catch (e: Exception) {
-            println("❌ Error deleting all categories for group $groupId: ${e.message}")
-            0
+            log.error("Error deleting all categories for group $groupId: ${e.message}", e)
+            0L
         }
     }
 
@@ -137,7 +139,7 @@ class CategoryService(
         // Сохранить все скопированные категории
         val saved = categoryRepository.saveAll(copiedCategories)
 
-        println("✅ Copied ${saved.count()} categories from group $sourceGroupId to $targetGroupId")
+        log.info("Copied ${saved.count()} categories from group $sourceGroupId to $targetGroupId")
 
         return saved.count()
     }

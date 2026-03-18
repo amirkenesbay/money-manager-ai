@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Workflow Requirements
+
+Before starting any task, describe what you are going to do. After completing the task, report what was done.
+
 ## Project Overview
 
 A Telegram bot for personal and shared financial management built with Spring Boot, Kotlin, and the Chat Machinist state machine framework. The bot uses MongoDB for data persistence and supports multi-user group accounting with invite-based sharing.

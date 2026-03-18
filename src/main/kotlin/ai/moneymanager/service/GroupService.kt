@@ -6,6 +6,7 @@ import ai.moneymanager.repository.MoneyGroupRepository
 import ai.moneymanager.repository.UserInfoRepository
 import ai.moneymanager.repository.entity.MoneyGroupEntity
 import org.bson.types.ObjectId
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.security.SecureRandom
 
@@ -15,6 +16,14 @@ class GroupService(
     private val userRepository: UserInfoRepository,
     private val categoryService: CategoryService
 ) {
+
+    private val log = LoggerFactory.getLogger(GroupService::class.java)
+
+    companion object {
+        private const val INVITE_TOKEN_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        private const val INVITE_TOKEN_LENGTH = 9
+        private const val MAX_TOKEN_RETRIES = 10
+    }
 
     /**
      * Создает новую группу для совместного учета
@@ -30,21 +39,21 @@ class GroupService(
         )
 
         val savedGroup = groupRepository.save(groupEntity)
-        println("✅ Group created: id=${savedGroup.id}, name=$name, ownerId=$ownerId")
+        log.info("Group created: id=${savedGroup.id}, name=$name, ownerId=$ownerId")
 
         // Добавляем группу к пользователю
         val userEntity = userRepository.findUserInfoEntityByTelegramUserId(ownerId)
         if (userEntity != null) {
-            println("📝 Found user entity: id=${userEntity.id}, groupIds=${userEntity.groupIds}")
+            log.debug("Found user entity: id=${userEntity.id}, groupIds=${userEntity.groupIds}")
             val updatedGroupIds = userEntity.groupIds + savedGroup.id!!
             val updatedUser = userEntity.copy(
                 groupIds = updatedGroupIds,
                 activeGroupId = savedGroup.id
             )
             val savedUser = userRepository.save(updatedUser)
-            println("💾 Updated user: id=${savedUser.id}, groupIds=${savedUser.groupIds}, activeGroupId=${savedUser.activeGroupId}")
+            log.debug("Updated user: id=${savedUser.id}, groupIds=${savedUser.groupIds}, activeGroupId=${savedUser.activeGroupId}")
         } else {
-            println("❌ User entity NOT FOUND for ownerId=$ownerId")
+            log.warn("User entity NOT FOUND for ownerId=$ownerId")
         }
 
         return mapToModel(savedGroup)
@@ -63,7 +72,7 @@ class GroupService(
         )
 
         val savedGroup = groupRepository.save(groupEntity)
-        println("✅ Personal group created: id=${savedGroup.id}, ownerId=$userId")
+        log.info("Personal group created: id=${savedGroup.id}, ownerId=$userId")
 
         // Устанавливаем как активную группу
         val userEntity = userRepository.findUserInfoEntityByTelegramUserId(userId)
@@ -76,7 +85,7 @@ class GroupService(
 
             // Создаем дефолтные категории для личной группы
             categoryService.createDefaultCategories(savedGroup.id!!)
-            println("📋 Created default categories for personal group")
+            log.info("Created default categories for personal group: ${savedGroup.id}")
         }
 
         return mapToModel(savedGroup)
@@ -187,7 +196,7 @@ class GroupService(
 
         // Удаляем все категории группы (каскадное удаление)
         val deletedCategoriesCount = categoryService.deleteAllCategoriesForGroup(groupId)
-        println("🗑 Deleted $deletedCategoriesCount categories for group $groupId")
+        log.info("Deleted $deletedCategoriesCount categories for group $groupId")
 
         // Удаляем группу
         groupRepository.delete(groupEntity)
@@ -216,13 +225,22 @@ class GroupService(
     }
 
     /**
-     * Генерация уникального токена приглашения
+     * Генерация уникального токена приглашения с проверкой коллизий
      */
     private fun generateInviteToken(): String {
-        val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
         val random = SecureRandom()
-        return (1..9)
-            .map { chars[random.nextInt(chars.length)] }
+        repeat(MAX_TOKEN_RETRIES) {
+            val token = (1..INVITE_TOKEN_LENGTH)
+                .map { INVITE_TOKEN_CHARS[random.nextInt(INVITE_TOKEN_CHARS.length)] }
+                .joinToString("")
+            if (groupRepository.findByInviteToken(token) == null) {
+                return token
+            }
+            log.warn("Invite token collision detected, retrying...")
+        }
+        // Теоретически недостижимо при 36^9 вариантах
+        return (1..INVITE_TOKEN_LENGTH)
+            .map { INVITE_TOKEN_CHARS[random.nextInt(INVITE_TOKEN_CHARS.length)] }
             .joinToString("")
     }
 

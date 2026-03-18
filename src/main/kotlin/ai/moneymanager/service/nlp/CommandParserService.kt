@@ -75,8 +75,7 @@ class CommandParserService(
             )
             processResponse(response, userMessage)
         } catch (e: Exception) {
-            log.info("❌ CommandParser error: ${e.message}")
-            e.printStackTrace()
+            log.error("CommandParser error: ${e.message}", e)
             BotCommand.ParseError(e.message ?: "Unknown error")
         }
     }
@@ -114,8 +113,7 @@ class CommandParserService(
 
             processResponse(response, "[voice message]")
         } catch (e: Exception) {
-            log.info("❌ Voice CommandParser error: ${e.message}")
-            e.printStackTrace()
+            log.error("Voice CommandParser error: ${e.message}", e)
             BotCommand.ParseError(e.message ?: "Unknown error")
         }
     }

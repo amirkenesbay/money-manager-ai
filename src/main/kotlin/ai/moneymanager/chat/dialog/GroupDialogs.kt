@@ -6,6 +6,11 @@ import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.service.GroupService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType
+import org.slf4j.LoggerFactory
+
+private val log = LoggerFactory.getLogger("GroupDialogs")
+
+private const val MAX_GROUP_NAME_LENGTH = 50
 
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.groupDialogTransitions(
     groupService: GroupService,
@@ -55,6 +60,42 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.openGroupManag
 }
 
 /**
+ * Вспомогательная функция для быстрого создания группы с фиксированным именем
+ */
+private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.quickCreateGroupTransition(
+    groupService: GroupService,
+    transitionName: String,
+    buttonType: MoneyManagerButtonType,
+    groupName: String
+) {
+    transition {
+        name = transitionName
+
+        condition {
+            from = MoneyManagerState.GROUP_CREATE_ENTER_NAME
+            button = buttonType
+        }
+
+        action {
+            context.groupNameInput = groupName
+            context.isQuickGroupCreation = true
+
+            val createdGroup = groupService.createGroup(user.id, groupName)
+            context.currentGroup = createdGroup
+
+            context.userInfo = context.userInfo?.copy(
+                activeGroupId = createdGroup.id,
+                groupIds = context.userInfo?.groupIds?.plus(createdGroup.id!!) ?: setOf(createdGroup.id!!)
+            )
+        }
+
+        then {
+            to = MoneyManagerState.GROUP_INVITE_SHOW
+        }
+    }
+}
+
+/**
  * Диалог создания группы
  */
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createGroupDialogTransitions(
@@ -88,121 +129,11 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createGroupDia
         }
     }
 
-    // Быстрое создание группы "Семья"
-    transition {
-        name = "Quick create group: Family"
-
-        condition {
-            from = MoneyManagerState.GROUP_CREATE_ENTER_NAME
-            button = MoneyManagerButtonType.QUICK_GROUP_FAMILY
-        }
-
-        action {
-            val groupName = "Семья"
-            context.groupNameInput = groupName
-            context.isQuickGroupCreation = true
-
-            val userId = user.id
-            val createdGroup = groupService.createGroup(userId, groupName)
-            context.currentGroup = createdGroup
-
-            context.userInfo = context.userInfo?.copy(
-                activeGroupId = createdGroup.id,
-                groupIds = context.userInfo?.groupIds?.plus(createdGroup.id!!) ?: setOf(createdGroup.id!!)
-            )
-        }
-
-        then {
-            to = MoneyManagerState.GROUP_INVITE_SHOW
-        }
-    }
-
-    // Быстрое создание группы "С другом"
-    transition {
-        name = "Quick create group: With Friend"
-
-        condition {
-            from = MoneyManagerState.GROUP_CREATE_ENTER_NAME
-            button = MoneyManagerButtonType.QUICK_GROUP_WITH_FRIEND
-        }
-
-        action {
-            val groupName = "С другом"
-            context.groupNameInput = groupName
-            context.isQuickGroupCreation = true
-
-            val userId = user.id
-            val createdGroup = groupService.createGroup(userId, groupName)
-            context.currentGroup = createdGroup
-
-            context.userInfo = context.userInfo?.copy(
-                activeGroupId = createdGroup.id,
-                groupIds = context.userInfo?.groupIds?.plus(createdGroup.id!!) ?: setOf(createdGroup.id!!)
-            )
-        }
-
-        then {
-            to = MoneyManagerState.GROUP_INVITE_SHOW
-        }
-    }
-
-    // Быстрое создание группы "Работа"
-    transition {
-        name = "Quick create group: Work"
-
-        condition {
-            from = MoneyManagerState.GROUP_CREATE_ENTER_NAME
-            button = MoneyManagerButtonType.QUICK_GROUP_WORK
-        }
-
-        action {
-            val groupName = "Работа"
-            context.groupNameInput = groupName
-            context.isQuickGroupCreation = true
-
-            val userId = user.id
-            val createdGroup = groupService.createGroup(userId, groupName)
-            context.currentGroup = createdGroup
-
-            context.userInfo = context.userInfo?.copy(
-                activeGroupId = createdGroup.id,
-                groupIds = context.userInfo?.groupIds?.plus(createdGroup.id!!) ?: setOf(createdGroup.id!!)
-            )
-        }
-
-        then {
-            to = MoneyManagerState.GROUP_INVITE_SHOW
-        }
-    }
-
-    // Быстрое создание группы "Поездка"
-    transition {
-        name = "Quick create group: Trip"
-
-        condition {
-            from = MoneyManagerState.GROUP_CREATE_ENTER_NAME
-            button = MoneyManagerButtonType.QUICK_GROUP_TRIP
-        }
-
-        action {
-            val groupName = "Поездка"
-            context.groupNameInput = groupName
-            context.isQuickGroupCreation = true
-
-            val userId = user.id
-            val createdGroup = groupService.createGroup(userId, groupName)
-            context.currentGroup = createdGroup
-
-            context.userInfo = context.userInfo?.copy(
-                activeGroupId = createdGroup.id,
-                groupIds = context.userInfo?.groupIds?.plus(createdGroup.id!!) ?: setOf(createdGroup.id!!)
-            )
-        }
-
-        then {
-            to = MoneyManagerState.GROUP_INVITE_SHOW
-        }
-    }
+    // Быстрое создание групп по предустановленным названиям
+    quickCreateGroupTransition(groupService, "Quick create group: Family", MoneyManagerButtonType.QUICK_GROUP_FAMILY, "Семья")
+    quickCreateGroupTransition(groupService, "Quick create group: With Friend", MoneyManagerButtonType.QUICK_GROUP_WITH_FRIEND, "С другом")
+    quickCreateGroupTransition(groupService, "Quick create group: Work", MoneyManagerButtonType.QUICK_GROUP_WORK, "Работа")
+    quickCreateGroupTransition(groupService, "Quick create group: Trip", MoneyManagerButtonType.QUICK_GROUP_TRIP, "Поездка")
 
     // Получить название группы и создать её (ручной ввод)
     transition {
@@ -214,12 +145,14 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createGroupDia
         }
 
         action {
-            val groupName = update.message.text ?: "Моя группа"
+            val groupName = update.message.text?.trim()
+                ?.takeIf { it.isNotBlank() }
+                ?.take(MAX_GROUP_NAME_LENGTH)
+                ?: "Моя группа"
             context.groupNameInput = groupName
             context.isQuickGroupCreation = false
 
-            val userId = user.id
-            val createdGroup = groupService.createGroup(userId, groupName)
+            val createdGroup = groupService.createGroup(user.id, groupName)
             context.currentGroup = createdGroup
 
             // Обновляем userInfo чтобы activeGroupId был актуальным
@@ -584,7 +517,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.deleteGroupTra
             if (groupId != null) {
                 val categories = categoryService.getCategoriesByGroup(groupId)
                 context.categoriesCountToDelete = categories.size
-                println("📊 Group ${selectedGroup.name} has ${categories.size} categories that will be deleted")
+                log.info("Group ${selectedGroup.name} has ${categories.size} categories that will be deleted")
             } else {
                 context.categoriesCountToDelete = 0
             }

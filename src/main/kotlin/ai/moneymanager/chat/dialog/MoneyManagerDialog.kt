@@ -12,6 +12,9 @@ import ai.moneymanager.service.nlp.CommandParserService
 import kz.rmr.chatmachinist.api.transition.ChatBuilder
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType
+import org.slf4j.LoggerFactory
+
+private val log = LoggerFactory.getLogger("MoneyManagerDialog")
 
 fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
     userInfoService: UserInfoService,
@@ -142,7 +145,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.joinGroupDialo
                 val updatedUserInfo = userInfoService.getUserInfo(user)
                 context.userInfo = updatedUserInfo
 
-                println("✅ User joined group: groupId=${joinedGroup?.id}, activeGroupId=${updatedUserInfo.activeGroupId}")
+                log.info("User joined group: groupId=${joinedGroup?.id}, activeGroupId=${updatedUserInfo.activeGroupId}")
             }
         }
 

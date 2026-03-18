@@ -7,6 +7,11 @@ import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.service.CategoryService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType
+import org.slf4j.LoggerFactory
+
+private val log = LoggerFactory.getLogger("CategoryDialogs")
+
+private const val MAX_CATEGORY_NAME_LENGTH = 50
 
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.categoryDialogTransitions(
     categoryService: CategoryService
@@ -195,7 +200,10 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createCategory
         }
 
         action {
-            val categoryName = update.message.text ?: "Новая категория"
+            val categoryName = update.message.text?.trim()
+                ?.takeIf { it.isNotBlank() }
+                ?.take(MAX_CATEGORY_NAME_LENGTH)
+                ?: "Новая категория"
             context.categoryNameInput = categoryName
 
             // Получаем активную группу и выбранный тип
@@ -473,7 +481,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.deleteAllCateg
                 context.categories = emptyList()
                 context.currentCategory = null
 
-                println("🗑 Deleted $deletedCount categories for group $activeGroupId")
+                log.info("Deleted $deletedCount categories for group $activeGroupId")
             }
         }
 

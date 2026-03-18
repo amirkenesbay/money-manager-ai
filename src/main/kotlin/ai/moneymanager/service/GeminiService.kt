@@ -36,7 +36,7 @@ class GeminiService(
             )
             response.text()
         } catch (e: Exception) {
-            log.info("❌ Gemini error: ${e.message}")
+            log.error("Gemini generateText error: ${e.message}", e)
             null
         }
     }
