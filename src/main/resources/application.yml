@@ -4,10 +4,10 @@ chat-machinist:
     type: mongodb
   bot:
     name: moneyManagerAIbot
-    token: secret
+    token: ${BOT_TOKEN}
 
 gemini:
-  api-key: ${GEMINI_API_KEY:secret}
+  api-key: ${GEMINI_API_KEY}
   model: gemini-2.5-flash
 
 telegram:
@@ -21,8 +21,8 @@ spring:
   mongodb:
     database: moneyManagerBot
     host: ${MONGO_HOST:localhost}
-    username: moneyManagerUser
-    password: secret
+    username: ${MONGO_USERNAME}
+    password: ${MONGO_PASSWORD}
     port: 27019
   data:
     mongodb:
