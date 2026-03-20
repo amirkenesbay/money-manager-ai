@@ -13,14 +13,11 @@ enum class MoneyManagerState {
     GROUP_MANAGEMENT,
     GROUP_CREATE_ENTER_NAME,
     GROUP_INVITE_SHOW,
-    GROUP_INVITE_SELECT,
     GROUP_JOIN_CONFIRM,
     GROUP_LIST,
+    GROUP_ACTIONS,
     GROUP_MEMBERS,
-    GROUP_SWITCH,
-    GROUP_EDIT_SELECT,
     GROUP_EDIT_ENTER_NAME,
-    GROUP_DELETE_SELECT,
     GROUP_DELETE_CONFIRM,
 
     // -------- NLP --------
@@ -33,6 +30,7 @@ enum class MoneyManagerState {
     CATEGORY_NO_GROUP_WARNING,
     CATEGORY_CREATE_SELECT_TYPE,
     CATEGORY_CREATE_ENTER_NAME,
+    CATEGORY_CREATE_RESULT,
     CATEGORY_LIST,
     CATEGORY_ACTIONS,
     CATEGORY_EDIT_NAME,
@@ -50,6 +48,7 @@ enum class MoneyManagerButtonType {
     // Groups
     CREATE_GROUP,
     MY_GROUPS,
+    GROUP_ITEM,
     GROUP_MEMBERS,
     SWITCH_GROUP,
     EDIT_GROUP,
@@ -98,6 +97,7 @@ class MoneyManagerContext {
     var groupNameInput: String? = null
     var userGroups: List<MoneyGroup> = emptyList()
     var isQuickGroupCreation: Boolean = false
+    var inviteFromActions: Boolean = false
     var categoriesCountToDelete: Int = 0
 
     // -------- CATEGORIES --------
@@ -106,6 +106,14 @@ class MoneyManagerContext {
     var categoryTypeInput: CategoryType? = null
     var currentCategory: Category? = null
     var categories: List<Category> = emptyList()
+
+    // -------- SESSION --------
+    // Set to true on /start so that stale old dialog instances (which remain in MongoDB)
+    // cannot accidentally match NLP text transitions.
+    var isActive: Boolean = false
+
+    // -------- INPUT MODE --------
+    var manualTextInputActive: Boolean = false
 
     // -------- NLP --------
     var nlpGroupName: String? = null

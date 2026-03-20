@@ -27,13 +27,11 @@ class MoneyManagerReplyConfig {
             groupManagementReply()
             groupCreateEnterNameReply()
             groupInviteShowReply()
-            groupInviteSelectReply()
             groupJoinConfirmReply()
             groupListReply()
+            groupActionsReply()
             groupMembersReply()
-            groupEditSelectReply()
             groupEditEnterNameReply()
-            groupDeleteSelectReply()
             groupDeleteConfirmReply()
 
             // Category replies
@@ -41,6 +39,7 @@ class MoneyManagerReplyConfig {
             categoryNoGroupWarningReply()
             categoryCreateSelectTypeReply()
             categoryCreateEnterNameReply()
+            categoryCreateResultReply()
             categoryListReply()
             categoryActionsReply()
             categoryEditNameReply()

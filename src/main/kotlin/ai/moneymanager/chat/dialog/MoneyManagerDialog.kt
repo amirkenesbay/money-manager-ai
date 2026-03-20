@@ -1,5 +1,8 @@
 package ai.moneymanager.chat.dialog
 
+import ai.moneymanager.chat.transition.category.categoryDialogTransitions
+import ai.moneymanager.chat.transition.group.groupDialogTransitions
+import ai.moneymanager.chat.transition.nlp.nlpDialogTransitions
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
@@ -39,7 +42,6 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
     userInfoService: UserInfoService,
     groupService: GroupService
 ) {
-    // Обработка команды /start
     transition {
         name = "Start Money Manager Dialog"
         startDialog = true
@@ -53,9 +55,9 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
         }
 
         action {
+            context.isActive = true
             context.userInfo = userInfoService.getUserInfo(user)
 
-            // Проверяем, есть ли параметр deep link для присоединения к группе
             val messageText = update.message?.text
             if (messageText != null) {
                 val parts = messageText.split(" ")
@@ -65,7 +67,6 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
                     val group = groupService.getGroupByToken(token)
                     context.pendingGroup = group
 
-                    // Получаем информацию о создателе группы
                     if (group != null) {
                         context.pendingGroupOwnerInfo = userInfoService.getUserInfoByTelegramId(group.ownerId)
                     }
@@ -75,16 +76,11 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
 
         then {
             to = MoneyManagerState.STARTED
-
             noReply = true
-
-            trigger {
-                sameDialog = true
-            }
+            trigger { sameDialog = true }
         }
     }
 
-    // Если есть приглашение в группу, показываем подтверждение
     transition {
         name = "Show group join confirmation"
 
@@ -102,7 +98,6 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
         }
     }
 
-    // Иначе переходим в главное меню
     transition {
         name = "Open main menu"
 
@@ -125,7 +120,6 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.joinGroupDialo
     groupService: GroupService,
     userInfoService: UserInfoService
 ) {
-    // Подтверждение присоединения к группе
     transition {
         name = "Confirm join group"
 
@@ -141,7 +135,6 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.joinGroupDialo
                 val joinedGroup = groupService.joinGroup(userId, token)
                 context.currentGroup = joinedGroup
 
-                // ВАЖНО: Обновляем context.userInfo с новым activeGroupId
                 val updatedUserInfo = userInfoService.getUserInfo(user)
                 context.userInfo = updatedUserInfo
 
@@ -154,7 +147,6 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.joinGroupDialo
         }
     }
 
-    // Отклонение приглашения
     transition {
         name = "Cancel join group"
 
@@ -164,7 +156,6 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.joinGroupDialo
         }
 
         action {
-            // Очищаем данные о приглашении
             context.pendingInviteToken = null
             context.pendingGroup = null
             context.pendingGroupOwnerInfo = null

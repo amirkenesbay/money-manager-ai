@@ -31,12 +31,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupManagementReply(
                 }
                 buttonRow {
                     button {
-                        text = "🔗 Пригласить в группу"
-                        type = MoneyManagerButtonType.INVITE_TO_GROUP
-                    }
-                }
-                buttonRow {
-                    button {
                         text = "⬅️ Назад в меню"
                         type = MoneyManagerButtonType.BACK_TO_MENU
                     }
@@ -125,73 +119,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupInviteShowReply(
     }
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupInviteSelectReply() {
-    reply {
-        state = MoneyManagerState.GROUP_INVITE_SELECT
-
-        message {
-            val userInfo = context.userInfo
-            val userGroups = context.userGroups
-
-            // Фильтруем только те группы, где пользователь является владельцем
-            val ownedGroups = userGroups.filter { it.ownerId == userInfo?.telegramUserId }
-
-            if (ownedGroups.isNotEmpty()) {
-                val groupsList = ownedGroups.mapIndexed { index, group ->
-                    "${index + 1} - ${group.name}"
-                }.joinToString("\n")
-
-                text = """
-                    |🔗 Пригласить в группу
-                    |
-                    |Выберите группу, для которой хотите получить ссылку приглашения:
-                    |
-                    |$groupsList
-                    |
-                    |💡 Ссылку могут получить только владельцы групп.
-                """.trimMargin()
-
-                keyboard {
-                    // Создаем кнопки только для групп, где пользователь - владелец
-                    ownedGroups.chunked(3).forEach { groupsInRow ->
-                        buttonRow {
-                            groupsInRow.forEach { group ->
-                                button {
-                                    val index = ownedGroups.indexOf(group) + 1
-                                    text = "$index"
-                                    type = MoneyManagerButtonType.INVITE_TO_GROUP
-                                }
-                            }
-                        }
-                    }
-
-                    buttonRow {
-                        button {
-                            text = "❌ Отмена"
-                            type = MoneyManagerButtonType.CANCEL
-                        }
-                    }
-                }
-            } else {
-                text = """
-                    |❌ Нет доступных групп
-                    |
-                    |У вас нет групп, где вы являетесь владельцем.
-                    |Только владелец может получить ссылку для приглашения.
-                """.trimMargin()
-
-                keyboard {
-                    buttonRow {
-                        button {
-                            text = "⬅️ Назад"
-                            type = MoneyManagerButtonType.BACK_TO_MENU
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
 
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupJoinConfirmReply() {
     reply {
@@ -268,65 +195,31 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupListReply() {
             val userGroups = context.userGroups
 
             if (userGroups.isNotEmpty()) {
-                // Формируем список групп с номерами
-                val groupsList = userGroups.mapIndexed { index, group ->
-                    val ownerMark = if (group.ownerId == userInfo?.telegramUserId) " 👑" else ""
-                    "${index + 1} - ${group.name}$ownerMark"
-                }.joinToString("\n")
-
-                // Находим активную группу
-                val activeGroup = userGroups.find { it.id == userInfo?.activeGroupId }
-                val activeGroupText = if (activeGroup != null) {
-                    val activeIndex = userGroups.indexOf(activeGroup) + 1
-                    "$activeIndex - ${activeGroup.name}"
-                } else {
-                    "Не выбрана"
-                }
-
                 text = """
                     |📋 Мои группы
                     |
-                    |У вас ${userGroups.size} групп(ы)
-                    |
-                    |$groupsList
-                    |
-                    |Активная группа: $activeGroupText
-                    |
-                    |Выберите номер группы для переключения:
-                    |👑 - вы владелец группы
+                    |Выберите группу:
+                    |👑 - владелец, ✅ - активная
                 """.trimMargin()
 
                 keyboard {
-                    // Создаем кнопки для каждой группы (по 3 в ряд)
-                    userGroups.chunked(3).forEach { groupsInRow ->
+                    userGroups.forEach { group ->
                         buttonRow {
-                            groupsInRow.forEachIndexed { _, group ->
-                                button {
-                                    val index = userGroups.indexOf(group) + 1
-                                    text = if (group.id == userInfo?.activeGroupId) {
-                                        "✅ $index"
-                                    } else {
-                                        "$index"
-                                    }
-                                    type = MoneyManagerButtonType.SWITCH_GROUP
+                            button {
+                                val isOwner = group.ownerId == userInfo?.telegramUserId
+                                val isActive = group.id == userInfo?.activeGroupId
+                                val prefix = when {
+                                    isActive && isOwner -> "✅ 👑 "
+                                    isActive -> "✅ "
+                                    isOwner -> "👑 "
+                                    else -> ""
                                 }
+                                text = "$prefix${group.name}"
+                                type = MoneyManagerButtonType.GROUP_ITEM
                             }
                         }
                     }
 
-                    // Кнопки "Редактировать", "Удалить" и "Назад"
-                    buttonRow {
-                        button {
-                            text = "✏️ Редактировать группу"
-                            type = MoneyManagerButtonType.EDIT_GROUP
-                        }
-                    }
-                    buttonRow {
-                        button {
-                            text = "🗑 Удалить группу"
-                            type = MoneyManagerButtonType.DELETE_GROUP
-                        }
-                    }
                     buttonRow {
                         button {
                             text = "⬅️ Назад"
@@ -354,59 +247,75 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupListReply() {
     }
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupDeleteSelectReply() {
+
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupActionsReply() {
     reply {
-        state = MoneyManagerState.GROUP_DELETE_SELECT
+        state = MoneyManagerState.GROUP_ACTIONS
 
         message {
+            val group = context.currentGroup
             val userInfo = context.userInfo
-            val userGroups = context.userGroups
+            val isOwner = group?.ownerId == userInfo?.telegramUserId
+            val isActive = group?.id == userInfo?.activeGroupId
 
-            // Фильтруем только те группы, где пользователь является владельцем
-            val ownedGroups = userGroups.filter { it.ownerId == userInfo?.telegramUserId }
-
-            if (ownedGroups.isNotEmpty()) {
-                val groupsList = ownedGroups.mapIndexed { index, group ->
-                    "${index + 1} - ${group.name}"
-                }.joinToString("\n")
+            if (group != null) {
+                val ownerText = if (isOwner) "👑 Вы владелец" else ""
+                val activeText = if (isActive) "✅ Активная группа" else ""
+                val statusLine = listOf(ownerText, activeText).filter { it.isNotEmpty() }.joinToString(" · ")
 
                 text = """
-                    |🗑 Удаление группы
+                    |👥 Группа "${group.name}"
                     |
-                    |Выберите группу для удаления:
-                    |
-                    |$groupsList
-                    |
-                    |⚠️ Вы можете удалять только те группы, где вы являетесь владельцем.
+                    |${if (statusLine.isNotEmpty()) "$statusLine\n|" else ""}
+                    |Участников: ${group.memberIds.size}
                 """.trimMargin()
 
                 keyboard {
-                    // Создаем кнопки только для групп, где пользователь - владелец
-                    ownedGroups.chunked(3).forEach { groupsInRow ->
+                    if (isOwner) {
                         buttonRow {
-                            groupsInRow.forEach { group ->
-                                button {
-                                    val index = ownedGroups.indexOf(group) + 1
-                                    text = "$index"
-                                    type = MoneyManagerButtonType.DELETE_GROUP
-                                }
+                            button {
+                                text = "✏️ Изменить название"
+                                type = MoneyManagerButtonType.EDIT_GROUP
+                            }
+                        }
+                        buttonRow {
+                            button {
+                                text = "🔗 Пригласить в группу"
+                                type = MoneyManagerButtonType.INVITE_TO_GROUP
                             }
                         }
                     }
-
                     buttonRow {
                         button {
-                            text = "❌ Отмена"
-                            type = MoneyManagerButtonType.CANCEL
+                            text = "👥 Участники"
+                            type = MoneyManagerButtonType.GROUP_MEMBERS
+                        }
+                    }
+                    if (!isActive) {
+                        buttonRow {
+                            button {
+                                text = "✅ Сделать активной"
+                                type = MoneyManagerButtonType.SWITCH_GROUP
+                            }
+                        }
+                    }
+                    if (isOwner) {
+                        buttonRow {
+                            button {
+                                text = "🗑 Удалить группу"
+                                type = MoneyManagerButtonType.DELETE_GROUP
+                            }
+                        }
+                    }
+                    buttonRow {
+                        button {
+                            text = "⬅️ Назад к списку"
+                            type = MoneyManagerButtonType.BACK_TO_MENU
                         }
                     }
                 }
             } else {
-                text = """
-                    ❌ Нет групп для удаления
-
-                    У вас нет групп, где вы являетесь владельцем.
-                """.trimIndent()
+                text = "Группа не найдена"
 
                 keyboard {
                     buttonRow {
@@ -496,72 +405,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupDeleteConfirmRep
     }
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupEditSelectReply() {
-    reply {
-        state = MoneyManagerState.GROUP_EDIT_SELECT
-
-        message {
-            val userInfo = context.userInfo
-            val userGroups = context.userGroups
-
-            // Фильтруем только те группы, где пользователь является владельцем
-            val ownedGroups = userGroups.filter { it.ownerId == userInfo?.telegramUserId }
-
-            if (ownedGroups.isNotEmpty()) {
-                val groupsList = ownedGroups.mapIndexed { index, group ->
-                    "${index + 1} - ${group.name}"
-                }.joinToString("\n")
-
-                text = """
-                    |✏️ Редактирование группы
-                    |
-                    |Выберите группу для редактирования:
-                    |
-                    |$groupsList
-                    |
-                    |⚠️ Вы можете редактировать только те группы, где вы являетесь владельцем.
-                """.trimMargin()
-
-                keyboard {
-                    // Создаем кнопки только для групп, где пользователь - владелец
-                    ownedGroups.chunked(3).forEach { groupsInRow ->
-                        buttonRow {
-                            groupsInRow.forEach { group ->
-                                button {
-                                    val index = ownedGroups.indexOf(group) + 1
-                                    text = "$index"
-                                    type = MoneyManagerButtonType.EDIT_GROUP
-                                }
-                            }
-                        }
-                    }
-
-                    buttonRow {
-                        button {
-                            text = "❌ Отмена"
-                            type = MoneyManagerButtonType.CANCEL
-                        }
-                    }
-                }
-            } else {
-                text = """
-                    ❌ Нет групп для редактирования
-
-                    У вас нет групп, где вы являетесь владельцем.
-                """.trimIndent()
-
-                keyboard {
-                    buttonRow {
-                        button {
-                            text = "⬅️ Назад"
-                            type = MoneyManagerButtonType.BACK_TO_MENU
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
 
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupEditEnterNameReply() {
     reply {

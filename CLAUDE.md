@@ -12,6 +12,10 @@ A Telegram bot for personal and shared financial management built with Spring Bo
 
 ## Build & Development Commands
 
+### Java Version
+
+**Requires JDK 21.** Higher versions (e.g., JDK 25) are not supported by the Kotlin Gradle plugin. Ensure `JAVA_HOME` points to JDK 21 before building.
+
 ### Running the Application
 
 ```bash

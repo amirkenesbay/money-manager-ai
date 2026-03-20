@@ -144,6 +144,50 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryCreateEnterNa
     }
 }
 
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryCreateResultReply() {
+    reply {
+        state = MoneyManagerState.CATEGORY_CREATE_RESULT
+
+        message {
+            val category = context.currentCategory
+            val categoryName = context.categoryNameInput ?: "категория"
+
+            text = if (category != null) {
+                val icon = category.icon ?: "📌"
+                val typeText = if (category.type == CategoryType.EXPENSE) "расхода" else "дохода"
+                """
+                    |✅ Категория $typeText создана
+                    |
+                    |$icon ${category.name}
+                """.trimMargin()
+            } else {
+                """
+                    |❌ Не удалось создать категорию
+                    |
+                    |Категория «$categoryName» уже существует в этой группе.
+                """.trimMargin()
+            }
+
+            keyboard {
+                if (category != null) {
+                    buttonRow {
+                        button {
+                            text = "➕ Создать ещё"
+                            type = MoneyManagerButtonType.CREATE_CATEGORY
+                        }
+                    }
+                }
+                buttonRow {
+                    button {
+                        text = "⬅️ Назад"
+                        type = MoneyManagerButtonType.BACK_TO_MENU
+                    }
+                }
+            }
+        }
+    }
+}
+
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryListReply() {
     reply {
         state = MoneyManagerState.CATEGORY_LIST
