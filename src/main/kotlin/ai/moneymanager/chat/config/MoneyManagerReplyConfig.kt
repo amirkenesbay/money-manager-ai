@@ -46,10 +46,10 @@ class MoneyManagerReplyConfig {
             categoryDeleteConfirmReply()
             categoryDeleteAllConfirmReply()
 
-            // NLP replies
-            nlpConfirmCreateGroupReply()
-            nlpConfirmDeleteGroupReply()
-            nlpResponseReply()
+            // NLP replies (disabled for now)
+            // nlpConfirmCreateGroupReply()
+            // nlpConfirmDeleteGroupReply()
+            // nlpResponseReply()
         }
     }
 }
