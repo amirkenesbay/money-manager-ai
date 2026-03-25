@@ -5,11 +5,13 @@ import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.GroupService
+import ai.moneymanager.service.UserInfoService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.groupActionsTransitions(
     groupService: GroupService,
-    categoryService: CategoryService
+    categoryService: CategoryService,
+    userInfoService: UserInfoService
 ) {
     transition {
         name = "Select group from list"
@@ -102,6 +104,17 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.groupActionsTransition
         condition {
             from = MoneyManagerState.GROUP_ACTIONS
             button = MoneyManagerButtonType.GROUP_MEMBERS
+        }
+
+        action {
+            val group = context.currentGroup
+            if (group != null) {
+                // Fetch UserInfo for all member IDs
+                val membersList = group.memberIds.mapNotNull { memberId ->
+                    userInfoService.getUserInfoByTelegramId(memberId)
+                }
+                context.groupMembersList = membersList
+            }
         }
 
         then {

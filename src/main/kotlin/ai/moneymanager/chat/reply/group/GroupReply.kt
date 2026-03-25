@@ -3,6 +3,7 @@ package ai.moneymanager.chat.reply.group
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
+import ai.moneymanager.domain.model.UserInfo
 import kz.rmr.chatmachinist.api.reply.RepliesBuilder
 
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupManagementReply() {
@@ -450,15 +451,37 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupMembersReply() {
 
         message {
             val group = context.currentGroup
+            val membersList = context.groupMembersList
+
             if (group != null) {
+                // Find owner information
+                val ownerInfo = membersList.find { it.telegramUserId == group.ownerId }
+                val ownerName = formatUserName(ownerInfo, group.ownerId)
+
+                // Format members list
+                val membersText = if (membersList.isNotEmpty()) {
+                    membersList.joinToString("\n") { member ->
+                        val isOwner = member.telegramUserId == group.ownerId
+                        val memberName = formatUserName(member, member.telegramUserId ?: 0)
+                        if (isOwner) {
+                            "• 👑 $memberName"
+                        } else {
+                            "• $memberName"
+                        }
+                    }
+                } else {
+                    // Fallback if member info wasn't loaded
+                    group.memberIds.joinToString("\n") { "• Пользователь ID: $it" }
+                }
+
                 text = """
-                    👥 Участники группы "${group.name}"
-
-                    Всего участников: ${group.memberIds.size}
-                    Создатель: ID ${group.ownerId}
-
-                    ${group.memberIds.joinToString("\n") { "• Пользователь ID: $it" }}
-                """.trimIndent()
+                    |👥 Участники группы "${group.name}"
+                    |
+                    |Всего участников: ${group.memberIds.size}
+                    |Создатель: $ownerName
+                    |
+                    |$membersText
+                """.trimMargin()
             } else {
                 text = "Группа не найдена"
             }
@@ -472,5 +495,23 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupMembersReply() {
                 }
             }
         }
+    }
+}
+
+// Helper function to format user name
+private fun formatUserName(userInfo: UserInfo?, telegramUserId: Long): String {
+    return when {
+        userInfo != null -> {
+            val firstName = userInfo.firstName ?: ""
+            val lastName = userInfo.lastName ?: ""
+            val fullName = "$firstName $lastName".trim()
+
+            when {
+                fullName.isNotEmpty() -> fullName
+                !userInfo.username.isNullOrEmpty() -> "@${userInfo.username}"
+                else -> "ID $telegramUserId"
+            }
+        }
+        else -> "ID $telegramUserId"
     }
 }

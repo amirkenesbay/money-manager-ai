@@ -113,6 +113,7 @@ class MoneyManagerContext {
     var currentGroup: MoneyGroup? = null
     var groupNameInput: String? = null
     var userGroups: List<MoneyGroup> = emptyList()
+    var groupMembersList: List<UserInfo> = emptyList()
     var isQuickGroupCreation: Boolean = false
     var inviteFromActions: Boolean = false
     var categoriesCountToDelete: Int = 0

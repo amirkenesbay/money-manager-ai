@@ -32,7 +32,7 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
 
         startMoneyManagerDialogTransition(userInfoService, groupService)
         joinGroupDialogTransitions(groupService, userInfoService)
-        groupDialogTransitions(groupService, categoryService)
+        groupDialogTransitions(groupService, categoryService, userInfoService)
         categoryDialogTransitions(categoryService)
         // NLP disabled for now
         // nlpDialogTransitions(commandParserService, groupService, userInfoService, telegramFileService, geminiService)
