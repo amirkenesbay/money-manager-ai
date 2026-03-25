@@ -20,7 +20,20 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.categoryBackTransition
     }
 
     transition {
-        name = "Back to category management from category list"
+        name = "Back to category management from select type"
+
+        condition {
+            from = MoneyManagerState.CATEGORY_LIST_SELECT_TYPE
+            button = MoneyManagerButtonType.CANCEL
+        }
+
+        then {
+            to = MoneyManagerState.CATEGORY_MANAGEMENT
+        }
+    }
+
+    transition {
+        name = "Back to select type from category list"
 
         condition {
             from = MoneyManagerState.CATEGORY_LIST
@@ -28,7 +41,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.categoryBackTransition
         }
 
         then {
-            to = MoneyManagerState.CATEGORY_MANAGEMENT
+            to = MoneyManagerState.CATEGORY_LIST_SELECT_TYPE
         }
     }
 }

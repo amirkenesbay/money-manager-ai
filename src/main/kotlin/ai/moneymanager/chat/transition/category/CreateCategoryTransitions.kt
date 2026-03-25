@@ -12,6 +12,54 @@ import org.slf4j.LoggerFactory
 
 private const val MAX_CATEGORY_NAME_LENGTH = 50
 
+private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.quickCreateCategoryTransition(
+    categoryService: CategoryService,
+    transitionName: String,
+    buttonType: MoneyManagerButtonType,
+    categoryName: String,
+    categoryIcon: String
+) {
+    transition {
+        name = transitionName
+
+        condition {
+            from = MoneyManagerState.CATEGORY_CREATE_ENTER_NAME
+            button = buttonType
+        }
+
+        action {
+            val log = LoggerFactory.getLogger("CreateCategoryTransitions")
+            context.categoryNameInput = categoryName
+            context.categoryIconInput = categoryIcon
+            context.isQuickCategoryCreation = true
+            context.manualTextInputActive = false
+
+            val activeGroupId = context.userInfo?.activeGroupId
+            val categoryType = context.categoryTypeInput ?: CategoryType.EXPENSE
+            log.info("Quick creating category: name='$categoryName', icon='$categoryIcon', type=$categoryType, activeGroupId=$activeGroupId")
+
+            if (activeGroupId != null) {
+                val createdCategory = categoryService.createCategory(
+                    name = categoryName,
+                    icon = categoryIcon,
+                    type = categoryType,
+                    groupId = activeGroupId
+                )
+                context.currentCategory = createdCategory
+                log.info("Quick category creation result: ${if (createdCategory != null) "success, id=${createdCategory.id}" else "null (duplicate?)"}")
+            } else {
+                log.warn("Skipping quick category creation - activeGroupId is null! userInfo=${context.userInfo}")
+            }
+
+            context.categoryTypeInput = null
+        }
+
+        then {
+            to = MoneyManagerState.CATEGORY_CREATE_RESULT
+        }
+    }
+}
+
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createCategoryTransitions(
     categoryService: CategoryService
 ) {
@@ -133,12 +181,29 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createCategoryTransiti
         action {
             context.categoryTypeInput = null
             context.manualTextInputActive = false
+            context.isQuickCategoryCreation = false
         }
 
         then {
             to = MoneyManagerState.CATEGORY_CREATE_SELECT_TYPE
         }
     }
+
+    // Quick create transitions for expense categories
+    quickCreateCategoryTransition(categoryService, "Quick create: Food out", MoneyManagerButtonType.QUICK_CATEGORY_FOOD_OUT, "Еда вне дома", "🍔")
+    quickCreateCategoryTransition(categoryService, "Quick create: Utilities", MoneyManagerButtonType.QUICK_CATEGORY_UTILITIES, "ЖКХ", "🏠")
+    quickCreateCategoryTransition(categoryService, "Quick create: Medicine", MoneyManagerButtonType.QUICK_CATEGORY_MEDICINE, "Медицина", "💊")
+    quickCreateCategoryTransition(categoryService, "Quick create: Entertainment", MoneyManagerButtonType.QUICK_CATEGORY_ENTERTAINMENT, "Развлечения", "🎮")
+    quickCreateCategoryTransition(categoryService, "Quick create: Clothes", MoneyManagerButtonType.QUICK_CATEGORY_CLOTHES, "Одежда и обувь", "👕")
+    quickCreateCategoryTransition(categoryService, "Quick create: Taxi", MoneyManagerButtonType.QUICK_CATEGORY_TAXI, "Такси", "🚕")
+
+    // Quick create transitions for income categories
+    quickCreateCategoryTransition(categoryService, "Quick create: Salary", MoneyManagerButtonType.QUICK_CATEGORY_SALARY, "Зарплата", "💰")
+    quickCreateCategoryTransition(categoryService, "Quick create: Bonus", MoneyManagerButtonType.QUICK_CATEGORY_BONUS, "Премия", "💸")
+    quickCreateCategoryTransition(categoryService, "Quick create: Gift", MoneyManagerButtonType.QUICK_CATEGORY_GIFT, "Подарок", "🎁")
+    quickCreateCategoryTransition(categoryService, "Quick create: Freelance", MoneyManagerButtonType.QUICK_CATEGORY_FREELANCE, "Фриланс", "💼")
+    quickCreateCategoryTransition(categoryService, "Quick create: Investments", MoneyManagerButtonType.QUICK_CATEGORY_INVESTMENTS, "Инвестиции", "📈")
+    quickCreateCategoryTransition(categoryService, "Quick create: Debt return", MoneyManagerButtonType.QUICK_CATEGORY_DEBT_RETURN, "Возврат долга", "💵")
 
     transition {
         name = "Create category with name"
@@ -188,6 +253,10 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createCategoryTransiti
         condition {
             from = MoneyManagerState.CATEGORY_CREATE_RESULT
             button = MoneyManagerButtonType.CREATE_CATEGORY
+        }
+
+        action {
+            context.isQuickCategoryCreation = false
         }
 
         then {

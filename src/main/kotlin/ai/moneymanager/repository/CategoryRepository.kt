@@ -9,7 +9,9 @@ import org.springframework.stereotype.Repository
 @Repository
 interface CategoryRepository : MongoRepository<CategoryEntity, ObjectId> {
     fun findByGroupId(groupId: ObjectId): List<CategoryEntity>
+    fun findByGroupIdOrderByAuditInfoCreatedAtAsc(groupId: ObjectId): List<CategoryEntity>
     fun findByGroupIdAndType(groupId: ObjectId, type: CategoryType): List<CategoryEntity>
+    fun findByGroupIdAndTypeOrderByAuditInfoCreatedAtAsc(groupId: ObjectId, type: CategoryType): List<CategoryEntity>
     fun findByGroupIdAndName(groupId: ObjectId, name: String): CategoryEntity?
     fun deleteByGroupId(groupId: ObjectId): Long
 }

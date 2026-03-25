@@ -12,6 +12,7 @@ import org.telegram.telegrambots.meta.api.objects.User
 @Service
 class UserInfoService(
     private val userRepository: UserInfoRepository,
+    private val groupService: GroupService,
     @Value("\${chat-machinist.bot.token}")
     private val botToken: String
 ) : DefaultAbsSender(
@@ -23,7 +24,16 @@ class UserInfoService(
 
         if (userInfo == null) {
             val entity = userRepository.save(mapUserModel(telegramUserInfo))
-            return mapEntity(entity)
+
+            // Создаем личную группу для нового пользователя с дефолтными категориями
+            groupService.createPersonalGroup(
+                userId = telegramUserInfo.id,
+                userName = telegramUserInfo.userName
+            )
+
+            // Получаем обновленную информацию пользователя с группами
+            val updatedEntity = userRepository.findUserInfoEntityByTelegramUserId(telegramUserInfo.id)
+            return mapEntity(updatedEntity ?: entity)
         }
 
         return mapEntity(userInfo)

@@ -31,6 +31,7 @@ enum class MoneyManagerState {
     CATEGORY_CREATE_SELECT_TYPE,
     CATEGORY_CREATE_ENTER_NAME,
     CATEGORY_CREATE_RESULT,
+    CATEGORY_LIST_SELECT_TYPE,
     CATEGORY_LIST,
     CATEGORY_ACTIONS,
     CATEGORY_EDIT_NAME,
@@ -72,6 +73,22 @@ enum class MoneyManagerButtonType {
     DELETE_CATEGORY_BUTTON,
     DELETE_ALL_CATEGORIES,
 
+    // Quick category names - Expense
+    QUICK_CATEGORY_FOOD_OUT,
+    QUICK_CATEGORY_UTILITIES,
+    QUICK_CATEGORY_MEDICINE,
+    QUICK_CATEGORY_ENTERTAINMENT,
+    QUICK_CATEGORY_CLOTHES,
+    QUICK_CATEGORY_TAXI,
+
+    // Quick category names - Income
+    QUICK_CATEGORY_SALARY,
+    QUICK_CATEGORY_BONUS,
+    QUICK_CATEGORY_GIFT,
+    QUICK_CATEGORY_FREELANCE,
+    QUICK_CATEGORY_INVESTMENTS,
+    QUICK_CATEGORY_DEBT_RETURN,
+
     // Actions
     CONFIRM_JOIN,
     CONFIRM_DELETE,
@@ -106,6 +123,7 @@ class MoneyManagerContext {
     var categoryTypeInput: CategoryType? = null
     var currentCategory: Category? = null
     var categories: List<Category> = emptyList()
+    var isQuickCategoryCreation: Boolean = false
 
     // -------- SESSION --------
     // Set to true on /start so that stale old dialog instances (which remain in MongoDB)

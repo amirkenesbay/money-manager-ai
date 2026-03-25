@@ -41,7 +41,7 @@ class CategoryService(
      * Получить все категории группы
      */
     fun getCategoriesByGroup(groupId: ObjectId): List<Category> {
-        return categoryRepository.findByGroupId(groupId)
+        return categoryRepository.findByGroupIdOrderByAuditInfoCreatedAtAsc(groupId)
             .map { mapToModel(it) }
     }
 
@@ -49,7 +49,7 @@ class CategoryService(
      * Получить категории группы по типу
      */
     fun getCategoriesByGroupAndType(groupId: ObjectId, type: CategoryType): List<Category> {
-        return categoryRepository.findByGroupIdAndType(groupId, type)
+        return categoryRepository.findByGroupIdAndTypeOrderByAuditInfoCreatedAtAsc(groupId, type)
             .map { mapToModel(it) }
     }
 

@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.mapping.Document
 
 @Document(collection = "category")
-@CompoundIndex(def = "{'groupId': 1, 'name': 1}", unique = true)
+@CompoundIndex(def = "{'groupId': 1, 'name': 1, 'type': 1}", unique = true)
 data class CategoryEntity(
     val id: ObjectId? = null,
     val name: String,

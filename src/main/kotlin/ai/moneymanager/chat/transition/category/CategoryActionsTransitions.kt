@@ -21,12 +21,13 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.categoryActionsTransit
         action {
             val buttonText = buttonText ?: return@action
 
-            val categoryNumber = buttonText.substringBefore(".").trim().toIntOrNull() ?: return@action
-            val categoryIndex = categoryNumber - 1
-
-            if (categoryIndex < 0 || categoryIndex >= context.categories.size) return@action
-
-            context.currentCategory = context.categories[categoryIndex]
+            // Button text format: "icon name" (e.g., "🛒 Продукты")
+            // Find the category that matches this button text
+            context.currentCategory = context.categories.find { category ->
+                val icon = category.icon ?: "📌"
+                val expectedText = "$icon ${category.name}"
+                expectedText == buttonText
+            }
         }
 
         then {

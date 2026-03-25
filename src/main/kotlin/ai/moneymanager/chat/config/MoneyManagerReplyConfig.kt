@@ -40,6 +40,7 @@ class MoneyManagerReplyConfig {
             categoryCreateSelectTypeReply()
             categoryCreateEnterNameReply()
             categoryCreateResultReply()
+            categoryListSelectTypeReply()
             categoryListReply()
             categoryActionsReply()
             categoryEditNameReply()
