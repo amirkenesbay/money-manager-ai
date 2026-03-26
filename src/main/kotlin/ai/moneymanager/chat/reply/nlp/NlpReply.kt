@@ -82,7 +82,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.nlpResponseReply() {
             keyboard {
                 buttonRow {
                     button {
-                        text = "◀️ Назад"
+                        text = "⬅️ Назад"
                         type = MoneyManagerButtonType.BACK_TO_MENU
                     }
                 }

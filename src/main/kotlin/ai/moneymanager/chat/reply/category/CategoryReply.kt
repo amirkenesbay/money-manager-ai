@@ -11,8 +11,11 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryManagementRep
         state = MoneyManagerState.CATEGORY_MANAGEMENT
 
         message {
+            val groupName = context.activeGroupName
+            val groupLine = if (groupName != null) "\nГруппа: $groupName" else ""
+
             text = """
-                📂 Управление категориями
+                📂 Управление категориями$groupLine
 
                 Здесь вы можете создать новые категории или просмотреть существующие.
             """.trimIndent()
@@ -28,12 +31,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryManagementRep
                     button {
                         text = "📋 Мои категории"
                         type = MoneyManagerButtonType.MY_CATEGORIES
-                    }
-                }
-                buttonRow {
-                    button {
-                        text = "🗑 Удалить все категории"
-                        type = MoneyManagerButtonType.DELETE_ALL_CATEGORIES
                     }
                 }
                 buttonRow {
@@ -55,10 +52,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryNoGroupWarnin
             text = """
                 |⚠️ Нет активной группы
                 |
-                |Для создания категорий необходимо сначала создать группу.
-                |Категории привязаны к группе и могут использоваться только в рамках этой группы.
-                |
-                |Создайте группу или выберите существующую для продолжения.
+                |Для управления категориями нужна группа. Создайте группу для личного или совместного учёта.
             """.trimMargin()
 
             keyboard {
@@ -293,6 +287,12 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryListSelectTyp
                 }
                 buttonRow {
                     button {
+                        text = "🗑 Удалить все категории"
+                        type = MoneyManagerButtonType.DELETE_ALL_CATEGORIES
+                    }
+                }
+                buttonRow {
+                    button {
                         text = "⬅️ Назад"
                         type = MoneyManagerButtonType.CANCEL
                     }
@@ -331,7 +331,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryListReply() {
                 """
                     $typeEmoji Категории $typeText
 
-                    Выберите категорию для редактирования:
+                    Выберите категорию:
                 """.trimIndent()
             }
 
@@ -365,14 +365,21 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryActionsReply(
         state = MoneyManagerState.CATEGORY_ACTIONS
 
         message {
+            if (context.textInputResponse) {
+                newPinnedMessage = true
+                context.textInputResponse = false
+            }
+
             val category = context.currentCategory
             val icon = category?.icon ?: "📌"
             val typeText = if (category?.type == CategoryType.EXPENSE) "расхода" else "дохода"
+            val confirmation = context.renameConfirmation?.let { "\n\n$it" } ?: ""
+            context.renameConfirmation = null
 
             text = """
                 Категория $typeText: $icon ${category?.name}
 
-                Выберите действие:
+                Выберите действие:$confirmation
             """.trimIndent()
 
             keyboard {
@@ -380,6 +387,12 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryActionsReply(
                     button {
                         text = "✏️ Изменить название"
                         type = MoneyManagerButtonType.EDIT_CATEGORY
+                    }
+                }
+                buttonRow {
+                    button {
+                        text = "🎨 Изменить иконку"
+                        type = MoneyManagerButtonType.EDIT_CATEGORY_ICON
                     }
                 }
                 buttonRow {
@@ -392,6 +405,39 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryActionsReply(
                     button {
                         text = "⬅️ Назад к списку"
                         type = MoneyManagerButtonType.BACK_TO_MENU
+                    }
+                }
+            }
+        }
+    }
+}
+
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryEditIconReply() {
+    reply {
+        state = MoneyManagerState.CATEGORY_EDIT_ICON
+
+        message {
+            val category = context.currentCategory
+            val icon = category?.icon ?: "📌"
+
+            val errorText = if (context.iconInputError) {
+                "\n\n⚠️ Пожалуйста, отправьте эмодзи, а не текст"
+            } else ""
+            context.iconInputError = false
+
+            text = """
+                |🎨 Изменение иконки
+                |
+                |Текущая иконка: $icon ${category?.name}
+                |
+                |Отправьте новый эмодзи:$errorText
+            """.trimMargin()
+
+            keyboard {
+                buttonRow {
+                    button {
+                        text = "❌ Отмена"
+                        type = MoneyManagerButtonType.CANCEL
                     }
                 }
             }

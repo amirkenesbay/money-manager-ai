@@ -28,6 +28,8 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.editGroupTransitions(
             if (updatedGroup != null) {
                 context.currentGroup = updatedGroup
                 context.userGroups = groupService.getUserGroups(userId)
+                context.renameConfirmation = "✅ Название изменено на «${updatedGroup.name}»"
+                context.textInputResponse = true
             }
         }
 

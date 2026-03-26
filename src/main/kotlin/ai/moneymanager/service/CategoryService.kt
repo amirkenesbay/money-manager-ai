@@ -20,7 +20,7 @@ class CategoryService(
      */
     fun createCategory(name: String, icon: String?, type: CategoryType, groupId: ObjectId): Category? {
         // Проверяем, не существует ли уже категория с таким названием в этой группе
-        val existingCategory = categoryRepository.findByGroupIdAndName(groupId, name)
+        val existingCategory = categoryRepository.findByGroupIdAndNameAndType(groupId, name, type)
         if (existingCategory != null) {
             // Категория с таким названием уже существует
             return null

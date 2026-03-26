@@ -16,7 +16,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.deleteAllCategoriesTra
         name = "Start delete all categories"
 
         condition {
-            from = MoneyManagerState.CATEGORY_MANAGEMENT
+            from = MoneyManagerState.CATEGORY_LIST_SELECT_TYPE
             button = MoneyManagerButtonType.DELETE_ALL_CATEGORIES
         }
 

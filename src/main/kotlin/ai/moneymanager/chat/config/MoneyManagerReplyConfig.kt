@@ -43,6 +43,7 @@ class MoneyManagerReplyConfig {
             categoryListSelectTypeReply()
             categoryListReply()
             categoryActionsReply()
+            categoryEditIconReply()
             categoryEditNameReply()
             categoryDeleteConfirmReply()
             categoryDeleteAllConfirmReply()

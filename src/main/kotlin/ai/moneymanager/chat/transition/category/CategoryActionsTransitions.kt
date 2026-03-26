@@ -85,16 +85,106 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.categoryActionsTransit
             val updatedCategory = categoryService.updateCategoryName(categoryId, newName)
             if (updatedCategory != null) {
                 context.currentCategory = updatedCategory
+                context.renameConfirmation = "✅ Название изменено на «${updatedCategory.name}»"
+                context.textInputResponse = true
 
                 val activeGroupId = context.userInfo?.activeGroupId
-                if (activeGroupId != null) {
-                    context.categories = categoryService.getCategoriesByGroup(activeGroupId)
+                val categoryType = context.categoryTypeInput
+                if (activeGroupId != null && categoryType != null) {
+                    context.categories = categoryService.getCategoriesByGroupAndType(activeGroupId, categoryType)
                 }
             }
         }
 
         then {
             to = MoneyManagerState.CATEGORY_ACTIONS
+        }
+    }
+
+    transition {
+        name = "Start edit category icon"
+
+        condition {
+            from = MoneyManagerState.CATEGORY_ACTIONS
+            button = MoneyManagerButtonType.EDIT_CATEGORY_ICON
+        }
+
+        action {
+            context.manualTextInputActive = true
+        }
+
+        then {
+            to = MoneyManagerState.CATEGORY_EDIT_ICON
+        }
+    }
+
+    transition {
+        name = "Cancel edit category icon"
+
+        condition {
+            from = MoneyManagerState.CATEGORY_EDIT_ICON
+            button = MoneyManagerButtonType.CANCEL
+        }
+
+        action {
+            context.manualTextInputActive = false
+        }
+
+        then {
+            to = MoneyManagerState.CATEGORY_ACTIONS
+        }
+    }
+
+    transition {
+        name = "Save category new icon"
+
+        condition {
+            from = MoneyManagerState.CATEGORY_EDIT_ICON
+            eventType = EventType.TEXT
+            guard {
+                val text = update.message?.text?.trim() ?: return@guard false
+                text.isNotEmpty() && !text.any { it in 'a'..'z' || it in 'A'..'Z' || it in 'а'..'я' || it in 'А'..'Я' || it in '0'..'9' }
+            }
+        }
+
+        action {
+            context.manualTextInputActive = false
+            context.iconInputError = false
+            val newIcon = update.message.text?.trim() ?: return@action
+            val categoryId = context.currentCategory?.id ?: return@action
+
+            val updatedCategory = categoryService.updateCategoryIcon(categoryId, newIcon)
+            if (updatedCategory != null) {
+                context.currentCategory = updatedCategory
+                context.textInputResponse = true
+
+                val activeGroupId = context.userInfo?.activeGroupId
+                val categoryType = context.categoryTypeInput
+                if (activeGroupId != null && categoryType != null) {
+                    context.categories = categoryService.getCategoriesByGroupAndType(activeGroupId, categoryType)
+                }
+            }
+        }
+
+        then {
+            to = MoneyManagerState.CATEGORY_ACTIONS
+        }
+    }
+
+    transition {
+        name = "Reject non-emoji icon input"
+
+        condition {
+            from = MoneyManagerState.CATEGORY_EDIT_ICON
+            eventType = EventType.TEXT
+        }
+
+        action {
+            context.iconInputError = true
+        }
+
+        then {
+            to = MoneyManagerState.CATEGORY_EDIT_ICON
         }
     }
 
@@ -121,12 +211,13 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.categoryActionsTransit
 
         action {
             val categoryId = context.currentCategory?.id ?: return@action
+            val categoryType = context.currentCategory?.type
 
             val deleted = categoryService.deleteCategory(categoryId)
             if (deleted) {
                 val activeGroupId = context.userInfo?.activeGroupId
-                if (activeGroupId != null) {
-                    context.categories = categoryService.getCategoriesByGroup(activeGroupId)
+                if (activeGroupId != null && categoryType != null) {
+                    context.categories = categoryService.getCategoriesByGroupAndType(activeGroupId, categoryType)
                 }
                 context.currentCategory = null
             }

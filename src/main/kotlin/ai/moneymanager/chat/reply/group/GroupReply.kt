@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.reply.group
 
+import ai.moneymanager.domain.model.GroupType
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
@@ -12,10 +13,10 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupManagementReply(
 
         message {
             text = """
-                👥 Управление группами
-
-                Здесь вы можете создать новую группу для совместного учета или присоединиться к существующей.
-            """.trimIndent()
+                |👥 Совместный учёт
+                |
+                |Ведите финансы вместе с семьёй, друзьями или коллегами. Создайте группу и пригласите участников по ссылке.
+            """.trimMargin()
 
             keyboard {
                 buttonRow {
@@ -47,10 +48,10 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupCreateEnterNameR
 
         message {
             text = """
-                ➕ Создание новой группы
-
-                Введите название группы или выберите готовый вариант:
-            """.trimIndent()
+                |➕ Новая группа для совместного учёта
+                |
+                |Введите название или выберите готовый вариант:
+            """.trimMargin()
 
             keyboard {
                 // Быстрые варианты названий
@@ -92,17 +93,21 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupInviteShowReply(
         state = MoneyManagerState.GROUP_INVITE_SHOW
 
         message {
-            // Если быстрое создание (кнопка) - редактируем сообщение, если ручной ввод - новое сообщение
-            newMessage = !context.isQuickGroupCreation
+            // Редактируем сообщение при быстром создании или переходе из действий группы, иначе - новое сообщение
+            newMessage = !context.isQuickGroupCreation && !context.inviteFromActions
 
             val group = context.currentGroup
             if (group != null) {
                 val botUsername = "moneyManagerAIbot"
+                val activeNotice = if (!context.inviteFromActions) {
+                    "\n|\n|✅ Группа установлена как активная"
+                } else ""
+
                 text = """
-                    |🔗 Ссылка для приглашения в группу "${group.name}"
+                    |🔗 Пригласите участников в "${group.name}"
                     |
-                    |Отправьте участникам эту ссылку:
-                    |https://t.me/$botUsername?start=join_${group.inviteToken}
+                    |Отправьте эту ссылку тем, с кем хотите вести совместный учёт:
+                    |https://t.me/$botUsername?start=join_${group.inviteToken}$activeNotice
                 """.trimMargin()
             } else {
                 text = "Ошибка: группа не найдена"
@@ -149,12 +154,12 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupJoinConfirmReply
                 }
 
                 text = """
-                    |👥 Приглашение в группу "${group.name}"
+                    |👥 Приглашение в совместный учёт "${group.name}"
                     |
                     |Участников: ${group.memberIds.size}
                     |Создатель: $ownerName
                     |
-                    |Присоединиться к этой группе?
+                    |Присоединиться?
                 """.trimMargin()
 
                 keyboard {
@@ -230,10 +235,10 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupListReply() {
                 }
             } else {
                 text = """
-                    📋 Мои группы
-
-                    У вас пока нет групп. Создайте новую группу для совместного учета!
-                """.trimIndent()
+                    |📋 Мои группы
+                    |
+                    |У вас пока нет групп. Создайте группу, чтобы вести учёт вместе с другими!
+                """.trimMargin()
 
                 keyboard {
                     buttonRow {
@@ -254,21 +259,32 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupActionsReply() {
         state = MoneyManagerState.GROUP_ACTIONS
 
         message {
+            if (context.textInputResponse) {
+                newPinnedMessage = true
+                context.textInputResponse = false
+            }
+
             val group = context.currentGroup
             val userInfo = context.userInfo
             val isOwner = group?.ownerId == userInfo?.telegramUserId
             val isActive = group?.id == userInfo?.activeGroupId
 
             if (group != null) {
+                val isPersonal = group.type == GroupType.PERSONAL
                 val ownerText = if (isOwner) "👑 Вы владелец" else ""
                 val activeText = if (isActive) "✅ Активная группа" else ""
                 val statusLine = listOf(ownerText, activeText).filter { it.isNotEmpty() }.joinToString(" · ")
+                val confirmation = context.renameConfirmation?.let { "\n|\n|$it" } ?: ""
+                context.renameConfirmation = null
+                val personalHint = if (isOwner && isPersonal) {
+                    "\n|\n|💡 Для совместного учёта создайте новую группу в разделе «Совместный учёт»"
+                } else ""
 
                 text = """
                     |👥 Группа "${group.name}"
                     |
                     |${if (statusLine.isNotEmpty()) "$statusLine\n|" else ""}
-                    |Участников: ${group.memberIds.size}
+                    |Участников: ${group.memberIds.size}$confirmation$personalHint
                 """.trimMargin()
 
                 keyboard {
@@ -279,10 +295,12 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupActionsReply() {
                                 type = MoneyManagerButtonType.EDIT_GROUP
                             }
                         }
-                        buttonRow {
-                            button {
-                                text = "🔗 Пригласить в группу"
-                                type = MoneyManagerButtonType.INVITE_TO_GROUP
+                        if (!isPersonal) {
+                            buttonRow {
+                                button {
+                                    text = "🔗 Пригласить в группу"
+                                    type = MoneyManagerButtonType.INVITE_TO_GROUP
+                                }
                             }
                         }
                     }
@@ -300,7 +318,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupActionsReply() {
                             }
                         }
                     }
-                    if (isOwner) {
+                    if (isOwner && !isPersonal) {
                         buttonRow {
                             button {
                                 text = "🗑 Удалить группу"

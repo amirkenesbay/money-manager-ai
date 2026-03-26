@@ -35,6 +35,7 @@ enum class MoneyManagerState {
     CATEGORY_LIST,
     CATEGORY_ACTIONS,
     CATEGORY_EDIT_NAME,
+    CATEGORY_EDIT_ICON,
     CATEGORY_DELETE_CONFIRM,
     CATEGORY_DELETE_ALL_CONFIRM,
 }
@@ -70,6 +71,7 @@ enum class MoneyManagerButtonType {
     CATEGORY_TYPE_INCOME,
     CATEGORY_ITEM,
     EDIT_CATEGORY,
+    EDIT_CATEGORY_ICON,
     DELETE_CATEGORY_BUTTON,
     DELETE_ALL_CATEGORIES,
 
@@ -119,12 +121,18 @@ class MoneyManagerContext {
     var categoriesCountToDelete: Int = 0
 
     // -------- CATEGORIES --------
+    var activeGroupName: String? = null
     var categoryNameInput: String? = null
     var categoryIconInput: String? = null
     var categoryTypeInput: CategoryType? = null
     var currentCategory: Category? = null
     var categories: List<Category> = emptyList()
     var isQuickCategoryCreation: Boolean = false
+
+    // -------- UI FEEDBACK --------
+    var renameConfirmation: String? = null
+    var textInputResponse: Boolean = false
+    var iconInputError: Boolean = false
 
     // -------- SESSION --------
     // Set to true on /start so that stale old dialog instances (which remain in MongoDB)

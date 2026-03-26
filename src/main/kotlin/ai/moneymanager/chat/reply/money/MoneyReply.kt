@@ -16,7 +16,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.menuReply() {
                 |Я помогу управлять финансами. Просто напиши мне:
                 |• «кофе 500» — добавить расход
                 |• «зарплата 150 000» — добавить доход
-                |• «создай группу семья» — создать группу
+                |• «создай группу семья» — совместный учёт
                 |
                 |Или используй кнопки 👇
             """.trimMargin()
@@ -24,7 +24,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.menuReply() {
             keyboard {
                 buttonRow {
                     button {
-                        text = "👥 Совместный учет"
+                        text = "👥 Совместный учёт"
                         type = MoneyManagerButtonType.SHARED_ACCOUNTING
                     }
                 }
