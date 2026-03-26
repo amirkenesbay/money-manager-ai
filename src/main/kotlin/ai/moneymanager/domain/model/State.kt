@@ -133,6 +133,7 @@ class MoneyManagerContext {
     var renameConfirmation: String? = null
     var textInputResponse: Boolean = false
     var iconInputError: Boolean = false
+    var groupNameDuplicateError: Boolean = false
 
     // -------- SESSION --------
     // Set to true on /start so that stale old dialog instances (which remain in MongoDB)

@@ -28,7 +28,10 @@ class GroupService(
     /**
      * Создает новую группу для совместного учета
      */
-    fun createGroup(ownerId: Long, name: String): MoneyGroup {
+    fun createGroup(ownerId: Long, name: String): MoneyGroup? {
+        if (groupRepository.findByOwnerIdAndName(ownerId, name) != null) {
+            return null
+        }
         val inviteToken = generateInviteToken()
         val groupEntity = MoneyGroupEntity(
             name = name,
@@ -173,6 +176,12 @@ class GroupService(
 
         // Проверяем, является ли пользователь владельцем
         if (groupEntity.ownerId != userId) {
+            return null
+        }
+
+        // Проверяем дубликат имени
+        val existing = groupRepository.findByOwnerIdAndName(userId, newName)
+        if (existing != null && existing.id != groupId) {
             return null
         }
 

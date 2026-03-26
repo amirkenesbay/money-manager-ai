@@ -28,16 +28,22 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.quickCreateGro
             context.isQuickGroupCreation = true
 
             val createdGroup = groupService.createGroup(user.id, groupName)
-            context.currentGroup = createdGroup
-
-            context.userInfo = context.userInfo?.copy(
-                activeGroupId = createdGroup.id,
-                groupIds = context.userInfo?.groupIds?.plus(createdGroup.id!!) ?: setOf(createdGroup.id!!)
-            )
+            if (createdGroup != null) {
+                context.currentGroup = createdGroup
+                context.userInfo = context.userInfo?.copy(
+                    activeGroupId = createdGroup.id,
+                    groupIds = context.userInfo?.groupIds?.plus(createdGroup.id!!) ?: setOf(createdGroup.id!!)
+                )
+                context.groupNameDuplicateError = false
+            } else {
+                context.groupNameDuplicateError = true
+            }
         }
 
         then {
-            to = MoneyManagerState.GROUP_INVITE_SHOW
+            to = MoneyManagerState.GROUP_CREATE_ENTER_NAME
+            noReply = true
+            trigger { sameDialog = true }
         }
     }
 }
@@ -93,7 +99,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createGroupTransitions
         }
 
         action {
-            context.manualTextInputActive = false
             val groupName = update.message.text?.trim()
                 ?.takeIf { it.isNotBlank() }
                 ?.take(MAX_GROUP_NAME_LENGTH)
@@ -102,16 +107,53 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createGroupTransitions
             context.isQuickGroupCreation = false
 
             val createdGroup = groupService.createGroup(user.id, groupName)
-            context.currentGroup = createdGroup
+            if (createdGroup != null) {
+                context.manualTextInputActive = false
+                context.currentGroup = createdGroup
+                context.userInfo = context.userInfo?.copy(
+                    activeGroupId = createdGroup.id,
+                    groupIds = context.userInfo?.groupIds?.plus(createdGroup.id!!) ?: setOf(createdGroup.id!!)
+                )
+                context.groupNameDuplicateError = false
+            } else {
+                context.groupNameDuplicateError = true
+            }
+        }
 
-            context.userInfo = context.userInfo?.copy(
-                activeGroupId = createdGroup.id,
-                groupIds = context.userInfo?.groupIds?.plus(createdGroup.id!!) ?: setOf(createdGroup.id!!)
-            )
+        then {
+            to = MoneyManagerState.GROUP_CREATE_ENTER_NAME
+            noReply = true
+            trigger { sameDialog = true }
+        }
+    }
+
+    // Triggered: group created successfully
+    transition {
+        name = "Group created successfully"
+
+        condition {
+            from = MoneyManagerState.GROUP_CREATE_ENTER_NAME
+            eventType = EventType.TRIGGERED
+            guard { !context.groupNameDuplicateError }
         }
 
         then {
             to = MoneyManagerState.GROUP_INVITE_SHOW
+        }
+    }
+
+    // Triggered: duplicate group name
+    transition {
+        name = "Group name duplicate error"
+
+        condition {
+            from = MoneyManagerState.GROUP_CREATE_ENTER_NAME
+            eventType = EventType.TRIGGERED
+            guard { context.groupNameDuplicateError }
+        }
+
+        then {
+            to = MoneyManagerState.GROUP_CREATE_ENTER_NAME
         }
     }
 }

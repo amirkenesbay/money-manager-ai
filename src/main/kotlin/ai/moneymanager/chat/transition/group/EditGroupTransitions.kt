@@ -30,6 +30,11 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.editGroupTransitions(
                 context.userGroups = groupService.getUserGroups(userId)
                 context.renameConfirmation = "✅ Название изменено на «${updatedGroup.name}»"
                 context.textInputResponse = true
+                context.groupNameDuplicateError = false
+            } else {
+                context.groupNameDuplicateError = true
+                context.renameConfirmation = "❌ Группа с названием «$newName» уже существует"
+                context.textInputResponse = true
             }
         }
 

@@ -47,10 +47,15 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupCreateEnterNameR
         state = MoneyManagerState.GROUP_CREATE_ENTER_NAME
 
         message {
+            val errorText = if (context.groupNameDuplicateError) {
+                "\n\n⚠️ Группа с названием «${context.groupNameInput}» уже существует. Введите другое название:"
+            } else ""
+            context.groupNameDuplicateError = false
+
             text = """
                 |➕ Новая группа для совместного учёта
                 |
-                |Введите название или выберите готовый вариант:
+                |Введите название или выберите готовый вариант:$errorText
             """.trimMargin()
 
             keyboard {
