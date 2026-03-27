@@ -110,7 +110,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.groupActionsTransition
             val group = context.currentGroup
             if (group != null) {
                 // Fetch UserInfo for all member IDs
-                val membersList = group.memberIds.mapNotNull { memberId ->
+                val membersList = group.memberTelegramUserIds.mapNotNull { memberId ->
                     userInfoService.getUserInfoByTelegramId(memberId)
                 }
                 context.groupMembersList = membersList

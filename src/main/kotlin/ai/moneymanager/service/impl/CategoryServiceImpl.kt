@@ -98,13 +98,12 @@ class CategoryServiceImpl(
      * @param groupId ID группы
      * @return количество удаленных категорий
      */
-    override fun deleteAllCategoriesForGroup(groupId: ObjectId): Int {
+    override fun deleteAllCategoriesForGroup(groupId: ObjectId): Long {
         return try {
-            val deletedCount = categoryRepository.deleteByGroupId(groupId)
-            deletedCount.toInt()
+            categoryRepository.deleteByGroupId(groupId)
         } catch (e: Exception) {
             println("❌ Error deleting all categories for group $groupId: ${e.message}")
-            0
+            0L
         }
     }
 

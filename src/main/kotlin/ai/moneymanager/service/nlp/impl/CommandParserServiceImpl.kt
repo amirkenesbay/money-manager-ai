@@ -6,6 +6,7 @@ import ai.moneymanager.domain.model.nlp.BotFunctions
 import ai.moneymanager.domain.model.nlp.arguments.AddExpenseArgs
 import ai.moneymanager.domain.model.nlp.arguments.AddIncomeArgs
 import ai.moneymanager.domain.model.nlp.arguments.CreateGroupArgs
+import ai.moneymanager.domain.model.nlp.arguments.DeleteGroupArgs
 import ai.moneymanager.domain.model.nlp.enum.GeminiFunction
 import ai.moneymanager.mapper.GeminiArgsMapper
 import ai.moneymanager.service.nlp.CommandParserService
@@ -145,6 +146,12 @@ class CommandParserServiceImpl(
                     // Можно добавить простую валидацию:
                     if (dto.groupName.isBlank()) return BotCommand.ParseError("groupName is blank")
                     BotCommand.CreateGroup(dto.groupName)
+                }
+
+                GeminiFunction.DELETE_GROUP -> {
+                    val dto = argsMapper.map<DeleteGroupArgs>(args)
+                    if (dto.groupName.isBlank()) return BotCommand.ParseError("groupName is blank")
+                    BotCommand.DeleteGroup(dto.groupName)
                 }
 
                 GeminiFunction.ADD_EXPENSE -> {

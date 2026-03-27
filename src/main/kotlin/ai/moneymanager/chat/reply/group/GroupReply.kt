@@ -223,7 +223,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupListReply() {
                     userGroups.forEach { group ->
                         buttonRow {
                             button {
-                                val isOwner = group.ownerId == userInfo?.telegramUserId
+                                val isOwner = group.ownerTelegramUserId == userInfo?.telegramUserId
                                 val isActive = group.id == userInfo?.activeGroupId
                                 val prefix = when {
                                     isActive && isOwner -> "✅ 👑 "
@@ -277,7 +277,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupActionsReply() {
 
             val group = context.currentGroup
             val userInfo = context.userInfo
-            val isOwner = group?.ownerId == userInfo?.telegramUserId
+            val isOwner = group?.ownerTelegramUserId == userInfo?.telegramUserId
             val isActive = group?.id == userInfo?.activeGroupId
 
             if (group != null) {
@@ -295,7 +295,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupActionsReply() {
                     |👥 Группа "${group.name}"
                     |
                     |${if (statusLine.isNotEmpty()) "$statusLine\n|" else ""}
-                    |Участников: ${group.memberIds.size}$confirmation$personalHint
+                    |Участников: ${group.memberTelegramUserIds.size}$confirmation$personalHint
                 """.trimMargin()
 
                 keyboard {
@@ -435,76 +435,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupDeleteConfirmRep
     }
 }
 
-<<<<<<< HEAD
-=======
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupEditSelectReply() {
-    reply {
-        state = MoneyManagerState.GROUP_EDIT_SELECT
-
-        message {
-            val userInfo = context.userInfo
-            val userGroups = context.userGroups
-
-            // Фильтруем только те группы, где пользователь является владельцем
-            val ownedGroups = userGroups.filter { it.ownerTelegramUserId == userInfo?.telegramUserId }
-
-            if (ownedGroups.isNotEmpty()) {
-                val groupsList = ownedGroups.mapIndexed { index, group ->
-                    "${index + 1} - ${group.name}"
-                }.joinToString("\n")
-
-                text = """
-                    |✏️ Редактирование группы
-                    |
-                    |Выберите группу для редактирования:
-                    |
-                    |$groupsList
-                    |
-                    |⚠️ Вы можете редактировать только те группы, где вы являетесь владельцем.
-                """.trimMargin()
-
-                keyboard {
-                    // Создаем кнопки только для групп, где пользователь - владелец
-                    ownedGroups.chunked(3).forEach { groupsInRow ->
-                        buttonRow {
-                            groupsInRow.forEach { group ->
-                                button {
-                                    val index = ownedGroups.indexOf(group) + 1
-                                    text = "$index"
-                                    type = MoneyManagerButtonType.EDIT_GROUP
-                                }
-                            }
-                        }
-                    }
-
-                    buttonRow {
-                        button {
-                            text = "❌ Отмена"
-                            type = MoneyManagerButtonType.CANCEL
-                        }
-                    }
-                }
-            } else {
-                text = """
-                    ❌ Нет групп для редактирования
-
-                    У вас нет групп, где вы являетесь владельцем.
-                """.trimIndent()
-
-                keyboard {
-                    buttonRow {
-                        button {
-                            text = "⬅️ Назад"
-                            type = MoneyManagerButtonType.BACK_TO_MENU
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
->>>>>>> 7472de4 (modify create finance operation)
-
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupEditEnterNameReply() {
     reply {
         state = MoneyManagerState.GROUP_EDIT_ENTER_NAME
@@ -553,13 +483,13 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupMembersReply() {
 
             if (group != null) {
                 // Find owner information
-                val ownerInfo = membersList.find { it.telegramUserId == group.ownerId }
-                val ownerName = formatUserName(ownerInfo, group.ownerId)
+                val ownerInfo = membersList.find { it.telegramUserId == group.ownerTelegramUserId }
+                val ownerName = formatUserName(ownerInfo, group.ownerTelegramUserId)
 
                 // Format members list
                 val membersText = if (membersList.isNotEmpty()) {
                     membersList.joinToString("\n") { member ->
-                        val isOwner = member.telegramUserId == group.ownerId
+                        val isOwner = member.telegramUserId == group.ownerTelegramUserId
                         val memberName = formatUserName(member, member.telegramUserId ?: 0)
                         if (isOwner) {
                             "• 👑 $memberName"
@@ -569,27 +499,17 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupMembersReply() {
                     }
                 } else {
                     // Fallback if member info wasn't loaded
-                    group.memberIds.joinToString("\n") { "• Пользователь ID: $it" }
+                    group.memberTelegramUserIds.joinToString("\n") { "• Пользователь ID: $it" }
                 }
 
                 text = """
-<<<<<<< HEAD
                     |👥 Участники группы "${group.name}"
                     |
-                    |Всего участников: ${group.memberIds.size}
+                    |Всего участников: ${group.memberTelegramUserIds.size}
                     |Создатель: $ownerName
                     |
                     |$membersText
                 """.trimMargin()
-=======
-                    👥 Участники группы "${group.name}"
-
-                    Всего участников: ${group.memberTelegramUserIds.size}
-                    Создатель: ID ${group.ownerTelegramUserId}
-
-                    ${group.memberTelegramUserIds.joinToString("\n") { "• Пользователь ID: $it" }}
-                """.trimIndent()
->>>>>>> 7472de4 (modify create finance operation)
             } else {
                 text = "Группа не найдена"
             }
