@@ -52,6 +52,7 @@ class MoneyManagerReplyConfig {
             // nlpConfirmCreateGroupReply()
             // nlpConfirmDeleteGroupReply()
             // nlpResponseReply()
+
         }
     }
 }

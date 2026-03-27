@@ -1,0 +1,83 @@
+package ai.moneymanager.service
+
+import ai.moneymanager.domain.model.FinanceOperation
+import ai.moneymanager.dto.CreateFinanceOperationRequestDto
+import ai.moneymanager.dto.HistoryFinanceOperationDto
+import ai.moneymanager.dto.UpdateFinanceOperationRequestDto
+import org.bson.types.ObjectId
+import java.math.BigDecimal
+import java.time.LocalDate
+
+interface FinanceOperationService {
+    /**
+     * Создать финансовую операцию
+     */
+    fun create(createDto: CreateFinanceOperationRequestDto): FinanceOperation
+
+    /**
+     * Получить полную сумму всей группы
+     */
+    fun getBalanceGroupFromGroupEntity(groupId: ObjectId, telegramUserId: Long): BigDecimal
+
+    /**
+     * Получить историю финансовых операций у группы в конкретный период
+     */
+    fun getHistoryFinanceOperationByPeriodFromGroupEntity(groupId: ObjectId, telegramUserId: Long, fromDate: LocalDate,
+                                                          toDate: LocalDate): List<HistoryFinanceOperationDto>
+
+    /**
+     * Получить всю историю финансовых операций группы
+     */
+    fun getAllHistoryFinanceOperationFromGroupEntity(groupId: ObjectId, telegramUserId: Long): List<HistoryFinanceOperationDto>
+
+    /**
+     * Получить баланс группы за всю историю доходов группы
+     */
+    fun getIncomeOperationBalanceForAllTimeFromGroup(groupId: ObjectId, telegramUserId: Long): BigDecimal
+
+    /**
+     * Получить баланс группы за всю историю расходов группы
+     */
+    fun getExpenseOperationBalanceForAllTimeFromGroupEntity(groupId: ObjectId, telegramUserId: Long): BigDecimal
+
+    /**
+     * Получить сумму доходов по категории за весь период
+     */
+    fun getIncomeBalanceByCategoryId(groupId: ObjectId, telegramUserId: Long, categoryId: ObjectId): BigDecimal
+
+    /**
+     * Получить сумму расходов по категории за весь период
+     */
+    fun getExpenseBalanceByCategoryId(groupId: ObjectId, telegramUserId: Long, categoryId: ObjectId): BigDecimal
+
+    /**
+     * Получить баланс категории за всю историю существование категории
+     */
+    fun getBalanceCategoryFromCategoryEntity(groupId: ObjectId, telegramUserId: Long, categoryId: ObjectId): BigDecimal
+
+    /**
+     * Получить историю финансовых операций у категории в конкретный период
+     */
+    fun getHistoryFinanceOperationByPeriodFromCategoryEntity(groupId: ObjectId, telegramUserId: Long, categoryId: ObjectId,
+                                                             fromDate: LocalDate, toDate: LocalDate): List<HistoryFinanceOperationDto>
+
+    /**
+     * Получить всю историю финансовых операций категории
+     */
+    fun getAllHistoryFinanceOperationFromCategoryEntity(groupId: ObjectId, telegramUserId: Long, categoryId: ObjectId): List<HistoryFinanceOperationDto>
+
+    /**
+     * Изменить запись
+     */
+    fun updateFinanceOperation(id: ObjectId, updateDto: UpdateFinanceOperationRequestDto): FinanceOperation
+
+    /**
+     * Удалить запись
+     */
+    fun deleteFinanceOperation(id: ObjectId, telegramUserId: Long)
+
+    /**
+     * Удалить все записи в конкретной категории
+     */
+    fun deleteAllFinanceOperation(ids: List<ObjectId>, groupId: ObjectId, categoryId: ObjectId, telegramUserId: Long)
+}

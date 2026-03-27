@@ -69,7 +69,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
                     context.pendingGroup = group
 
                     if (group != null) {
-                        context.pendingGroupOwnerInfo = userInfoService.getUserInfoByTelegramId(group.ownerId)
+                        context.pendingGroupOwnerInfo = userInfoService.getUserInfoByTelegramId(group.ownerTelegramUserId)
                     }
                 }
             }
