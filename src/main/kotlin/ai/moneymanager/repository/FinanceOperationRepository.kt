@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.repository.Aggregation
 import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.stereotype.Repository
 import java.math.BigDecimal
-import java.time.LocalDateTime
+import java.time.LocalDate
 
 @Repository
 interface FinanceOperationRepository : MongoRepository<FinanceOperationEntity, ObjectId> {
@@ -49,6 +49,8 @@ interface FinanceOperationRepository : MongoRepository<FinanceOperationEntity, O
                     "'telegramUserId': 1, " +
                     "'amount': 1, " +
                     "'currency': 1, " +
+                    "'operationType': 1, " +
+                    "'categoryId': 1, " +
                     "'day': 1, " +
                     "'description': 1, " +
                     "'createdAt': '\$auditInfo.created_at' } }"
@@ -66,14 +68,16 @@ interface FinanceOperationRepository : MongoRepository<FinanceOperationEntity, O
                     "'telegramUserId': 1, " +
                     "'amount': 1, " +
                     "'currency': 1, " +
+                    "'operationType': 1, " +
+                    "'categoryId': 1, " +
                     "'day': 1, " +
                     "'description': 1, " +
                     "'createdAt': '\$auditInfo.created_at' } }"]
     )
     fun getHistoryFinanceOperationByPeriodFromGroupEntity(
         groupId: ObjectId,
-        from: LocalDateTime,
-        to: LocalDateTime
+        from: LocalDate,
+        to: LocalDate
     ): List<HistoryFinanceOperationDto>
 
     @Aggregation(
@@ -113,9 +117,11 @@ interface FinanceOperationRepository : MongoRepository<FinanceOperationEntity, O
                     "'telegramUserId': 1, " +
                     "'amount': 1, " +
                     "'currency': 1, " +
+                    "'operationType': 1, " +
+                    "'categoryId': 1, " +
                     "'day': 1, " +
                     "'description': 1, " +
-                    "'createdAt': '\$auditInfo.created_at' } }"
+                    "'createdAt': '\$auditInfo.created_at' }  }"
         ]
     )
     fun getAllHistoryFinanceOperationFromCategoryEntity(categoryId: ObjectId): List<HistoryFinanceOperationDto>
@@ -130,13 +136,17 @@ interface FinanceOperationRepository : MongoRepository<FinanceOperationEntity, O
                     "'telegramUserId': 1, " +
                     "'amount': 1, " +
                     "'currency': 1, " +
+                    "'operationType': 1, " +
+                    "'categoryId': 1, " +
                     "'day': 1, " +
                     "'description': 1, " +
                     "'createdAt': '\$auditInfo.created_at' } }"]
     )
     fun getHistoryFinanceOperationByPeriodFromCategoryEntity(
         categoryId: ObjectId,
-        from: LocalDateTime,
-        to: LocalDateTime
+        from: LocalDate,
+        to: LocalDate
     ): List<HistoryFinanceOperationDto>
+
+    fun deleteAllByGroupId(groupId: ObjectId)
 }

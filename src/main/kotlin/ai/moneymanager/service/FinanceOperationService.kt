@@ -6,7 +6,7 @@ import ai.moneymanager.dto.HistoryFinanceOperationDto
 import ai.moneymanager.dto.UpdateFinanceOperationRequestDto
 import org.bson.types.ObjectId
 import java.math.BigDecimal
-import java.time.LocalDateTime
+import java.time.LocalDate
 
 interface FinanceOperationService {
     /**
@@ -22,8 +22,8 @@ interface FinanceOperationService {
     /**
      * Получить историю финансовых операций у группы в конкретный период
      */
-    fun getHistoryFinanceOperationByPeriodFromGroupEntity(groupId: ObjectId, telegramUserId: Long, fromDate: LocalDateTime,
-                                                          toDate: LocalDateTime): List<HistoryFinanceOperationDto>
+    fun getHistoryFinanceOperationByPeriodFromGroupEntity(groupId: ObjectId, telegramUserId: Long, fromDate: LocalDate,
+                                                          toDate: LocalDate): List<HistoryFinanceOperationDto>
 
     /**
      * Получить всю историю финансовых операций группы
@@ -59,7 +59,7 @@ interface FinanceOperationService {
      * Получить историю финансовых операций у категории в конкретный период
      */
     fun getHistoryFinanceOperationByPeriodFromCategoryEntity(groupId: ObjectId, telegramUserId: Long, categoryId: ObjectId,
-                                                             fromDate: LocalDateTime, toDate: LocalDateTime): List<HistoryFinanceOperationDto>
+                                                             fromDate: LocalDate, toDate: LocalDate): List<HistoryFinanceOperationDto>
 
     /**
      * Получить всю историю финансовых операций категории
@@ -75,4 +75,9 @@ interface FinanceOperationService {
      * Удалить запись
      */
     fun deleteFinanceOperation(id: ObjectId, telegramUserId: Long)
+
+    /**
+     * Удалить все записи в конкретной категории
+     */
+    fun deleteAllFinanceOperation(ids: List<ObjectId>, groupId: ObjectId, categoryId: ObjectId, telegramUserId: Long)
 }

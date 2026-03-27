@@ -1,17 +1,17 @@
 package ai.moneymanager.domain.model
 
 import ai.moneymanager.domain.model.financeOperation.CurrencyType
-import ai.moneymanager.domain.model.financeOperation.DayType
 import ai.moneymanager.domain.model.financeOperation.OperationType
 import org.bson.types.ObjectId
 import java.math.BigDecimal
+import java.time.LocalDate
 
 data class FinanceOperation(
     val id: ObjectId? = null,
     val telegramUserId: Long,
     val groupId: ObjectId,
     val categoryId: ObjectId? = null,
-    val day: DayType,
+    val day: LocalDate,
     val amount: BigDecimal,
     val operationType: OperationType,
     val currency: CurrencyType,
@@ -27,7 +27,7 @@ data class FinanceOperation(
         fun create(telegramUserId: Long,
             groupId: ObjectId,
             categoryId: ObjectId?,
-            day: DayType,
+            day: LocalDate,
             amount: BigDecimal,
             operationType: OperationType,
             currency: CurrencyType,
@@ -41,22 +41,5 @@ data class FinanceOperation(
                 currency = currency,
                 description = description?.trim()?.takeIf { it.isNotBlank() }
             )
-        fun update(telegramUserId: Long,
-                   groupId: ObjectId,
-                   categoryId: ObjectId,
-                   day: DayType,
-                   amount: BigDecimal,
-                   operationType: OperationType,
-                   currency: CurrencyType,
-                   description: String?): FinanceOperation = FinanceOperation(
-            telegramUserId = telegramUserId,
-            groupId = groupId,
-            categoryId = categoryId,
-            day = day,
-            amount = amount,
-            operationType = operationType,
-            currency = currency,
-            description = description?.trim()?.takeIf { it.isNotBlank() }
-        )
     }
 }

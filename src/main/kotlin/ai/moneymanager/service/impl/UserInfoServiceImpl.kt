@@ -13,11 +13,7 @@ import org.telegram.telegrambots.meta.api.objects.User
 @Service
 class UserInfoServiceImpl(
     private val userRepository: UserInfoRepository,
-    @Value("\${chat-machinist.bot.token}")
-    private val botToken: String
-) : UserInfoService, DefaultAbsSender(
-    DefaultBotOptions(), botToken
-) {
+) : UserInfoService {
 
     /**
      * Получить информацию о юзере

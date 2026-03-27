@@ -2,6 +2,7 @@ package ai.moneymanager.service.impl
 
 import ai.moneymanager.domain.model.GroupType
 import ai.moneymanager.domain.model.MoneyGroup
+import ai.moneymanager.repository.FinanceOperationRepository
 import ai.moneymanager.repository.MoneyGroupRepository
 import ai.moneymanager.repository.UserInfoRepository
 import ai.moneymanager.repository.entity.MoneyGroupEntity
@@ -18,6 +19,7 @@ class GroupServiceImpl(
     private val groupRepository: MoneyGroupRepository,
     private val userRepository: UserInfoRepository,
     private val categoryService: CategoryService,
+    private val financeOperationRepository: FinanceOperationRepository
 ) : GroupService {
     private val log = LoggerFactory.getLogger(this::class.java)
 
@@ -64,6 +66,7 @@ class GroupServiceImpl(
     /**
      * Создает личную группу для пользователя (вызывается при регистрации)
      */
+    @Transactional
     override fun createPersonalGroup(userId: Long, userName: String?): MoneyGroup {
         val groupEntity = MoneyGroupEntity(
             name = "Личный учет",
@@ -76,7 +79,6 @@ class GroupServiceImpl(
         val savedGroup = groupRepository.save(groupEntity)
         log.info("Personal group created: id={}, ownerId={}", savedGroup.id, userId)
 
-        // Устанавливаем как активную группу
         val userEntity = userRepository.findUserInfoEntityByTelegramUserId(userId)
         if (userEntity != null) {
             val updatedUser = userEntity.copy(
@@ -85,7 +87,6 @@ class GroupServiceImpl(
             )
             userRepository.save(updatedUser)
 
-            // Создаем дефолтные категории для личной группы
             categoryService.createDefaultCategories(savedGroup.id!!)
             log.debug("Created default categories for personal group id={}", savedGroup.id)
         }
@@ -192,25 +193,22 @@ class GroupServiceImpl(
     override fun deleteGroup(userId: Long, groupId: ObjectId): Boolean {
         val groupEntity = groupRepository.findById(groupId).orElse(null) ?: return false
 
-        // Проверяем, является ли пользователь владельцем
         if (groupEntity.ownerTelegramUserId != userId) {
             return false
         }
 
-        // Удаляем все категории группы (каскадное удаление)
+        financeOperationRepository.deleteAllByGroupId(groupId)
+
         val deletedCategoriesCount = categoryService.deleteAllCategoriesForGroup(groupId)
         log.info("Deleted {} categories for group {}", deletedCategoriesCount, groupId)
 
-        // Удаляем группу
         groupRepository.delete(groupEntity)
 
-        // Удаляем группу из всех пользователей
         groupEntity.memberTelegramUserIds.forEach { memberId ->
             val memberEntity = userRepository.findUserInfoEntityByTelegramUserId(memberId)
             if (memberEntity != null) {
                 val updatedGroupIds = memberEntity.groupIds - groupId
                 val updatedActiveGroupId = if (memberEntity.activeGroupId == groupId) {
-                    // Если удаляемая группа была активной, выбираем другую
                     updatedGroupIds.firstOrNull()
                 } else {
                     memberEntity.activeGroupId

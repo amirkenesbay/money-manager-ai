@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
-import java.time.LocalDateTime
+import java.time.LocalDate
 
 @Service
 class FinanceOperationServiceImpl(
@@ -98,8 +98,8 @@ class FinanceOperationServiceImpl(
      * Получить историю финансовых операций у группы в конкретный период
      */
     override fun getHistoryFinanceOperationByPeriodFromGroupEntity(
-        groupId: ObjectId, telegramUserId: Long, fromDate: LocalDateTime,
-        toDate: LocalDateTime
+        groupId: ObjectId, telegramUserId: Long, fromDate: LocalDate,
+        toDate: LocalDate
     ): List<HistoryFinanceOperationDto> {
 
         log.info(
@@ -219,7 +219,7 @@ class FinanceOperationServiceImpl(
      */
     override fun getHistoryFinanceOperationByPeriodFromCategoryEntity(
         groupId: ObjectId, telegramUserId: Long, categoryId: ObjectId,
-        fromDate: LocalDateTime, toDate: LocalDateTime
+        fromDate: LocalDate, toDate: LocalDate
     ): List<HistoryFinanceOperationDto> {
 
         log.info(
@@ -296,11 +296,11 @@ class FinanceOperationServiceImpl(
         val category = getCategory(categoryId)
         validateCategoryBelongsToGroup(groupId, category)
 
-        val updatedDomain = FinanceOperation.update(
+        val updatedDomain = FinanceOperation.create(
             telegramUserId = currentFinanceOperation.telegramUserId,
             groupId = groupId,
             categoryId = categoryId,
-            day = updateDto.day ?: currentFinanceOperation.day,
+            day = updateDto.day ?: currentFinanceOperation.operationDate,
             amount = updateDto.amount ?: currentFinanceOperation.amount,
             operationType = category.toOperationType(),
             currency = updateDto.currency ?: currentFinanceOperation.currency,
@@ -332,13 +332,26 @@ class FinanceOperationServiceImpl(
 
         val currentFinanceOperation = getFinanceOperation(id)
 
-        validUser(currentFinanceOperation, telegramUserId)
-
         checkUserIsOwnerOrMember(currentFinanceOperation.groupId, telegramUserId)
-
-        log.info("Finance operation deleted successfully: id={}, telegramUserId={}", id, telegramUserId)
+        validateCanDeleteFinanceOperation(currentFinanceOperation, telegramUserId)
 
         financeOperationRepository.delete(currentFinanceOperation)
+
+        log.info(
+            "Finance operation deleted successfully: id={}, deletedByTelegramUserId={}, operationOwnerTelegramUserId={}",
+            id,
+            telegramUserId,
+            currentFinanceOperation.telegramUserId
+        )
+    }
+
+    override fun deleteAllFinanceOperation(
+        ids: List<ObjectId>,
+        groupId: ObjectId,
+        categoryId: ObjectId,
+        telegramUserId: Long
+    ) {
+
     }
 
     /**
@@ -419,4 +432,24 @@ class FinanceOperationServiceImpl(
             CategoryType.EXPENSE -> OperationType.EXPENSE
             CategoryType.INCOME -> OperationType.INCOME
         }
+
+    /**
+     * Проверяет, может ли пользователь удалить финансовую операцию
+     */
+    private fun validateCanDeleteFinanceOperation(
+        financeOperationEntity: FinanceOperationEntity,
+        telegramUserId: Long
+    ) {
+        val group = moneyGroupRepository.findById(financeOperationEntity.groupId)
+            .orElseThrow { IllegalStateException("Group with id=${financeOperationEntity.groupId} not found") }
+
+        val isAuthor = financeOperationEntity.telegramUserId == telegramUserId
+        val isGroupOwner = group.ownerTelegramUserId == telegramUserId
+
+        if (!isAuthor && !isGroupOwner) {
+            throw IllegalStateException(
+                "User with telegramUserId=$telegramUserId cannot delete finance operation id=${financeOperationEntity.id}"
+            )
+        }
+    }
 }
