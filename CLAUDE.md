@@ -569,3 +569,40 @@ These features will add new states, entities (Transaction), and extend the NLP c
 - Avoid business logic in Dialog/Reply builders - delegate to Services
 - Use meaningful names: `createGroupTransition()` not `transition1()`
 - Enum naming: `UPPER_SNAKE_CASE` for states/button types, `PascalCase` for classes
+
+## Clean Code Principles
+
+All code must strictly follow these principles:
+
+### SOLID
+
+- **Single Responsibility (SRP)**: Each class and function must have one responsibility. If a method does multiple things — split it into separate methods.
+- **Open/Closed (OCP)**: Code should be open for extension, closed for modification. Use interfaces and abstractions for extension points.
+- **Liskov Substitution (LSP)**: Subtypes must be substitutable for their base types without breaking correctness.
+- **Interface Segregation (ISP)**: Prefer small, focused interfaces over large "fat" ones.
+- **Dependency Inversion (DIP)**: Depend on abstractions (interfaces), not concrete implementations. Use Spring constructor injection.
+
+### DRY (Don't Repeat Yourself)
+
+- Never duplicate logic. If the same code appears in multiple places — extract it into a shared function or utility.
+- Reuse existing services and helpers instead of writing similar code from scratch.
+
+### KISS (Keep It Simple, Stupid)
+
+- Write the simplest, most readable code possible. Do not over-engineer.
+- Prefer straightforward solutions over clever constructs unless they provide a real benefit.
+- Avoid deep nesting — use early returns and guard clauses.
+
+### YAGNI (You Aren't Gonna Need It)
+
+- Do not add functionality "just in case". Implement only what is needed right now.
+- Do not create abstractions preemptively — abstract only when there is a real need.
+
+### Additional Principles
+
+- **Pure functions**: Where possible, write functions without side effects — they take data in, return a result.
+- **Meaningful names**: Variable, function, and class names must clearly reflect their purpose. Avoid abbreviations unless absolutely necessary.
+- **Small functions**: Functions should be short (~20 lines max) and do one thing. If a function is long — break it up.
+- **Minimal comments**: Code should be self-documenting. Comments are only for explaining "why", not "what".
+- **Fail fast**: Validate inputs at the start of a function and throw errors early — do not let invalid data propagate deeper.
+- **Composition over Inheritance**: Prefer composition over inheritance for behavior reuse.
