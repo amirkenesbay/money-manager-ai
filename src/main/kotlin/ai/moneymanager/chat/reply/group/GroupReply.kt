@@ -1,10 +1,13 @@
 package ai.moneymanager.chat.reply.group
 
+import ai.moneymanager.chat.reply.common.backButton
+import ai.moneymanager.chat.reply.common.cancelButton
+import ai.moneymanager.chat.reply.common.confirmAndCancelButtons
+import ai.moneymanager.chat.reply.common.formatUserDisplayName
 import ai.moneymanager.domain.model.GroupType
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
-import ai.moneymanager.domain.model.UserInfo
 import kz.rmr.chatmachinist.api.reply.RepliesBuilder
 
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupManagementReply() {
@@ -31,12 +34,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupManagementReply(
                         type = MoneyManagerButtonType.MY_GROUPS
                     }
                 }
-                buttonRow {
-                    button {
-                        text = "⬅️ Назад в меню"
-                        type = MoneyManagerButtonType.BACK_TO_MENU
-                    }
-                }
+                backButton("⬅️ Назад в меню")
             }
         }
     }
@@ -47,6 +45,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupCreateEnterNameR
         state = MoneyManagerState.GROUP_CREATE_ENTER_NAME
 
         message {
+            // show-once: read and reset
             val errorText = if (context.groupNameDuplicateError) {
                 "\n\n⚠️ Группа с названием «${context.groupNameInput}» уже существует. Введите другое название:"
             } else ""
@@ -59,7 +58,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupCreateEnterNameR
             """.trimMargin()
 
             keyboard {
-                // Быстрые варианты названий
                 buttonRow {
                     button {
                         text = "👨‍👩‍👧‍👦 Семья"
@@ -80,14 +78,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupCreateEnterNameR
                         type = MoneyManagerButtonType.QUICK_GROUP_TRIP
                     }
                 }
-
-                // Кнопка отмены
-                buttonRow {
-                    button {
-                        text = "❌ Отмена"
-                        type = MoneyManagerButtonType.CANCEL
-                    }
-                }
+                cancelButton()
             }
         }
     }
@@ -98,7 +89,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupInviteShowReply(
         state = MoneyManagerState.GROUP_INVITE_SHOW
 
         message {
-            // Редактируем сообщение при быстром создании или переходе из действий группы, иначе - новое сообщение
             newMessage = !context.isQuickGroupCreation && !context.inviteFromActions
 
             val group = context.currentGroup
@@ -119,12 +109,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupInviteShowReply(
             }
 
             keyboard {
-                buttonRow {
-                    button {
-                        text = "⬅️ Назад"
-                        type = MoneyManagerButtonType.BACK_TO_MENU
-                    }
-                }
+                backButton()
             }
         }
     }
@@ -140,23 +125,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupJoinConfirmReply
             val ownerInfo = context.pendingGroupOwnerInfo
 
             if (group != null) {
-                // Формируем имя создателя
-                val ownerName = when {
-                    ownerInfo != null -> {
-                        val firstName = ownerInfo.firstName ?: ""
-                        val lastName = ownerInfo.lastName ?: ""
-                        val fullName = "$firstName $lastName".trim()
-
-                        if (fullName.isNotEmpty()) {
-                            fullName
-                        } else if (!ownerInfo.username.isNullOrEmpty()) {
-                            "@${ownerInfo.username}"
-                        } else {
-                            "ID ${group.ownerId}"
-                        }
-                    }
-                    else -> "ID ${group.ownerId}"
-                }
+                val ownerName = formatUserDisplayName(ownerInfo, group.ownerId)
 
                 text = """
                     |👥 Приглашение в совместный учёт "${group.name}"
@@ -168,29 +137,17 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupJoinConfirmReply
                 """.trimMargin()
 
                 keyboard {
-                    buttonRow {
-                        button {
-                            text = "✅ Присоединиться"
-                            type = MoneyManagerButtonType.CONFIRM_JOIN
-                        }
-                    }
-                    buttonRow {
-                        button {
-                            text = "❌ Отклонить"
-                            type = MoneyManagerButtonType.CANCEL
-                        }
-                    }
+                    confirmAndCancelButtons(
+                        confirmText = "✅ Присоединиться",
+                        confirmType = MoneyManagerButtonType.CONFIRM_JOIN,
+                        cancelText = "❌ Отклонить"
+                    )
                 }
             } else {
                 text = "Группа не найдена или приглашение недействительно"
 
                 keyboard {
-                    buttonRow {
-                        button {
-                            text = "⬅️ Назад в меню"
-                            type = MoneyManagerButtonType.BACK_TO_MENU
-                        }
-                    }
+                    backButton("⬅️ Назад в меню")
                 }
             }
         }
@@ -230,13 +187,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupListReply() {
                             }
                         }
                     }
-
-                    buttonRow {
-                        button {
-                            text = "⬅️ Назад"
-                            type = MoneyManagerButtonType.BACK_TO_MENU
-                        }
-                    }
+                    backButton()
                 }
             } else {
                 text = """
@@ -246,12 +197,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupListReply() {
                 """.trimMargin()
 
                 keyboard {
-                    buttonRow {
-                        button {
-                            text = "⬅️ Назад"
-                            type = MoneyManagerButtonType.BACK_TO_MENU
-                        }
-                    }
+                    backButton()
                 }
             }
         }
@@ -264,6 +210,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupActionsReply() {
         state = MoneyManagerState.GROUP_ACTIONS
 
         message {
+            // show-once: read and reset
             if (context.textInputResponse) {
                 newPinnedMessage = true
                 context.textInputResponse = false
@@ -279,8 +226,11 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupActionsReply() {
                 val ownerText = if (isOwner) "👑 Вы владелец" else ""
                 val activeText = if (isActive) "✅ Активная группа" else ""
                 val statusLine = listOf(ownerText, activeText).filter { it.isNotEmpty() }.joinToString(" · ")
+
+                // show-once: read and reset
                 val confirmation = context.renameConfirmation?.let { "\n|\n|$it" } ?: ""
                 context.renameConfirmation = null
+
                 val personalHint = if (isOwner && isPersonal) {
                     "\n|\n|💡 Для совместного учёта создайте новую группу в разделе «Совместный учёт»"
                 } else ""
@@ -331,23 +281,13 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupActionsReply() {
                             }
                         }
                     }
-                    buttonRow {
-                        button {
-                            text = "⬅️ Назад к списку"
-                            type = MoneyManagerButtonType.BACK_TO_MENU
-                        }
-                    }
+                    backButton("⬅️ Назад к списку")
                 }
             } else {
                 text = "Группа не найдена"
 
                 keyboard {
-                    buttonRow {
-                        button {
-                            text = "⬅️ Назад"
-                            type = MoneyManagerButtonType.BACK_TO_MENU
-                        }
-                    }
+                    backButton()
                 }
             }
         }
@@ -384,18 +324,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupDeleteConfirmRep
                     """.trimMargin()
 
                     keyboard {
-                        buttonRow {
-                            button {
-                                text = "✅ Да, удалить"
-                                type = MoneyManagerButtonType.CONFIRM_DELETE
-                            }
-                        }
-                        buttonRow {
-                            button {
-                                text = "❌ Отмена"
-                                type = MoneyManagerButtonType.CANCEL
-                            }
-                        }
+                        confirmAndCancelButtons()
                     }
                 } else {
                     text = """
@@ -405,24 +334,14 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupDeleteConfirmRep
                     """.trimIndent()
 
                     keyboard {
-                        buttonRow {
-                            button {
-                                text = "⬅️ Назад"
-                                type = MoneyManagerButtonType.BACK_TO_MENU
-                            }
-                        }
+                        backButton()
                     }
                 }
             } else {
                 text = "Группа не найдена"
 
                 keyboard {
-                    buttonRow {
-                        button {
-                            text = "⬅️ Назад"
-                            type = MoneyManagerButtonType.BACK_TO_MENU
-                        }
-                    }
+                    backButton()
                 }
             }
         }
@@ -445,23 +364,13 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupEditEnterNameRep
                 """.trimMargin()
 
                 keyboard {
-                    buttonRow {
-                        button {
-                            text = "❌ Отмена"
-                            type = MoneyManagerButtonType.CANCEL
-                        }
-                    }
+                    cancelButton()
                 }
             } else {
                 text = "Группа не найдена"
 
                 keyboard {
-                    buttonRow {
-                        button {
-                            text = "⬅️ Назад"
-                            type = MoneyManagerButtonType.BACK_TO_MENU
-                        }
-                    }
+                    backButton()
                 }
             }
         }
@@ -477,23 +386,18 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupMembersReply() {
             val membersList = context.groupMembersList
 
             if (group != null) {
-                // Find owner information
-                val ownerInfo = membersList.find { it.telegramUserId == group.ownerId }
-                val ownerName = formatUserName(ownerInfo, group.ownerId)
+                val ownerName = formatUserDisplayName(
+                    membersList.find { it.telegramUserId == group.ownerId },
+                    group.ownerId
+                )
 
-                // Format members list
                 val membersText = if (membersList.isNotEmpty()) {
                     membersList.joinToString("\n") { member ->
                         val isOwner = member.telegramUserId == group.ownerId
-                        val memberName = formatUserName(member, member.telegramUserId ?: 0)
-                        if (isOwner) {
-                            "• 👑 $memberName"
-                        } else {
-                            "• $memberName"
-                        }
+                        val memberName = formatUserDisplayName(member, member.telegramUserId ?: 0)
+                        if (isOwner) "• 👑 $memberName" else "• $memberName"
                     }
                 } else {
-                    // Fallback if member info wasn't loaded
                     group.memberIds.joinToString("\n") { "• Пользователь ID: $it" }
                 }
 
@@ -510,31 +414,8 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupMembersReply() {
             }
 
             keyboard {
-                buttonRow {
-                    button {
-                        text = "⬅️ Назад"
-                        type = MoneyManagerButtonType.BACK_TO_MENU
-                    }
-                }
+                backButton()
             }
         }
-    }
-}
-
-// Helper function to format user name
-private fun formatUserName(userInfo: UserInfo?, telegramUserId: Long): String {
-    return when {
-        userInfo != null -> {
-            val firstName = userInfo.firstName ?: ""
-            val lastName = userInfo.lastName ?: ""
-            val fullName = "$firstName $lastName".trim()
-
-            when {
-                fullName.isNotEmpty() -> fullName
-                !userInfo.username.isNullOrEmpty() -> "@${userInfo.username}"
-                else -> "ID $telegramUserId"
-            }
-        }
-        else -> "ID $telegramUserId"
     }
 }

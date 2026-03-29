@@ -1,5 +1,10 @@
 package ai.moneymanager.chat.reply.category
 
+import ai.moneymanager.chat.reply.common.CategoryTypeForm
+import ai.moneymanager.chat.reply.common.backButton
+import ai.moneymanager.chat.reply.common.cancelButton
+import ai.moneymanager.chat.reply.common.categoryTypeLabel
+import ai.moneymanager.chat.reply.common.confirmAndCancelButtons
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
@@ -12,13 +17,13 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryManagementRep
 
         message {
             val groupName = context.activeGroupName
-            val groupLine = if (groupName != null) "\nГруппа: $groupName" else ""
+            val groupLine = if (groupName != null) "\n|Группа: $groupName" else ""
 
             text = """
-                📂 Управление категориями$groupLine
-
-                Здесь вы можете создать новые категории или просмотреть существующие.
-            """.trimIndent()
+                |📂 Управление категориями$groupLine
+                |
+                |Здесь вы можете создать новые категории или просмотреть существующие.
+            """.trimMargin()
 
             keyboard {
                 buttonRow {
@@ -33,12 +38,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryManagementRep
                         type = MoneyManagerButtonType.MY_CATEGORIES
                     }
                 }
-                buttonRow {
-                    button {
-                        text = "⬅️ Назад в меню"
-                        type = MoneyManagerButtonType.BACK_TO_MENU
-                    }
-                }
+                backButton("⬅️ Назад в меню")
             }
         }
     }
@@ -62,12 +62,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryNoGroupWarnin
                         type = MoneyManagerButtonType.CREATE_GROUP
                     }
                 }
-                buttonRow {
-                    button {
-                        text = "⬅️ Назад"
-                        type = MoneyManagerButtonType.BACK_TO_MENU
-                    }
-                }
+                backButton()
             }
         }
     }
@@ -79,10 +74,10 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryCreateSelectT
 
         message {
             text = """
-                ➕ Создание новой категории
-
-                Выберите тип категории:
-            """.trimIndent()
+                |➕ Создание новой категории
+                |
+                |Выберите тип категории:
+            """.trimMargin()
 
             keyboard {
                 buttonRow {
@@ -97,12 +92,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryCreateSelectT
                         type = MoneyManagerButtonType.CATEGORY_TYPE_INCOME
                     }
                 }
-                buttonRow {
-                    button {
-                        text = "❌ Отмена"
-                        type = MoneyManagerButtonType.CANCEL
-                    }
-                }
+                cancelButton()
             }
         }
     }
@@ -114,23 +104,17 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryCreateEnterNa
 
         message {
             val categoryType = context.categoryTypeInput
-            val typeText = when (categoryType) {
-                CategoryType.EXPENSE -> "расхода"
-                CategoryType.INCOME -> "дохода"
-                else -> "категории"
-            }
+            val typeText = categoryTypeLabel(categoryType)
 
             text = """
-                ➕ Создание категории $typeText
-
-                Введите название категории или выберите готовый вариант:
-            """.trimIndent()
+                |➕ Создание категории $typeText
+                |
+                |Введите название категории или выберите готовый вариант:
+            """.trimMargin()
 
             keyboard {
-                // Template buttons based on category type
                 when (categoryType) {
                     CategoryType.EXPENSE -> {
-                        // First row of expense templates
                         buttonRow {
                             button {
                                 text = "🍔 Еда вне дома"
@@ -141,7 +125,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryCreateEnterNa
                                 type = MoneyManagerButtonType.QUICK_CATEGORY_UTILITIES
                             }
                         }
-                        // Second row of expense templates
                         buttonRow {
                             button {
                                 text = "💊 Медицина"
@@ -152,7 +135,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryCreateEnterNa
                                 type = MoneyManagerButtonType.QUICK_CATEGORY_ENTERTAINMENT
                             }
                         }
-                        // Third row of expense templates
                         buttonRow {
                             button {
                                 text = "👕 Одежда и обувь"
@@ -165,7 +147,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryCreateEnterNa
                         }
                     }
                     CategoryType.INCOME -> {
-                        // First row of income templates
                         buttonRow {
                             button {
                                 text = "💰 Зарплата"
@@ -176,7 +157,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryCreateEnterNa
                                 type = MoneyManagerButtonType.QUICK_CATEGORY_BONUS
                             }
                         }
-                        // Second row of income templates
                         buttonRow {
                             button {
                                 text = "🎁 Подарок"
@@ -187,7 +167,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryCreateEnterNa
                                 type = MoneyManagerButtonType.QUICK_CATEGORY_FREELANCE
                             }
                         }
-                        // Third row of income templates
                         buttonRow {
                             button {
                                 text = "📈 Инвестиции"
@@ -201,14 +180,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryCreateEnterNa
                     }
                     else -> {}
                 }
-
-                // Cancel button
-                buttonRow {
-                    button {
-                        text = "❌ Отмена"
-                        type = MoneyManagerButtonType.CANCEL
-                    }
-                }
+                cancelButton()
             }
         }
     }
@@ -219,7 +191,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryCreateResultR
         state = MoneyManagerState.CATEGORY_CREATE_RESULT
 
         message {
-            // If quick creation, edit the message instead of sending a new one
             newMessage = !context.isQuickCategoryCreation
 
             val category = context.currentCategory
@@ -227,7 +198,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryCreateResultR
 
             text = if (category != null) {
                 val icon = category.icon ?: "📌"
-                val typeText = if (category.type == CategoryType.EXPENSE) "расхода" else "дохода"
+                val typeText = categoryTypeLabel(category.type)
                 """
                     |✅ Категория $typeText создана
                     |
@@ -250,12 +221,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryCreateResultR
                         }
                     }
                 }
-                buttonRow {
-                    button {
-                        text = "⬅️ Назад"
-                        type = MoneyManagerButtonType.BACK_TO_MENU
-                    }
-                }
+                backButton()
             }
         }
     }
@@ -267,10 +233,10 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryListSelectTyp
 
         message {
             text = """
-                📋 Мои категории
-
-                Выберите тип категорий для просмотра:
-            """.trimIndent()
+                |📋 Мои категории
+                |
+                |Выберите тип категорий для просмотра:
+            """.trimMargin()
 
             keyboard {
                 buttonRow {
@@ -291,12 +257,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryListSelectTyp
                         type = MoneyManagerButtonType.DELETE_ALL_CATEGORIES
                     }
                 }
-                buttonRow {
-                    button {
-                        text = "⬅️ Назад"
-                        type = MoneyManagerButtonType.CANCEL
-                    }
-                }
+                cancelButton("⬅️ Назад")
             }
         }
     }
@@ -309,11 +270,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryListReply() {
         message {
             val categories = context.categories
             val categoryType = context.categoryTypeInput
-            val typeText = when (categoryType) {
-                CategoryType.EXPENSE -> "расходов"
-                CategoryType.INCOME -> "доходов"
-                else -> ""
-            }
+            val typeText = categoryTypeLabel(categoryType, CategoryTypeForm.GENITIVE_PLURAL)
             val typeEmoji = when (categoryType) {
                 CategoryType.EXPENSE -> "📉"
                 CategoryType.INCOME -> "📈"
@@ -322,22 +279,21 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryListReply() {
 
             text = if (categories.isEmpty()) {
                 """
-                    $typeEmoji Категории $typeText
-
-                    У вас пока нет категорий $typeText.
-                    Создайте первую категорию!
-                """.trimIndent()
+                    |$typeEmoji Категории $typeText
+                    |
+                    |У вас пока нет категорий $typeText.
+                    |Создайте первую категорию!
+                """.trimMargin()
             } else {
                 """
-                    $typeEmoji Категории $typeText
-
-                    Выберите категорию:
-                """.trimIndent()
+                    |$typeEmoji Категории $typeText
+                    |
+                    |Выберите категорию:
+                """.trimMargin()
             }
 
             keyboard {
                 if (categories.isNotEmpty()) {
-                    // Показываем категории как кнопки
                     categories.forEach { category ->
                         buttonRow {
                             button {
@@ -348,13 +304,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryListReply() {
                         }
                     }
                 }
-
-                buttonRow {
-                    button {
-                        text = "⬅️ Назад"
-                        type = MoneyManagerButtonType.BACK_TO_MENU
-                    }
-                }
+                backButton()
             }
         }
     }
@@ -365,6 +315,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryActionsReply(
         state = MoneyManagerState.CATEGORY_ACTIONS
 
         message {
+            // show-once: read and reset
             if (context.textInputResponse) {
                 newPinnedMessage = true
                 context.textInputResponse = false
@@ -372,15 +323,17 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryActionsReply(
 
             val category = context.currentCategory
             val icon = category?.icon ?: "📌"
-            val typeText = if (category?.type == CategoryType.EXPENSE) "расхода" else "дохода"
+            val typeText = categoryTypeLabel(category?.type)
+
+            // show-once: read and reset
             val confirmation = context.renameConfirmation?.let { "\n\n$it" } ?: ""
             context.renameConfirmation = null
 
             text = """
-                Категория $typeText: $icon ${category?.name}
-
-                Выберите действие:$confirmation
-            """.trimIndent()
+                |Категория $typeText: $icon ${category?.name}
+                |
+                |Выберите действие:$confirmation
+            """.trimMargin()
 
             keyboard {
                 buttonRow {
@@ -401,12 +354,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryActionsReply(
                         type = MoneyManagerButtonType.DELETE_CATEGORY_BUTTON
                     }
                 }
-                buttonRow {
-                    button {
-                        text = "⬅️ Назад к списку"
-                        type = MoneyManagerButtonType.BACK_TO_MENU
-                    }
-                }
+                backButton("⬅️ Назад к списку")
             }
         }
     }
@@ -420,8 +368,9 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryEditIconReply
             val category = context.currentCategory
             val icon = category?.icon ?: "📌"
 
+            // show-once: read and reset
             val errorText = if (context.iconInputError) {
-                "\n\n⚠️ Пожалуйста, отправьте эмодзи, а не текст"
+                "\n|\n|⚠️ Пожалуйста, отправьте эмодзи, а не текст"
             } else ""
             context.iconInputError = false
 
@@ -434,12 +383,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryEditIconReply
             """.trimMargin()
 
             keyboard {
-                buttonRow {
-                    button {
-                        text = "❌ Отмена"
-                        type = MoneyManagerButtonType.CANCEL
-                    }
-                }
+                cancelButton()
             }
         }
     }
@@ -454,20 +398,15 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryEditNameReply
             val icon = category?.icon ?: "📌"
 
             text = """
-                ✏️ Редактирование категории
-
-                Текущее название: $icon ${category?.name}
-
-                Введите новое название:
-            """.trimIndent()
+                |✏️ Редактирование категории
+                |
+                |Текущее название: $icon ${category?.name}
+                |
+                |Введите новое название:
+            """.trimMargin()
 
             keyboard {
-                buttonRow {
-                    button {
-                        text = "❌ Отмена"
-                        type = MoneyManagerButtonType.CANCEL
-                    }
-                }
+                cancelButton()
             }
         }
     }
@@ -482,26 +421,15 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryDeleteConfirm
             val icon = category?.icon ?: "📌"
 
             text = """
-                🗑 Удаление категории
-
-                Вы уверены, что хотите удалить категорию "$icon ${category?.name}"?
-
-                ⚠️ Это действие необратимо!
-            """.trimIndent()
+                |🗑 Удаление категории
+                |
+                |Вы уверены, что хотите удалить категорию "$icon ${category?.name}"?
+                |
+                |⚠️ Это действие необратимо!
+            """.trimMargin()
 
             keyboard {
-                buttonRow {
-                    button {
-                        text = "✅ Да, удалить"
-                        type = MoneyManagerButtonType.CONFIRM_DELETE
-                    }
-                }
-                buttonRow {
-                    button {
-                        text = "❌ Отмена"
-                        type = MoneyManagerButtonType.CANCEL
-                    }
-                }
+                confirmAndCancelButtons()
             }
         }
     }
@@ -541,18 +469,9 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryDeleteAllConf
 
             keyboard {
                 if (categoryCount > 0) {
-                    buttonRow {
-                        button {
-                            text = "✅ Да, удалить все"
-                            type = MoneyManagerButtonType.CONFIRM_DELETE
-                        }
-                    }
-                }
-                buttonRow {
-                    button {
-                        text = if (categoryCount == 0) "⬅️ Назад" else "❌ Отмена"
-                        type = MoneyManagerButtonType.CANCEL
-                    }
+                    confirmAndCancelButtons("✅ Да, удалить все")
+                } else {
+                    backButton()
                 }
             }
         }

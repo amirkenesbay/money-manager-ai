@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.reply.nlp
 
+import ai.moneymanager.chat.reply.common.backButton
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
@@ -80,12 +81,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.nlpResponseReply() {
             """.trimMargin()
 
             keyboard {
-                buttonRow {
-                    button {
-                        text = "⬅️ Назад"
-                        type = MoneyManagerButtonType.BACK_TO_MENU
-                    }
-                }
+                backButton()
             }
         }
     }
