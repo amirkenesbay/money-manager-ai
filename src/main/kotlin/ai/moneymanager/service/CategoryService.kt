@@ -15,14 +15,9 @@ class CategoryService(
 
     private val log = LoggerFactory.getLogger(CategoryService::class.java)
 
-    /**
-     * Создать новую категорию
-     */
     fun createCategory(name: String, icon: String?, type: CategoryType, groupId: ObjectId): Category? {
-        // Проверяем, не существует ли уже категория с таким названием в этой группе
         val existingCategory = categoryRepository.findByGroupIdAndNameAndType(groupId, name, type)
         if (existingCategory != null) {
-            // Категория с таким названием уже существует
             return null
         }
 
@@ -37,34 +32,22 @@ class CategoryService(
         return mapToModel(savedCategory)
     }
 
-    /**
-     * Получить все категории группы
-     */
     fun getCategoriesByGroup(groupId: ObjectId): List<Category> {
         return categoryRepository.findByGroupIdOrderByAuditInfoCreatedAtAsc(groupId)
             .map { mapToModel(it) }
     }
 
-    /**
-     * Получить категории группы по типу
-     */
     fun getCategoriesByGroupAndType(groupId: ObjectId, type: CategoryType): List<Category> {
         return categoryRepository.findByGroupIdAndTypeOrderByAuditInfoCreatedAtAsc(groupId, type)
             .map { mapToModel(it) }
     }
 
-    /**
-     * Получить категорию по ID
-     */
     fun getCategory(categoryId: ObjectId): Category? {
         return categoryRepository.findById(categoryId)
             .map { mapToModel(it) }
             .orElse(null)
     }
 
-    /**
-     * Обновить название категории
-     */
     fun updateCategoryName(categoryId: ObjectId, newName: String): Category? {
         val categoryEntity = categoryRepository.findById(categoryId).orElse(null) ?: return null
         val updatedCategory = categoryEntity.copy(name = newName)
@@ -72,9 +55,6 @@ class CategoryService(
         return mapToModel(savedCategory)
     }
 
-    /**
-     * Обновить иконку категории
-     */
     fun updateCategoryIcon(categoryId: ObjectId, newIcon: String?): Category? {
         val categoryEntity = categoryRepository.findById(categoryId).orElse(null) ?: return null
         val updatedCategory = categoryEntity.copy(icon = newIcon)
@@ -82,9 +62,6 @@ class CategoryService(
         return mapToModel(savedCategory)
     }
 
-    /**
-     * Удалить категорию
-     */
     fun deleteCategory(categoryId: ObjectId): Boolean {
         return try {
             categoryRepository.deleteById(categoryId)
@@ -95,8 +72,6 @@ class CategoryService(
     }
 
     /**
-     * Удалить все категории группы
-     *
      * @param groupId ID группы
      * @return количество удаленных категорий
      */
@@ -110,43 +85,32 @@ class CategoryService(
     }
 
     /**
-     * Копирует все категории из одной группы в другую
-     *
      * @param sourceGroupId ID группы-источника
      * @param targetGroupId ID группы-приемника
      * @return количество скопированных категорий
      */
     fun copyCategoriesFromGroup(sourceGroupId: ObjectId, targetGroupId: ObjectId): Int {
-        // Загрузить все категории из источника
         val sourceCategories = categoryRepository.findByGroupId(sourceGroupId)
 
-        // Если категорий нет - вернуть 0
         if (sourceCategories.isEmpty()) {
             return 0
         }
 
-        // Создать новые категории с новым groupId
         val copiedCategories = sourceCategories.map { source ->
             CategoryEntity(
-                id = null,  // Новый ObjectId будет сгенерирован MongoDB
+                id = null,
                 name = source.name,
                 icon = source.icon,
                 type = source.type,
-                groupId = targetGroupId  // КЛЮЧЕВОЕ изменение
+                groupId = targetGroupId
             )
         }
 
-        // Сохранить все скопированные категории
         val saved = categoryRepository.saveAll(copiedCategories)
-
         log.info("Copied ${saved.count()} categories from group $sourceGroupId to $targetGroupId")
-
         return saved.count()
     }
 
-    /**
-     * Создать дефолтные категории для новой группы
-     */
     fun createDefaultCategories(groupId: ObjectId) {
         val defaultExpenseCategories = listOf(
             CategoryEntity(name = "Продукты", icon = "🛒", type = CategoryType.EXPENSE, groupId = groupId),
@@ -167,9 +131,6 @@ class CategoryService(
         categoryRepository.saveAll(defaultExpenseCategories + defaultIncomeCategories)
     }
 
-    /**
-     * Маппинг Entity -> Model
-     */
     private fun mapToModel(entity: CategoryEntity): Category {
         return Category(
             id = entity.id,

@@ -21,12 +21,9 @@ class GeminiService(
         client = Client.builder()
             .apiKey(geminiProperties.apiKey)
             .build()
-        log.info("✅ Gemini client initialized with model: ${geminiProperties.model}")
+        log.info("Gemini client initialized with model: ${geminiProperties.model}")
     }
 
-    /**
-     * Генерирует текстовый ответ от Gemini
-     */
     fun generateText(prompt: String): String? {
         return try {
             val response: GenerateContentResponse = client.models.generateContent(
@@ -41,9 +38,6 @@ class GeminiService(
         }
     }
 
-    /**
-     * Проверка работоспособности Gemini API
-     */
     fun healthCheck(): Boolean {
         return try {
             val response = generateText("Ответь одним словом: работает")

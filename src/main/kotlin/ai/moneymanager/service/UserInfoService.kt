@@ -25,13 +25,11 @@ class UserInfoService(
         if (userInfo == null) {
             val entity = userRepository.save(mapUserModel(telegramUserInfo))
 
-            // Создаем личную группу для нового пользователя с дефолтными категориями
             groupService.createPersonalGroup(
                 userId = telegramUserInfo.id,
                 userName = telegramUserInfo.userName
             )
 
-            // Получаем обновленную информацию пользователя с группами
             val updatedEntity = userRepository.findUserInfoEntityByTelegramUserId(telegramUserInfo.id)
             return mapEntity(updatedEntity ?: entity)
         }
@@ -46,15 +44,9 @@ class UserInfoService(
 
     private fun findUser(user: User): UserInfoEntity? {
         if (user.userName != null) {
-            getByUsername(user.userName)
             return userRepository.findUserInfoEntityByUsername(user.userName)
         }
-
         return userRepository.findUserInfoEntityByTelegramUserId(user.id)
-    }
-
-    private fun getByUsername(username: String): UserInfoEntity? {
-        return userRepository.findUserInfoEntityByUsername(username)
     }
 
     private fun mapUserModel(telegramUserInfo: User): UserInfoEntity {

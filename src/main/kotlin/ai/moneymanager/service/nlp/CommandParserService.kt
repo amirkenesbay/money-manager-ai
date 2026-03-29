@@ -63,9 +63,6 @@ class CommandParserService(
 
     }
 
-    /**
-     * Парсит текстовое сообщение пользователя и определяет команду
-     */
     fun parseCommand(userMessage: String): BotCommand {
         return try {
             val response = client.models.generateContent(
@@ -80,10 +77,7 @@ class CommandParserService(
         }
     }
 
-    /**
-     * Парсит голосовое сообщение и определяет команду
-     * @param audioBytes байты аудио файла (OGG/OPUS от Telegram)
-     */
+    /** @param audioBytes байты аудио файла (OGG/OPUS от Telegram) */
     fun parseVoiceCommand(audioBytes: ByteArray): BotCommand {
         return try {
             log.info("🎤 Processing voice message: ${audioBytes.size} bytes")
