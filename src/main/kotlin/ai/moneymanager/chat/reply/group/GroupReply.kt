@@ -72,6 +72,12 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupCreateEnterNameR
                 }
                 buttonRow {
                     button {
+                        text = "➕ Задать свое название"
+                        type = MoneyManagerButtonType.QUICK_GROUP_YOU_OWN_NAME
+                    }
+                }
+                buttonRow {
+                    button {
                         text = "💼 Работа"
                         type = MoneyManagerButtonType.QUICK_GROUP_WORK
                     }
@@ -152,16 +158,16 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupJoinConfirmReply
                         } else if (!ownerInfo.username.isNullOrEmpty()) {
                             "@${ownerInfo.username}"
                         } else {
-                            "ID ${group.ownerId}"
+                            "ID ${group.ownerTelegramUserId}"
                         }
                     }
-                    else -> "ID ${group.ownerId}"
+                    else -> "ID ${group.ownerTelegramUserId}"
                 }
 
                 text = """
                     |👥 Приглашение в совместный учёт "${group.name}"
                     |
-                    |Участников: ${group.memberIds.size}
+                    |Участников: ${group.memberTelegramUserIds.size}
                     |Создатель: $ownerName
                     |
                     |Присоединиться?
@@ -217,7 +223,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupListReply() {
                     userGroups.forEach { group ->
                         buttonRow {
                             button {
-                                val isOwner = group.ownerId == userInfo?.telegramUserId
+                                val isOwner = group.ownerTelegramUserId == userInfo?.telegramUserId
                                 val isActive = group.id == userInfo?.activeGroupId
                                 val prefix = when {
                                     isActive && isOwner -> "✅ 👑 "
@@ -271,7 +277,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupActionsReply() {
 
             val group = context.currentGroup
             val userInfo = context.userInfo
-            val isOwner = group?.ownerId == userInfo?.telegramUserId
+            val isOwner = group?.ownerTelegramUserId == userInfo?.telegramUserId
             val isActive = group?.id == userInfo?.activeGroupId
 
             if (group != null) {
@@ -289,7 +295,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupActionsReply() {
                     |👥 Группа "${group.name}"
                     |
                     |${if (statusLine.isNotEmpty()) "$statusLine\n|" else ""}
-                    |Участников: ${group.memberIds.size}$confirmation$personalHint
+                    |Участников: ${group.memberTelegramUserIds.size}$confirmation$personalHint
                 """.trimMargin()
 
                 keyboard {
@@ -364,7 +370,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupDeleteConfirmRep
             val categoriesCount = context.categoriesCountToDelete
 
             if (group != null) {
-                val isOwner = group.ownerId == userInfo?.telegramUserId
+                val isOwner = group.ownerTelegramUserId == userInfo?.telegramUserId
 
                 if (isOwner) {
                     val categoriesWarning = if (categoriesCount > 0) {
@@ -429,7 +435,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupDeleteConfirmRep
     }
 }
 
-
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupEditEnterNameReply() {
     reply {
         state = MoneyManagerState.GROUP_EDIT_ENTER_NAME
@@ -478,13 +483,13 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupMembersReply() {
 
             if (group != null) {
                 // Find owner information
-                val ownerInfo = membersList.find { it.telegramUserId == group.ownerId }
-                val ownerName = formatUserName(ownerInfo, group.ownerId)
+                val ownerInfo = membersList.find { it.telegramUserId == group.ownerTelegramUserId }
+                val ownerName = formatUserName(ownerInfo, group.ownerTelegramUserId)
 
                 // Format members list
                 val membersText = if (membersList.isNotEmpty()) {
                     membersList.joinToString("\n") { member ->
-                        val isOwner = member.telegramUserId == group.ownerId
+                        val isOwner = member.telegramUserId == group.ownerTelegramUserId
                         val memberName = formatUserName(member, member.telegramUserId ?: 0)
                         if (isOwner) {
                             "• 👑 $memberName"
@@ -494,13 +499,13 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupMembersReply() {
                     }
                 } else {
                     // Fallback if member info wasn't loaded
-                    group.memberIds.joinToString("\n") { "• Пользователь ID: $it" }
+                    group.memberTelegramUserIds.joinToString("\n") { "• Пользователь ID: $it" }
                 }
 
                 text = """
                     |👥 Участники группы "${group.name}"
                     |
-                    |Всего участников: ${group.memberIds.size}
+                    |Всего участников: ${group.memberTelegramUserIds.size}
                     |Создатель: $ownerName
                     |
                     |$membersText

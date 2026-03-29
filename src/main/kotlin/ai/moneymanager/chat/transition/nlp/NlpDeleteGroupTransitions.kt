@@ -34,7 +34,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.nlpDeleteGroupTransiti
                 return@action
             }
 
-            if (group.ownerId != userId) {
+            if (group.ownerTelegramUserId != userId) {
                 context.nlpResponse = "❌ Только владелец может удалить группу \"${group.name}\"."
                 context.nlpGroupName = null
                 log.info("❌ User $userId is not owner of group ${group.name}")
