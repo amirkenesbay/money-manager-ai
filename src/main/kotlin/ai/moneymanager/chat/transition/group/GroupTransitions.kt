@@ -15,8 +15,8 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.groupDialogTransitions
     openGroupManagementTransition()
     createGroupTransitions(groupService)
     viewGroupsListTransitions(groupService)
-    groupActionsTransitions(groupService, categoryService, userInfoService)
+    groupActionsTransitions(groupService, userInfoService)
     editGroupTransitions(groupService)
-    deleteGroupTransitions(groupService)
+    deleteGroupTransitions(groupService, categoryService)
     groupBackTransitions()
 }

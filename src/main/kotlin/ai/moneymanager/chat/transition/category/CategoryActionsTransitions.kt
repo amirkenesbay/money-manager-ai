@@ -1,5 +1,10 @@
 package ai.moneymanager.chat.transition.category
 
+import ai.moneymanager.chat.transition.common.confirmFlow
+import ai.moneymanager.chat.transition.common.refreshCategoryList
+import ai.moneymanager.chat.transition.common.simpleTransition
+import ai.moneymanager.chat.transition.common.simpleTransitionWithAction
+import ai.moneymanager.chat.transition.common.textInputFlow
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
@@ -12,132 +17,49 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.categoryActionsTransit
 ) {
     transition {
         name = "Select category from list"
-
         condition {
             from = MoneyManagerState.CATEGORY_LIST
             button = MoneyManagerButtonType.CATEGORY_ITEM
         }
-
         action {
             val buttonText = buttonText ?: return@action
-
-            // Button text format: "icon name" (e.g., "🛒 Продукты")
-            // Find the category that matches this button text
             context.currentCategory = context.categories.find { category ->
                 val icon = category.icon ?: "📌"
-                val expectedText = "$icon ${category.name}"
-                expectedText == buttonText
+                "$icon ${category.name}" == buttonText
             }
         }
-
-        then {
-            to = MoneyManagerState.CATEGORY_ACTIONS
-        }
+        then { to = MoneyManagerState.CATEGORY_ACTIONS }
     }
 
-    transition {
-        name = "Start edit category"
-
-        condition {
-            from = MoneyManagerState.CATEGORY_ACTIONS
-            button = MoneyManagerButtonType.EDIT_CATEGORY
-        }
-
-        action {
-            context.manualTextInputActive = true
-        }
-
-        then {
-            to = MoneyManagerState.CATEGORY_EDIT_NAME
-        }
-    }
-
-    transition {
-        name = "Cancel edit category"
-
-        condition {
-            from = MoneyManagerState.CATEGORY_EDIT_NAME
-            button = MoneyManagerButtonType.CANCEL
-        }
-
-        action {
-            context.manualTextInputActive = false
-        }
-
-        then {
-            to = MoneyManagerState.CATEGORY_ACTIONS
-        }
-    }
-
-    transition {
-        name = "Save category new name"
-
-        condition {
-            from = MoneyManagerState.CATEGORY_EDIT_NAME
-            eventType = EventType.TEXT
-        }
-
-        action {
-            context.manualTextInputActive = false
-            val newName = update.message.text ?: return@action
-            val categoryId = context.currentCategory?.id ?: return@action
+    textInputFlow(
+        flowName = "edit category name",
+        sourceState = MoneyManagerState.CATEGORY_ACTIONS,
+        editState = MoneyManagerState.CATEGORY_EDIT_NAME,
+        startButton = MoneyManagerButtonType.EDIT_CATEGORY,
+        onSave = {
+            val newName = update.message.text ?: return@textInputFlow
+            val categoryId = context.currentCategory?.id ?: return@textInputFlow
 
             val updatedCategory = categoryService.updateCategoryName(categoryId, newName)
             if (updatedCategory != null) {
                 context.currentCategory = updatedCategory
                 context.renameConfirmation = "✅ Название изменено на «${updatedCategory.name}»"
                 context.textInputResponse = true
-
-                val activeGroupId = context.userInfo?.activeGroupId
-                val categoryType = context.categoryTypeInput
-                if (activeGroupId != null && categoryType != null) {
-                    context.categories = categoryService.getCategoriesByGroupAndType(activeGroupId, categoryType)
-                }
+                context.refreshCategoryList(categoryService)
             }
         }
+    )
 
-        then {
-            to = MoneyManagerState.CATEGORY_ACTIONS
-        }
-    }
+    simpleTransitionWithAction("Start edit category icon",
+        MoneyManagerState.CATEGORY_ACTIONS, MoneyManagerButtonType.EDIT_CATEGORY_ICON, MoneyManagerState.CATEGORY_EDIT_ICON
+    ) { context.manualTextInputActive = true }
 
-    transition {
-        name = "Start edit category icon"
-
-        condition {
-            from = MoneyManagerState.CATEGORY_ACTIONS
-            button = MoneyManagerButtonType.EDIT_CATEGORY_ICON
-        }
-
-        action {
-            context.manualTextInputActive = true
-        }
-
-        then {
-            to = MoneyManagerState.CATEGORY_EDIT_ICON
-        }
-    }
-
-    transition {
-        name = "Cancel edit category icon"
-
-        condition {
-            from = MoneyManagerState.CATEGORY_EDIT_ICON
-            button = MoneyManagerButtonType.CANCEL
-        }
-
-        action {
-            context.manualTextInputActive = false
-        }
-
-        then {
-            to = MoneyManagerState.CATEGORY_ACTIONS
-        }
-    }
+    simpleTransitionWithAction("Cancel edit category icon",
+        MoneyManagerState.CATEGORY_EDIT_ICON, MoneyManagerButtonType.CANCEL, MoneyManagerState.CATEGORY_ACTIONS
+    ) { context.manualTextInputActive = false }
 
     transition {
         name = "Save category new icon"
-
         condition {
             from = MoneyManagerState.CATEGORY_EDIT_ICON
             eventType = EventType.TEXT
@@ -146,7 +68,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.categoryActionsTransit
                 text.isNotEmpty() && !text.any { it in 'a'..'z' || it in 'A'..'Z' || it in 'а'..'я' || it in 'А'..'Я' || it in '0'..'9' }
             }
         }
-
         action {
             context.manualTextInputActive = false
             context.iconInputError = false
@@ -157,100 +78,38 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.categoryActionsTransit
             if (updatedCategory != null) {
                 context.currentCategory = updatedCategory
                 context.textInputResponse = true
-
-                val activeGroupId = context.userInfo?.activeGroupId
-                val categoryType = context.categoryTypeInput
-                if (activeGroupId != null && categoryType != null) {
-                    context.categories = categoryService.getCategoriesByGroupAndType(activeGroupId, categoryType)
-                }
+                context.refreshCategoryList(categoryService)
             }
         }
-
-        then {
-            to = MoneyManagerState.CATEGORY_ACTIONS
-        }
+        then { to = MoneyManagerState.CATEGORY_ACTIONS }
     }
 
     transition {
         name = "Reject non-emoji icon input"
-
         condition {
             from = MoneyManagerState.CATEGORY_EDIT_ICON
             eventType = EventType.TEXT
         }
-
-        action {
-            context.iconInputError = true
-        }
-
-        then {
-            to = MoneyManagerState.CATEGORY_EDIT_ICON
-        }
+        action { context.iconInputError = true }
+        then { to = MoneyManagerState.CATEGORY_EDIT_ICON }
     }
 
-    transition {
-        name = "Start delete category"
-
-        condition {
-            from = MoneyManagerState.CATEGORY_ACTIONS
-            button = MoneyManagerButtonType.DELETE_CATEGORY_BUTTON
-        }
-
-        then {
-            to = MoneyManagerState.CATEGORY_DELETE_CONFIRM
-        }
-    }
-
-    transition {
-        name = "Confirm delete category"
-
-        condition {
-            from = MoneyManagerState.CATEGORY_DELETE_CONFIRM
-            button = MoneyManagerButtonType.CONFIRM_DELETE
-        }
-
-        action {
-            val categoryId = context.currentCategory?.id ?: return@action
-            val categoryType = context.currentCategory?.type
-
+    confirmFlow(
+        flowName = "delete category",
+        sourceState = MoneyManagerState.CATEGORY_ACTIONS,
+        confirmState = MoneyManagerState.CATEGORY_DELETE_CONFIRM,
+        returnState = MoneyManagerState.CATEGORY_LIST,
+        triggerButton = MoneyManagerButtonType.DELETE_CATEGORY_BUTTON,
+        onConfirm = {
+            val categoryId = context.currentCategory?.id ?: return@confirmFlow
             val deleted = categoryService.deleteCategory(categoryId)
             if (deleted) {
-                val activeGroupId = context.userInfo?.activeGroupId
-                if (activeGroupId != null && categoryType != null) {
-                    context.categories = categoryService.getCategoriesByGroupAndType(activeGroupId, categoryType)
-                }
+                context.refreshCategoryList(categoryService)
                 context.currentCategory = null
             }
         }
+    )
 
-        then {
-            to = MoneyManagerState.CATEGORY_LIST
-        }
-    }
-
-    transition {
-        name = "Cancel delete category"
-
-        condition {
-            from = MoneyManagerState.CATEGORY_DELETE_CONFIRM
-            button = MoneyManagerButtonType.CANCEL
-        }
-
-        then {
-            to = MoneyManagerState.CATEGORY_ACTIONS
-        }
-    }
-
-    transition {
-        name = "Back to category list from actions"
-
-        condition {
-            from = MoneyManagerState.CATEGORY_ACTIONS
-            button = MoneyManagerButtonType.BACK_TO_MENU
-        }
-
-        then {
-            to = MoneyManagerState.CATEGORY_LIST
-        }
-    }
+    simpleTransition("Back to category list from actions",
+        MoneyManagerState.CATEGORY_ACTIONS, MoneyManagerButtonType.BACK_TO_MENU, MoneyManagerState.CATEGORY_LIST)
 }

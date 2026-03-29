@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.transition.category
 
+import ai.moneymanager.chat.transition.common.confirmFlow
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
@@ -12,35 +13,23 @@ private val log = LoggerFactory.getLogger("DeleteAllCategoriesTransitions")
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.deleteAllCategoriesTransitions(
     categoryService: CategoryService
 ) {
-    transition {
-        name = "Start delete all categories"
-
-        condition {
-            from = MoneyManagerState.CATEGORY_LIST_SELECT_TYPE
-            button = MoneyManagerButtonType.DELETE_ALL_CATEGORIES
-        }
-
-        action {
+    confirmFlow(
+        flowName = "delete all categories",
+        sourceState = MoneyManagerState.CATEGORY_LIST_SELECT_TYPE,
+        confirmState = MoneyManagerState.CATEGORY_DELETE_ALL_CONFIRM,
+        returnState = MoneyManagerState.CATEGORY_MANAGEMENT,
+        triggerButton = MoneyManagerButtonType.DELETE_ALL_CATEGORIES,
+        cancelState = MoneyManagerState.CATEGORY_MANAGEMENT,
+        onStart = {
             val activeGroupId = context.userInfo?.activeGroupId
             if (activeGroupId != null) {
                 context.categories = categoryService.getCategoriesByGroup(activeGroupId)
             }
-        }
-
-        then {
-            to = MoneyManagerState.CATEGORY_DELETE_ALL_CONFIRM
-        }
-    }
-
-    transition {
-        name = "Confirm delete all categories"
-
-        condition {
-            from = MoneyManagerState.CATEGORY_DELETE_ALL_CONFIRM
-            button = MoneyManagerButtonType.CONFIRM_DELETE
-        }
-
-        action {
+        },
+        onCancel = {
+            context.categories = emptyList()
+        },
+        onConfirm = {
             val activeGroupId = context.userInfo?.activeGroupId
             if (activeGroupId != null) {
                 val deletedCount = categoryService.deleteAllCategoriesForGroup(activeGroupId)
@@ -49,26 +38,5 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.deleteAllCategoriesTra
                 log.info("Deleted $deletedCount categories for group $activeGroupId")
             }
         }
-
-        then {
-            to = MoneyManagerState.CATEGORY_MANAGEMENT
-        }
-    }
-
-    transition {
-        name = "Cancel delete all categories"
-
-        condition {
-            from = MoneyManagerState.CATEGORY_DELETE_ALL_CONFIRM
-            button = MoneyManagerButtonType.CANCEL
-        }
-
-        action {
-            context.categories = emptyList()
-        }
-
-        then {
-            to = MoneyManagerState.CATEGORY_MANAGEMENT
-        }
-    }
+    )
 }

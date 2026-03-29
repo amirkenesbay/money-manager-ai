@@ -1,47 +1,18 @@
 package ai.moneymanager.chat.transition.category
 
+import ai.moneymanager.chat.transition.common.simpleTransition
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.categoryBackTransitions() {
-    transition {
-        name = "Back to menu from category management"
+    simpleTransition("Back to menu from category management",
+        MoneyManagerState.CATEGORY_MANAGEMENT, MoneyManagerButtonType.BACK_TO_MENU, MoneyManagerState.MENU)
 
-        condition {
-            from = MoneyManagerState.CATEGORY_MANAGEMENT
-            button = MoneyManagerButtonType.BACK_TO_MENU
-        }
+    simpleTransition("Back to category management from select type",
+        MoneyManagerState.CATEGORY_LIST_SELECT_TYPE, MoneyManagerButtonType.CANCEL, MoneyManagerState.CATEGORY_MANAGEMENT)
 
-        then {
-            to = MoneyManagerState.MENU
-        }
-    }
-
-    transition {
-        name = "Back to category management from select type"
-
-        condition {
-            from = MoneyManagerState.CATEGORY_LIST_SELECT_TYPE
-            button = MoneyManagerButtonType.CANCEL
-        }
-
-        then {
-            to = MoneyManagerState.CATEGORY_MANAGEMENT
-        }
-    }
-
-    transition {
-        name = "Back to select type from category list"
-
-        condition {
-            from = MoneyManagerState.CATEGORY_LIST
-            button = MoneyManagerButtonType.BACK_TO_MENU
-        }
-
-        then {
-            to = MoneyManagerState.CATEGORY_LIST_SELECT_TYPE
-        }
-    }
+    simpleTransition("Back to select type from category list",
+        MoneyManagerState.CATEGORY_LIST, MoneyManagerButtonType.BACK_TO_MENU, MoneyManagerState.CATEGORY_LIST_SELECT_TYPE)
 }
