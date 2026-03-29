@@ -14,6 +14,20 @@ Test the Money Manager AI bot via Telegram MCP (telegram-mcp).
 
 ## Instructions
 
+### Application Lifecycle
+
+Before testing, the application must be running. After testing, it must be stopped.
+
+1. **Start the application** before any test actions:
+   - Ensure Java 21 is active (`sdk use java 21.0.2-tem` or equivalent)
+   - Run `./gradlew bootRun` in the background
+   - Wait for the application to start (look for "Started MoneyManagerAIApplication" in logs)
+
+2. **Run the test scenario** (see below)
+
+3. **Stop the application** after testing is complete:
+   - Kill the `bootRun` process
+
 ### Interpreting $ARGUMENTS
 
 If `$ARGUMENTS` is provided, treat it as a test scenario to execute. Examples:
