@@ -20,6 +20,9 @@ enum class MoneyManagerState {
     GROUP_EDIT_ENTER_NAME,
     GROUP_DELETE_CONFIRM,
 
+    // -------- FINANCE --------
+    FINANCE_MANAGEMENT,
+
     // -------- NLP --------
     NLP_CONFIRM_CREATE_GROUP,
     NLP_CONFIRM_DELETE_GROUP,
@@ -44,6 +47,10 @@ enum class MoneyManagerButtonType {
     // Menu
     PERSONAL_ACCOUNTING,
     SHARED_ACCOUNTING,
+    BALANCE,        // TODO: показ баланса группы
+    NOTIFICATIONS,  // TODO: настройки уведомлений
+    AI_ASSISTANT,   // TODO: AI ассистент
+    FINANCE,        // экран "Финансы"
     ADD_EXPENSE,
     ADD_INCOME,
 
@@ -90,6 +97,12 @@ enum class MoneyManagerButtonType {
     QUICK_CATEGORY_FREELANCE,
     QUICK_CATEGORY_INVESTMENTS,
     QUICK_CATEGORY_DEBT_RETURN,
+
+    // Finance
+    FINANCE_ADD_EXPENSE,  // TODO: добавление расхода
+    FINANCE_ADD_INCOME,   // TODO: добавление дохода
+    FINANCE_HISTORY,      // TODO: история операций
+    FINANCE_REPORT,       // TODO: отчёт по операциям
 
     // Actions
     ENTER_CUSTOM_NAME,

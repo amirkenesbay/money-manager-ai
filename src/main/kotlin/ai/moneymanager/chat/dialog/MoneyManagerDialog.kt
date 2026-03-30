@@ -1,6 +1,7 @@
 package ai.moneymanager.chat.dialog
 
 import ai.moneymanager.chat.transition.category.categoryDialogTransitions
+import ai.moneymanager.chat.transition.finance.financeDialogTransitions
 import ai.moneymanager.chat.transition.group.groupDialogTransitions
 import ai.moneymanager.chat.transition.nlp.nlpDialogTransitions
 import ai.moneymanager.domain.model.MoneyManagerButtonType
@@ -34,6 +35,7 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
         joinGroupDialogTransitions(groupService, userInfoService)
         groupDialogTransitions(groupService, categoryService, userInfoService)
         categoryDialogTransitions(categoryService, groupService)
+        financeDialogTransitions()
         // NLP disabled for now
         // nlpDialogTransitions(commandParserService, groupService, userInfoService, telegramFileService, geminiService)
     }

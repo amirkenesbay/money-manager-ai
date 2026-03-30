@@ -24,11 +24,25 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.menuReply() {
             keyboard {
                 buttonRow {
                     button {
-                        text = "👥 Совместный учёт"
-                        type = MoneyManagerButtonType.SHARED_ACCOUNTING
+                        text = "💰 Баланс"
+                        type = MoneyManagerButtonType.BALANCE
+                    }
+                    button {
+                        text = "🔔 Уведомления"
+                        type = MoneyManagerButtonType.NOTIFICATIONS
                     }
                 }
                 buttonRow {
+                    button {
+                        text = "🤖 AI"
+                        type = MoneyManagerButtonType.AI_ASSISTANT
+                    }
+                }
+                buttonRow {
+                    button {
+                        text = "👥 Группы"
+                        type = MoneyManagerButtonType.SHARED_ACCOUNTING
+                    }
                     button {
                         text = "📂 Категории"
                         type = MoneyManagerButtonType.CATEGORIES
@@ -36,8 +50,8 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.menuReply() {
                 }
                 buttonRow {
                     button {
-                        text = "💡 Что спросить?"
-                        type = MoneyManagerButtonType.WHAT_TO_ASK
+                        text = "📊 Финансы"
+                        type = MoneyManagerButtonType.FINANCE
                     }
                 }
             }

@@ -1,6 +1,7 @@
 package ai.moneymanager.chat.config
 
 import ai.moneymanager.chat.reply.category.*
+import ai.moneymanager.chat.reply.finance.financeManagementReply
 import ai.moneymanager.chat.reply.group.*
 import ai.moneymanager.chat.reply.money.menuReply
 import ai.moneymanager.chat.reply.nlp.nlpConfirmCreateGroupReply
@@ -22,6 +23,9 @@ class MoneyManagerReplyConfig {
 
             // Money replies
             menuReply()
+
+            // Finance replies
+            financeManagementReply()
 
             // Group replies
             groupManagementReply()
