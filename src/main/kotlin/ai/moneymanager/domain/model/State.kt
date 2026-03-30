@@ -92,6 +92,7 @@ enum class MoneyManagerButtonType {
     QUICK_CATEGORY_DEBT_RETURN,
 
     // Actions
+    ENTER_CUSTOM_NAME,
     CONFIRM_JOIN,
     CONFIRM_DELETE,
     CANCEL,
@@ -142,6 +143,7 @@ class MoneyManagerContext {
 
     // -------- INPUT MODE --------
     var manualTextInputActive: Boolean = false
+    var customNameInputMode: Boolean = false
 
     // -------- NLP --------
     var nlpGroupName: String? = null

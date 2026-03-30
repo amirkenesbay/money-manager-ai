@@ -49,6 +49,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createCategoryTransiti
     ) {
         context.categoryTypeInput = CategoryType.EXPENSE
         context.manualTextInputActive = true
+        context.customNameInputMode = false
     }
 
     simpleTransitionWithAction("Select income category type",
@@ -56,10 +57,15 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createCategoryTransiti
     ) {
         context.categoryTypeInput = CategoryType.INCOME
         context.manualTextInputActive = true
+        context.customNameInputMode = false
     }
 
     simpleTransition("Cancel category type selection",
         MoneyManagerState.CATEGORY_CREATE_SELECT_TYPE, MoneyManagerButtonType.CANCEL, MoneyManagerState.CATEGORY_MANAGEMENT)
+
+    simpleTransitionWithAction("Enter custom category name",
+        MoneyManagerState.CATEGORY_CREATE_ENTER_NAME, MoneyManagerButtonType.ENTER_CUSTOM_NAME, MoneyManagerState.CATEGORY_CREATE_ENTER_NAME
+    ) { context.customNameInputMode = true }
 
     simpleTransitionWithAction("Cancel category creation",
         MoneyManagerState.CATEGORY_CREATE_ENTER_NAME, MoneyManagerButtonType.CANCEL, MoneyManagerState.CATEGORY_CREATE_SELECT_TYPE
@@ -67,6 +73,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createCategoryTransiti
         context.categoryTypeInput = null
         context.manualTextInputActive = false
         context.isQuickCategoryCreation = false
+        context.customNameInputMode = false
     }
 
     QuickTemplates.ALL_CATEGORIES.forEach { template ->
@@ -81,6 +88,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createCategoryTransiti
                 context.categoryIconInput = template.icon
                 context.isQuickCategoryCreation = true
                 context.manualTextInputActive = false
+                context.customNameInputMode = false
 
                 val activeGroupId = context.userInfo?.activeGroupId
                 val categoryType = context.categoryTypeInput ?: CategoryType.EXPENSE
@@ -111,6 +119,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createCategoryTransiti
         }
         action {
             context.manualTextInputActive = false
+            context.customNameInputMode = false
             val categoryName = update.message.text?.trim()
                 ?.takeIf { it.isNotBlank() }
                 ?.take(MAX_CATEGORY_NAME_LENGTH)

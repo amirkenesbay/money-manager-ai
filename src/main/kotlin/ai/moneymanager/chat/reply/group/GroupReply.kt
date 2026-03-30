@@ -51,34 +51,52 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupCreateEnterNameR
             } else ""
             context.groupNameDuplicateError = false
 
-            text = """
-                |➕ Новая группа для совместного учёта
-                |
-                |Введите название или выберите готовый вариант:$errorText
-            """.trimMargin()
+            if (context.customNameInputMode) {
+                text = """
+                    |➕ Новая группа для совместного учёта
+                    |
+                    |✍️ Введите название группы:$errorText
+                """.trimMargin()
 
-            keyboard {
-                buttonRow {
-                    button {
-                        text = "👨‍👩‍👧‍👦 Семья"
-                        type = MoneyManagerButtonType.QUICK_GROUP_FAMILY
-                    }
-                    button {
-                        text = "👥 С другом"
-                        type = MoneyManagerButtonType.QUICK_GROUP_WITH_FRIEND
-                    }
+                keyboard {
+                    cancelButton()
                 }
-                buttonRow {
-                    button {
-                        text = "💼 Работа"
-                        type = MoneyManagerButtonType.QUICK_GROUP_WORK
+            } else {
+                text = """
+                    |➕ Новая группа для совместного учёта
+                    |
+                    |Выберите готовый вариант или задайте своё название:$errorText
+                """.trimMargin()
+
+                keyboard {
+                    buttonRow {
+                        button {
+                            text = "👨‍👩‍👧‍👦 Семья"
+                            type = MoneyManagerButtonType.QUICK_GROUP_FAMILY
+                        }
+                        button {
+                            text = "👥 С другом"
+                            type = MoneyManagerButtonType.QUICK_GROUP_WITH_FRIEND
+                        }
                     }
-                    button {
-                        text = "✈️ Поездка"
-                        type = MoneyManagerButtonType.QUICK_GROUP_TRIP
+                    buttonRow {
+                        button {
+                            text = "💼 Работа"
+                            type = MoneyManagerButtonType.QUICK_GROUP_WORK
+                        }
+                        button {
+                            text = "✈️ Поездка"
+                            type = MoneyManagerButtonType.QUICK_GROUP_TRIP
+                        }
                     }
+                    buttonRow {
+                        button {
+                            text = "✏️ Своё название"
+                            type = MoneyManagerButtonType.ENTER_CUSTOM_NAME
+                        }
+                    }
+                    cancelButton()
                 }
-                cancelButton()
             }
         }
     }

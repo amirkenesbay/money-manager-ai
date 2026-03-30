@@ -19,9 +19,16 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createGroupTransitions
         MoneyManagerState.GROUP_MANAGEMENT, MoneyManagerButtonType.CREATE_GROUP, MoneyManagerState.GROUP_CREATE_ENTER_NAME
     ) { context.manualTextInputActive = true }
 
+    simpleTransitionWithAction("Enter custom group name",
+        MoneyManagerState.GROUP_CREATE_ENTER_NAME, MoneyManagerButtonType.ENTER_CUSTOM_NAME, MoneyManagerState.GROUP_CREATE_ENTER_NAME
+    ) { context.customNameInputMode = true }
+
     simpleTransitionWithAction("Cancel group creation",
         MoneyManagerState.GROUP_CREATE_ENTER_NAME, MoneyManagerButtonType.CANCEL, MoneyManagerState.GROUP_MANAGEMENT
-    ) { context.manualTextInputActive = false }
+    ) {
+        context.manualTextInputActive = false
+        context.customNameInputMode = false
+    }
 
     QuickTemplates.GROUPS.forEach { template ->
         transition {
@@ -57,6 +64,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createGroupTransitions
             context.groupNameInput = groupName
             context.isQuickGroupCreation = false
             context.manualTextInputActive = false
+            context.customNameInputMode = false
             context.handleGroupCreated(groupService.createGroup(user.id, groupName))
         }
         then {

@@ -106,81 +106,99 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryCreateEnterNa
             val categoryType = context.categoryTypeInput
             val typeText = categoryTypeLabel(categoryType)
 
-            text = """
-                |➕ Создание категории $typeText
-                |
-                |Введите название категории или выберите готовый вариант:
-            """.trimMargin()
+            if (context.customNameInputMode) {
+                text = """
+                    |➕ Создание категории $typeText
+                    |
+                    |✍️ Введите название категории:
+                """.trimMargin()
 
-            keyboard {
-                when (categoryType) {
-                    CategoryType.EXPENSE -> {
-                        buttonRow {
-                            button {
-                                text = "🍔 Еда вне дома"
-                                type = MoneyManagerButtonType.QUICK_CATEGORY_FOOD_OUT
-                            }
-                            button {
-                                text = "🏠 ЖКХ"
-                                type = MoneyManagerButtonType.QUICK_CATEGORY_UTILITIES
-                            }
-                        }
-                        buttonRow {
-                            button {
-                                text = "💊 Медицина"
-                                type = MoneyManagerButtonType.QUICK_CATEGORY_MEDICINE
-                            }
-                            button {
-                                text = "🎮 Развлечения"
-                                type = MoneyManagerButtonType.QUICK_CATEGORY_ENTERTAINMENT
-                            }
-                        }
-                        buttonRow {
-                            button {
-                                text = "👕 Одежда и обувь"
-                                type = MoneyManagerButtonType.QUICK_CATEGORY_CLOTHES
-                            }
-                            button {
-                                text = "🚕 Такси"
-                                type = MoneyManagerButtonType.QUICK_CATEGORY_TAXI
-                            }
-                        }
-                    }
-                    CategoryType.INCOME -> {
-                        buttonRow {
-                            button {
-                                text = "💰 Зарплата"
-                                type = MoneyManagerButtonType.QUICK_CATEGORY_SALARY
-                            }
-                            button {
-                                text = "💸 Премия"
-                                type = MoneyManagerButtonType.QUICK_CATEGORY_BONUS
-                            }
-                        }
-                        buttonRow {
-                            button {
-                                text = "🎁 Подарок"
-                                type = MoneyManagerButtonType.QUICK_CATEGORY_GIFT
-                            }
-                            button {
-                                text = "💼 Фриланс"
-                                type = MoneyManagerButtonType.QUICK_CATEGORY_FREELANCE
-                            }
-                        }
-                        buttonRow {
-                            button {
-                                text = "📈 Инвестиции"
-                                type = MoneyManagerButtonType.QUICK_CATEGORY_INVESTMENTS
-                            }
-                            button {
-                                text = "💵 Возврат долга"
-                                type = MoneyManagerButtonType.QUICK_CATEGORY_DEBT_RETURN
-                            }
-                        }
-                    }
-                    else -> {}
+                keyboard {
+                    cancelButton()
                 }
-                cancelButton()
+            } else {
+                text = """
+                    |➕ Создание категории $typeText
+                    |
+                    |Выберите готовый вариант или задайте своё название:
+                """.trimMargin()
+
+                keyboard {
+                    when (categoryType) {
+                        CategoryType.EXPENSE -> {
+                            buttonRow {
+                                button {
+                                    text = "🍔 Еда вне дома"
+                                    type = MoneyManagerButtonType.QUICK_CATEGORY_FOOD_OUT
+                                }
+                                button {
+                                    text = "🏠 ЖКХ"
+                                    type = MoneyManagerButtonType.QUICK_CATEGORY_UTILITIES
+                                }
+                            }
+                            buttonRow {
+                                button {
+                                    text = "💊 Медицина"
+                                    type = MoneyManagerButtonType.QUICK_CATEGORY_MEDICINE
+                                }
+                                button {
+                                    text = "🎮 Развлечения"
+                                    type = MoneyManagerButtonType.QUICK_CATEGORY_ENTERTAINMENT
+                                }
+                            }
+                            buttonRow {
+                                button {
+                                    text = "👕 Одежда и обувь"
+                                    type = MoneyManagerButtonType.QUICK_CATEGORY_CLOTHES
+                                }
+                                button {
+                                    text = "🚕 Такси"
+                                    type = MoneyManagerButtonType.QUICK_CATEGORY_TAXI
+                                }
+                            }
+                        }
+                        CategoryType.INCOME -> {
+                            buttonRow {
+                                button {
+                                    text = "💰 Зарплата"
+                                    type = MoneyManagerButtonType.QUICK_CATEGORY_SALARY
+                                }
+                                button {
+                                    text = "💸 Премия"
+                                    type = MoneyManagerButtonType.QUICK_CATEGORY_BONUS
+                                }
+                            }
+                            buttonRow {
+                                button {
+                                    text = "🎁 Подарок"
+                                    type = MoneyManagerButtonType.QUICK_CATEGORY_GIFT
+                                }
+                                button {
+                                    text = "💼 Фриланс"
+                                    type = MoneyManagerButtonType.QUICK_CATEGORY_FREELANCE
+                                }
+                            }
+                            buttonRow {
+                                button {
+                                    text = "📈 Инвестиции"
+                                    type = MoneyManagerButtonType.QUICK_CATEGORY_INVESTMENTS
+                                }
+                                button {
+                                    text = "💵 Возврат долга"
+                                    type = MoneyManagerButtonType.QUICK_CATEGORY_DEBT_RETURN
+                                }
+                            }
+                        }
+                        else -> {}
+                    }
+                    buttonRow {
+                        button {
+                            text = "✏️ Своё название"
+                            type = MoneyManagerButtonType.ENTER_CUSTOM_NAME
+                        }
+                    }
+                    cancelButton()
+                }
             }
         }
     }
