@@ -10,31 +10,41 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeManagementRepl
         state = MoneyManagerState.FINANCE_MANAGEMENT
 
         message {
+            val details = buildString {
+                context.selectedCategory?.let {
+                    val icon = it.icon ?: "📌"
+                    append("\n$icon Категория: ${it.name}")
+                }
+                context.financeAmount?.let { append("\n💰 Сумма: $it") }
+                context.financeComment?.let { append("\n💬 Комментарий: $it") }
+                context.selectedDate?.let { append("\n📅 Дата: $it") }
+            }
+
             text = """
                 |📊 Финансы
                 |
-                |Управляй расходами и доходами
+                |Управляй расходами и доходами${if (details.isNotEmpty()) "\n$details" else ""}
             """.trimMargin()
 
             keyboard {
                 buttonRow {
                     button {
                         text = "📉 Расход"
-                        type = MoneyManagerButtonType.FINANCE_ADD_EXPENSE // TODO: добавление расхода
+                        type = MoneyManagerButtonType.FINANCE_ADD_EXPENSE
                     }
                     button {
                         text = "📈 Доход"
-                        type = MoneyManagerButtonType.FINANCE_ADD_INCOME // TODO: добавление дохода
+                        type = MoneyManagerButtonType.FINANCE_ADD_INCOME
                     }
                 }
                 buttonRow {
                     button {
                         text = "📋 История"
-                        type = MoneyManagerButtonType.FINANCE_HISTORY // TODO: история операций
+                        type = MoneyManagerButtonType.FINANCE_HISTORY
                     }
                     button {
                         text = "📈 Отчёт"
-                        type = MoneyManagerButtonType.FINANCE_REPORT // TODO: отчёт по операциям
+                        type = MoneyManagerButtonType.FINANCE_REPORT
                     }
                 }
                 buttonRow {

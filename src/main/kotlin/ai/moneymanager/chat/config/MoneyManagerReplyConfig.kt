@@ -2,6 +2,14 @@ package ai.moneymanager.chat.config
 
 import ai.moneymanager.chat.reply.category.*
 import ai.moneymanager.chat.reply.finance.financeManagementReply
+import ai.moneymanager.chat.reply.finance.financeCalendarReply
+import ai.moneymanager.chat.reply.finance.financeEnterAmountReply
+import ai.moneymanager.chat.reply.finance.financeEnterCommentReply
+import ai.moneymanager.chat.reply.finance.financeNoCategoriesWarningReply
+import ai.moneymanager.chat.reply.finance.financeSelectCategoryReply
+import ai.moneymanager.chat.reply.finance.financeSelectDateReply
+import ai.moneymanager.chat.reply.finance.financeSelectMonthReply
+import ai.moneymanager.chat.reply.finance.financeSelectYearReply
 import ai.moneymanager.chat.reply.group.*
 import ai.moneymanager.chat.reply.money.menuReply
 import ai.moneymanager.chat.reply.nlp.nlpConfirmCreateGroupReply
@@ -26,6 +34,14 @@ class MoneyManagerReplyConfig {
 
             // Finance replies
             financeManagementReply()
+            financeSelectCategoryReply()
+            financeNoCategoriesWarningReply()
+            financeEnterAmountReply()
+            financeEnterCommentReply()
+            financeSelectDateReply()
+            financeCalendarReply()
+            financeSelectYearReply()
+            financeSelectMonthReply()
 
             // Group replies
             groupManagementReply()

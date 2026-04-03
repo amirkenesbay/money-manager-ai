@@ -3,10 +3,16 @@ package ai.moneymanager.chat.transition.finance
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
+import ai.moneymanager.service.CategoryService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 
-fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.financeDialogTransitions() {
+fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.financeDialogTransitions(
+    categoryService: CategoryService
+) {
     openFinanceManagementTransition()
+    financeCategoryTransitions(categoryService)
+    financeAmountTransitions()
+    financeDateTransitions()
     financeBackTransitions()
 }
 

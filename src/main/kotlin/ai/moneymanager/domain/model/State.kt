@@ -22,6 +22,14 @@ enum class MoneyManagerState {
 
     // -------- FINANCE --------
     FINANCE_MANAGEMENT,
+    FINANCE_SELECT_CATEGORY,
+    FINANCE_NO_CATEGORIES_WARNING,
+    FINANCE_ENTER_AMOUNT,
+    FINANCE_ENTER_COMMENT,
+    FINANCE_SELECT_DATE,
+    FINANCE_CALENDAR,
+    FINANCE_SELECT_YEAR,
+    FINANCE_SELECT_MONTH,
 
     // -------- NLP --------
     NLP_CONFIRM_CREATE_GROUP,
@@ -99,10 +107,20 @@ enum class MoneyManagerButtonType {
     QUICK_CATEGORY_DEBT_RETURN,
 
     // Finance
-    FINANCE_ADD_EXPENSE,  // TODO: добавление расхода
-    FINANCE_ADD_INCOME,   // TODO: добавление дохода
+    FINANCE_ADD_EXPENSE,
+    FINANCE_ADD_INCOME,
+    FINANCE_CATEGORY_ITEM,
+    CREATE_CATEGORY_FROM_FINANCE,
     FINANCE_HISTORY,      // TODO: история операций
     FINANCE_REPORT,       // TODO: отчёт по операциям
+
+    // Quick dates
+    QUICK_DATE_TODAY,
+    QUICK_DATE_YESTERDAY,
+    QUICK_DATE_BEFORE_YESTERDAY,
+    OPEN_CALENDAR,
+    SKIP_COMMENT,
+    BACK_TO_AMOUNT,
 
     // Actions
     ENTER_CUSTOM_NAME,
@@ -110,6 +128,9 @@ enum class MoneyManagerButtonType {
     CONFIRM_DELETE,
     CANCEL,
     BACK_TO_MENU,
+    BACK_TO_FINANCE,
+    BACK_TO_FINANCE_DATE,
+    BACK_TO_CALENDAR,
 
     // NLP
     CONFIRM_NLP_ACTION,
@@ -157,6 +178,18 @@ class MoneyManagerContext {
     // -------- INPUT MODE --------
     var manualTextInputActive: Boolean = false
     var customNameInputMode: Boolean = false
+
+    // -------- FINANCE --------
+    var financeOperationType: CategoryType? = null
+    var selectedCategory: Category? = null
+    var financeAmount: Double? = null
+    var financeComment: String? = null
+    var amountInputError: Boolean = false
+
+    // -------- CALENDAR --------
+    var calendarYear: Int = java.time.LocalDate.now().year
+    var calendarMonth: Int = java.time.LocalDate.now().monthValue
+    var selectedDate: java.time.LocalDate? = null
 
     // -------- NLP --------
     var nlpGroupName: String? = null
