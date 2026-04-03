@@ -2,6 +2,7 @@ package ai.moneymanager.chat.config
 
 import ai.moneymanager.chat.reply.category.*
 import ai.moneymanager.chat.reply.finance.financeManagementReply
+import ai.moneymanager.chat.reply.finance.financeOperationSavedReply
 import ai.moneymanager.chat.reply.finance.financeCalendarReply
 import ai.moneymanager.chat.reply.finance.financeEnterAmountReply
 import ai.moneymanager.chat.reply.finance.financeEnterCommentReply
@@ -42,6 +43,7 @@ class MoneyManagerReplyConfig {
             financeCalendarReply()
             financeSelectYearReply()
             financeSelectMonthReply()
+            financeOperationSavedReply()
 
             // Group replies
             groupManagementReply()

@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.transition.finance
 
+import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
@@ -14,8 +15,8 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.financeDialogTransitio
     openFinanceManagementTransition()
     financeCategoryTransitions(categoryService)
     financeAmountTransitions()
-    financeDateTransitions()
-    saveFinanceOperationTransition(financeOperationService)
+    financeDateTransitions(financeOperationService)
+    financeOperationSavedTransitions(categoryService)
     financeBackTransitions()
 }
 
@@ -34,36 +35,88 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.openFinanceMan
     }
 }
 
-private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.saveFinanceOperationTransition(
-    financeOperationService: FinanceOperationService
+private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.financeOperationSavedTransitions(
+    categoryService: CategoryService
 ) {
     transition {
-        name = "Save finance operation"
+        name = "Add expense from saved screen"
 
         condition {
-            from = MoneyManagerState.FINANCE_MANAGEMENT
-            button = MoneyManagerButtonType.FINANCE_SAVE
+            from = MoneyManagerState.FINANCE_OPERATION_SAVED
+            button = MoneyManagerButtonType.FINANCE_ADD_EXPENSE
         }
 
         action {
-            val groupId = context.userInfo?.activeGroupId ?: return@action
-            val type = context.financeOperationType ?: return@action
-            val amount = context.financeAmount ?: return@action
-            val category = context.selectedCategory ?: return@action
-            val date = context.selectedDate ?: return@action
+            context.clearFinanceData()
+            context.financeOperationType = CategoryType.EXPENSE
+            loadFinanceCategories(categoryService)
+        }
 
-            financeOperationService.save(
-                groupId = groupId,
-                creatorId = user.id,
-                type = type,
-                amount = amount,
-                categoryId = category.id!!,
-                categoryName = category.name,
-                categoryIcon = category.icon,
-                operationDate = date,
-                description = context.financeComment
-            )
+        then {
+            to = MoneyManagerState.FINANCE_OPERATION_SAVED
+            noReply = true
+            trigger { sameDialog = true }
+        }
+    }
 
+    transition {
+        name = "Add income from saved screen"
+
+        condition {
+            from = MoneyManagerState.FINANCE_OPERATION_SAVED
+            button = MoneyManagerButtonType.FINANCE_ADD_INCOME
+        }
+
+        action {
+            context.clearFinanceData()
+            context.financeOperationType = CategoryType.INCOME
+            loadFinanceCategories(categoryService)
+        }
+
+        then {
+            to = MoneyManagerState.FINANCE_OPERATION_SAVED
+            noReply = true
+            trigger { sameDialog = true }
+        }
+    }
+
+    transition {
+        name = "Route to category list from saved"
+
+        condition {
+            from = MoneyManagerState.FINANCE_OPERATION_SAVED
+            eventType = kz.rmr.chatmachinist.model.EventType.TRIGGERED
+            guard { context.financeOperationType != null && context.categories.isNotEmpty() }
+        }
+
+        then {
+            to = MoneyManagerState.FINANCE_SELECT_CATEGORY
+        }
+    }
+
+    transition {
+        name = "Route to no categories from saved"
+
+        condition {
+            from = MoneyManagerState.FINANCE_OPERATION_SAVED
+            eventType = kz.rmr.chatmachinist.model.EventType.TRIGGERED
+            guard { context.financeOperationType != null && context.categories.isEmpty() }
+        }
+
+        then {
+            to = MoneyManagerState.FINANCE_NO_CATEGORIES_WARNING
+        }
+    }
+
+    transition {
+        name = "Back to finance from saved screen"
+
+        condition {
+            from = MoneyManagerState.FINANCE_OPERATION_SAVED
+            button = MoneyManagerButtonType.BACK_TO_FINANCE
+        }
+
+        action {
             context.clearFinanceData()
         }
 

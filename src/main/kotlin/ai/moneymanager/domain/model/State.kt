@@ -30,6 +30,7 @@ enum class MoneyManagerState {
     FINANCE_CALENDAR,
     FINANCE_SELECT_YEAR,
     FINANCE_SELECT_MONTH,
+    FINANCE_OPERATION_SAVED,
 
     // -------- NLP --------
     NLP_CONFIRM_CREATE_GROUP,
@@ -111,7 +112,6 @@ enum class MoneyManagerButtonType {
     FINANCE_ADD_INCOME,
     FINANCE_CATEGORY_ITEM,
     CREATE_CATEGORY_FROM_FINANCE,
-    FINANCE_SAVE,
     FINANCE_HISTORY,      // TODO: история операций
     FINANCE_REPORT,       // TODO: отчёт по операциям
 
