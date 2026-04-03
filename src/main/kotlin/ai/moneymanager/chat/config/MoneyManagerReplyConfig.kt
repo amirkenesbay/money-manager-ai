@@ -3,6 +3,12 @@ package ai.moneymanager.chat.config
 import ai.moneymanager.chat.reply.category.*
 import ai.moneymanager.chat.reply.finance.financeManagementReply
 import ai.moneymanager.chat.reply.finance.financeOperationSavedReply
+import ai.moneymanager.chat.reply.finance.financeHistoryReply
+import ai.moneymanager.chat.reply.finance.financeHistorySelectStartDateReply
+import ai.moneymanager.chat.reply.finance.financeHistorySelectEndDateReply
+import ai.moneymanager.chat.reply.finance.financeHistoryCalendarReply
+import ai.moneymanager.chat.reply.finance.financeHistorySelectYearReply
+import ai.moneymanager.chat.reply.finance.financeHistorySelectMonthReply
 import ai.moneymanager.chat.reply.finance.financeCalendarReply
 import ai.moneymanager.chat.reply.finance.financeEnterAmountReply
 import ai.moneymanager.chat.reply.finance.financeEnterCommentReply
@@ -44,6 +50,14 @@ class MoneyManagerReplyConfig {
             financeSelectYearReply()
             financeSelectMonthReply()
             financeOperationSavedReply()
+
+            // Finance history replies
+            financeHistoryReply()
+            financeHistorySelectStartDateReply()
+            financeHistorySelectEndDateReply()
+            financeHistoryCalendarReply()
+            financeHistorySelectYearReply()
+            financeHistorySelectMonthReply()
 
             // Group replies
             groupManagementReply()

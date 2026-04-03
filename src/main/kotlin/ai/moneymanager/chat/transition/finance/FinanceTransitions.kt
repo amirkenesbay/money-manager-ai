@@ -17,6 +17,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.financeDialogTransitio
     financeAmountTransitions()
     financeDateTransitions(financeOperationService)
     financeOperationSavedTransitions(categoryService)
+    financeHistoryTransitions(financeOperationService)
     financeBackTransitions()
 }
 

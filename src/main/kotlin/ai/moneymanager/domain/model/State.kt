@@ -32,6 +32,14 @@ enum class MoneyManagerState {
     FINANCE_SELECT_MONTH,
     FINANCE_OPERATION_SAVED,
 
+    // -------- FINANCE HISTORY --------
+    FINANCE_HISTORY_VIEW,
+    FINANCE_HISTORY_SELECT_START_DATE,
+    FINANCE_HISTORY_SELECT_END_DATE,
+    FINANCE_HISTORY_CALENDAR,
+    FINANCE_HISTORY_SELECT_YEAR,
+    FINANCE_HISTORY_SELECT_MONTH,
+
     // -------- NLP --------
     NLP_CONFIRM_CREATE_GROUP,
     NLP_CONFIRM_DELETE_GROUP,
@@ -112,8 +120,15 @@ enum class MoneyManagerButtonType {
     FINANCE_ADD_INCOME,
     FINANCE_CATEGORY_ITEM,
     CREATE_CATEGORY_FROM_FINANCE,
-    FINANCE_HISTORY,      // TODO: история операций
+    FINANCE_HISTORY,
     FINANCE_REPORT,       // TODO: отчёт по операциям
+
+    // History period
+    CHANGE_PERIOD,
+    QUICK_PERIOD_THIS_MONTH,
+    QUICK_PERIOD_LAST_MONTH,
+    QUICK_PERIOD_THIS_YEAR,
+    BACK_TO_HISTORY,
 
     // Quick dates
     QUICK_DATE_TODAY,
@@ -199,6 +214,12 @@ class MoneyManagerContext {
         financeComment = null
         selectedDate = null
     }
+
+    // -------- HISTORY --------
+    var historyStartDate: java.time.LocalDate? = null
+    var historyEndDate: java.time.LocalDate? = null
+    var historyReport: String? = null
+    var historySelectingStart: Boolean = true
 
     // -------- NLP --------
     var nlpGroupName: String? = null
