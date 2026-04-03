@@ -26,6 +26,10 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeManagementRepl
                 |Управляй расходами и доходами${if (details.isNotEmpty()) "\n$details" else ""}
             """.trimMargin()
 
+            val allFieldsFilled = context.selectedCategory != null
+                && context.financeAmount != null
+                && context.selectedDate != null
+
             keyboard {
                 buttonRow {
                     button {
@@ -35,6 +39,14 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeManagementRepl
                     button {
                         text = "📈 Доход"
                         type = MoneyManagerButtonType.FINANCE_ADD_INCOME
+                    }
+                }
+                if (allFieldsFilled) {
+                    buttonRow {
+                        button {
+                            text = "✅ Сохранить"
+                            type = MoneyManagerButtonType.FINANCE_SAVE
+                        }
                     }
                 }
                 buttonRow {

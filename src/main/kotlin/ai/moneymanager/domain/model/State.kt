@@ -111,6 +111,7 @@ enum class MoneyManagerButtonType {
     FINANCE_ADD_INCOME,
     FINANCE_CATEGORY_ITEM,
     CREATE_CATEGORY_FROM_FINANCE,
+    FINANCE_SAVE,
     FINANCE_HISTORY,      // TODO: история операций
     FINANCE_REPORT,       // TODO: отчёт по операциям
 
@@ -190,6 +191,14 @@ class MoneyManagerContext {
     var calendarYear: Int = java.time.LocalDate.now().year
     var calendarMonth: Int = java.time.LocalDate.now().monthValue
     var selectedDate: java.time.LocalDate? = null
+
+    fun clearFinanceData() {
+        financeOperationType = null
+        selectedCategory = null
+        financeAmount = null
+        financeComment = null
+        selectedDate = null
+    }
 
     // -------- NLP --------
     var nlpGroupName: String? = null
