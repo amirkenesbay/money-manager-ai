@@ -3,23 +3,23 @@ package ai.moneymanager.chat.transition.finance
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
-import ai.moneymanager.service.FinanceOperationService
+import ai.moneymanager.service.FinanceHistoryService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.ActionContext
 import kz.rmr.chatmachinist.widget.CalendarButtonType
 import java.time.LocalDate
 
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.financeHistoryTransitions(
-    financeOperationService: FinanceOperationService
+    financeHistoryService: FinanceHistoryService
 ) {
-    openHistoryTransition(financeOperationService)
-    changePeriodTransitions(financeOperationService)
+    openHistoryTransition(financeHistoryService)
+    changePeriodTransitions(financeHistoryService)
     historyCalendarTransitions()
     historyBackTransitions()
 }
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.openHistoryTransition(
-    financeOperationService: FinanceOperationService
+    financeHistoryService: FinanceHistoryService
 ) {
     transition {
         name = "Open finance history"
@@ -33,7 +33,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.openHistoryTra
             val now = LocalDate.now()
             context.historyStartDate = now.withDayOfMonth(1)
             context.historyEndDate = now.withDayOfMonth(now.lengthOfMonth())
-            loadReport(financeOperationService)
+            loadReport(financeHistoryService)
         }
 
         then {
@@ -43,7 +43,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.openHistoryTra
 }
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.changePeriodTransitions(
-    financeOperationService: FinanceOperationService
+    financeHistoryService: FinanceHistoryService
 ) {
     transition {
         name = "Open period selection"
@@ -71,7 +71,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.changePeriodTr
             val now = LocalDate.now()
             context.historyStartDate = now.withDayOfMonth(1)
             context.historyEndDate = now.withDayOfMonth(now.lengthOfMonth())
-            loadReport(financeOperationService)
+            loadReport(financeHistoryService)
         }
 
         then {
@@ -91,7 +91,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.changePeriodTr
             val lastMonth = LocalDate.now().minusMonths(1)
             context.historyStartDate = lastMonth.withDayOfMonth(1)
             context.historyEndDate = lastMonth.withDayOfMonth(lastMonth.lengthOfMonth())
-            loadReport(financeOperationService)
+            loadReport(financeHistoryService)
         }
 
         then {
@@ -111,7 +111,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.changePeriodTr
             val now = LocalDate.now()
             context.historyStartDate = now.withDayOfYear(1)
             context.historyEndDate = now.withMonth(12).withDayOfMonth(31)
-            loadReport(financeOperationService)
+            loadReport(financeHistoryService)
         }
 
         then {
@@ -176,7 +176,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.changePeriodTr
 
         action {
             context.historyEndDate = LocalDate.now()
-            loadReport(financeOperationService)
+            loadReport(financeHistoryService)
         }
 
         then {
@@ -194,7 +194,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.changePeriodTr
 
         action {
             context.historyEndDate = LocalDate.now().minusDays(1)
-            loadReport(financeOperationService)
+            loadReport(financeHistoryService)
         }
 
         then {
@@ -240,7 +240,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.changePeriodTr
                     dayText.toInt()
                 )
             }
-            loadReport(financeOperationService)
+            loadReport(financeHistoryService)
         }
 
         then {
@@ -482,10 +482,10 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.historyBackTra
 }
 
 private fun ActionContext<MoneyManagerState, MoneyManagerContext>.loadReport(
-    financeOperationService: FinanceOperationService
+    financeHistoryService: FinanceHistoryService
 ) {
     val groupId = context.userInfo?.activeGroupId ?: return
     val startDate = context.historyStartDate ?: return
     val endDate = context.historyEndDate ?: return
-    context.historyReport = financeOperationService.generateReport(groupId, startDate, endDate)
+    context.historyReport = financeHistoryService.generateReport(groupId, startDate, endDate)
 }

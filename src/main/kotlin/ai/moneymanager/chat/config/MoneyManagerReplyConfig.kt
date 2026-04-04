@@ -4,6 +4,12 @@ import ai.moneymanager.chat.reply.category.*
 import ai.moneymanager.chat.reply.finance.financeManagementReply
 import ai.moneymanager.chat.reply.finance.financeOperationSavedReply
 import ai.moneymanager.chat.reply.finance.financeHistoryReply
+import ai.moneymanager.chat.reply.finance.financeReportMenuReply
+import ai.moneymanager.chat.reply.finance.financeReportComparisonReply
+import ai.moneymanager.chat.reply.finance.financeReportAnalyticsReply
+import ai.moneymanager.chat.reply.finance.financeReportMembersReply
+import ai.moneymanager.chat.reply.finance.financeReportCategorySelectReply
+import ai.moneymanager.chat.reply.finance.financeReportCategoryViewReply
 import ai.moneymanager.chat.reply.finance.financeHistorySelectStartDateReply
 import ai.moneymanager.chat.reply.finance.financeHistorySelectEndDateReply
 import ai.moneymanager.chat.reply.finance.financeHistoryCalendarReply
@@ -50,6 +56,14 @@ class MoneyManagerReplyConfig {
             financeSelectYearReply()
             financeSelectMonthReply()
             financeOperationSavedReply()
+
+            // Finance report replies
+            financeReportMenuReply()
+            financeReportComparisonReply()
+            financeReportAnalyticsReply()
+            financeReportMembersReply()
+            financeReportCategorySelectReply()
+            financeReportCategoryViewReply()
 
             // Finance history replies
             financeHistoryReply()

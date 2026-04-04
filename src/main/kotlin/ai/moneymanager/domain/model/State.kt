@@ -32,6 +32,14 @@ enum class MoneyManagerState {
     FINANCE_SELECT_MONTH,
     FINANCE_OPERATION_SAVED,
 
+    // -------- FINANCE REPORT --------
+    FINANCE_REPORT_MENU,
+    FINANCE_REPORT_COMPARISON,
+    FINANCE_REPORT_ANALYTICS,
+    FINANCE_REPORT_MEMBERS,
+    FINANCE_REPORT_CATEGORY_SELECT,
+    FINANCE_REPORT_CATEGORY_VIEW,
+
     // -------- FINANCE HISTORY --------
     FINANCE_HISTORY_VIEW,
     FINANCE_HISTORY_SELECT_START_DATE,
@@ -121,7 +129,17 @@ enum class MoneyManagerButtonType {
     FINANCE_CATEGORY_ITEM,
     CREATE_CATEGORY_FROM_FINANCE,
     FINANCE_HISTORY,
-    FINANCE_REPORT,       // TODO: отчёт по операциям
+    FINANCE_REPORT,
+
+    // Report
+    REPORT_COMPARISON,
+    REPORT_ANALYTICS,
+    REPORT_BY_MEMBERS,
+    REPORT_BY_CATEGORY,
+    REPORT_PREV,
+    REPORT_NEXT,
+    REPORT_CATEGORY_ITEM,
+    BACK_TO_REPORT_MENU,
 
     // History period
     CHANGE_PERIOD,
@@ -214,6 +232,11 @@ class MoneyManagerContext {
         financeComment = null
         selectedDate = null
     }
+
+    // -------- REPORT --------
+    var reportMonth: java.time.LocalDate? = null
+    var reportText: String? = null
+    var reportCategory: Category? = null
 
     // -------- HISTORY --------
     var historyStartDate: java.time.LocalDate? = null

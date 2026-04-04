@@ -5,19 +5,28 @@ import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.service.CategoryService
+import ai.moneymanager.service.FinanceHistoryService
 import ai.moneymanager.service.FinanceOperationService
+import ai.moneymanager.service.FinanceReportService
+import ai.moneymanager.service.GroupService
+import ai.moneymanager.service.UserInfoService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.financeDialogTransitions(
     categoryService: CategoryService,
-    financeOperationService: FinanceOperationService
+    financeOperationService: FinanceOperationService,
+    financeHistoryService: FinanceHistoryService,
+    financeReportService: FinanceReportService,
+    userInfoService: UserInfoService,
+    groupService: GroupService
 ) {
     openFinanceManagementTransition()
     financeCategoryTransitions(categoryService)
     financeAmountTransitions()
     financeDateTransitions(financeOperationService)
     financeOperationSavedTransitions(categoryService)
-    financeHistoryTransitions(financeOperationService)
+    financeHistoryTransitions(financeHistoryService)
+    financeReportTransitions(financeReportService, userInfoService, categoryService, groupService)
     financeBackTransitions()
 }
 
