@@ -1,0 +1,16 @@
+.git
+.gradle
+build
+out
+.idea
+*.iml
+.DS_Store
+docs
+mermaid
+plans
+tmp
+*.md
+!HELP.md
+.claude
+.env
+.env.*

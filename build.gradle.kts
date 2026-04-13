@@ -35,6 +35,22 @@ sourceSets {
 repositories {
     mavenLocal()
     mavenCentral()
+    maven {
+        name = "GitHubPackagesChatMachinist"
+        url = uri("https://maven.pkg.github.com/amirkenesbay/chat-machinist")
+        credentials {
+            username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
+            password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
+        }
+    }
+    maven {
+        name = "GitHubPackagesMongoPersistence"
+        url = uri("https://maven.pkg.github.com/amirkenesbay/chat-machinist-mongo-persistence-starter")
+        credentials {
+            username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
+            password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
+        }
+    }
 }
 
 val chatMachinistVersion: String by project
