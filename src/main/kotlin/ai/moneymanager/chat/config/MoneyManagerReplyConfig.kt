@@ -25,6 +25,7 @@ import ai.moneymanager.chat.reply.finance.financeSelectMonthReply
 import ai.moneymanager.chat.reply.finance.financeSelectYearReply
 import ai.moneymanager.chat.reply.group.*
 import ai.moneymanager.chat.reply.money.menuReply
+import ai.moneymanager.chat.reply.notification.*
 import ai.moneymanager.chat.reply.nlp.nlpConfirmCreateGroupReply
 import ai.moneymanager.chat.reply.nlp.nlpConfirmDeleteGroupReply
 import ai.moneymanager.chat.reply.nlp.nlpResponseReply
@@ -97,6 +98,27 @@ class MoneyManagerReplyConfig {
             categoryEditNameReply()
             categoryDeleteConfirmReply()
             categoryDeleteAllConfirmReply()
+
+            // Notification replies
+            notificationTimezoneSelectReply()
+            notificationTimezoneExtendedReply()
+            notificationCreateIconReply()
+            notificationListReply()
+            notificationActionsReply()
+            notificationCreateNameReply()
+            notificationCreateFrequencyReply()
+            notificationCreateCustomUnitReply()
+            notificationCreateCustomNReply()
+            notificationCreateDayOfWeekReply()
+            notificationCreateDayOfMonthReply()
+            notificationCreateMonthReply()
+            notificationCreateSelectHourReply()
+            notificationCreateSelectMinuteReply()
+            notificationCreateConfirmReply()
+            notificationEditMenuReply()
+            notificationEditNameReply()
+            notificationDeleteConfirmReply()
+            notificationDeleteAllConfirmReply()
 
             // NLP replies (disabled for now)
             // nlpConfirmCreateGroupReply()

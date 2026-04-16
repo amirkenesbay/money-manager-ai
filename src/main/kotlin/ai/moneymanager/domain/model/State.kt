@@ -1,7 +1,9 @@
 package ai.moneymanager.domain.model
 
 import ai.moneymanager.domain.model.nlp.BotCommand
+import ai.moneymanager.repository.entity.NotificationEntity
 import com.fasterxml.jackson.annotation.JsonFormat
+import java.time.DayOfWeek
 
 @JsonFormat(shape = JsonFormat.Shape.BINARY)
 enum class MoneyManagerState {
@@ -66,6 +68,27 @@ enum class MoneyManagerState {
     CATEGORY_EDIT_ICON,
     CATEGORY_DELETE_CONFIRM,
     CATEGORY_DELETE_ALL_CONFIRM,
+
+    // -------- NOTIFICATIONS --------
+    NOTIFICATION_LIST,
+    NOTIFICATION_ACTIONS,
+    NOTIFICATION_CREATE_ICON,
+    NOTIFICATION_CREATE_NAME,
+    NOTIFICATION_CREATE_FREQUENCY,
+    NOTIFICATION_CREATE_CUSTOM_UNIT,
+    NOTIFICATION_CREATE_CUSTOM_N,
+    NOTIFICATION_CREATE_DAY_OF_WEEK,
+    NOTIFICATION_CREATE_DAY_OF_MONTH,
+    NOTIFICATION_CREATE_MONTH,
+    NOTIFICATION_CREATE_SELECT_HOUR,
+    NOTIFICATION_CREATE_SELECT_MINUTE,
+    NOTIFICATION_CREATE_CONFIRM,
+    NOTIFICATION_EDIT_MENU,
+    NOTIFICATION_EDIT_NAME,
+    NOTIFICATION_DELETE_CONFIRM,
+    NOTIFICATION_DELETE_ALL_CONFIRM,
+    NOTIFICATION_TIMEZONE_SELECT,
+    NOTIFICATION_TIMEZONE_EXTENDED,
 }
 
 enum class MoneyManagerButtonType {
@@ -171,6 +194,56 @@ enum class MoneyManagerButtonType {
 
     // AI hints
     WHAT_TO_ASK,
+
+    // Notification navigation
+    CREATE_NOTIFICATION,
+    NOTIFICATION_ITEM,
+    EDIT_NOTIFICATION,
+    DELETE_NOTIFICATION,
+    DELETE_ALL_NOTIFICATIONS,
+    TOGGLE_NOTIFICATION,
+    BACK_TO_NOTIFICATIONS,
+
+    // Notification creation - frequency
+    NOTIFICATION_FREQ_DAILY,
+    NOTIFICATION_FREQ_WEEKLY,
+    NOTIFICATION_FREQ_BIWEEKLY,
+    NOTIFICATION_FREQ_MONTHLY,
+    NOTIFICATION_FREQ_BIMONTHLY,
+    NOTIFICATION_FREQ_YEARLY,
+    NOTIFICATION_FREQ_CUSTOM,
+
+    // Custom frequency unit
+    NOTIFICATION_CUSTOM_DAYS,
+    NOTIFICATION_CUSTOM_WEEKS,
+    NOTIFICATION_CUSTOM_MONTHS,
+    NOTIFICATION_CUSTOM_YEARS,
+
+    // Day of week / time / day of month / month
+    NOTIFICATION_DAY_OF_WEEK,
+    NOTIFICATION_HOUR,
+    NOTIFICATION_MINUTE,
+    NOTIFICATION_DAY_OF_MONTH,
+    NOTIFICATION_MONTH_ITEM,
+
+    // Edit actions
+    NOTIFICATION_EDIT_NAME_BTN,
+    NOTIFICATION_EDIT_ICON_BTN,
+    NOTIFICATION_EDIT_FREQUENCY_BTN,
+    NOTIFICATION_SKIP_ICON,
+
+    // Timezone
+    TIMEZONE_ITEM,
+    TIMEZONE_OTHER,
+
+    // Quick notification names
+    QUICK_NOTIF_DAILY_EXPENSES,
+    QUICK_NOTIF_WEEKLY_REPORT,
+    QUICK_NOTIF_MONTHLY_BUDGET,
+    QUICK_NOTIF_SALARY_DAY,
+
+    // Confirm create/edit
+    NOTIFICATION_CONFIRM_CREATE,
 }
 
 class MoneyManagerContext {
@@ -243,6 +316,38 @@ class MoneyManagerContext {
     var historyEndDate: java.time.LocalDate? = null
     var historyReport: String? = null
     var historySelectingStart: Boolean = true
+
+    // -------- NOTIFICATIONS --------
+    var notifications: List<NotificationEntity> = emptyList()
+    var currentNotification: NotificationEntity? = null
+    var notifIconInput: String? = null
+    var notifNameInput: String? = null
+    var notifFrequencyType: FrequencyType? = null
+    var notifCustomInterval: Int? = null
+    var notifHour: Int? = null
+    var notifMinute: Int? = null
+    var notifDayOfWeek: DayOfWeek? = null
+    var notifDayOfMonth: Int? = null
+    var notifMonthOfYear: Int? = null
+    var notifCustomInputError: Boolean = false
+    var notifNameInputError: Boolean = false
+    var notifEditMode: Boolean = false
+
+    fun clearNotificationInput() {
+        notifIconInput = null
+        notifNameInput = null
+        notifFrequencyType = null
+        notifCustomInterval = null
+        notifHour = null
+        notifMinute = null
+        notifDayOfWeek = null
+        notifDayOfMonth = null
+        notifMonthOfYear = null
+        notifCustomInputError = false
+        notifNameInputError = false
+        notifEditMode = false
+        customNameInputMode = false
+    }
 
     // -------- NLP --------
     var nlpGroupName: String? = null

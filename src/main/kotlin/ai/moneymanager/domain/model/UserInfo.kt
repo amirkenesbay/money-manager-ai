@@ -10,5 +10,6 @@ data class UserInfo(
     val telegramUserId: Long?,
     val languageCode: String?,
     val activeGroupId: ObjectId? = null,
-    val groupIds: Set<ObjectId> = emptySet()
+    val groupIds: Set<ObjectId> = emptySet(),
+    val timezone: String? = null
 )

@@ -9,6 +9,7 @@ import ai.moneymanager.service.FinanceOperationService
 import ai.moneymanager.service.FinanceReportService
 import ai.moneymanager.service.GeminiService
 import ai.moneymanager.service.GroupService
+import ai.moneymanager.service.NotificationService
 import ai.moneymanager.service.TelegramFileService
 import ai.moneymanager.service.UserInfoService
 import ai.moneymanager.service.nlp.CommandParserService
@@ -31,7 +32,8 @@ class MoneyManagerChatConfig(
     private val geminiService: GeminiService,
     private val financeOperationService: FinanceOperationService,
     private val financeHistoryService: FinanceHistoryService,
-    private val financeReportService: FinanceReportService
+    private val financeReportService: FinanceReportService,
+    private val notificationService: NotificationService
 ) {
 
     @Bean
@@ -50,6 +52,6 @@ class MoneyManagerChatConfig(
                 }
             }
 
-            moneyManagerDialog(userInfoService, groupService, categoryService, commandParserService, telegramFileService, geminiService, financeOperationService, financeHistoryService, financeReportService)
+            moneyManagerDialog(userInfoService, groupService, categoryService, commandParserService, telegramFileService, geminiService, financeOperationService, financeHistoryService, financeReportService, notificationService)
         }
 }

@@ -1,5 +1,11 @@
 package ai.moneymanager.domain.model
 
+data class QuickNotificationTemplate(
+    val buttonType: MoneyManagerButtonType,
+    val name: String,
+    val icon: String
+)
+
 data class QuickGroupTemplate(
     val buttonType: MoneyManagerButtonType,
     val name: String
@@ -39,4 +45,11 @@ object QuickTemplates {
     )
 
     val ALL_CATEGORIES = EXPENSE_CATEGORIES + INCOME_CATEGORIES
+
+    val NOTIFICATIONS = listOf(
+        QuickNotificationTemplate(MoneyManagerButtonType.QUICK_NOTIF_DAILY_EXPENSES, "Внести расходы за день", "📝"),
+        QuickNotificationTemplate(MoneyManagerButtonType.QUICK_NOTIF_WEEKLY_REPORT, "Еженедельный учёт", "📊"),
+        QuickNotificationTemplate(MoneyManagerButtonType.QUICK_NOTIF_MONTHLY_BUDGET, "Проверить бюджет", "💰"),
+        QuickNotificationTemplate(MoneyManagerButtonType.QUICK_NOTIF_SALARY_DAY, "День зарплаты", "💸"),
+    )
 }

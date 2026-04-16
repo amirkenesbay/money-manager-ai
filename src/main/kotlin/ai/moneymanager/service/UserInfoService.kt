@@ -42,6 +42,12 @@ class UserInfoService(
         return entity?.let { mapEntity(it) }
     }
 
+    fun updateTimezone(telegramUserId: Long, timezone: String): UserInfo? {
+        val entity = userRepository.findUserInfoEntityByTelegramUserId(telegramUserId) ?: return null
+        val updated = userRepository.save(entity.copy(timezone = timezone))
+        return mapEntity(updated)
+    }
+
     private fun findUser(user: User): UserInfoEntity? {
         if (user.userName != null) {
             return userRepository.findUserInfoEntityByUsername(user.userName)
@@ -68,7 +74,8 @@ class UserInfoService(
             telegramUserId = it.telegramUserId,
             languageCode = it.languageCode,
             activeGroupId = it.activeGroupId,
-            groupIds = it.groupIds
+            groupIds = it.groupIds,
+            timezone = it.timezone
         )
     }
 }
