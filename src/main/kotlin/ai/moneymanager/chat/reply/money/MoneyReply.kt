@@ -11,7 +11,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.menuReply() {
 
         message {
             text = """
-                |Салем! 👋
+                |Салем! 👋 🧪
                 |
                 |Я помогу управлять финансами. Просто напиши мне:
                 |• «кофе 500» — добавить расход
