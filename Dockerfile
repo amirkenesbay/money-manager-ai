@@ -2,19 +2,22 @@ FROM eclipse-temurin:21-jdk AS builder
 
 WORKDIR /app
 
-ARG GPR_USER
-ARG GPR_KEY
-ENV GITHUB_ACTOR=${GPR_USER}
-ENV GITHUB_TOKEN=${GPR_KEY}
-
 COPY gradlew settings.gradle.kts build.gradle.kts gradle.properties ./
 COPY gradle ./gradle
 
-RUN ./gradlew --no-daemon dependencies || true
+RUN --mount=type=secret,id=gpr_user \
+    --mount=type=secret,id=gpr_key \
+    GITHUB_ACTOR=$(cat /run/secrets/gpr_user) \
+    GITHUB_TOKEN=$(cat /run/secrets/gpr_key) \
+    ./gradlew --no-daemon dependencies || true
 
 COPY src ./src
 
-RUN ./gradlew --no-daemon bootJar -x test
+RUN --mount=type=secret,id=gpr_user \
+    --mount=type=secret,id=gpr_key \
+    GITHUB_ACTOR=$(cat /run/secrets/gpr_user) \
+    GITHUB_TOKEN=$(cat /run/secrets/gpr_key) \
+    ./gradlew --no-daemon bootJar -x test
 
 FROM eclipse-temurin:21-jre
 
