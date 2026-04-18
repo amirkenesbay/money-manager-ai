@@ -1,5 +1,6 @@
 package ai.moneymanager.domain.model
 
+import ai.moneymanager.domain.model.nlp.AiPendingAction
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.repository.entity.NotificationEntity
 import com.fasterxml.jackson.annotation.JsonFormat
@@ -55,6 +56,11 @@ enum class MoneyManagerState {
     NLP_CONFIRM_DELETE_GROUP,
     NLP_RESPONSE,
 
+    // -------- AI --------
+    AI_MODE,
+    AI_CONFIRM,
+    AI_RESULT,
+
     // -------- CATEGORIES --------
     CATEGORY_MANAGEMENT,
     CATEGORY_NO_GROUP_WARNING,
@@ -97,7 +103,7 @@ enum class MoneyManagerButtonType {
     SHARED_ACCOUNTING,
     BALANCE,        // TODO: показ баланса группы
     NOTIFICATIONS,  // TODO: настройки уведомлений
-    AI_ASSISTANT,   // TODO: AI ассистент
+    AI_ASSISTANT,
     FINANCE,        // экран "Финансы"
     ADD_EXPENSE,
     ADD_INCOME,
@@ -194,6 +200,10 @@ enum class MoneyManagerButtonType {
 
     // AI hints
     WHAT_TO_ASK,
+
+    // AI
+    CONFIRM_AI_ACTION,
+    AI_ASK_AGAIN,
 
     // Notification navigation
     CREATE_NOTIFICATION,
@@ -356,4 +366,9 @@ class MoneyManagerContext {
     var nlpNewMessage: Boolean = true
     var nlpTargetState: MoneyManagerState? = null
     var parsedCommand: BotCommand? = null
+
+    // -------- AI --------
+    var pendingAiAction: AiPendingAction? = null
+    var aiResultMessage: String? = null
+    var aiResultNewMessage: Boolean = true
 }

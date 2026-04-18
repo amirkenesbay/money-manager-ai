@@ -54,4 +54,60 @@ object BotFunctions {
      */
     @JvmStatic
     fun outOfContext(originalMessage: String) {}
+
+    // ===== CATEGORY =====
+
+    /**
+     * Создать новую категорию расхода или дохода в активной группе пользователя.
+     * @param name название категории (например: "Кино", "Спорт", "Книги")
+     * @param type тип категории: "EXPENSE" для расхода, "INCOME" для дохода
+     * @param icon опциональная иконка-эмодзи для категории (например: "🎬", "⚽")
+     */
+    @JvmStatic
+    fun createCategory(name: String, type: String, icon: String?) {
+    }
+
+    /**
+     * Удалить категорию по названию.
+     * @param name название категории для удаления
+     * @param type опциональный тип категории: "EXPENSE" или "INCOME". Если не указан — поиск по всем типам.
+     */
+    @JvmStatic
+    fun deleteCategory(name: String, type: String?) {
+    }
+
+    /**
+     * Переименовать существующую категорию.
+     * @param oldName текущее название категории
+     * @param newName новое название
+     * @param type опциональный тип категории: "EXPENSE" или "INCOME"
+     */
+    @JvmStatic
+    fun renameCategory(oldName: String, newName: String, type: String?) {
+    }
+
+    /**
+     * Изменить иконку-эмодзи у существующей категории.
+     * @param name название категории
+     * @param newIcon новая иконка-эмодзи (например: "🎬", "⚽", "💵")
+     * @param type опциональный тип категории: "EXPENSE" или "INCOME"
+     */
+    @JvmStatic
+    fun changeCategoryIcon(name: String, newIcon: String, type: String?) {
+    }
+
+    /**
+     * Удалить ВСЕ категории в активной группе пользователя. Деструктивное действие.
+     */
+    @JvmStatic
+    fun deleteAllCategories() {
+    }
+
+    /**
+     * Показать список категорий пользователя.
+     * @param type опциональный тип: "EXPENSE" — только расходные, "INCOME" — только доходные. Если не указан — все.
+     */
+    @JvmStatic
+    fun listCategories(type: String?) {
+    }
 }

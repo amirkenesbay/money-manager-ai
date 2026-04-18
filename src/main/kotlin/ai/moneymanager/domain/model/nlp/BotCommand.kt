@@ -50,4 +50,35 @@ sealed class BotCommand {
     data class ParseError(
         val error: String
     ) : BotCommand()
+
+    // ===== CATEGORY =====
+
+    data class CreateCategory(
+        val name: String,
+        val type: String,
+        val icon: String?
+    ) : BotCommand()
+
+    data class DeleteCategory(
+        val name: String,
+        val type: String?
+    ) : BotCommand()
+
+    data class RenameCategory(
+        val oldName: String,
+        val newName: String,
+        val type: String?
+    ) : BotCommand()
+
+    data class ChangeCategoryIcon(
+        val name: String,
+        val newIcon: String,
+        val type: String?
+    ) : BotCommand()
+
+    object DeleteAllCategories : BotCommand()
+
+    data class ListCategories(
+        val type: String?
+    ) : BotCommand()
 }

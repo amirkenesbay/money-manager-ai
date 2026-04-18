@@ -1,5 +1,7 @@
 package ai.moneymanager.chat.dialog
 
+import ai.moneymanager.chat.transition.ai.aiDialogTransitions
+import ai.moneymanager.chat.transition.ai.handler.AiDomainHandler
 import ai.moneymanager.chat.transition.category.categoryDialogTransitions
 import ai.moneymanager.chat.transition.finance.financeDialogTransitions
 import ai.moneymanager.chat.transition.group.groupDialogTransitions
@@ -35,7 +37,8 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
     financeOperationService: FinanceOperationService,
     financeHistoryService: FinanceHistoryService,
     financeReportService: FinanceReportService,
-    notificationService: NotificationService
+    notificationService: NotificationService,
+    aiDomainHandlers: List<AiDomainHandler>
 ) {
     dialog {
         name = "Money Manager Dialog"
@@ -46,7 +49,8 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
         categoryDialogTransitions(categoryService, groupService)
         financeDialogTransitions(categoryService, financeOperationService, financeHistoryService, financeReportService, userInfoService, groupService)
         notificationDialogTransitions(notificationService, userInfoService)
-        // NLP disabled for now
+        aiDialogTransitions(commandParserService, telegramFileService, geminiService, aiDomainHandlers)
+        // Legacy NLP disabled for now
         // nlpDialogTransitions(commandParserService, groupService, userInfoService, telegramFileService, geminiService)
     }
 }
