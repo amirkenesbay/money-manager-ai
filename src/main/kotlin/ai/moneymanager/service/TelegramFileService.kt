@@ -6,9 +6,13 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.telegram.telegrambots.bots.DefaultAbsSender
 import org.telegram.telegrambots.bots.DefaultBotOptions
+import org.telegram.telegrambots.meta.api.methods.ActionType
 import org.telegram.telegrambots.meta.api.methods.GetFile
+import org.telegram.telegrambots.meta.api.methods.send.SendChatAction
 import org.telegram.telegrambots.meta.api.objects.Voice
 import java.net.URI
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 sealed class VoiceValidationResult {
     object Valid : VoiceValidationResult()
@@ -22,6 +26,16 @@ class TelegramFileService(
 ) : DefaultAbsSender(DefaultBotOptions(), chatMachinistProperties.bot.token) {
 
     private val log = LoggerFactory.getLogger(this::class.java)
+
+    fun sendTyping(chatId: Long) {
+        runCatching {
+            val action = SendChatAction().apply {
+                setChatId(chatId)
+                setAction(ActionType.TYPING)
+            }
+            execute(action)
+        }.onFailure { log.warn("Failed to send typing action: ${it.message}") }
+    }
 
     fun downloadVoice(voice: Voice): ByteArray? {
         val validationResult = validateVoice(voice)

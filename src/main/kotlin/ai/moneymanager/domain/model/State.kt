@@ -371,4 +371,5 @@ class MoneyManagerContext {
     var pendingAiAction: AiPendingAction? = null
     var aiResultMessage: String? = null
     var aiResultNewMessage: Boolean = true
+    var aiRedirectState: MoneyManagerState? = null
 }
