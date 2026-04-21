@@ -23,6 +23,11 @@ enum class MoneyManagerState {
     GROUP_EDIT_ENTER_NAME,
     GROUP_DELETE_CONFIRM,
 
+    // -------- BALANCE --------
+    BALANCE_ONBOARDING_PROMPT,
+    BALANCE_ONBOARDING_ENTER_AMOUNT,
+    BALANCE_VIEW,
+
     // -------- FINANCE --------
     FINANCE_MANAGEMENT,
     FINANCE_SELECT_CATEGORY,
@@ -101,7 +106,9 @@ enum class MoneyManagerButtonType {
     // Menu
     PERSONAL_ACCOUNTING,
     SHARED_ACCOUNTING,
-    BALANCE,        // TODO: показ баланса группы
+    BALANCE,
+    BALANCE_SET_AMOUNT,
+    BALANCE_START_FROM_ZERO,
     NOTIFICATIONS,  // TODO: настройки уведомлений
     AI_ASSISTANT,
     FINANCE,        // экран "Финансы"
@@ -203,7 +210,6 @@ enum class MoneyManagerButtonType {
 
     // AI
     CONFIRM_AI_ACTION,
-    AI_ASK_AGAIN,
 
     // Notification navigation
     CREATE_NOTIFICATION,
@@ -296,6 +302,10 @@ class MoneyManagerContext {
     var manualTextInputActive: Boolean = false
     var customNameInputMode: Boolean = false
 
+    // -------- BALANCE --------
+    var currentBalance: BalanceBreakdown? = null
+    var balanceAmountInputError: Boolean = false
+
     // -------- FINANCE --------
     var financeOperationType: CategoryType? = null
     var selectedCategory: Category? = null
@@ -370,6 +380,5 @@ class MoneyManagerContext {
     // -------- AI --------
     var pendingAiAction: AiPendingAction? = null
     var aiResultMessage: String? = null
-    var aiResultNewMessage: Boolean = true
     var aiRedirectState: MoneyManagerState? = null
 }

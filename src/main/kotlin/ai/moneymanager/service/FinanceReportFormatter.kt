@@ -4,18 +4,17 @@ import ai.moneymanager.domain.model.report.AnalyticsReport
 import ai.moneymanager.domain.model.report.CategoryComparison
 import ai.moneymanager.domain.model.report.CategoryMonthData
 import ai.moneymanager.domain.model.report.CategoryReport
+import ai.moneymanager.chat.reply.common.SECTION_SEPARATOR
+import ai.moneymanager.chat.reply.common.SECTION_SEPARATOR_WITH_BLANK_LINE
+import ai.moneymanager.chat.reply.common.formatAmount
 import ai.moneymanager.domain.model.report.ComparisonReport
 import ai.moneymanager.domain.model.report.MembersReport
 import ai.moneymanager.domain.model.report.MemberTotal
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
 import kotlin.math.abs
 
-private const val SEPARATOR = "\n━━━━━━━━━━━━━━━━━━━━━"
-private const val SEPARATOR_WITH_BLANK_LINE = "\n\n━━━━━━━━━━━━━━━━━━━━━"
 private const val BAR_WIDTH = 12
 
 @Component
@@ -23,7 +22,7 @@ class FinanceReportFormatter {
 
     fun formatComparison(report: ComparisonReport): String = buildString {
         append("📊 Сравнение: ${report.previousMonthName} → ${report.currentMonthName} ${report.year}")
-        append(SEPARATOR)
+        append(SECTION_SEPARATOR)
 
         if (report.isEmpty) {
             append("\n\nНет операций за выбранный период")
@@ -52,7 +51,7 @@ class FinanceReportFormatter {
         val previousSign = if (previousBalance >= BigDecimal.ZERO) "+" else ""
         val currentSign = if (currentBalance >= BigDecimal.ZERO) "+" else ""
 
-        append(SEPARATOR_WITH_BLANK_LINE)
+        append(SECTION_SEPARATOR_WITH_BLANK_LINE)
         append("\n💰 Баланс: $previousSign${formatAmount(previousBalance)} → $currentSign${formatAmount(currentBalance)}")
         appendDelta(previousBalance, currentBalance)
     }
@@ -76,7 +75,7 @@ class FinanceReportFormatter {
 
     fun formatAnalytics(report: AnalyticsReport): String = buildString {
         append("📈 Аналитика за ${report.monthName} ${report.year}")
-        append(SEPARATOR)
+        append(SECTION_SEPARATOR)
 
         if (report.isEmpty) {
             append("\n\nНет операций за этот месяц")
@@ -132,7 +131,7 @@ class FinanceReportFormatter {
 
     fun formatMembers(report: MembersReport): String = buildString {
         append("👥 По участникам — ${report.monthName} ${report.year}")
-        append(SEPARATOR)
+        append(SECTION_SEPARATOR)
 
         if (report.isEmpty) {
             append("\n\nНет операций за этот месяц")
@@ -162,13 +161,13 @@ class FinanceReportFormatter {
     private fun StringBuilder.appendBalanceLine(totalIncome: BigDecimal, totalExpense: BigDecimal) {
         val balance = totalIncome.subtract(totalExpense)
         val sign = if (balance >= BigDecimal.ZERO) "+" else ""
-        append(SEPARATOR_WITH_BLANK_LINE)
+        append(SECTION_SEPARATOR_WITH_BLANK_LINE)
         append("\n💰 Баланс группы: $sign${formatAmount(balance)}")
     }
 
     fun formatCategory(report: CategoryReport): String = buildString {
         append("${report.icon} ${report.categoryName} — за ${report.months} месяцев")
-        append(SEPARATOR)
+        append(SECTION_SEPARATOR)
         append("\n")
 
         appendBarChart(report.monthsData, report.maxAmount)
@@ -196,7 +195,7 @@ class FinanceReportFormatter {
 
         val totalOperations = monthsData.sumOf { it.count }
 
-        append(SEPARATOR_WITH_BLANK_LINE)
+        append(SECTION_SEPARATOR_WITH_BLANK_LINE)
         append("\nСреднее: ${formatAmount(average)}/мес")
         append("\nВсего операций: $totalOperations")
 
@@ -235,11 +234,6 @@ class FinanceReportFormatter {
         if (total.isPositive()) {
             part.multiply(BigDecimal.valueOf(100)).divide(total, 0, RoundingMode.HALF_UP)
         } else BigDecimal.ZERO
-
-    private fun formatAmount(amount: BigDecimal): String {
-        val format = DecimalFormat("#,##0", DecimalFormatSymbols().apply { groupingSeparator = ' ' })
-        return "${format.format(amount)}₸"
-    }
 
     private fun BigDecimal.isPositive(): Boolean = compareTo(BigDecimal.ZERO) > 0
     private fun BigDecimal.isZero(): Boolean = compareTo(BigDecimal.ZERO) == 0

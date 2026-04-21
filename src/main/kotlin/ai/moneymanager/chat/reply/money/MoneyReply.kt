@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.reply.money
 
+import ai.moneymanager.chat.reply.common.formatAmount
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
@@ -10,7 +11,13 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.menuReply() {
         state = MoneyManagerState.MENU
 
         message {
-            text = """
+            val balance = context.currentBalance
+            val header = if (balance != null) {
+                "💰 Баланс: ${formatAmount(balance.total)}\n\n"
+            } else {
+                ""
+            }
+            text = header + """
                 |Салем! 👋
                 |
                 |Я помогу управлять финансами. Просто напиши мне:

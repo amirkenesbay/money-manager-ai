@@ -9,6 +9,7 @@ import ai.moneymanager.repository.entity.UserInfoEntity
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.math.BigDecimal
 import java.security.SecureRandom
 
 @Service
@@ -90,6 +91,13 @@ class GroupService(
         val userEntity = userRepository.findUserInfoEntityByTelegramUserId(userId) ?: return null
         val activeGroupId = userEntity.activeGroupId ?: return null
         return getGroup(activeGroupId)
+    }
+
+    fun setInitialBalance(groupId: ObjectId, amount: BigDecimal): MoneyGroup? {
+        val groupEntity = groupRepository.findById(groupId).orElse(null) ?: return null
+        val saved = groupRepository.save(groupEntity.copy(initialBalance = amount))
+        log.info("Initial balance set: groupId=$groupId, amount=$amount")
+        return mapToModel(saved)
     }
 
     fun updateGroupName(userId: Long, groupId: ObjectId, newName: String): MoneyGroup? {
@@ -193,7 +201,8 @@ class GroupService(
             inviteToken = entity.inviteToken,
             ownerId = entity.ownerId,
             memberIds = entity.memberIds,
-            type = entity.type
+            type = entity.type,
+            initialBalance = entity.initialBalance
         )
     }
 }

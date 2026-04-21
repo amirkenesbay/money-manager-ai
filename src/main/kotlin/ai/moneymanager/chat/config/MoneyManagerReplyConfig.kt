@@ -27,6 +27,9 @@ import ai.moneymanager.chat.reply.finance.financeSelectDateReply
 import ai.moneymanager.chat.reply.finance.financeSelectMonthReply
 import ai.moneymanager.chat.reply.finance.financeSelectYearReply
 import ai.moneymanager.chat.reply.group.*
+import ai.moneymanager.chat.reply.money.balanceOnboardingEnterAmountReply
+import ai.moneymanager.chat.reply.money.balanceOnboardingPromptReply
+import ai.moneymanager.chat.reply.money.balanceViewReply
 import ai.moneymanager.chat.reply.money.menuReply
 import ai.moneymanager.chat.reply.notification.*
 import ai.moneymanager.chat.reply.nlp.nlpConfirmCreateGroupReply
@@ -48,6 +51,11 @@ class MoneyManagerReplyConfig {
 
             // Money replies
             menuReply()
+
+            // Balance replies
+            balanceOnboardingPromptReply()
+            balanceOnboardingEnterAmountReply()
+            balanceViewReply()
 
             // Finance replies
             financeManagementReply()

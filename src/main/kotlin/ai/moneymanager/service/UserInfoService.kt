@@ -48,6 +48,13 @@ class UserInfoService(
         return mapEntity(updated)
     }
 
+    fun markOnboardingCompleted(telegramUserId: Long): UserInfo? {
+        val entity = userRepository.findUserInfoEntityByTelegramUserId(telegramUserId) ?: return null
+        if (entity.onboardingCompleted) return mapEntity(entity)
+        val updated = userRepository.save(entity.copy(onboardingCompleted = true))
+        return mapEntity(updated)
+    }
+
     private fun findUser(user: User): UserInfoEntity? {
         if (user.userName != null) {
             return userRepository.findUserInfoEntityByUsername(user.userName)
@@ -75,7 +82,8 @@ class UserInfoService(
             languageCode = it.languageCode,
             activeGroupId = it.activeGroupId,
             groupIds = it.groupIds,
-            timezone = it.timezone
+            timezone = it.timezone,
+            onboardingCompleted = it.onboardingCompleted
         )
     }
 }

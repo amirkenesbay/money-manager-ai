@@ -11,5 +11,6 @@ data class UserInfo(
     val languageCode: String?,
     val activeGroupId: ObjectId? = null,
     val groupIds: Set<ObjectId> = emptySet(),
-    val timezone: String? = null
+    val timezone: String? = null,
+    val onboardingCompleted: Boolean = false
 )

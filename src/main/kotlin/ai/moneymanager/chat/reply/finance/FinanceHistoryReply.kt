@@ -1,12 +1,10 @@
 package ai.moneymanager.chat.reply.finance
 
+import ai.moneymanager.chat.reply.common.dateFormatter
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import kz.rmr.chatmachinist.api.reply.RepliesBuilder
-import java.time.format.DateTimeFormatter
-
-private val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
 
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeHistoryReply() {
     reply {

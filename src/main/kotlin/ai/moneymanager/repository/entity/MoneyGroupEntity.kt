@@ -5,6 +5,7 @@ import ai.moneymanager.repository.entity.common.AuditInfo
 import org.bson.types.ObjectId
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
+import java.math.BigDecimal
 
 @Document(collection = "money_group")
 data class MoneyGroupEntity(
@@ -15,5 +16,6 @@ data class MoneyGroupEntity(
     val ownerId: Long,
     val memberIds: Set<Long>,
     val type: GroupType,
+    val initialBalance: BigDecimal = BigDecimal.ZERO,
     val auditInfo: AuditInfo = AuditInfo()
 )

@@ -1,5 +1,6 @@
 package ai.moneymanager.service
 
+import ai.moneymanager.domain.model.BalanceBreakdown
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.repository.FinanceOperationRepository
 import ai.moneymanager.repository.entity.FinanceOperationEntity
@@ -15,6 +16,20 @@ class FinanceOperationService(
 ) {
 
     private val log = LoggerFactory.getLogger(FinanceOperationService::class.java)
+
+    fun calculateBalance(groupId: ObjectId, initialBalance: BigDecimal): BalanceBreakdown {
+        val ops = financeOperationRepository.findByGroupId(groupId)
+        val income = ops.filter { it.type == CategoryType.INCOME }
+            .fold(BigDecimal.ZERO) { acc, op -> acc + op.amount }
+        val expense = ops.filter { it.type == CategoryType.EXPENSE }
+            .fold(BigDecimal.ZERO) { acc, op -> acc + op.amount }
+        return BalanceBreakdown(
+            initial = initialBalance,
+            income = income,
+            expense = expense,
+            total = initialBalance + income - expense
+        )
+    }
 
     fun save(
         groupId: ObjectId,

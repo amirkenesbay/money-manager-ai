@@ -44,19 +44,19 @@ class CommandParserService(
             .build()
 
         // Получаем методы из BotFunctions для function calling
-        val createGroupMethod = BotFunctions::class.java.getMethod("createGroup", String::class.java)
-        val deleteGroupMethod = BotFunctions::class.java.getMethod("deleteGroup", String::class.java)
-        val addExpenseMethod = BotFunctions::class.java.getMethod("addExpense", Double::class.java, String::class.java, String::class.java)
-        val addIncomeMethod = BotFunctions::class.java.getMethod("addIncome", Double::class.java, String::class.java, String::class.java)
-        val outOfContextMethod = BotFunctions::class.java.getMethod("outOfContext", String::class.java)
+        val createGroupMethod = botFunctionMethod(GeminiFunction.CREATE_GROUP, String::class.java)
+        val deleteGroupMethod = botFunctionMethod(GeminiFunction.DELETE_GROUP, String::class.java)
+        val addExpenseMethod = botFunctionMethod(GeminiFunction.ADD_EXPENSE, Double::class.java, String::class.java, String::class.java)
+        val addIncomeMethod = botFunctionMethod(GeminiFunction.ADD_INCOME, Double::class.java, String::class.java, String::class.java)
+        val outOfContextMethod = botFunctionMethod(GeminiFunction.OUT_OF_CONTEXT, String::class.java)
 
         // Category functions
-        val createCategoryMethod = BotFunctions::class.java.getMethod("createCategory", String::class.java, String::class.java, String::class.java)
-        val deleteCategoryMethod = BotFunctions::class.java.getMethod("deleteCategory", String::class.java, String::class.java)
-        val renameCategoryMethod = BotFunctions::class.java.getMethod("renameCategory", String::class.java, String::class.java, String::class.java)
-        val changeCategoryIconMethod = BotFunctions::class.java.getMethod("changeCategoryIcon", String::class.java, String::class.java, String::class.java)
-        val deleteAllCategoriesMethod = BotFunctions::class.java.getMethod("deleteAllCategories")
-        val listCategoriesMethod = BotFunctions::class.java.getMethod("listCategories", String::class.java)
+        val createCategoryMethod = botFunctionMethod(GeminiFunction.CREATE_CATEGORY, String::class.java, String::class.java, String::class.java)
+        val deleteCategoryMethod = botFunctionMethod(GeminiFunction.DELETE_CATEGORY, String::class.java, String::class.java)
+        val renameCategoryMethod = botFunctionMethod(GeminiFunction.RENAME_CATEGORY, String::class.java, String::class.java, String::class.java)
+        val changeCategoryIconMethod = botFunctionMethod(GeminiFunction.CHANGE_CATEGORY_ICON, String::class.java, String::class.java, String::class.java)
+        val deleteAllCategoriesMethod = botFunctionMethod(GeminiFunction.DELETE_ALL_CATEGORIES)
+        val listCategoriesMethod = botFunctionMethod(GeminiFunction.LIST_CATEGORIES, String::class.java)
 
         val systemContent = Content.fromParts(Part.fromText(SYSTEM_PROMPT))
 
@@ -79,6 +79,9 @@ class CommandParserService(
             .build()
 
     }
+
+    private fun botFunctionMethod(function: GeminiFunction, vararg parameterTypes: Class<*>) =
+        BotFunctions::class.java.getMethod(function.functionName, *parameterTypes)
 
     fun parseCommand(userMessage: String): BotCommand {
         return try {

@@ -13,4 +13,6 @@ interface FinanceOperationRepository : MongoRepository<FinanceOperationEntity, O
         startDate: LocalDate,
         endDate: LocalDate
     ): List<FinanceOperationEntity>
+
+    fun findByGroupId(groupId: ObjectId): List<FinanceOperationEntity>
 }
