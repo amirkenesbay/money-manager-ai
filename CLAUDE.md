@@ -626,6 +626,8 @@ All code must strictly follow these principles:
 
 - Never duplicate logic. If the same code appears in multiple places — extract it into a shared function or utility.
 - Reuse existing services and helpers instead of writing similar code from scratch.
+- Watch for duplication across sibling transitions / reply blocks: when 3-4 transitions share the same `action { ... }` or `message { ... }` body differing only in state or input type, extract a helper (e.g. `ActionContext<...>.processX(...)`) and call it from each transition. A linter or IDE flagging "duplicated code fragment" is a direct signal — fix it in the same change, don't defer.
+- Before writing a new transition/reply/service method, grep for similar logic in the same layer first and prefer parameterizing an existing helper over copy-paste.
 
 ### KISS (Keep It Simple, Stupid)
 
