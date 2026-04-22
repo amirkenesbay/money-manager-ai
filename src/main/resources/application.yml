@@ -4,7 +4,7 @@ chat-machinist:
   persistence:
     type: mongodb
   bot:
-    name: moneyManagerAIbot
+    name: ${BOT_NAME}
     token: ${BOT_TOKEN}
   alert:
     telegramChatId: ${ALERT_CHAT_ID:#{null}}
