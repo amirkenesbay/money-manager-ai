@@ -51,6 +51,19 @@ sealed class BotCommand {
         val error: String
     ) : BotCommand()
 
+    /**
+     * Превышен лимит запросов к Gemini (HTTP 429).
+     * retryAfterSeconds — рекомендуемая пауза из тела ответа, если смогли распарсить.
+     */
+    data class RateLimitError(
+        val retryAfterSeconds: Long?
+    ) : BotCommand()
+
+    /**
+     * Gemini временно недоступен: 5xx, сетевые ошибки или прочие 4xx кроме 429.
+     */
+    object ServiceError : BotCommand()
+
     // ===== CATEGORY =====
 
     data class CreateCategory(

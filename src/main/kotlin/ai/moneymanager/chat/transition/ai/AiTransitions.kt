@@ -41,7 +41,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiDialogTransitions(
             }
         }
         action {
-            handleAiText(update, context, commandParserService, domainHandlers, geminiService)
+            processAiText(commandParserService, telegramFileService, domainHandlers, geminiService)
         }
         then {
             to = MoneyManagerState.AI_MODE
@@ -57,7 +57,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiDialogTransitions(
             eventType = EventType.VOICE
         }
         action {
-            handleAiVoice(update, context, commandParserService, telegramFileService, domainHandlers, geminiService)
+            processAiVoice(commandParserService, telegramFileService, domainHandlers, geminiService)
         }
         then {
             to = MoneyManagerState.AI_MODE
@@ -77,7 +77,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiDialogTransitions(
             }
         }
         action {
-            handleAiText(update, context, commandParserService, domainHandlers, geminiService)
+            processAiText(commandParserService, telegramFileService, domainHandlers, geminiService)
         }
         then {
             to = MoneyManagerState.AI_MODE
@@ -93,7 +93,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiDialogTransitions(
             eventType = EventType.VOICE
         }
         action {
-            handleAiVoice(update, context, commandParserService, telegramFileService, domainHandlers, geminiService)
+            processAiVoice(commandParserService, telegramFileService, domainHandlers, geminiService)
         }
         then {
             to = MoneyManagerState.AI_MODE

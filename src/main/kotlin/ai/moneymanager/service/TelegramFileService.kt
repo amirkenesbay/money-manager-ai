@@ -1,6 +1,7 @@
 package ai.moneymanager.service
 
 import ai.moneymanager.config.TelegramFileProperties
+import jakarta.annotation.PreDestroy
 import kz.rmr.chatmachinist.ChatMachinistProperties
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -9,9 +10,13 @@ import org.telegram.telegrambots.bots.DefaultBotOptions
 import org.telegram.telegrambots.meta.api.methods.ActionType
 import org.telegram.telegrambots.meta.api.methods.GetFile
 import org.telegram.telegrambots.meta.api.methods.send.SendChatAction
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText
 import org.telegram.telegrambots.meta.api.objects.Voice
 import java.net.URI
 import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
 sealed class VoiceValidationResult {
@@ -27,6 +32,17 @@ class TelegramFileService(
 
     private val log = LoggerFactory.getLogger(this::class.java)
 
+    private val feedbackScheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor { runnable ->
+        Thread(runnable, "ai-feedback-heartbeat").apply { isDaemon = true }
+    }
+
+    @PreDestroy
+    fun shutdown() {
+        feedbackScheduler.shutdownNow()
+    }
+
+    fun scheduler(): ScheduledExecutorService = feedbackScheduler
+
     fun sendTyping(chatId: Long) {
         runCatching {
             val action = SendChatAction().apply {
@@ -35,6 +51,37 @@ class TelegramFileService(
             }
             execute(action)
         }.onFailure { log.warn("Failed to send typing action: ${it.message}") }
+    }
+
+    fun sendPlaceholder(chatId: Long, text: String): Int? {
+        return runCatching {
+            val message = SendMessage().apply {
+                setChatId(chatId)
+                this.text = text
+            }
+            execute(message).messageId
+        }.onFailure { log.warn("Failed to send placeholder: ${it.message}") }.getOrNull()
+    }
+
+    fun editPlaceholder(chatId: Long, messageId: Int, text: String) {
+        runCatching {
+            val edit = EditMessageText().apply {
+                setChatId(chatId)
+                this.messageId = messageId
+                this.text = text
+            }
+            execute(edit)
+        }.onFailure { log.warn("Failed to edit placeholder: ${it.message}") }
+    }
+
+    fun deletePlaceholder(chatId: Long, messageId: Int) {
+        runCatching {
+            val delete = DeleteMessage().apply {
+                setChatId(chatId)
+                this.messageId = messageId
+            }
+            execute(delete)
+        }.onFailure { log.warn("Failed to delete placeholder: ${it.message}") }
     }
 
     fun downloadVoice(voice: Voice): ByteArray? {
