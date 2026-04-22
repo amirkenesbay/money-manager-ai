@@ -1,8 +1,11 @@
 package ai.moneymanager.domain.model.nlp
 
+import ai.moneymanager.chat.reply.common.formatAmount
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
 import org.bson.types.ObjectId
+import java.math.BigDecimal
+import java.time.LocalDate
 
 sealed class AiPendingAction {
     abstract val confirmDescription: String
@@ -55,6 +58,26 @@ sealed class AiPendingAction {
         ) : CategoryAction() {
             override val confirmDescription: String
                 get() = "Удалить ВСЕ категории группы ($count шт.)"
+        }
+    }
+
+    sealed class TransactionAction : AiPendingAction() {
+        data class Add(
+            val groupId: ObjectId,
+            val creatorId: Long,
+            val type: CategoryType,
+            val amount: Double,
+            val category: Category,
+            val description: String?,
+            val operationDate: LocalDate
+        ) : TransactionAction() {
+            override val confirmDescription: String
+                get() {
+                    val typeWord = if (type == CategoryType.EXPENSE) "расход" else "доход"
+                    val iconPart = category.icon?.let { "$it " } ?: ""
+                    val descPart = description?.takeIf { it.isNotBlank() }?.let { " ($it)" } ?: ""
+                    return "Добавить $typeWord: $iconPart«${category.name}» — ${formatAmount(BigDecimal.valueOf(amount))}$descPart"
+                }
         }
     }
 }
