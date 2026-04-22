@@ -15,12 +15,17 @@ import ai.moneymanager.domain.model.nlp.arguments.RenameCategoryArgs
 import ai.moneymanager.domain.model.nlp.enum.GeminiFunction
 import ai.moneymanager.mapper.GeminiArgsMapper
 import com.google.genai.Client
+import com.google.genai.errors.ApiException
+import com.google.genai.errors.ClientException
+import com.google.genai.errors.GenAiIOException
+import com.google.genai.errors.ServerException
 import com.google.genai.types.AutomaticFunctionCallingConfig
 import com.google.genai.types.Blob
 import com.google.genai.types.Content
 import com.google.genai.types.FunctionCall
 import com.google.genai.types.GenerateContentConfig
 import com.google.genai.types.Part
+import com.google.genai.types.ThinkingConfig
 import com.google.genai.types.Tool
 import jakarta.annotation.PostConstruct
 import org.slf4j.Logger
@@ -76,6 +81,14 @@ class CommandParserService(
                     .disable(true)
                     .build()
             )
+            // Thinking отключён: для function-calling на коротких командах он добавляет
+            // 5-15 сек латентности без пользы. Включить при сложном reasoning — убрать
+            // thinkingBudget или поставить >0 (например, 1024).
+            .thinkingConfig(
+                ThinkingConfig.builder()
+                    .thinkingBudget(0)
+                    .build()
+            )
             .build()
 
     }
@@ -93,7 +106,7 @@ class CommandParserService(
             processResponse(response, userMessage)
         } catch (e: Exception) {
             log.error("CommandParser error: ${e.message}", e)
-            BotCommand.ParseError(e.message ?: "Unknown error")
+            classifyError(e)
         }
     }
 
@@ -128,8 +141,30 @@ class CommandParserService(
             processResponse(response, "[voice message]")
         } catch (e: Exception) {
             log.error("Voice CommandParser error: ${e.message}", e)
-            BotCommand.ParseError(e.message ?: "Unknown error")
+            classifyError(e)
         }
+    }
+
+    private fun classifyError(e: Exception): BotCommand {
+        return when (e) {
+            is ClientException -> {
+                if (e.code() == HTTP_TOO_MANY_REQUESTS) {
+                    BotCommand.RateLimitError(parseRetryAfterSeconds(e.message()))
+                } else {
+                    BotCommand.ServiceError
+                }
+            }
+            is ServerException -> BotCommand.ServiceError
+            is ApiException -> BotCommand.ServiceError
+            is GenAiIOException -> BotCommand.ServiceError
+            else -> BotCommand.ParseError(e.message ?: "Unknown error")
+        }
+    }
+
+    private fun parseRetryAfterSeconds(message: String?): Long? {
+        if (message.isNullOrBlank()) return null
+        val match = RETRY_AFTER_REGEX.find(message) ?: return null
+        return match.groupValues[1].toDoubleOrNull()?.toLong()?.coerceAtLeast(1L)
     }
 
     private fun processResponse(response: com.google.genai.types.GenerateContentResponse, originalMessage: String): BotCommand {
@@ -226,6 +261,9 @@ class CommandParserService(
     }
 
     companion object {
+        private const val HTTP_TOO_MANY_REQUESTS = 429
+        private val RETRY_AFTER_REGEX = Regex("""Please retry in (\d+(?:\.\d+)?)s""")
+
         private val SYSTEM_PROMPT = """
             Ты — ассистент Telegram бота для учета финансов. Твоя задача — понять намерение пользователя и вызвать соответствующую функцию.
 

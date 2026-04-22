@@ -36,11 +36,13 @@ internal val BotCommand.targetState: MoneyManagerState
         is BotCommand.AddExpense,
         is BotCommand.AddIncome,
         is BotCommand.ParseError,
+        is BotCommand.RateLimitError,
+        BotCommand.ServiceError,
         is BotCommand.CreateCategory,
         is BotCommand.DeleteCategory,
         is BotCommand.RenameCategory,
         is BotCommand.ChangeCategoryIcon,
-        is BotCommand.DeleteAllCategories,
+        BotCommand.DeleteAllCategories,
         is BotCommand.ListCategories -> MoneyManagerState.NLP_RESPONSE
     }
 
@@ -102,11 +104,23 @@ internal fun processNlpCommand(
             context.nlpTargetState = MoneyManagerState.NLP_RESPONSE
             log.info("❌ NLP error: ${command.error}")
         }
+        is BotCommand.RateLimitError -> {
+            context.nlpResponse = command.retryAfterSeconds
+                ?.let { "⏳ Лимит AI исчерпан. Попробуй через ~%d сек.".format(it) }
+                ?: "⏳ Лимит AI исчерпан. Попробуй через минуту."
+            context.nlpTargetState = MoneyManagerState.NLP_RESPONSE
+            log.info("⏳ NLP rate limit, retryAfter=${command.retryAfterSeconds}s")
+        }
+        BotCommand.ServiceError -> {
+            context.nlpResponse = "⚠️ AI сейчас недоступен. Попробуй через пару минут."
+            context.nlpTargetState = MoneyManagerState.NLP_RESPONSE
+            log.info("⚠️ NLP service error")
+        }
         is BotCommand.CreateCategory,
         is BotCommand.DeleteCategory,
         is BotCommand.RenameCategory,
         is BotCommand.ChangeCategoryIcon,
-        is BotCommand.DeleteAllCategories,
+        BotCommand.DeleteAllCategories,
         is BotCommand.ListCategories -> {
             // Категориальные команды обрабатываются в новом AI-флоу.
             context.nlpResponse = PARSE_ERROR_MESSAGE
