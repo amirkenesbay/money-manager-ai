@@ -15,5 +15,6 @@ data class UserInfoEntity(
     val activeGroupId: ObjectId? = null,
     val groupIds: Set<ObjectId> = emptySet(),
     val timezone: String? = null,
+    val onboardingCompleted: Boolean = false,
     val auditInfo: AuditInfo = AuditInfo()
 )

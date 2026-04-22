@@ -1,10 +1,13 @@
 chat-machinist:
   visualize: true
+  applicationName: "Money Manager AI"
   persistence:
     type: mongodb
   bot:
-    name: moneyManagerAIbot
+    name: ${BOT_NAME}
     token: ${BOT_TOKEN}
+  alert:
+    telegramChatId: ${ALERT_CHAT_ID:#{null}}
 
 gemini:
   api-key: ${GEMINI_API_KEY}

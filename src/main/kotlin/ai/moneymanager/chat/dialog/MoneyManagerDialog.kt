@@ -1,5 +1,9 @@
 package ai.moneymanager.chat.dialog
 
+import ai.moneymanager.chat.transition.ai.aiDialogTransitions
+import ai.moneymanager.chat.transition.ai.handler.AiDomainHandler
+import ai.moneymanager.chat.transition.balance.balanceDialogTransitions
+import ai.moneymanager.chat.transition.balance.loadCurrentBalance
 import ai.moneymanager.chat.transition.category.categoryDialogTransitions
 import ai.moneymanager.chat.transition.finance.financeDialogTransitions
 import ai.moneymanager.chat.transition.group.groupDialogTransitions
@@ -35,25 +39,29 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
     financeOperationService: FinanceOperationService,
     financeHistoryService: FinanceHistoryService,
     financeReportService: FinanceReportService,
-    notificationService: NotificationService
+    notificationService: NotificationService,
+    aiDomainHandlers: List<AiDomainHandler>
 ) {
     dialog {
         name = "Money Manager Dialog"
 
-        startMoneyManagerDialogTransition(userInfoService, groupService)
-        joinGroupDialogTransitions(groupService, userInfoService)
+        startMoneyManagerDialogTransition(userInfoService, groupService, financeOperationService)
+        joinGroupDialogTransitions(groupService, userInfoService, financeOperationService)
+        balanceDialogTransitions(groupService, userInfoService, financeOperationService)
         groupDialogTransitions(groupService, categoryService, userInfoService)
         categoryDialogTransitions(categoryService, groupService)
         financeDialogTransitions(categoryService, financeOperationService, financeHistoryService, financeReportService, userInfoService, groupService)
         notificationDialogTransitions(notificationService, userInfoService)
-        // NLP disabled for now
+        aiDialogTransitions(commandParserService, telegramFileService, geminiService, aiDomainHandlers)
+        // Legacy NLP disabled for now
         // nlpDialogTransitions(commandParserService, groupService, userInfoService, telegramFileService, geminiService)
     }
 }
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyManagerDialogTransition(
     userInfoService: UserInfoService,
-    groupService: GroupService
+    groupService: GroupService,
+    financeOperationService: FinanceOperationService
 ) {
     transition {
         name = "Start Money Manager Dialog"
@@ -112,6 +120,23 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
     }
 
     transition {
+        name = "Show balance onboarding"
+
+        condition {
+            from = MoneyManagerState.STARTED
+            eventType = EventType.TRIGGERED
+
+            guard {
+                context.pendingGroup == null && context.userInfo?.onboardingCompleted != true
+            }
+        }
+
+        then {
+            to = MoneyManagerState.BALANCE_ONBOARDING_PROMPT
+        }
+    }
+
+    transition {
         name = "Open main menu"
 
         condition {
@@ -119,8 +144,12 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
             eventType = EventType.TRIGGERED
 
             guard {
-                context.pendingGroup == null
+                context.pendingGroup == null && context.userInfo?.onboardingCompleted == true
             }
+        }
+
+        action {
+            loadCurrentBalance(groupService, financeOperationService)
         }
 
         then {
@@ -131,7 +160,8 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.joinGroupDialogTransitions(
     groupService: GroupService,
-    userInfoService: UserInfoService
+    userInfoService: UserInfoService,
+    financeOperationService: FinanceOperationService
 ) {
     transition {
         name = "Confirm join group"
@@ -148,11 +178,13 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.joinGroupDialo
                 val joinedGroup = groupService.joinGroup(userId, token)
                 context.currentGroup = joinedGroup
 
+                userInfoService.markOnboardingCompleted(userId)
                 val updatedUserInfo = userInfoService.getUserInfo(user)
                 context.userInfo = updatedUserInfo
 
                 log.info("User joined group: groupId=${joinedGroup?.id}, activeGroupId=${updatedUserInfo.activeGroupId}")
             }
+            loadCurrentBalance(groupService, financeOperationService)
         }
 
         then {
@@ -172,6 +204,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.joinGroupDialo
             context.pendingInviteToken = null
             context.pendingGroup = null
             context.pendingGroupOwnerInfo = null
+            loadCurrentBalance(groupService, financeOperationService)
         }
 
         then {

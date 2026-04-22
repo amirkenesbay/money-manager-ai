@@ -6,43 +6,43 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Before starting any task, describe what you are going to do. After completing the task, report what was done.
 
-## UI/UX Thinking — обязательно при каждом изменении
+## UI/UX Thinking — Required For Every Change
 
-**Перед каждым изменением кода** ты должен думать как senior UI/UX инженер. Это Telegram-бот, поэтому UI/UX здесь — это:
+**Before every code change** you must think like a senior UI/UX engineer. This is a Telegram bot, so UI/UX here means:
 
-### Принципы
+### Principles
 
-| Принцип | Применение в Telegram-боте |
-|---------|---------------------------|
-| **Instant feedback** | Каждое действие пользователя — видимый ответ. Сохранил расход? Покажи подтверждение с деталями. Нажал кнопку? Бот сразу отвечает |
-| **State clarity** | Пользователь всегда понимает: где он в диалоге, что от него ждут, что произошло. Не оставляй пользователя в неизвестности |
-| **Progressive disclosure** | Не вываливай всю информацию сразу. Сначала — главное, детали — по запросу (кнопки "Подробнее", вложенные меню) |
-| **Forgiveness** | Возможность отмены, кнопки "Назад", подтверждение деструктивных действий (удаление). Undo > confirm где возможно |
-| **Breathing space** | Текст сообщений не должен быть стеной. Используй пустые строки, эмодзи как визуальные якоря, списки вместо сплошного текста |
-| **Consistency** | Одинаковые действия — одинаковый UX. Кнопка "Назад" всегда внизу, формат подтверждений единый, эмодзи используются системно |
-| **Content hierarchy** | Самое важное — первым. Заголовки через эмодзи, ключевые данные выделены, второстепенное — мельче или по запросу |
+| Principle | How it applies in the Telegram bot |
+|-----------|------------------------------------|
+| **Instant feedback** | Every user action gets a visible response. Saved an expense? Show a confirmation with details. Pressed a button? The bot replies immediately. |
+| **State clarity** | The user always understands where they are in the dialog, what is expected of them, and what just happened. Never leave the user in the dark. |
+| **Progressive disclosure** | Don't dump everything at once. Show the main thing first; reveal details on demand (a "More" button, nested menus). |
+| **Forgiveness** | Allow cancellation, provide "Back" buttons, confirm destructive actions (deletion). Undo > confirm where possible. |
+| **Breathing space** | Message text must not be a wall. Use blank lines, emoji as visual anchors, lists instead of running prose. |
+| **Consistency** | Same actions — same UX. "Back" is always at the bottom, confirmation formats are unified, emoji usage is systematic. |
+| **Content hierarchy** | Most important first. Headings marked by emoji, key data highlighted, secondary info smaller or on demand. |
 
-### Чеклист перед реализацией
+### Pre-implementation Checklist
 
-При каждом изменении задай себе:
+Before every change, ask yourself:
 
-1. **Сообщения**: Текст понятен? Не слишком длинный? Есть визуальная структура (абзацы, эмодзи-маркеры)?
-2. **Кнопки**: Текст кнопок ясно описывает действие? Порядок логичен? Главное действие выделено?
-3. **Flow**: Путь пользователя минимален? Нет лишних шагов? Есть "Назад" на каждом экране?
-4. **Feedback**: После действия пользователь получает подтверждение? Видит результат?
-5. **Ошибки**: Если что-то пошло не так — пользователь понимает что и почему? Знает как исправить?
-6. **Edge cases**: Пустой список? Слишком длинное название? Первое использование (onboarding)?
+1. **Messages**: Is the text clear? Not too long? Is there visual structure (paragraphs, emoji markers)?
+2. **Buttons**: Does the button text clearly describe the action? Is the order logical? Is the primary action emphasized?
+3. **Flow**: Is the user's path minimal? Any unnecessary steps? Is there a "Back" on every screen?
+4. **Feedback**: After an action, does the user get a confirmation? See the result?
+5. **Errors**: If something went wrong, does the user understand what and why? Do they know how to fix it?
+6. **Edge cases**: Empty list? Overly long name? First use (onboarding)?
 
 ### Anti-Patterns
 
-| ❌ Не делать | ✅ Делать |
-|-------------|----------|
-| Молчание после действия | Показать подтверждение с деталями |
-| Стена текста без форматирования | Структура: заголовок, списки, отступы |
-| Кнопки без понятного контекста | Текст кнопки = действие ("Добавить расход", не "Ок") |
-| Тупик без "Назад" | Кнопка возврата на каждом экране |
-| Деструктивное действие без confirm | Подтверждение перед удалением |
-| Технические ошибки пользователю | Человеко-понятные сообщения об ошибках |
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Silence after an action | Show a confirmation with details |
+| Wall of text without formatting | Structure: heading, lists, spacing |
+| Buttons without clear context | Button text = action ("Add expense", not "OK") |
+| Dead end with no "Back" | A return button on every screen |
+| Destructive action without confirm | Confirmation before deletion |
+| Raw technical errors shown to the user | Human-readable error messages |
 
 ## Project Overview
 
@@ -399,11 +399,13 @@ Category
 
 **Important**: Always keep `UserInfo.groupIds` and `MoneyGroup.memberIds` in sync when adding/removing users from groups.
 
-**Default Categories**: When a group is created, default categories are auto-created:
+**Default Categories**: When a group is created, default categories are auto-created (names are in Russian because the bot's UI language is Russian):
 - Expenses: Продукты, Транспорт, Развлечения, Здоровье, Одежда, Образование, Другое
 - Income: Зарплата, Подарки, Другое
 
 ## Common Conversation Flows
+
+Note: button labels shown below in Russian (e.g., "Совместный учет", "Создать группу", "Назад") are the actual user-facing strings in the bot.
 
 ### Group Creation Flow
 ```
@@ -572,23 +574,23 @@ action {
 
 ## Known Issues & Workarounds
 
-1. **"No chat id" errors**: Usually non-fatal warnings from Chat Machinist framework, processing continues normally
-2. **"AlertService is not defined"**: Expected warning when alert service isn't configured, doesn't affect functionality
-3. **Button transitions not matching**: Ensure button type is defined in `MoneyManagerButtonType` enum and registered in both reply and transition
+1. **"No chat id" errors**: Usually non-fatal warnings from the Chat Machinist framework; processing continues normally
+2. **"AlertService is not defined"**: Expected warning when alert service isn't configured; doesn't affect functionality
+3. **Button transitions not matching**: Ensure the button type is defined in `MoneyManagerButtonType` enum and registered in both reply and transition
 
 ## Testing the Bot
 
 After code changes:
 1. Restart the application: `./gradlew bootRun`
-2. Test basic flow: `/start` → verify main menu appears
-3. Test group creation: Click "Совместный учет" → "Создать группу" → enter name
-4. Test invite flow: Share invite link → open in different Telegram account → verify join process
+2. Test basic flow: `/start` → verify the main menu appears
+3. Test group creation: Click "Совместный учет" → "Создать группу" → enter a name
+4. Test invite flow: Share invite link → open in a different Telegram account → verify the join process
 5. Test NLP: Send natural language like "Создай группу Семья" and verify the bot parses and confirms
-6. Check MongoDB: Verify data persisted correctly in `money_manager_user`, `money_group`, and `category` collections
+6. Check MongoDB: Verify data was persisted correctly in the `money_manager_user`, `money_group`, and `category` collections
 
 ## Upcoming Features
 
-See `docs/SPEC_FINANCE_TRACKING.md` for detailed specification of planned finance tracking features:
+See `docs/SPEC_FINANCE_TRACKING.md` for the detailed specification of planned finance tracking features:
 
 - **Balance Management**: Initial balance setup, group-wide balance tracking
 - **Transaction Recording**: Add expenses/incomes with categories, amounts, dates, descriptions
@@ -604,7 +606,7 @@ These features will add new states, entities (Transaction), and extend the NLP c
 - Use Kotlin idioms: data classes, extension functions, null-safety (`?.`, `?:`)
 - Prefer immutability: use `val` over `var`, immutable collections
 - Service methods should be small and focused (Single Responsibility)
-- Avoid business logic in Dialog/Reply builders - delegate to Services
+- Avoid business logic in Dialog/Reply builders — delegate to Services
 - Use meaningful names: `createGroupTransition()` not `transition1()`
 - Enum naming: `UPPER_SNAKE_CASE` for states/button types, `PascalCase` for classes
 
@@ -644,3 +646,8 @@ All code must strictly follow these principles:
 - **Minimal comments**: Code should be self-documenting. Comments are only for explaining "why", not "what".
 - **Fail fast**: Validate inputs at the start of a function and throw errors early — do not let invalid data propagate deeper.
 - **Composition over Inheritance**: Prefer composition over inheritance for behavior reuse.
+- **No magic strings/numbers**: Do not use "magic" literals. Any string or number that (a) is repeated in more than one place, (b) encodes business logic / an identifier / a format, or (c) must stay in sync with another value — must be extracted into a named constant.
+  - Examples of what to extract: format patterns (`"#,##0"`, `"dd.MM.yyyy"`), currency symbols (`"₸"`), visual separators (`"━━━"`), external function/method names (e.g. Gemini function names), deep-link prefixes (`"join_"`), MIME types, regex patterns.
+  - Where to put them: shared formatters and visual constants go into `chat/reply/common/FormatHelpers.kt`; external API names go into the enum/object that defines them (e.g. `GeminiFunction`); file-local literals go into a `private const val` in the same file.
+  - **Exceptions** (do NOT extract): one-off UI copy for messages/buttons, MongoDB collection names in `@Document`, Spring `@Value("\${...}")` keys (single source of truth is `application.yml`), log messages.
+  - Before adding a new literal, grep the project: if the same literal already exists, reuse the existing constant instead of duplicating it.

@@ -1,5 +1,6 @@
 package ai.moneymanager.domain.model
 
+import ai.moneymanager.domain.model.nlp.AiPendingAction
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.repository.entity.NotificationEntity
 import com.fasterxml.jackson.annotation.JsonFormat
@@ -21,6 +22,11 @@ enum class MoneyManagerState {
     GROUP_MEMBERS,
     GROUP_EDIT_ENTER_NAME,
     GROUP_DELETE_CONFIRM,
+
+    // -------- BALANCE --------
+    BALANCE_ONBOARDING_PROMPT,
+    BALANCE_ONBOARDING_ENTER_AMOUNT,
+    BALANCE_VIEW,
 
     // -------- FINANCE --------
     FINANCE_MANAGEMENT,
@@ -54,6 +60,11 @@ enum class MoneyManagerState {
     NLP_CONFIRM_CREATE_GROUP,
     NLP_CONFIRM_DELETE_GROUP,
     NLP_RESPONSE,
+
+    // -------- AI --------
+    AI_MODE,
+    AI_CONFIRM,
+    AI_RESULT,
 
     // -------- CATEGORIES --------
     CATEGORY_MANAGEMENT,
@@ -95,9 +106,11 @@ enum class MoneyManagerButtonType {
     // Menu
     PERSONAL_ACCOUNTING,
     SHARED_ACCOUNTING,
-    BALANCE,        // TODO: показ баланса группы
+    BALANCE,
+    BALANCE_SET_AMOUNT,
+    BALANCE_START_FROM_ZERO,
     NOTIFICATIONS,  // TODO: настройки уведомлений
-    AI_ASSISTANT,   // TODO: AI ассистент
+    AI_ASSISTANT,
     FINANCE,        // экран "Финансы"
     ADD_EXPENSE,
     ADD_INCOME,
@@ -195,6 +208,9 @@ enum class MoneyManagerButtonType {
     // AI hints
     WHAT_TO_ASK,
 
+    // AI
+    CONFIRM_AI_ACTION,
+
     // Notification navigation
     CREATE_NOTIFICATION,
     NOTIFICATION_ITEM,
@@ -286,6 +302,10 @@ class MoneyManagerContext {
     var manualTextInputActive: Boolean = false
     var customNameInputMode: Boolean = false
 
+    // -------- BALANCE --------
+    var currentBalance: BalanceBreakdown? = null
+    var balanceAmountInputError: Boolean = false
+
     // -------- FINANCE --------
     var financeOperationType: CategoryType? = null
     var selectedCategory: Category? = null
@@ -356,4 +376,9 @@ class MoneyManagerContext {
     var nlpNewMessage: Boolean = true
     var nlpTargetState: MoneyManagerState? = null
     var parsedCommand: BotCommand? = null
+
+    // -------- AI --------
+    var pendingAiAction: AiPendingAction? = null
+    var aiResultMessage: String? = null
+    var aiRedirectState: MoneyManagerState? = null
 }

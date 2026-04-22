@@ -5,8 +5,13 @@ import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.domain.model.nlp.BotFunctions
 import ai.moneymanager.domain.model.nlp.arguments.AddExpenseArgs
 import ai.moneymanager.domain.model.nlp.arguments.AddIncomeArgs
+import ai.moneymanager.domain.model.nlp.arguments.ChangeCategoryIconArgs
+import ai.moneymanager.domain.model.nlp.arguments.CreateCategoryArgs
 import ai.moneymanager.domain.model.nlp.arguments.CreateGroupArgs
+import ai.moneymanager.domain.model.nlp.arguments.DeleteCategoryArgs
 import ai.moneymanager.domain.model.nlp.arguments.DeleteGroupArgs
+import ai.moneymanager.domain.model.nlp.arguments.ListCategoriesArgs
+import ai.moneymanager.domain.model.nlp.arguments.RenameCategoryArgs
 import ai.moneymanager.domain.model.nlp.enum.GeminiFunction
 import ai.moneymanager.mapper.GeminiArgsMapper
 import com.google.genai.Client
@@ -39,18 +44,30 @@ class CommandParserService(
             .build()
 
         // Получаем методы из BotFunctions для function calling
-        val createGroupMethod = BotFunctions::class.java.getMethod("createGroup", String::class.java)
-        val deleteGroupMethod = BotFunctions::class.java.getMethod("deleteGroup", String::class.java)
-        val addExpenseMethod = BotFunctions::class.java.getMethod("addExpense", Double::class.java, String::class.java, String::class.java)
-        val addIncomeMethod = BotFunctions::class.java.getMethod("addIncome", Double::class.java, String::class.java, String::class.java)
-        val outOfContextMethod = BotFunctions::class.java.getMethod("outOfContext", String::class.java)
+        val createGroupMethod = botFunctionMethod(GeminiFunction.CREATE_GROUP, String::class.java)
+        val deleteGroupMethod = botFunctionMethod(GeminiFunction.DELETE_GROUP, String::class.java)
+        val addExpenseMethod = botFunctionMethod(GeminiFunction.ADD_EXPENSE, Double::class.java, String::class.java, String::class.java)
+        val addIncomeMethod = botFunctionMethod(GeminiFunction.ADD_INCOME, Double::class.java, String::class.java, String::class.java)
+        val outOfContextMethod = botFunctionMethod(GeminiFunction.OUT_OF_CONTEXT, String::class.java)
+
+        // Category functions
+        val createCategoryMethod = botFunctionMethod(GeminiFunction.CREATE_CATEGORY, String::class.java, String::class.java, String::class.java)
+        val deleteCategoryMethod = botFunctionMethod(GeminiFunction.DELETE_CATEGORY, String::class.java, String::class.java)
+        val renameCategoryMethod = botFunctionMethod(GeminiFunction.RENAME_CATEGORY, String::class.java, String::class.java, String::class.java)
+        val changeCategoryIconMethod = botFunctionMethod(GeminiFunction.CHANGE_CATEGORY_ICON, String::class.java, String::class.java, String::class.java)
+        val deleteAllCategoriesMethod = botFunctionMethod(GeminiFunction.DELETE_ALL_CATEGORIES)
+        val listCategoriesMethod = botFunctionMethod(GeminiFunction.LIST_CATEGORIES, String::class.java)
 
         val systemContent = Content.fromParts(Part.fromText(SYSTEM_PROMPT))
 
         config = GenerateContentConfig.builder()
             .tools(
                 Tool.builder()
-                    .functions(createGroupMethod, deleteGroupMethod, addExpenseMethod, addIncomeMethod, outOfContextMethod)
+                    .functions(
+                        createGroupMethod, deleteGroupMethod, addExpenseMethod, addIncomeMethod, outOfContextMethod,
+                        createCategoryMethod, deleteCategoryMethod, renameCategoryMethod,
+                        changeCategoryIconMethod, deleteAllCategoriesMethod, listCategoriesMethod
+                    )
                     .build()
             )
             .systemInstruction(systemContent)
@@ -62,6 +79,9 @@ class CommandParserService(
             .build()
 
     }
+
+    private fun botFunctionMethod(function: GeminiFunction, vararg parameterTypes: Class<*>) =
+        BotFunctions::class.java.getMethod(function.functionName, *parameterTypes)
 
     fun parseCommand(userMessage: String): BotCommand {
         return try {
@@ -161,6 +181,40 @@ class CommandParserService(
                     BotCommand.OutOfContext(originalMessage)
                 }
 
+                GeminiFunction.CREATE_CATEGORY -> {
+                    val dto = argsMapper.map<CreateCategoryArgs>(args)
+                    if (dto.name.isBlank()) return BotCommand.ParseError("category name is blank")
+                    if (dto.type.isBlank()) return BotCommand.ParseError("category type is blank")
+                    BotCommand.CreateCategory(dto.name.trim(), dto.type.trim(), dto.icon?.trim()?.takeIf { it.isNotEmpty() })
+                }
+
+                GeminiFunction.DELETE_CATEGORY -> {
+                    val dto = argsMapper.map<DeleteCategoryArgs>(args)
+                    if (dto.name.isBlank()) return BotCommand.ParseError("category name is blank")
+                    BotCommand.DeleteCategory(dto.name.trim(), dto.type?.trim()?.takeIf { it.isNotEmpty() })
+                }
+
+                GeminiFunction.RENAME_CATEGORY -> {
+                    val dto = argsMapper.map<RenameCategoryArgs>(args)
+                    if (dto.oldName.isBlank() || dto.newName.isBlank()) return BotCommand.ParseError("category name is blank")
+                    BotCommand.RenameCategory(dto.oldName.trim(), dto.newName.trim(), dto.type?.trim()?.takeIf { it.isNotEmpty() })
+                }
+
+                GeminiFunction.CHANGE_CATEGORY_ICON -> {
+                    val dto = argsMapper.map<ChangeCategoryIconArgs>(args)
+                    if (dto.name.isBlank() || dto.newIcon.isBlank()) return BotCommand.ParseError("category fields are blank")
+                    BotCommand.ChangeCategoryIcon(dto.name.trim(), dto.newIcon.trim(), dto.type?.trim()?.takeIf { it.isNotEmpty() })
+                }
+
+                GeminiFunction.DELETE_ALL_CATEGORIES -> {
+                    BotCommand.DeleteAllCategories
+                }
+
+                GeminiFunction.LIST_CATEGORIES -> {
+                    val dto = argsMapper.map<ListCategoriesArgs>(args)
+                    BotCommand.ListCategories(dto.type?.trim()?.takeIf { it.isNotEmpty() })
+                }
+
                 null -> {
                     BotCommand.OutOfContext(originalMessage)
                 }
@@ -174,23 +228,34 @@ class CommandParserService(
     companion object {
         private val SYSTEM_PROMPT = """
             Ты — ассистент Telegram бота для учета финансов. Твоя задача — понять намерение пользователя и вызвать соответствующую функцию.
-            
-            Примеры сообщений:
-            - создать группу для совместного учета. Примеры: "создай группу друзья", "новая группа семья" → createGroup
-            - удалить группу. Примеры: "удали группу друзья", "убери группу семья" → deleteGroup
-            - добавить расход. Примеры: "купил кофе 500", "потратил 1000 на такси" → addExpense (amount=500, category="Кофе")
-            - добавить доход. Примеры: "получил зарплату 500000", "подарили 10000" → addIncome
-            - если сообщение НЕ относится к финансам или управлению группами → outOfContext 
 
-            ВАЖНО:
-            - Если пользователь спрашивает что-то не по теме (математика, погода, общие вопросы) — вызови outOfContext
-            - Для расходов/доходов определи категорию из контекста (продукты, транспорт, зарплата и т.д.)
+            === ГРУППЫ ===
+            - "создай группу друзья", "новая группа семья" → createGroup
+            - "удали группу друзья", "убери группу семья" → deleteGroup
+
+            === ФИНАНСОВЫЕ ОПЕРАЦИИ ===
+            - "купил кофе 500", "потратил 1000 на такси" → addExpense (amount=500, category="Кофе")
+            - "получил зарплату 500000", "подарили 10000" → addIncome
+
+            === КАТЕГОРИИ ===
+            - "создай категорию Кино", "добавь категорию Спорт" → createCategory (name="Кино", type="EXPENSE"/"INCOME", icon=опционально)
+              Тип определяй из контекста: «кино», «такси», «ресторан», «покупки» → EXPENSE; «зарплата», «премия», «фриланс», «подарок» → INCOME
+              Если тип неочевиден — по умолчанию EXPENSE (пользователь увидит и сможет отменить)
+              Если пользователь дал эмодзи — передай как icon. Иначе icon=null
+            - "удали категорию Такси", "убери категорию Кино" → deleteCategory (name, type опционально)
+            - "переименуй Продукты в Еда", "переименуй категорию X в Y" → renameCategory (oldName, newName, type опционально)
+            - "замени иконку Зарплата на 💵", "поставь 🎬 на Кино" → changeCategoryIcon (name, newIcon, type опционально)
+            - "удали все категории", "очисти все категории" → deleteAllCategories (без аргументов)
+            - "покажи категории", "покажи категории расходов", "список доходов" → listCategories (type опционально)
+
+            === ПРАВИЛА ===
+            - Всегда вызывай ровно одну функцию, не отвечай текстом
+            - Никогда не отвечай текстом, всегда function call
+            - Если сообщение не про финансы/группы/категории (математика, погода, общие вопросы) → outOfContext
+            - Если сомневаешься в намерении → outOfContext
+            - Для finance-операций: если сумма не указана → outOfContext
             - Валюта по умолчанию — тенге (KZT)
-            - Всегда вызывай одну из функций, не отвечай текстом
-            - Никогда не отвечай текстом
-            - Всегда возвращай function call
-            - Если сомневаешься — outOfContext
-            - Если сумма не указана — outOfContext
+            - type для категорий — строго "EXPENSE" или "INCOME" (заглавные)
         """.trimIndent()
     }
 }

@@ -1,10 +1,12 @@
 package ai.moneymanager.chat.transition.nlp
 
+import ai.moneymanager.chat.reply.common.formatAmount
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.service.GeminiService
 import org.slf4j.LoggerFactory
+import java.math.BigDecimal
 
 internal val log = LoggerFactory.getLogger("NlpTransitions")
 
@@ -33,7 +35,13 @@ internal val BotCommand.targetState: MoneyManagerState
         is BotCommand.OutOfContext,
         is BotCommand.AddExpense,
         is BotCommand.AddIncome,
-        is BotCommand.ParseError -> MoneyManagerState.NLP_RESPONSE
+        is BotCommand.ParseError,
+        is BotCommand.CreateCategory,
+        is BotCommand.DeleteCategory,
+        is BotCommand.RenameCategory,
+        is BotCommand.ChangeCategoryIcon,
+        is BotCommand.DeleteAllCategories,
+        is BotCommand.ListCategories -> MoneyManagerState.NLP_RESPONSE
     }
 
 internal fun clearNlpContext(context: MoneyManagerContext) {
@@ -76,7 +84,7 @@ internal fun processNlpCommand(
         is BotCommand.AddExpense -> {
             context.nlpResponse = """
                 |Функция добавления расходов скоро будет доступна!
-                |Распознано: ${command.category ?: "без категории"}, ${command.amount} тг
+                |Распознано: ${command.category ?: "без категории"}, ${formatAmount(BigDecimal.valueOf(command.amount))}
             """.trimMargin()
             context.nlpTargetState = MoneyManagerState.NLP_RESPONSE
             log.info("✅ NLP parsed: AddExpense(${command.amount}, ${command.category})")
@@ -84,7 +92,7 @@ internal fun processNlpCommand(
         is BotCommand.AddIncome -> {
             context.nlpResponse = """
                 |Функция добавления доходов скоро будет доступна!
-                |Распознано: ${command.category ?: "без категории"}, ${command.amount} тг
+                |Распознано: ${command.category ?: "без категории"}, ${formatAmount(BigDecimal.valueOf(command.amount))}
             """.trimMargin()
             context.nlpTargetState = MoneyManagerState.NLP_RESPONSE
             log.info("✅ NLP parsed: AddIncome(${command.amount}, ${command.category})")
@@ -93,6 +101,16 @@ internal fun processNlpCommand(
             context.nlpResponse = PARSE_ERROR_MESSAGE
             context.nlpTargetState = MoneyManagerState.NLP_RESPONSE
             log.info("❌ NLP error: ${command.error}")
+        }
+        is BotCommand.CreateCategory,
+        is BotCommand.DeleteCategory,
+        is BotCommand.RenameCategory,
+        is BotCommand.ChangeCategoryIcon,
+        is BotCommand.DeleteAllCategories,
+        is BotCommand.ListCategories -> {
+            // Категориальные команды обрабатываются в новом AI-флоу.
+            context.nlpResponse = PARSE_ERROR_MESSAGE
+            context.nlpTargetState = MoneyManagerState.NLP_RESPONSE
         }
     }
 }

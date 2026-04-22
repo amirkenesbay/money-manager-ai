@@ -1,6 +1,7 @@
 package ai.moneymanager.domain.model
 
 import org.bson.types.ObjectId
+import java.math.BigDecimal
 
 /**
  * Группа для совместного учета финансов
@@ -11,7 +12,8 @@ data class MoneyGroup(
     val inviteToken: String,
     val ownerId: Long,
     val memberIds: Set<Long>,
-    val type: GroupType
+    val type: GroupType,
+    val initialBalance: BigDecimal = BigDecimal.ZERO
 )
 
 /**

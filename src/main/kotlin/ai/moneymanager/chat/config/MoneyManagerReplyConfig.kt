@@ -1,5 +1,8 @@
 package ai.moneymanager.chat.config
 
+import ai.moneymanager.chat.reply.ai.aiConfirmReply
+import ai.moneymanager.chat.reply.ai.aiModeReply
+import ai.moneymanager.chat.reply.ai.aiResultReply
 import ai.moneymanager.chat.reply.category.*
 import ai.moneymanager.chat.reply.finance.financeManagementReply
 import ai.moneymanager.chat.reply.finance.financeOperationSavedReply
@@ -24,6 +27,9 @@ import ai.moneymanager.chat.reply.finance.financeSelectDateReply
 import ai.moneymanager.chat.reply.finance.financeSelectMonthReply
 import ai.moneymanager.chat.reply.finance.financeSelectYearReply
 import ai.moneymanager.chat.reply.group.*
+import ai.moneymanager.chat.reply.money.balanceOnboardingEnterAmountReply
+import ai.moneymanager.chat.reply.money.balanceOnboardingPromptReply
+import ai.moneymanager.chat.reply.money.balanceViewReply
 import ai.moneymanager.chat.reply.money.menuReply
 import ai.moneymanager.chat.reply.notification.*
 import ai.moneymanager.chat.reply.nlp.nlpConfirmCreateGroupReply
@@ -45,6 +51,11 @@ class MoneyManagerReplyConfig {
 
             // Money replies
             menuReply()
+
+            // Balance replies
+            balanceOnboardingPromptReply()
+            balanceOnboardingEnterAmountReply()
+            balanceViewReply()
 
             // Finance replies
             financeManagementReply()
@@ -120,7 +131,12 @@ class MoneyManagerReplyConfig {
             notificationDeleteConfirmReply()
             notificationDeleteAllConfirmReply()
 
-            // NLP replies (disabled for now)
+            // AI replies
+            aiModeReply()
+            aiConfirmReply()
+            aiResultReply()
+
+            // Legacy NLP replies (disabled for now)
             // nlpConfirmCreateGroupReply()
             // nlpConfirmDeleteGroupReply()
             // nlpResponseReply()

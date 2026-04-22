@@ -1,15 +1,16 @@
 package ai.moneymanager.service
 
+import ai.moneymanager.chat.reply.common.SECTION_SEPARATOR
+import ai.moneymanager.chat.reply.common.SECTION_SEPARATOR_WITH_BLANK_LINE
+import ai.moneymanager.chat.reply.common.dateFormatter
+import ai.moneymanager.chat.reply.common.formatAmount
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.repository.FinanceOperationRepository
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 
@@ -17,8 +18,6 @@ import java.util.Locale
 class FinanceHistoryService(
     private val financeOperationRepository: FinanceOperationRepository
 ) {
-
-    private val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
 
     fun generateReport(groupId: ObjectId, startDate: LocalDate, endDate: LocalDate): String {
         val operations = financeOperationRepository
@@ -37,7 +36,7 @@ class FinanceHistoryService(
 
         return buildString {
             append(header)
-            append("\n━━━━━━━━━━━━━━━━━━━━━")
+            append(SECTION_SEPARATOR)
             appendSection("📈 Доходы:", incomes, totalIncome)
             appendSection("📉 Расходы:", expenses, totalExpense)
             appendBalanceLine(totalIncome, totalExpense)
@@ -90,15 +89,10 @@ class FinanceHistoryService(
     private fun StringBuilder.appendBalanceLine(totalIncome: BigDecimal, totalExpense: BigDecimal) {
         val balance = totalIncome.subtract(totalExpense)
         val sign = if (balance >= BigDecimal.ZERO) "+" else ""
-        append("\n\n━━━━━━━━━━━━━━━━━━━━━")
+        append(SECTION_SEPARATOR_WITH_BLANK_LINE)
         append("\n💰 Баланс: $sign${formatAmount(balance)}")
     }
 
     private fun sumAmounts(operations: List<FinanceOperationEntity>): BigDecimal =
         operations.fold(BigDecimal.ZERO) { acc, op -> acc.add(op.amount) }
-
-    private fun formatAmount(amount: BigDecimal): String {
-        val format = DecimalFormat("#,##0", DecimalFormatSymbols().apply { groupingSeparator = ' ' })
-        return "${format.format(amount)}₸"
-    }
 }
