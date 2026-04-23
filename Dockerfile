@@ -17,7 +17,7 @@ RUN --mount=type=secret,id=gpr_user \
     --mount=type=secret,id=gpr_key \
     GITHUB_ACTOR=$(cat /run/secrets/gpr_user) \
     GITHUB_TOKEN=$(cat /run/secrets/gpr_key) \
-    ./gradlew --no-daemon bootJar -x test
+    ./gradlew --no-daemon --refresh-dependencies bootJar -x test
 
 FROM eclipse-temurin:21-jre
 
