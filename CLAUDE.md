@@ -648,8 +648,21 @@ All code must strictly follow these principles:
 - **Minimal comments**: Code should be self-documenting. Comments are only for explaining "why", not "what".
 - **Fail fast**: Validate inputs at the start of a function and throw errors early — do not let invalid data propagate deeper.
 - **Composition over Inheritance**: Prefer composition over inheritance for behavior reuse.
-- **No magic strings/numbers**: Do not use "magic" literals. Any string or number that (a) is repeated in more than one place, (b) encodes business logic / an identifier / a format, or (c) must stay in sync with another value — must be extracted into a named constant.
-  - Examples of what to extract: format patterns (`"#,##0"`, `"dd.MM.yyyy"`), currency symbols (`"₸"`), visual separators (`"━━━"`), external function/method names (e.g. Gemini function names), deep-link prefixes (`"join_"`), MIME types, regex patterns.
-  - Where to put them: shared formatters and visual constants go into `chat/reply/common/FormatHelpers.kt`; external API names go into the enum/object that defines them (e.g. `GeminiFunction`); file-local literals go into a `private const val` in the same file.
-  - **Exceptions** (do NOT extract): one-off UI copy for messages/buttons, MongoDB collection names in `@Document`, Spring `@Value("\${...}")` keys (single source of truth is `application.yml`), log messages.
-  - Before adding a new literal, grep the project: if the same literal already exists, reuse the existing constant instead of duplicating it.
+- **No magic strings/numbers — strictly forbidden**: Any string or number literal that carries meaning beyond a single, trivial, throwaway usage MUST be extracted into a named constant. This is non-negotiable.
+  - **Always extract** literals that:
+    - are repeated in more than one place (even twice);
+    - encode business logic, an identifier, a format, a default value, or a fallback (e.g. default category icon `"📌"`, sign markers `"+"` / `"−"`);
+    - act as visual anchors reused across screens (separators, section headers like `"🕒 Последние:"`, status badges);
+    - are format patterns (`"#,##0"`, `"dd.MM.yyyy"`, `"dd.MM"`), currency symbols (`"₸"`), visual separators (`"━━━"`), emoji fallbacks, deep-link prefixes (`"join_"`), MIME types, regex patterns;
+    - are external function/method names (e.g. Gemini function names) — put them in the enum/object that defines them;
+    - are numeric parameters like limits, timeouts, page sizes, retry counts, day offsets (`0` for today, `1` for yesterday).
+  - **Where to put them**:
+    - shared formatters, icons, separators, signs, and any constant used by more than one file → `chat/reply/common/FormatHelpers.kt`;
+    - file-local constants that are truly used in only one file → `private const val` at the top of that file;
+    - external API names → the enum/object that models that API surface.
+  - **Narrow, explicitly-listed exceptions** (still prefer extraction when in doubt):
+    - MongoDB collection names inside `@Document("...")`;
+    - Spring `@Value("\${...}")` keys (single source of truth is `application.yml`);
+    - Log messages and internal transition `name = "..."` labels — unless they encode business data, in which case derive them from the enum/object that holds that data (e.g. `quickDay.name.lowercase()`).
+    - Single-screen, non-repeated user-facing copy in one `message { text = "..." }` or `button { text = "..." }` block — but the moment the same emoji/icon/phrase shows up in a second place, extract it immediately.
+  - **Before adding any literal, grep the project**: if the same literal already exists (even in a different form, e.g. the same emoji written inline), reuse the existing constant. If it doesn't exist yet, create the constant in the same change — never "just add the literal and extract later".
