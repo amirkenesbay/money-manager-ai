@@ -1,6 +1,7 @@
 package ai.moneymanager.chat.reply.category
 
 import ai.moneymanager.chat.reply.common.CategoryTypeForm
+import ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.chat.reply.common.backButton
 import ai.moneymanager.chat.reply.common.cancelButton
 import ai.moneymanager.chat.reply.common.categoryTypeLabel
@@ -215,7 +216,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryCreateResultR
             val categoryName = context.categoryNameInput ?: "категория"
 
             text = if (category != null) {
-                val icon = category.icon ?: "📌"
+                val icon = category.icon ?: DEFAULT_CATEGORY_ICON
                 val typeText = categoryTypeLabel(category.type)
                 """
                     |✅ Категория $typeText создана
@@ -315,7 +316,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryListReply() {
                     categories.forEach { category ->
                         buttonRow {
                             button {
-                                val icon = category.icon ?: "📌"
+                                val icon = category.icon ?: DEFAULT_CATEGORY_ICON
                                 text = "$icon ${category.name}"
                                 type = MoneyManagerButtonType.CATEGORY_ITEM
                             }
@@ -340,7 +341,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryActionsReply(
             }
 
             val category = context.currentCategory
-            val icon = category?.icon ?: "📌"
+            val icon = category?.icon ?: DEFAULT_CATEGORY_ICON
             val typeText = categoryTypeLabel(category?.type)
 
             // show-once: read and reset
@@ -384,7 +385,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryEditIconReply
 
         message {
             val category = context.currentCategory
-            val icon = category?.icon ?: "📌"
+            val icon = category?.icon ?: DEFAULT_CATEGORY_ICON
 
             // show-once: read and reset
             val errorText = if (context.iconInputError) {
@@ -413,7 +414,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryEditNameReply
 
         message {
             val category = context.currentCategory
-            val icon = category?.icon ?: "📌"
+            val icon = category?.icon ?: DEFAULT_CATEGORY_ICON
 
             text = """
                 |✏️ Редактирование категории
@@ -436,7 +437,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryDeleteConfirm
 
         message {
             val category = context.currentCategory
-            val icon = category?.icon ?: "📌"
+            val icon = category?.icon ?: DEFAULT_CATEGORY_ICON
 
             text = """
                 |🗑 Удаление категории

@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.reply.finance
 
+import ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
@@ -11,7 +12,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeEnterAmountRep
 
         message {
             val category = context.selectedCategory
-            val icon = category?.icon ?: "📌"
+            val icon = category?.icon ?: DEFAULT_CATEGORY_ICON
             val categoryName = category?.name ?: ""
             val errorText = if (context.amountInputError) "\n\n❌ Неверный формат. Введите число, например: 1500 или 49.90" else ""
 
@@ -39,7 +40,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeEnterCommentRe
 
         message {
             val category = context.selectedCategory
-            val icon = category?.icon ?: "📌"
+            val icon = category?.icon ?: DEFAULT_CATEGORY_ICON
             val categoryName = category?.name ?: ""
             val amount = context.financeAmount ?: 0.0
 

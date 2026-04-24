@@ -37,6 +37,7 @@ import ai.moneymanager.chat.reply.nlp.nlpConfirmDeleteGroupReply
 import ai.moneymanager.chat.reply.nlp.nlpResponseReply
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
+import ai.moneymanager.service.FinanceHistoryService
 import kz.rmr.chatmachinist.api.reply.RepliesBuilder
 import kz.rmr.chatmachinist.api.reply.replies
 import org.springframework.context.annotation.Bean
@@ -45,7 +46,9 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 class MoneyManagerReplyConfig {
     @Bean
-    fun replyBuilder(): RepliesBuilder<MoneyManagerState, MoneyManagerContext> {
+    fun replyBuilder(
+        financeHistoryService: FinanceHistoryService
+    ): RepliesBuilder<MoneyManagerState, MoneyManagerContext> {
         return replies {
             chatName = "Money Manager Chat"
 
@@ -58,7 +61,7 @@ class MoneyManagerReplyConfig {
             balanceViewReply()
 
             // Finance replies
-            financeManagementReply()
+            financeManagementReply(financeHistoryService)
             financeSelectCategoryReply()
             financeNoCategoriesWarningReply()
             financeEnterAmountReply()

@@ -2,6 +2,7 @@ package ai.moneymanager.repository
 
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import org.bson.types.ObjectId
+import org.springframework.data.domain.Pageable
 import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.stereotype.Repository
 import java.time.LocalDate
@@ -15,4 +16,9 @@ interface FinanceOperationRepository : MongoRepository<FinanceOperationEntity, O
     ): List<FinanceOperationEntity>
 
     fun findByGroupId(groupId: ObjectId): List<FinanceOperationEntity>
+
+    fun findByGroupIdOrderByOperationDateDescAuditInfoCreatedAtDesc(
+        groupId: ObjectId,
+        pageable: Pageable
+    ): List<FinanceOperationEntity>
 }

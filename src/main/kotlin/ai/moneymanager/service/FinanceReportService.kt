@@ -1,5 +1,6 @@
 package ai.moneymanager.service
 
+import ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.report.AnalyticsReport
 import ai.moneymanager.domain.model.report.CategoryComparison
@@ -125,7 +126,7 @@ class FinanceReportService(
         val max = expenses.maxByOrNull { it.amount } ?: return null
         return MaxExpense(
             amount = max.amount,
-            icon = max.categoryIcon ?: "📌",
+            icon = max.categoryIcon ?: DEFAULT_CATEGORY_ICON,
             categoryName = max.categoryName,
             day = max.operationDate.dayOfMonth,
             monthShort = monthNameShort(max.operationDate)
@@ -188,7 +189,7 @@ class FinanceReportService(
         val monthsData = loadCategoryMonthsData(groupId, categoryId, months)
 
         return CategoryReport(
-            icon = categoryIcon ?: "📌",
+            icon = categoryIcon ?: DEFAULT_CATEGORY_ICON,
             categoryName = categoryName,
             months = months,
             monthsData = monthsData,
@@ -238,7 +239,7 @@ class FinanceReportService(
         filter { it.type == type }
 
     private fun List<FinanceOperationEntity>.groupByCategory(): Map<Pair<String, String>, BigDecimal> =
-        groupBy { (it.categoryIcon ?: "📌") to it.categoryName }
+        groupBy { (it.categoryIcon ?: DEFAULT_CATEGORY_ICON) to it.categoryName }
             .mapValues { (_, ops) -> sumAmounts(ops) }
 
     private fun sumAmounts(operations: List<FinanceOperationEntity>): BigDecimal =

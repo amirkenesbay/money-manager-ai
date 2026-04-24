@@ -16,6 +16,20 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeHistoryReply()
             keyboard {
                 buttonRow {
                     button {
+                        text = "Сегодня"
+                        type = MoneyManagerButtonType.HISTORY_DAY_TODAY
+                    }
+                    button {
+                        text = "Вчера"
+                        type = MoneyManagerButtonType.HISTORY_DAY_YESTERDAY
+                    }
+                    button {
+                        text = "Позавчера"
+                        type = MoneyManagerButtonType.HISTORY_DAY_BEFORE_YESTERDAY
+                    }
+                }
+                buttonRow {
+                    button {
                         text = "📅 Изменить период"
                         type = MoneyManagerButtonType.CHANGE_PERIOD
                     }

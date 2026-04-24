@@ -13,9 +13,45 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.financeHistoryTransiti
     financeHistoryService: FinanceHistoryService
 ) {
     openHistoryTransition(financeHistoryService)
+    quickDayTransitions(financeHistoryService)
     changePeriodTransitions(financeHistoryService)
     historyCalendarTransitions()
     historyBackTransitions()
+}
+
+private enum class HistoryQuickDay(
+    val buttonType: MoneyManagerButtonType,
+    val daysAgo: Long
+) {
+    TODAY(MoneyManagerButtonType.HISTORY_DAY_TODAY, 0),
+    YESTERDAY(MoneyManagerButtonType.HISTORY_DAY_YESTERDAY, 1),
+    BEFORE_YESTERDAY(MoneyManagerButtonType.HISTORY_DAY_BEFORE_YESTERDAY, 2),
+}
+
+private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.quickDayTransitions(
+    financeHistoryService: FinanceHistoryService
+) {
+    HistoryQuickDay.entries.forEach { quickDay ->
+        transition {
+            name = "History quick day: ${quickDay.name.lowercase()}"
+
+            condition {
+                from = MoneyManagerState.FINANCE_HISTORY_VIEW
+                button = quickDay.buttonType
+            }
+
+            action {
+                val day = LocalDate.now().minusDays(quickDay.daysAgo)
+                context.historyStartDate = day
+                context.historyEndDate = day
+                loadReport(financeHistoryService)
+            }
+
+            then {
+                to = MoneyManagerState.FINANCE_HISTORY_VIEW
+            }
+        }
+    }
 }
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.openHistoryTransition(

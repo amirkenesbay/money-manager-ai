@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.transition.finance
 
+import ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
@@ -101,7 +102,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.selectCategory
         action {
             val text = buttonText ?: return@action
             context.selectedCategory = context.categories.find { category ->
-                val icon = category.icon ?: "📌"
+                val icon = category.icon ?: DEFAULT_CATEGORY_ICON
                 "$icon ${category.name}" == text
             }
             context.manualTextInputActive = true

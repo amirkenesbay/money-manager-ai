@@ -1,6 +1,7 @@
 package ai.moneymanager.chat.reply.finance
 
 import ai.moneymanager.chat.reply.common.CategoryTypeForm
+import ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.chat.reply.common.categoryTypeLabel
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.MoneyManagerButtonType
@@ -30,7 +31,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeSelectCategory
                 categories.forEach { category ->
                     buttonRow {
                         button {
-                            val icon = category.icon ?: "📌"
+                            val icon = category.icon ?: DEFAULT_CATEGORY_ICON
                             text = "$icon ${category.name}"
                             type = MoneyManagerButtonType.FINANCE_CATEGORY_ITEM
                         }

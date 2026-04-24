@@ -1,5 +1,6 @@
 package ai.moneymanager.service
 
+import ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.chat.reply.common.SECTION_SEPARATOR
 import ai.moneymanager.chat.reply.common.SECTION_SEPARATOR_WITH_BLANK_LINE
 import ai.moneymanager.chat.reply.common.dateFormatter
@@ -8,6 +9,7 @@ import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.repository.FinanceOperationRepository
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import org.bson.types.ObjectId
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -18,6 +20,13 @@ import java.util.Locale
 class FinanceHistoryService(
     private val financeOperationRepository: FinanceOperationRepository
 ) {
+
+    fun getRecentOperations(groupId: ObjectId, limit: Int): List<FinanceOperationEntity> =
+        financeOperationRepository
+            .findByGroupIdOrderByOperationDateDescAuditInfoCreatedAtDesc(
+                groupId,
+                PageRequest.of(0, limit)
+            )
 
     fun generateReport(groupId: ObjectId, startDate: LocalDate, endDate: LocalDate): String {
         val operations = financeOperationRepository
@@ -78,7 +87,7 @@ class FinanceHistoryService(
 
     private fun StringBuilder.appendCategoryLines(operations: List<FinanceOperationEntity>) {
         operations
-            .groupBy { (it.categoryIcon ?: "📌") to it.categoryName }
+            .groupBy { (it.categoryIcon ?: DEFAULT_CATEGORY_ICON) to it.categoryName }
             .map { (key, ops) -> Triple(key.first, key.second, sumAmounts(ops)) }
             .sortedByDescending { it.third }
             .forEach { (icon, name, total) ->
