@@ -297,6 +297,7 @@ class MoneyManagerContext {
     // Set to true on /start so that stale old dialog instances (which remain in MongoDB)
     // cannot accidentally match NLP text transitions.
     var isActive: Boolean = false
+    var pendingOpenFinance: Boolean = false
 
     // -------- INPUT MODE --------
     var manualTextInputActive: Boolean = false

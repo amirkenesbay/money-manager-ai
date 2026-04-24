@@ -12,6 +12,7 @@ import ai.moneymanager.chat.transition.notification.notificationDialogTransition
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
+import ai.moneymanager.domain.model.StartParameters
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.FinanceHistoryService
 import ai.moneymanager.service.FinanceOperationService
@@ -45,7 +46,7 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
     dialog {
         name = "Money Manager Dialog"
 
-        startMoneyManagerDialogTransition(userInfoService, groupService, financeOperationService)
+        startMoneyManagerDialogTransition(userInfoService, groupService, financeOperationService, telegramFileService)
         joinGroupDialogTransitions(groupService, userInfoService, financeOperationService)
         balanceDialogTransitions(groupService, userInfoService, financeOperationService)
         groupDialogTransitions(groupService, categoryService, userInfoService)
@@ -61,7 +62,8 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyManagerDialogTransition(
     userInfoService: UserInfoService,
     groupService: GroupService,
-    financeOperationService: FinanceOperationService
+    financeOperationService: FinanceOperationService,
+    telegramFileService: TelegramFileService
 ) {
     transition {
         name = "Start Money Manager Dialog"
@@ -78,6 +80,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
         action {
             context.isActive = true
             context.userInfo = userInfoService.getUserInfo(user)
+            context.pendingOpenFinance = false
 
             val messageText = update.message?.text
             if (messageText != null) {
@@ -90,6 +93,13 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
 
                     if (group != null) {
                         context.pendingGroupOwnerInfo = userInfoService.getUserInfoByTelegramId(group.ownerId)
+                    }
+                } else if (parts.size == 2 && parts[1] == StartParameters.OPEN_FINANCE) {
+                    context.pendingOpenFinance = true
+                    val chatId = update.message?.chatId
+                    val messageId = update.message?.messageId
+                    if (chatId != null && messageId != null) {
+                        telegramFileService.deleteMessage(chatId, messageId)
                     }
                 }
             }
@@ -137,6 +147,30 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
     }
 
     transition {
+        name = "Open finance from deep link"
+
+        condition {
+            from = MoneyManagerState.STARTED
+            eventType = EventType.TRIGGERED
+
+            guard {
+                context.pendingGroup == null &&
+                    context.userInfo?.onboardingCompleted == true &&
+                    context.pendingOpenFinance
+            }
+        }
+
+        action {
+            context.pendingOpenFinance = false
+            loadCurrentBalance(groupService, financeOperationService)
+        }
+
+        then {
+            to = MoneyManagerState.FINANCE_MANAGEMENT
+        }
+    }
+
+    transition {
         name = "Open main menu"
 
         condition {
@@ -144,7 +178,9 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
             eventType = EventType.TRIGGERED
 
             guard {
-                context.pendingGroup == null && context.userInfo?.onboardingCompleted == true
+                context.pendingGroup == null &&
+                    context.userInfo?.onboardingCompleted == true &&
+                    !context.pendingOpenFinance
             }
         }
 

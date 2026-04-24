@@ -84,6 +84,16 @@ class TelegramFileService(
         }.onFailure { log.warn("Failed to delete placeholder: ${it.message}") }
     }
 
+    fun deleteMessage(chatId: Long, messageId: Int) {
+        runCatching {
+            val delete = DeleteMessage().apply {
+                setChatId(chatId)
+                this.messageId = messageId
+            }
+            execute(delete)
+        }.onFailure { log.warn("Failed to delete message $messageId in chat $chatId: ${it.message}") }
+    }
+
     fun downloadVoice(voice: Voice): ByteArray? {
         val validationResult = validateVoice(voice)
         if (validationResult is VoiceValidationResult.Invalid) {

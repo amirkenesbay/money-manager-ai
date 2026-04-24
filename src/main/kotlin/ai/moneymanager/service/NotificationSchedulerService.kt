@@ -1,5 +1,6 @@
 package ai.moneymanager.service
 
+import ai.moneymanager.domain.model.StartParameters
 import ai.moneymanager.repository.entity.NotificationEntity
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -59,7 +60,7 @@ class NotificationSchedulerService(
             keyboard = listOf(
                 listOf(
                     InlineKeyboardButton("📊 Открыть Финансы").apply {
-                        url = "https://t.me/$botUsername"
+                        url = "https://t.me/$botUsername?start=${StartParameters.OPEN_FINANCE}"
                     }
                 )
             )
