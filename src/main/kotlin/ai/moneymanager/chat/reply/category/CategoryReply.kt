@@ -1,314 +1,274 @@
 package ai.moneymanager.chat.reply.category
 
-import ai.moneymanager.chat.reply.common.CategoryTypeForm
 import ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.chat.reply.common.backButton
 import ai.moneymanager.chat.reply.common.cancelButton
-import ai.moneymanager.chat.reply.common.categoryTypeLabel
 import ai.moneymanager.chat.reply.common.confirmAndCancelButtons
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
+import ai.moneymanager.domain.model.QuickCategoryTemplate
+import ai.moneymanager.domain.model.QuickTemplates
+import ai.moneymanager.service.LocalizationService
 import kz.rmr.chatmachinist.api.reply.RepliesBuilder
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryManagementReply() {
+private const val CATEGORY_LIST_TITLE_FALLBACK = "📋"
+
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryManagementReply(
+    localizationService: LocalizationService
+) {
     reply {
         state = MoneyManagerState.CATEGORY_MANAGEMENT
 
         message {
-            val groupName = context.activeGroupName
-            val groupLine = if (groupName != null) "\n|Группа: $groupName" else ""
+            val lang = context.userInfo?.language
+            val title = localizationService.t("category.management.title", lang)
+            val subtitle = localizationService.t("category.management.subtitle", lang)
+            val groupLine = context.activeGroupName
+                ?.let { "\n" + localizationService.t("category.management.group_line", lang, it) }
+                ?: ""
+            val createText = localizationService.t("category.button.create", lang)
+            val myCategoriesText = localizationService.t("category.button.my_categories", lang)
+            val backText = localizationService.t("common.back_to_menu", lang)
 
             text = """
-                |📂 Управление категориями$groupLine
+                |$title$groupLine
                 |
-                |Здесь вы можете создать новые категории или просмотреть существующие.
+                |$subtitle
             """.trimMargin()
 
             keyboard {
                 buttonRow {
                     button {
-                        text = "➕ Создать категорию"
+                        text = createText
                         type = MoneyManagerButtonType.CREATE_CATEGORY
                     }
                 }
                 buttonRow {
                     button {
-                        text = "📋 Мои категории"
+                        text = myCategoriesText
                         type = MoneyManagerButtonType.MY_CATEGORIES
                     }
                 }
-                backButton("⬅️ Назад в меню")
+                backButton(backText)
             }
         }
     }
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryNoGroupWarningReply() {
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryNoGroupWarningReply(
+    localizationService: LocalizationService
+) {
     reply {
         state = MoneyManagerState.CATEGORY_NO_GROUP_WARNING
 
         message {
-            text = """
-                |⚠️ Нет активной группы
-                |
-                |Для управления категориями нужна группа. Создайте группу для личного или совместного учёта.
-            """.trimMargin()
+            val lang = context.userInfo?.language
+            val createGroupText = localizationService.t("group.button.create", lang)
+            val backText = localizationService.t("common.back", lang)
+
+            text = localizationService.t("category.no_group.text", lang)
 
             keyboard {
                 buttonRow {
                     button {
-                        text = "➕ Создать группу"
+                        text = createGroupText
                         type = MoneyManagerButtonType.CREATE_GROUP
                     }
                 }
-                backButton()
+                backButton(backText)
             }
         }
     }
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryCreateSelectTypeReply() {
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryCreateSelectTypeReply(
+    localizationService: LocalizationService
+) {
     reply {
         state = MoneyManagerState.CATEGORY_CREATE_SELECT_TYPE
 
         message {
-            text = """
-                |➕ Создание новой категории
-                |
-                |Выберите тип категории:
-            """.trimMargin()
+            val lang = context.userInfo?.language
+            val expenseText = localizationService.t("category.button.type.expense_singular", lang)
+            val incomeText = localizationService.t("category.button.type.income_singular", lang)
+            val cancelText = localizationService.t("common.cancel", lang)
+
+            text = localizationService.t("category.create.select_type.text", lang)
 
             keyboard {
                 buttonRow {
                     button {
-                        text = "📉 Расход"
+                        text = expenseText
                         type = MoneyManagerButtonType.CATEGORY_TYPE_EXPENSE
                     }
                 }
                 buttonRow {
                     button {
-                        text = "📈 Доход"
+                        text = incomeText
                         type = MoneyManagerButtonType.CATEGORY_TYPE_INCOME
                     }
                 }
-                cancelButton()
+                cancelButton(cancelText)
             }
         }
     }
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryCreateEnterNameReply() {
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryCreateEnterNameReply(
+    localizationService: LocalizationService
+) {
     reply {
         state = MoneyManagerState.CATEGORY_CREATE_ENTER_NAME
 
         message {
+            val lang = context.userInfo?.language
             val categoryType = context.categoryTypeInput
-            val typeText = categoryTypeLabel(categoryType)
+            val titleKey = createTitleKey(categoryType)
+            val title = localizationService.t(titleKey, lang)
+            val cancelText = localizationService.t("common.cancel", lang)
 
             if (context.customNameInputMode) {
-                text = """
-                    |➕ Создание категории $typeText
-                    |
-                    |✍️ Введите название категории:
-                """.trimMargin()
+                val prompt = localizationService.t("category.create.prompt.custom", lang)
+                text = "$title\n\n$prompt"
 
                 keyboard {
-                    cancelButton()
+                    cancelButton(cancelText)
                 }
             } else {
-                text = """
-                    |➕ Создание категории $typeText
-                    |
-                    |Выберите готовый вариант или задайте своё название:
-                """.trimMargin()
+                val prompt = localizationService.t("category.create.prompt.quick", lang)
+                val enterCustomText = localizationService.t("category.create.button.enter_custom", lang)
+                val templates = quickTemplatesFor(categoryType)
+
+                text = "$title\n\n$prompt"
 
                 keyboard {
-                    when (categoryType) {
-                        CategoryType.EXPENSE -> {
-                            buttonRow {
+                    templates.chunked(2).forEach { row ->
+                        buttonRow {
+                            row.forEach { template ->
                                 button {
-                                    text = "🍔 Еда вне дома"
-                                    type = MoneyManagerButtonType.QUICK_CATEGORY_FOOD_OUT
-                                }
-                                button {
-                                    text = "🏠 ЖКХ"
-                                    type = MoneyManagerButtonType.QUICK_CATEGORY_UTILITIES
-                                }
-                            }
-                            buttonRow {
-                                button {
-                                    text = "💊 Медицина"
-                                    type = MoneyManagerButtonType.QUICK_CATEGORY_MEDICINE
-                                }
-                                button {
-                                    text = "🎮 Развлечения"
-                                    type = MoneyManagerButtonType.QUICK_CATEGORY_ENTERTAINMENT
-                                }
-                            }
-                            buttonRow {
-                                button {
-                                    text = "👕 Одежда и обувь"
-                                    type = MoneyManagerButtonType.QUICK_CATEGORY_CLOTHES
-                                }
-                                button {
-                                    text = "🚕 Такси"
-                                    type = MoneyManagerButtonType.QUICK_CATEGORY_TAXI
+                                    text = formatQuickButton(template, lang, localizationService)
+                                    type = template.buttonType
                                 }
                             }
                         }
-                        CategoryType.INCOME -> {
-                            buttonRow {
-                                button {
-                                    text = "💰 Зарплата"
-                                    type = MoneyManagerButtonType.QUICK_CATEGORY_SALARY
-                                }
-                                button {
-                                    text = "💸 Премия"
-                                    type = MoneyManagerButtonType.QUICK_CATEGORY_BONUS
-                                }
-                            }
-                            buttonRow {
-                                button {
-                                    text = "🎁 Подарок"
-                                    type = MoneyManagerButtonType.QUICK_CATEGORY_GIFT
-                                }
-                                button {
-                                    text = "💼 Фриланс"
-                                    type = MoneyManagerButtonType.QUICK_CATEGORY_FREELANCE
-                                }
-                            }
-                            buttonRow {
-                                button {
-                                    text = "📈 Инвестиции"
-                                    type = MoneyManagerButtonType.QUICK_CATEGORY_INVESTMENTS
-                                }
-                                button {
-                                    text = "💵 Возврат долга"
-                                    type = MoneyManagerButtonType.QUICK_CATEGORY_DEBT_RETURN
-                                }
-                            }
-                        }
-                        else -> {}
                     }
                     buttonRow {
                         button {
-                            text = "✏️ Своё название"
+                            text = enterCustomText
                             type = MoneyManagerButtonType.ENTER_CUSTOM_NAME
                         }
                     }
-                    cancelButton()
+                    cancelButton(cancelText)
                 }
             }
         }
     }
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryCreateResultReply() {
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryCreateResultReply(
+    localizationService: LocalizationService
+) {
     reply {
         state = MoneyManagerState.CATEGORY_CREATE_RESULT
 
         message {
             newMessage = !context.isQuickCategoryCreation
 
+            val lang = context.userInfo?.language
             val category = context.currentCategory
-            val categoryName = context.categoryNameInput ?: "категория"
+            val backText = localizationService.t("common.back", lang)
 
             text = if (category != null) {
                 val icon = category.icon ?: DEFAULT_CATEGORY_ICON
-                val typeText = categoryTypeLabel(category.type)
-                """
-                    |✅ Категория $typeText создана
-                    |
-                    |$icon ${category.name}
-                """.trimMargin()
+                val key = createSuccessKey(category.type)
+                localizationService.t(key, lang, icon, category.name)
             } else {
-                """
-                    |❌ Не удалось создать категорию
-                    |
-                    |Категория «$categoryName» уже существует в этой группе.
-                """.trimMargin()
+                val name = context.categoryNameInput ?: ""
+                localizationService.t("category.create.result.duplicate", lang, name)
             }
 
             keyboard {
                 if (category != null) {
+                    val createMoreText = localizationService.t("category.create.result.button.create_more", lang)
                     buttonRow {
                         button {
-                            text = "➕ Создать ещё"
+                            text = createMoreText
                             type = MoneyManagerButtonType.CREATE_CATEGORY
                         }
                     }
                 }
-                backButton()
+                backButton(backText)
             }
         }
     }
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryListSelectTypeReply() {
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryListSelectTypeReply(
+    localizationService: LocalizationService
+) {
     reply {
         state = MoneyManagerState.CATEGORY_LIST_SELECT_TYPE
 
         message {
-            text = """
-                |📋 Мои категории
-                |
-                |Выберите тип категорий для просмотра:
-            """.trimMargin()
+            val lang = context.userInfo?.language
+            val expenseText = localizationService.t("category.button.type.expense_plural", lang)
+            val incomeText = localizationService.t("category.button.type.income_plural", lang)
+            val deleteAllText = localizationService.t("category.list.button.delete_all", lang)
+            val backText = localizationService.t("common.back", lang)
+
+            text = localizationService.t("category.list.select_type.text", lang)
 
             keyboard {
                 buttonRow {
                     button {
-                        text = "📉 Расходы"
+                        text = expenseText
                         type = MoneyManagerButtonType.CATEGORY_TYPE_EXPENSE
                     }
                 }
                 buttonRow {
                     button {
-                        text = "📈 Доходы"
+                        text = incomeText
                         type = MoneyManagerButtonType.CATEGORY_TYPE_INCOME
                     }
                 }
                 buttonRow {
                     button {
-                        text = "🗑 Удалить все категории"
+                        text = deleteAllText
                         type = MoneyManagerButtonType.DELETE_ALL_CATEGORIES
                     }
                 }
-                cancelButton("⬅️ Назад")
+                cancelButton(backText)
             }
         }
     }
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryListReply() {
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryListReply(
+    localizationService: LocalizationService
+) {
     reply {
         state = MoneyManagerState.CATEGORY_LIST
 
         message {
+            val lang = context.userInfo?.language
             val categories = context.categories
             val categoryType = context.categoryTypeInput
-            val typeText = categoryTypeLabel(categoryType, CategoryTypeForm.GENITIVE_PLURAL)
-            val typeEmoji = when (categoryType) {
-                CategoryType.EXPENSE -> "📉"
-                CategoryType.INCOME -> "📈"
-                else -> "📋"
-            }
+            val backText = localizationService.t("common.back", lang)
 
             text = if (categories.isEmpty()) {
-                """
-                    |$typeEmoji Категории $typeText
-                    |
-                    |У вас пока нет категорий $typeText.
-                    |Создайте первую категорию!
-                """.trimMargin()
+                val emptyKey = listEmptyKey(categoryType)
+                if (emptyKey != null) {
+                    localizationService.t(emptyKey, lang)
+                } else {
+                    CATEGORY_LIST_TITLE_FALLBACK
+                }
             } else {
-                """
-                    |$typeEmoji Категории $typeText
-                    |
-                    |Выберите категорию:
-                """.trimMargin()
+                val titleKey = listTitleKey(categoryType)
+                val title = if (titleKey != null) localizationService.t(titleKey, lang) else CATEGORY_LIST_TITLE_FALLBACK
+                val subtitle = localizationService.t("category.list.subtitle", lang)
+                "$title\n\n$subtitle"
             }
 
             keyboard {
@@ -323,18 +283,21 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryListReply() {
                         }
                     }
                 }
-                backButton()
+                backButton(backText)
             }
         }
     }
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryActionsReply() {
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryActionsReply(
+    localizationService: LocalizationService
+) {
     reply {
         state = MoneyManagerState.CATEGORY_ACTIONS
 
         message {
-            // show-once: read and reset
+            val lang = context.userInfo?.language
+
             if (context.textInputResponse) {
                 newPinnedMessage = true
                 context.textInputResponse = false
@@ -342,157 +305,212 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryActionsReply(
 
             val category = context.currentCategory
             val icon = category?.icon ?: DEFAULT_CATEGORY_ICON
-            val typeText = categoryTypeLabel(category?.type)
+            val headerKey = actionsHeaderKey(category?.type)
+            val header = if (headerKey != null) localizationService.t(headerKey, lang) else ""
 
-            // show-once: read and reset
             val confirmation = context.renameConfirmation?.let { "\n\n$it" } ?: ""
             context.renameConfirmation = null
 
+            val chooseAction = localizationService.t("category.actions.choose_action", lang)
+            val editNameText = localizationService.t("category.actions.button.edit_name", lang)
+            val editIconText = localizationService.t("category.actions.button.edit_icon", lang)
+            val deleteText = localizationService.t("category.actions.button.delete", lang)
+            val backText = localizationService.t("common.back_to_list", lang)
+
             text = """
-                |Категория $typeText: $icon ${category?.name}
+                |$header: $icon ${category?.name}
                 |
-                |Выберите действие:$confirmation
+                |$chooseAction$confirmation
             """.trimMargin()
 
             keyboard {
                 buttonRow {
                     button {
-                        text = "✏️ Изменить название"
+                        text = editNameText
                         type = MoneyManagerButtonType.EDIT_CATEGORY
                     }
                 }
                 buttonRow {
                     button {
-                        text = "🎨 Изменить иконку"
+                        text = editIconText
                         type = MoneyManagerButtonType.EDIT_CATEGORY_ICON
                     }
                 }
                 buttonRow {
                     button {
-                        text = "🗑 Удалить категорию"
+                        text = deleteText
                         type = MoneyManagerButtonType.DELETE_CATEGORY_BUTTON
                     }
                 }
-                backButton("⬅️ Назад к списку")
+                backButton(backText)
             }
         }
     }
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryEditIconReply() {
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryEditIconReply(
+    localizationService: LocalizationService
+) {
     reply {
         state = MoneyManagerState.CATEGORY_EDIT_ICON
 
         message {
+            val lang = context.userInfo?.language
             val category = context.currentCategory
             val icon = category?.icon ?: DEFAULT_CATEGORY_ICON
+            val cancelText = localizationService.t("common.cancel", lang)
 
-            // show-once: read and reset
+            val title = localizationService.t("category.edit_icon.title", lang)
+            val current = localizationService.t("category.edit_icon.current", lang, icon, category?.name ?: "")
+            val prompt = localizationService.t("category.edit_icon.prompt", lang)
             val errorText = if (context.iconInputError) {
-                "\n|\n|⚠️ Пожалуйста, отправьте эмодзи, а не текст"
+                localizationService.t("category.edit_icon.error", lang)
             } else ""
             context.iconInputError = false
 
             text = """
-                |🎨 Изменение иконки
+                |$title
                 |
-                |Текущая иконка: $icon ${category?.name}
+                |$current
                 |
-                |Отправьте новый эмодзи:$errorText
+                |$prompt$errorText
             """.trimMargin()
 
             keyboard {
-                cancelButton()
+                cancelButton(cancelText)
             }
         }
     }
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryEditNameReply() {
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryEditNameReply(
+    localizationService: LocalizationService
+) {
     reply {
         state = MoneyManagerState.CATEGORY_EDIT_NAME
 
         message {
+            val lang = context.userInfo?.language
             val category = context.currentCategory
             val icon = category?.icon ?: DEFAULT_CATEGORY_ICON
+            val cancelText = localizationService.t("common.cancel", lang)
+
+            val title = localizationService.t("category.edit_name.title", lang)
+            val current = localizationService.t("category.edit_name.current", lang, icon, category?.name ?: "")
+            val prompt = localizationService.t("category.edit_name.prompt", lang)
 
             text = """
-                |✏️ Редактирование категории
+                |$title
                 |
-                |Текущее название: $icon ${category?.name}
+                |$current
                 |
-                |Введите новое название:
+                |$prompt
             """.trimMargin()
 
             keyboard {
-                cancelButton()
+                cancelButton(cancelText)
             }
         }
     }
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryDeleteConfirmReply() {
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryDeleteConfirmReply(
+    localizationService: LocalizationService
+) {
     reply {
         state = MoneyManagerState.CATEGORY_DELETE_CONFIRM
 
         message {
+            val lang = context.userInfo?.language
             val category = context.currentCategory
             val icon = category?.icon ?: DEFAULT_CATEGORY_ICON
+            val confirmText = localizationService.t("common.confirm.delete_yes", lang)
+            val cancelText = localizationService.t("common.cancel", lang)
 
-            text = """
-                |🗑 Удаление категории
-                |
-                |Вы уверены, что хотите удалить категорию "$icon ${category?.name}"?
-                |
-                |⚠️ Это действие необратимо!
-            """.trimMargin()
+            text = localizationService.t("category.delete.text", lang, icon, category?.name ?: "")
 
             keyboard {
-                confirmAndCancelButtons()
+                confirmAndCancelButtons(confirmText = confirmText, cancelText = cancelText)
             }
         }
     }
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryDeleteAllConfirmReply() {
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryDeleteAllConfirmReply(
+    localizationService: LocalizationService
+) {
     reply {
         state = MoneyManagerState.CATEGORY_DELETE_ALL_CONFIRM
 
         message {
+            val lang = context.userInfo?.language
             val categories = context.categories
             val categoryCount = categories.size
+            val backText = localizationService.t("common.back", lang)
 
             text = if (categoryCount == 0) {
-                """
-                    |❌ Нет категорий для удаления
-                    |
-                    |В текущей группе нет категорий.
-                """.trimMargin()
+                localizationService.t("category.delete_all.empty", lang)
             } else {
                 val expenseCount = categories.count { it.type == CategoryType.EXPENSE }
                 val incomeCount = categories.count { it.type == CategoryType.INCOME }
-
-                """
-                    |⚠️ Удаление всех категорий
-                    |
-                    |Вы уверены, что хотите удалить ВСЕ категории группы?
-                    |
-                    |Всего категорий: $categoryCount
-                    |├─ 📉 Расходы: $expenseCount
-                    |└─ 📈 Доходы: $incomeCount
-                    |
-                    |⚠️ Это действие необратимо!
-                    |Все категории будут безвозвратно удалены.
-                """.trimMargin()
+                localizationService.t(
+                    "category.delete_all.confirm.text", lang,
+                    categoryCount, expenseCount, incomeCount
+                )
             }
 
             keyboard {
                 if (categoryCount > 0) {
-                    confirmAndCancelButtons("✅ Да, удалить все")
+                    val confirmText = localizationService.t("category.delete_all.button.confirm", lang)
+                    val cancelText = localizationService.t("common.cancel", lang)
+                    confirmAndCancelButtons(confirmText = confirmText, cancelText = cancelText)
                 } else {
-                    backButton()
+                    backButton(backText)
                 }
             }
         }
     }
+}
+
+private fun createTitleKey(type: CategoryType?): String = when (type) {
+    CategoryType.INCOME -> "category.create.title.income"
+    else -> "category.create.title.expense"
+}
+
+private fun createSuccessKey(type: CategoryType?): String = when (type) {
+    CategoryType.INCOME -> "category.create.result.success.income"
+    else -> "category.create.result.success.expense"
+}
+
+private fun listTitleKey(type: CategoryType?): String? = when (type) {
+    CategoryType.EXPENSE -> "category.list.title.expense"
+    CategoryType.INCOME -> "category.list.title.income"
+    else -> null
+}
+
+private fun listEmptyKey(type: CategoryType?): String? = when (type) {
+    CategoryType.EXPENSE -> "category.list.empty.expense"
+    CategoryType.INCOME -> "category.list.empty.income"
+    else -> null
+}
+
+private fun actionsHeaderKey(type: CategoryType?): String? = when (type) {
+    CategoryType.EXPENSE -> "category.actions.header.expense"
+    CategoryType.INCOME -> "category.actions.header.income"
+    else -> null
+}
+
+private fun quickTemplatesFor(type: CategoryType?): List<QuickCategoryTemplate> = when (type) {
+    CategoryType.EXPENSE -> QuickTemplates.EXPENSE_CATEGORIES
+    CategoryType.INCOME -> QuickTemplates.INCOME_CATEGORIES
+    else -> emptyList()
+}
+
+private fun formatQuickButton(
+    template: QuickCategoryTemplate,
+    language: String?,
+    localizationService: LocalizationService
+): String {
+    val name = localizationService.t(template.nameKey, language)
+    return "${template.icon} $name"
 }

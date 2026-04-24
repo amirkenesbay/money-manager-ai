@@ -55,7 +55,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.selectLanguage
 
                 if (groupService.getUserGroups(user.id).isEmpty()) {
                     val personalName = localizationService.t(PERSONAL_GROUP_NAME_KEY, choice.code)
-                    groupService.createPersonalGroup(user.id, personalName)
+                    groupService.createPersonalGroup(user.id, personalName, choice.code)
                     val refreshed = userInfoService.getUserInfoByTelegramId(user.id)
                     if (refreshed != null) {
                         context.userInfo = refreshed

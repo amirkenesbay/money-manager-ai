@@ -56,7 +56,7 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
         languageDialogTransitions(userInfoService, groupService, localizationService)
         balanceDialogTransitions(groupService, userInfoService, financeOperationService)
         groupDialogTransitions(groupService, categoryService, userInfoService, localizationService)
-        categoryDialogTransitions(categoryService, groupService)
+        categoryDialogTransitions(categoryService, groupService, localizationService)
         financeDialogTransitions(categoryService, financeOperationService, financeHistoryService, financeReportService, userInfoService, groupService)
         notificationDialogTransitions(notificationService, userInfoService)
         aiDialogTransitions(commandParserService, telegramFileService, geminiService, aiDomainHandlers)
@@ -291,5 +291,5 @@ private fun ensurePersonalGroupOnJoin(
     val telegramLanguageCode = userInfoService.getUserInfoByTelegramId(userId)?.languageCode
     val resolvedLanguage = localizationService.resolveLanguage(selected = null, telegramLanguageCode = telegramLanguageCode)
     val personalName = localizationService.t(PERSONAL_GROUP_NAME_KEY, resolvedLanguage)
-    groupService.createPersonalGroup(userId, personalName)
+    groupService.createPersonalGroup(userId, personalName, resolvedLanguage)
 }
