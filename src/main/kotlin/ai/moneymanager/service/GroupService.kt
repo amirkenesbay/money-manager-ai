@@ -36,8 +36,8 @@ class GroupService(
         }
     }
 
-    fun createPersonalGroup(userId: Long, userName: String?): MoneyGroup {
-        val group = saveGroupAndUpdateUser("Личный учет", userId, GroupType.PERSONAL) { _, newId ->
+    fun createPersonalGroup(userId: Long, name: String): MoneyGroup {
+        val group = saveGroupAndUpdateUser(name, userId, GroupType.PERSONAL) { _, newId ->
             setOf(newId)
         }
         categoryService.createDefaultCategories(group.id!!)

@@ -10,6 +10,7 @@ import ai.moneymanager.service.FinanceOperationService
 import ai.moneymanager.service.FinanceReportService
 import ai.moneymanager.service.GeminiService
 import ai.moneymanager.service.GroupService
+import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.NotificationService
 import ai.moneymanager.service.TelegramFileService
 import ai.moneymanager.service.UserInfoService
@@ -35,6 +36,7 @@ class MoneyManagerChatConfig(
     private val financeHistoryService: FinanceHistoryService,
     private val financeReportService: FinanceReportService,
     private val notificationService: NotificationService,
+    private val localizationService: LocalizationService,
     private val aiDomainHandlers: List<AiDomainHandler>
 ) {
 
@@ -54,6 +56,6 @@ class MoneyManagerChatConfig(
                 }
             }
 
-            moneyManagerDialog(userInfoService, groupService, categoryService, commandParserService, telegramFileService, geminiService, financeOperationService, financeHistoryService, financeReportService, notificationService, aiDomainHandlers)
+            moneyManagerDialog(userInfoService, groupService, categoryService, commandParserService, telegramFileService, geminiService, financeOperationService, financeHistoryService, financeReportService, notificationService, localizationService, aiDomainHandlers)
         }
 }

@@ -23,6 +23,10 @@ enum class MoneyManagerState {
     GROUP_EDIT_ENTER_NAME,
     GROUP_DELETE_CONFIRM,
 
+    // -------- SETTINGS --------
+    SETTINGS,
+    LANGUAGE_SELECT,
+
     // -------- BALANCE --------
     BALANCE_ONBOARDING_PROMPT,
     BALANCE_ONBOARDING_ENTER_AMOUNT,
@@ -204,6 +208,14 @@ enum class MoneyManagerButtonType {
     BACK_TO_FINANCE,
     BACK_TO_FINANCE_DATE,
     BACK_TO_CALENDAR,
+    BACK_TO_SETTINGS,
+
+    // Settings
+    SETTINGS,
+    OPEN_LANGUAGE_PICKER,
+    LANGUAGE_RU,
+    LANGUAGE_EN,
+    LANGUAGE_KK,
 
     // NLP
     CONFIRM_NLP_ACTION,
@@ -289,6 +301,10 @@ class MoneyManagerContext {
     var currentCategory: Category? = null
     var categories: List<Category> = emptyList()
     var isQuickCategoryCreation: Boolean = false
+
+    // -------- SETTINGS --------
+    var languageReturnToSettings: Boolean = false
+    var languageJustChanged: Boolean = false
 
     // -------- UI FEEDBACK --------
     var renameConfirmation: String? = null

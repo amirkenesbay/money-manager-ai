@@ -35,9 +35,12 @@ import ai.moneymanager.chat.reply.notification.*
 import ai.moneymanager.chat.reply.nlp.nlpConfirmCreateGroupReply
 import ai.moneymanager.chat.reply.nlp.nlpConfirmDeleteGroupReply
 import ai.moneymanager.chat.reply.nlp.nlpResponseReply
+import ai.moneymanager.chat.reply.settings.languageSelectReply
+import ai.moneymanager.chat.reply.settings.settingsReply
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.service.FinanceHistoryService
+import ai.moneymanager.service.LocalizationService
 import kz.rmr.chatmachinist.api.reply.RepliesBuilder
 import kz.rmr.chatmachinist.api.reply.replies
 import org.springframework.context.annotation.Bean
@@ -47,13 +50,18 @@ import org.springframework.context.annotation.Configuration
 class MoneyManagerReplyConfig {
     @Bean
     fun replyBuilder(
-        financeHistoryService: FinanceHistoryService
+        financeHistoryService: FinanceHistoryService,
+        localizationService: LocalizationService
     ): RepliesBuilder<MoneyManagerState, MoneyManagerContext> {
         return replies {
             chatName = "Money Manager Chat"
 
             // Money replies
-            menuReply()
+            menuReply(localizationService)
+
+            // Settings replies
+            settingsReply(localizationService)
+            languageSelectReply(localizationService)
 
             // Balance replies
             balanceOnboardingPromptReply()
@@ -89,15 +97,15 @@ class MoneyManagerReplyConfig {
             financeHistorySelectMonthReply()
 
             // Group replies
-            groupManagementReply()
-            groupCreateEnterNameReply()
-            groupInviteShowReply()
-            groupJoinConfirmReply()
-            groupListReply()
-            groupActionsReply()
-            groupMembersReply()
-            groupEditEnterNameReply()
-            groupDeleteConfirmReply()
+            groupManagementReply(localizationService)
+            groupCreateEnterNameReply(localizationService)
+            groupInviteShowReply(localizationService)
+            groupJoinConfirmReply(localizationService)
+            groupListReply(localizationService)
+            groupActionsReply(localizationService)
+            groupMembersReply(localizationService)
+            groupEditEnterNameReply(localizationService)
+            groupDeleteConfirmReply(localizationService)
 
             // Category replies
             categoryManagementReply()

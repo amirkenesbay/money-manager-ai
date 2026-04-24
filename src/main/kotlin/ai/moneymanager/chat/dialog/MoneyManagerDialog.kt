@@ -9,6 +9,8 @@ import ai.moneymanager.chat.transition.finance.financeDialogTransitions
 import ai.moneymanager.chat.transition.group.groupDialogTransitions
 import ai.moneymanager.chat.transition.nlp.nlpDialogTransitions
 import ai.moneymanager.chat.transition.notification.notificationDialogTransitions
+import ai.moneymanager.chat.transition.settings.languageDialogTransitions
+import ai.moneymanager.chat.transition.settings.settingsDialogTransitions
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
@@ -19,6 +21,7 @@ import ai.moneymanager.service.FinanceOperationService
 import ai.moneymanager.service.FinanceReportService
 import ai.moneymanager.service.GeminiService
 import ai.moneymanager.service.GroupService
+import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.TelegramFileService
 import ai.moneymanager.service.NotificationService
 import ai.moneymanager.service.UserInfoService
@@ -41,15 +44,18 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
     financeHistoryService: FinanceHistoryService,
     financeReportService: FinanceReportService,
     notificationService: NotificationService,
+    localizationService: LocalizationService,
     aiDomainHandlers: List<AiDomainHandler>
 ) {
     dialog {
         name = "Money Manager Dialog"
 
         startMoneyManagerDialogTransition(userInfoService, groupService, financeOperationService, telegramFileService)
-        joinGroupDialogTransitions(groupService, userInfoService, financeOperationService)
+        joinGroupDialogTransitions(groupService, userInfoService, financeOperationService, localizationService)
+        settingsDialogTransitions()
+        languageDialogTransitions(userInfoService, groupService, localizationService)
         balanceDialogTransitions(groupService, userInfoService, financeOperationService)
-        groupDialogTransitions(groupService, categoryService, userInfoService)
+        groupDialogTransitions(groupService, categoryService, userInfoService, localizationService)
         categoryDialogTransitions(categoryService, groupService)
         financeDialogTransitions(categoryService, financeOperationService, financeHistoryService, financeReportService, userInfoService, groupService)
         notificationDialogTransitions(notificationService, userInfoService)
@@ -130,6 +136,23 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
     }
 
     transition {
+        name = "Show language picker on first start"
+
+        condition {
+            from = MoneyManagerState.STARTED
+            eventType = EventType.TRIGGERED
+
+            guard {
+                context.pendingGroup == null && context.userInfo?.language == null
+            }
+        }
+
+        then {
+            to = MoneyManagerState.LANGUAGE_SELECT
+        }
+    }
+
+    transition {
         name = "Show balance onboarding"
 
         condition {
@@ -137,7 +160,9 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
             eventType = EventType.TRIGGERED
 
             guard {
-                context.pendingGroup == null && context.userInfo?.onboardingCompleted != true
+                context.pendingGroup == null &&
+                    context.userInfo?.language != null &&
+                    context.userInfo?.onboardingCompleted != true
             }
         }
 
@@ -155,6 +180,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
 
             guard {
                 context.pendingGroup == null &&
+                    context.userInfo?.language != null &&
                     context.userInfo?.onboardingCompleted == true &&
                     context.pendingOpenFinance
             }
@@ -179,6 +205,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
 
             guard {
                 context.pendingGroup == null &&
+                    context.userInfo?.language != null &&
                     context.userInfo?.onboardingCompleted == true &&
                     !context.pendingOpenFinance
             }
@@ -197,7 +224,8 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.joinGroupDialogTransitions(
     groupService: GroupService,
     userInfoService: UserInfoService,
-    financeOperationService: FinanceOperationService
+    financeOperationService: FinanceOperationService,
+    localizationService: LocalizationService
 ) {
     transition {
         name = "Confirm join group"
@@ -211,6 +239,8 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.joinGroupDialo
             val userId = user.id
             val token = context.pendingInviteToken
             if (token != null) {
+                ensurePersonalGroupOnJoin(userId, userInfoService, groupService, localizationService)
+
                 val joinedGroup = groupService.joinGroup(userId, token)
                 context.currentGroup = joinedGroup
 
@@ -247,4 +277,19 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.joinGroupDialo
             to = MoneyManagerState.MENU
         }
     }
+}
+
+private const val PERSONAL_GROUP_NAME_KEY = "group.default.personal_name"
+
+private fun ensurePersonalGroupOnJoin(
+    userId: Long,
+    userInfoService: UserInfoService,
+    groupService: GroupService,
+    localizationService: LocalizationService
+) {
+    if (groupService.getUserGroups(userId).isNotEmpty()) return
+    val telegramLanguageCode = userInfoService.getUserInfoByTelegramId(userId)?.languageCode
+    val resolvedLanguage = localizationService.resolveLanguage(selected = null, telegramLanguageCode = telegramLanguageCode)
+    val personalName = localizationService.t(PERSONAL_GROUP_NAME_KEY, resolvedLanguage)
+    groupService.createPersonalGroup(userId, personalName)
 }

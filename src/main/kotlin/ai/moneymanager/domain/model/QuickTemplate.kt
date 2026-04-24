@@ -8,7 +8,7 @@ data class QuickNotificationTemplate(
 
 data class QuickGroupTemplate(
     val buttonType: MoneyManagerButtonType,
-    val name: String
+    val nameKey: String
 )
 
 data class QuickCategoryTemplate(
@@ -20,10 +20,10 @@ data class QuickCategoryTemplate(
 
 object QuickTemplates {
     val GROUPS = listOf(
-        QuickGroupTemplate(MoneyManagerButtonType.QUICK_GROUP_FAMILY, "Семья"),
-        QuickGroupTemplate(MoneyManagerButtonType.QUICK_GROUP_WITH_FRIEND, "С другом"),
-        QuickGroupTemplate(MoneyManagerButtonType.QUICK_GROUP_WORK, "Работа"),
-        QuickGroupTemplate(MoneyManagerButtonType.QUICK_GROUP_TRIP, "Поездка"),
+        QuickGroupTemplate(MoneyManagerButtonType.QUICK_GROUP_FAMILY, "group.quick.family.name"),
+        QuickGroupTemplate(MoneyManagerButtonType.QUICK_GROUP_WITH_FRIEND, "group.quick.with_friend.name"),
+        QuickGroupTemplate(MoneyManagerButtonType.QUICK_GROUP_WORK, "group.quick.work.name"),
+        QuickGroupTemplate(MoneyManagerButtonType.QUICK_GROUP_TRIP, "group.quick.trip.name"),
     )
 
     val EXPENSE_CATEGORIES = listOf(
