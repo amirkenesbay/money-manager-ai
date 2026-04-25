@@ -5,31 +5,36 @@ import ai.moneymanager.chat.reply.common.formatAmount
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
+import ai.moneymanager.service.LocalizationService
 import kz.rmr.chatmachinist.api.reply.RepliesBuilder
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.balanceOnboardingPromptReply() {
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.balanceOnboardingPromptReply(
+    localizationService: LocalizationService
+) {
     reply {
         state = MoneyManagerState.BALANCE_ONBOARDING_PROMPT
 
         message {
+            val lang = context.userInfo?.language
+            val title = localizationService.t("balance.onboarding.title", lang)
+            val body = localizationService.t("balance.onboarding.body", lang)
+
             text = """
-                |👋 Добро пожаловать!
+                |$title
                 |
-                |Чтобы я точно считал твои деньги, расскажи, сколько у тебя сейчас на счетах.
-                |
-                |Это нужно один раз — дальше я буду обновлять баланс автоматически при каждом расходе и доходе.
+                |$body
             """.trimMargin()
 
             keyboard {
                 buttonRow {
                     button {
-                        text = "💵 Указать текущий баланс"
+                        text = localizationService.t("balance.onboarding.button.set_amount", lang)
                         type = MoneyManagerButtonType.BALANCE_SET_AMOUNT
                     }
                 }
                 buttonRow {
                     button {
-                        text = "✨ Начать с нуля"
+                        text = localizationService.t("balance.onboarding.button.start_zero", lang)
                         type = MoneyManagerButtonType.BALANCE_START_FROM_ZERO
                     }
                 }
@@ -38,26 +43,25 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.balanceOnboardingProm
     }
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.balanceOnboardingEnterAmountReply() {
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.balanceOnboardingEnterAmountReply(
+    localizationService: LocalizationService
+) {
     reply {
         state = MoneyManagerState.BALANCE_ONBOARDING_ENTER_AMOUNT
 
         message {
+            val lang = context.userInfo?.language
             val errorPrefix = if (context.balanceAmountInputError) {
-                "⚠️ Не получилось распознать сумму. Введите положительное число, например: 50000\n\n"
-            } else {
-                ""
-            }
-            text = errorPrefix + """
-                |💵 Введите текущий баланс
-                |
-                |Например: 50000 или 150 000
-            """.trimMargin()
+                localizationService.t("balance.onboarding.amount.error", lang)
+            } else ""
+            val prompt = localizationService.t("balance.onboarding.amount.title", lang)
+
+            text = errorPrefix + prompt
 
             keyboard {
                 buttonRow {
                     button {
-                        text = "✨ Начать с нуля"
+                        text = localizationService.t("balance.onboarding.button.start_zero", lang)
                         type = MoneyManagerButtonType.BALANCE_START_FROM_ZERO
                     }
                 }
@@ -66,34 +70,38 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.balanceOnboardingEnte
     }
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.balanceViewReply() {
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.balanceViewReply(
+    localizationService: LocalizationService
+) {
     reply {
         state = MoneyManagerState.BALANCE_VIEW
 
         message {
+            val lang = context.userInfo?.language
             val balance = context.currentBalance
+            val title = localizationService.t("balance.view.title", lang)
+
             text = if (balance != null) {
                 """
-                    |💰 Баланс
+                    |$title
                     |
-                    |Начальный: ${formatAmount(balance.initial)}
-                    |📈 Доходы: ${formatAmount(balance.income)}
-                    |📉 Расходы: ${formatAmount(balance.expense)}
+                    |${localizationService.t("balance.view.initial", lang, formatAmount(balance.initial))}
+                    |${localizationService.t("balance.view.income", lang, formatAmount(balance.income))}
+                    |${localizationService.t("balance.view.expense", lang, formatAmount(balance.expense))}
                     |
-                    |Итого: ${formatAmount(balance.total)}
+                    |${localizationService.t("balance.view.total", lang, formatAmount(balance.total))}
                 """.trimMargin()
             } else {
                 """
-                    |💰 Баланс
+                    |$title
                     |
-                    |Пока нет данных о балансе.
+                    |${localizationService.t("balance.view.empty", lang)}
                 """.trimMargin()
             }
 
             keyboard {
-                backButton()
+                backButton(text = localizationService.t("common.back_to_menu", lang))
             }
         }
     }
 }
-

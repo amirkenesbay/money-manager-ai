@@ -64,9 +64,9 @@ class MoneyManagerReplyConfig {
             languageSelectReply(localizationService)
 
             // Balance replies
-            balanceOnboardingPromptReply()
-            balanceOnboardingEnterAmountReply()
-            balanceViewReply()
+            balanceOnboardingPromptReply(localizationService)
+            balanceOnboardingEnterAmountReply(localizationService)
+            balanceViewReply(localizationService)
 
             // Finance replies
             financeManagementReply(financeHistoryService, localizationService)
