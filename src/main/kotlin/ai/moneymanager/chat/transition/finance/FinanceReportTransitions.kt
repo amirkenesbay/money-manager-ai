@@ -104,7 +104,8 @@ private fun ActionContext<MoneyManagerState, MoneyManagerContext>.loadComparison
 ) {
     val groupId = context.userInfo?.activeGroupId ?: return
     val month1Start = context.reportMonth ?: return
-    context.reportText = financeReportService.generateComparisonReport(groupId, month1Start)
+    val language = context.userInfo?.language
+    context.reportText = financeReportService.generateComparisonReport(groupId, month1Start, language)
 }
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.analyticsTransitions(
@@ -170,7 +171,8 @@ private fun ActionContext<MoneyManagerState, MoneyManagerContext>.loadAnalyticsR
 ) {
     val groupId = context.userInfo?.activeGroupId ?: return
     val monthStart = context.reportMonth ?: return
-    context.reportText = financeReportService.generateAnalyticsReport(groupId, monthStart)
+    val language = context.userInfo?.language
+    context.reportText = financeReportService.generateAnalyticsReport(groupId, monthStart, language)
 }
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.membersTransitions(
@@ -249,7 +251,8 @@ private fun ActionContext<MoneyManagerState, MoneyManagerContext>.loadMembersRep
         formatUserDisplayName(info, memberId)
     }
 
-    context.reportText = financeReportService.generateMembersReport(groupId, monthStart, memberNames)
+    val language = context.userInfo?.language
+    context.reportText = financeReportService.generateMembersReport(groupId, monthStart, memberNames, language)
 }
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.categoryReportTransitions(
@@ -289,8 +292,9 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.categoryReport
 
             val groupId = context.userInfo?.activeGroupId ?: return@action
             val categoryId = category.id ?: return@action
+            val language = context.userInfo?.language
             context.reportText = financeReportService.generateCategoryReport(
-                groupId, categoryId, category.icon, category.name
+                groupId, categoryId, category.icon, category.name, language
             )
         }
 

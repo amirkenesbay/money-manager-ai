@@ -523,5 +523,6 @@ private fun ActionContext<MoneyManagerState, MoneyManagerContext>.loadReport(
     val groupId = context.userInfo?.activeGroupId ?: return
     val startDate = context.historyStartDate ?: return
     val endDate = context.historyEndDate ?: return
-    context.historyReport = financeHistoryService.generateReport(groupId, startDate, endDate)
+    val language = context.userInfo?.language
+    context.historyReport = financeHistoryService.generateReport(groupId, startDate, endDate, language)
 }
