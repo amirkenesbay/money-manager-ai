@@ -351,7 +351,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
             button = MoneyManagerButtonType.NOTIFICATION_DAY_OF_WEEK
         }
         action {
-            context.notifDayOfWeek = parseDayOfWeek(buttonText ?: "")
+            context.notifDayOfWeek = parseDayOfWeek(buttonText ?: "", context.userInfo?.language)
         }
         then {
             to = MoneyManagerState.NOTIFICATION_CREATE_SELECT_HOUR
@@ -389,7 +389,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
             button = MoneyManagerButtonType.NOTIFICATION_MONTH_ITEM
         }
         action {
-            context.notifMonthOfYear = parseMonth(buttonText ?: "")
+            context.notifMonthOfYear = parseMonth(buttonText ?: "", context.userInfo?.language)
         }
         then {
             to = MoneyManagerState.NOTIFICATION_CREATE_DAY_OF_MONTH

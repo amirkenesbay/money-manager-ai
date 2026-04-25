@@ -13,10 +13,13 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
 import java.time.LocalDateTime
 
+private const val DEFAULT_NOTIFICATION_ICON = "🔔"
+
 @Service
 class NotificationSchedulerService(
     private val notificationService: NotificationService,
     private val userInfoService: UserInfoService,
+    private val localizationService: LocalizationService,
     @Value("\${chat-machinist.bot.token}")
     private val botToken: String,
     @Value("\${chat-machinist.bot.name}")
@@ -38,9 +41,9 @@ class NotificationSchedulerService(
 
         for (notification in dueNotifications) {
             try {
-                sendNotification(notification)
                 val userInfo = userInfoService.getUserInfoByTelegramId(notification.telegramUserId)
                 val timezone = userInfo?.timezone ?: "UTC"
+                sendNotification(notification, userInfo?.language)
                 notificationService.advanceNextFireTime(notification, timezone)
                 log.info("Sent and advanced notification '{}' for user {}", notification.name, notification.telegramUserId)
             } catch (e: Exception) {
@@ -49,17 +52,15 @@ class NotificationSchedulerService(
         }
     }
 
-    private fun sendNotification(notification: NotificationEntity) {
-        val messageText = """
-            |${notification.icon ?: "🔔"} ${notification.name}
-            |
-            |Не забудьте внести учёт расходов и доходов!
-        """.trimMargin()
+    private fun sendNotification(notification: NotificationEntity, language: String?) {
+        val icon = notification.icon ?: DEFAULT_NOTIFICATION_ICON
+        val messageText = localizationService.t("notification.push.body", language, icon, notification.name)
 
+        val openFinanceText = localizationService.t("notification.push.button.open_finance", language)
         val keyboard = InlineKeyboardMarkup().apply {
             keyboard = listOf(
                 listOf(
-                    InlineKeyboardButton("📊 Открыть Финансы").apply {
+                    InlineKeyboardButton(openFinanceText).apply {
                         url = "https://t.me/$botUsername?start=${StartParameters.OPEN_FINANCE}"
                     }
                 )
