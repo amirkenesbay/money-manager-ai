@@ -6,7 +6,9 @@ import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.service.AiFeedback
+import ai.moneymanager.service.AiPromptService
 import ai.moneymanager.service.GeminiService
+import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.TelegramFileService
 import ai.moneymanager.service.nlp.CommandParserService
 import ai.moneymanager.service.withAiFeedback
@@ -18,46 +20,6 @@ import org.telegram.telegrambots.meta.api.objects.Update
 internal val aiLog = LoggerFactory.getLogger("AiTransitions")
 
 internal const val MAX_VOICE_DURATION_SECONDS = 180
-
-internal const val AI_MODE_INTRO = """🤖 AI Ассистент
-
-Управляй финансами естественной речью.
-
-🎤 Лучше всего — голосовые сообщения!
-Нажми и удерживай микрофон 👇
-
-Или напиши текстом. Сейчас я умею:
-
-📂 Категории:
-• «Создай категорию Кино»
-• «Удали категорию Такси»
-• «Переименуй Продукты в Еда»
-• «Замени иконку Зарплата на 💵»
-• «Покажи категории расходов»
-• «Удали все категории»
-
-Скоро добавлю: группы, финансы, отчёты, баланс, уведомления."""
-
-internal const val VOICE_TOO_LONG_MESSAGE = "⚠️ Голосовое сообщение слишком длинное (%dс). Максимум 3 минуты."
-internal const val VOICE_DOWNLOAD_ERROR_MESSAGE = "❌ Не удалось загрузить голосовое сообщение. Попробуй ещё раз."
-internal const val PARSE_ERROR_MESSAGE =
-    "❌ Не смог разобрать запрос. Попробуй переформулировать или нажми голосовую кнопку."
-internal const val OUT_OF_CONTEXT_FALLBACK = """🤖 Я ассистент для финансов.
-
-Могу помочь с категориями, группами и учётом расходов/доходов. Попробуй:
-• «Создай категорию Кино»
-• «Покажи категории расходов»"""
-internal const val UNHANDLED_COMMAND_MESSAGE = "🛠 Этот тип команд ещё в разработке. Скоро появится!"
-
-internal const val FEEDBACK_THINKING = "🧠 Думаю…"
-internal const val FEEDBACK_VOICE_RECEIVED = "🎤 Услышал голосовое…"
-internal const val FEEDBACK_VOICE_PROCESSING = "🧠 Распознаю и думаю…"
-internal const val FEEDBACK_RATE_LIMIT = "❌ Лимит AI"
-internal const val FEEDBACK_SERVICE_ERROR = "❌ AI недоступен"
-
-internal const val RATE_LIMIT_WITH_HINT_MESSAGE = "⏳ Лимит AI исчерпан. Попробуй через ~%d сек."
-internal const val RATE_LIMIT_MESSAGE = "⏳ Лимит AI исчерпан. Попробуй через минуту."
-internal const val SERVICE_ERROR_MESSAGE = "⚠️ AI сейчас недоступен. Попробуй через пару минут."
 
 fun matchesEntityName(entityName: String, searchName: String): Boolean {
     val normalizedEntity = entityName.lowercase().trim()
@@ -83,14 +45,17 @@ internal fun handleAiText(
     commandParserService: CommandParserService,
     domainHandlers: List<AiDomainHandler>,
     geminiService: GeminiService,
+    localizationService: LocalizationService,
+    aiPromptService: AiPromptService,
     feedback: AiFeedback
 ) {
     val userMessage = update.message?.text ?: return
+    val lang = context.userInfo?.language
     aiLog.info("🧠 AI processing text: $userMessage")
-    feedback.show(FEEDBACK_THINKING)
+    feedback.show(localizationService.t("ai.feedback.thinking", lang))
     val command = commandParserService.parseCommand(userMessage)
-    showErrorStageIfNeeded(command, feedback)
-    processAiCommand(command, context, domainHandlers, geminiService)
+    showErrorStageIfNeeded(command, feedback, localizationService, lang)
+    processAiCommand(command, context, domainHandlers, geminiService, localizationService, aiPromptService)
 }
 
 internal fun handleAiVoice(
@@ -100,40 +65,45 @@ internal fun handleAiVoice(
     telegramFileService: TelegramFileService,
     domainHandlers: List<AiDomainHandler>,
     geminiService: GeminiService,
+    localizationService: LocalizationService,
+    aiPromptService: AiPromptService,
     feedback: AiFeedback
 ) {
     val voice = update.message?.voice ?: return
+    val lang = context.userInfo?.language
     aiLog.info("🎤 AI processing voice: ${voice.duration}s")
 
     if (voice.duration > MAX_VOICE_DURATION_SECONDS) {
         clearAiContext(context)
-        context.aiResultMessage = VOICE_TOO_LONG_MESSAGE.format(voice.duration)
+        context.aiResultMessage = localizationService.t("ai.error.voice_too_long", lang, voice.duration)
         return
     }
 
-    feedback.show(FEEDBACK_VOICE_RECEIVED)
+    feedback.show(localizationService.t("ai.feedback.voice_received", lang))
     val audioBytes = telegramFileService.downloadVoice(voice)
     if (audioBytes == null) {
         clearAiContext(context)
-        context.aiResultMessage = VOICE_DOWNLOAD_ERROR_MESSAGE
+        context.aiResultMessage = localizationService.t("ai.error.voice_download", lang)
         return
     }
 
-    feedback.show(FEEDBACK_VOICE_PROCESSING)
+    feedback.show(localizationService.t("ai.feedback.voice_processing", lang))
     val command = commandParserService.parseVoiceCommand(audioBytes)
-    showErrorStageIfNeeded(command, feedback)
-    processAiCommand(command, context, domainHandlers, geminiService)
+    showErrorStageIfNeeded(command, feedback, localizationService, lang)
+    processAiCommand(command, context, domainHandlers, geminiService, localizationService, aiPromptService)
 }
 
 internal fun ActionContext<MoneyManagerState, MoneyManagerContext>.processAiText(
     commandParserService: CommandParserService,
     telegramFileService: TelegramFileService,
     domainHandlers: List<AiDomainHandler>,
-    geminiService: GeminiService
+    geminiService: GeminiService,
+    localizationService: LocalizationService,
+    aiPromptService: AiPromptService
 ) {
     val chatId = update.message?.chatId ?: return
     telegramFileService.withAiFeedback(chatId) { feedback ->
-        handleAiText(update, context, commandParserService, domainHandlers, geminiService, feedback)
+        handleAiText(update, context, commandParserService, domainHandlers, geminiService, localizationService, aiPromptService, feedback)
     }
 }
 
@@ -141,7 +111,9 @@ internal fun ActionContext<MoneyManagerState, MoneyManagerContext>.processAiVoic
     commandParserService: CommandParserService,
     telegramFileService: TelegramFileService,
     domainHandlers: List<AiDomainHandler>,
-    geminiService: GeminiService
+    geminiService: GeminiService,
+    localizationService: LocalizationService,
+    aiPromptService: AiPromptService
 ) {
     val chatId = update.message?.chatId ?: return
     telegramFileService.withAiFeedback(chatId) { feedback ->
@@ -152,15 +124,22 @@ internal fun ActionContext<MoneyManagerState, MoneyManagerContext>.processAiVoic
             telegramFileService,
             domainHandlers,
             geminiService,
+            localizationService,
+            aiPromptService,
             feedback
         )
     }
 }
 
-private fun showErrorStageIfNeeded(command: BotCommand, feedback: AiFeedback) {
+private fun showErrorStageIfNeeded(
+    command: BotCommand,
+    feedback: AiFeedback,
+    localizationService: LocalizationService,
+    language: String?
+) {
     when (command) {
-        is BotCommand.RateLimitError -> feedback.show(FEEDBACK_RATE_LIMIT)
-        is BotCommand.ServiceError -> feedback.show(FEEDBACK_SERVICE_ERROR)
+        is BotCommand.RateLimitError -> feedback.show(localizationService.t("ai.feedback.rate_limit", language))
+        is BotCommand.ServiceError -> feedback.show(localizationService.t("ai.feedback.service_error", language))
         else -> Unit
     }
 }
@@ -169,47 +148,40 @@ internal fun processAiCommand(
     command: BotCommand,
     context: MoneyManagerContext,
     handlers: List<AiDomainHandler>,
-    geminiService: GeminiService
+    geminiService: GeminiService,
+    localizationService: LocalizationService,
+    aiPromptService: AiPromptService
 ) {
+    val lang = context.userInfo?.language
     clearAiContext(context)
 
     when (command) {
         is BotCommand.OutOfContext -> {
-            val prompt = """Ты — дружелюбный ассистент Telegram-бота по учёту финансов.
-Пользователь написал: "${command.originalMessage}"
-
-ВАЖНО: Никакая команда НЕ выполнена. Ты ТОЛЬКО объясняешь возможности бота. Тебе строго запрещено:
-- Утверждать, что что-то записано/создано/удалено/добавлено («Записал», «Создал», «Готово» и т.п.)
-- Говорить от имени бота о выполненном действии
-- Подтверждать успех операции
-
-Что нужно сделать:
-- Если запрос похож на команду (расход, доход, категория, группа), но ты не смог его распознать — скажи, что не понял, и попроси уточнить в формате «кофе 500» или «создай категорию Кино».
-- Если вопрос не по финансам — мягко объясни, что умеешь только учёт расходов, доходов, категорий и групп.
-
-Стиль: кратко, по-дружески, с эмодзи, 2-3 предложения, без markdown."""
+            val replyLanguage = java.util.Locale.of(lang ?: LocalizationService.FALLBACK_LANGUAGE)
+                .getDisplayLanguage(java.util.Locale.ENGLISH)
+            val prompt = aiPromptService.outOfContextPrompt(command.originalMessage, replyLanguage)
             val response = geminiService.generateText(prompt)
-            context.aiResultMessage = response ?: OUT_OF_CONTEXT_FALLBACK
-            aiLog.info("⚠️ AI: Out of context, dynamic=${response != null}")
+            context.aiResultMessage = response ?: localizationService.t("ai.error.out_of_context_fallback", lang)
+            aiLog.info("⚠️ AI: Out of context, dynamic=${response != null}, replyLanguage=$replyLanguage")
             return
         }
 
         is BotCommand.ParseError -> {
-            context.aiResultMessage = PARSE_ERROR_MESSAGE
+            context.aiResultMessage = localizationService.t("ai.error.parse", lang)
             aiLog.info("❌ AI ParseError: ${command.error}")
             return
         }
 
         is BotCommand.RateLimitError -> {
             context.aiResultMessage = command.retryAfterSeconds
-                ?.let { RATE_LIMIT_WITH_HINT_MESSAGE.format(it) }
-                ?: RATE_LIMIT_MESSAGE
+                ?.let { localizationService.t("ai.error.rate_limit_with_hint", lang, it) }
+                ?: localizationService.t("ai.error.rate_limit", lang)
             aiLog.info("⏳ AI rate limit, retryAfter=${command.retryAfterSeconds}s")
             return
         }
 
         is BotCommand.ServiceError -> {
-            context.aiResultMessage = SERVICE_ERROR_MESSAGE
+            context.aiResultMessage = localizationService.t("ai.error.service", lang)
             aiLog.info("⚠️ AI service error")
             return
         }
@@ -219,7 +191,7 @@ internal fun processAiCommand(
 
     val handler = handlers.firstOrNull { it.canHandle(command) }
     if (handler == null) {
-        context.aiResultMessage = UNHANDLED_COMMAND_MESSAGE
+        context.aiResultMessage = localizationService.t("ai.error.unhandled", lang)
         aiLog.info("⚠️ AI: no handler for $command")
         return
     }
@@ -227,7 +199,7 @@ internal fun processAiCommand(
     when (val result = handler.prepareAction(command, context)) {
         is AiPreparationResult.RequiresConfirmation -> {
             context.pendingAiAction = result.action
-            aiLog.info("✅ AI prepared action: ${result.action.confirmDescription}")
+            aiLog.info("✅ AI prepared action: ${result.action.describe(localizationService, lang)}")
         }
 
         is AiPreparationResult.ImmediateResult -> {

@@ -143,9 +143,9 @@ class MoneyManagerReplyConfig {
             notificationDeleteAllConfirmReply(localizationService)
 
             // AI replies
-            aiModeReply()
-            aiConfirmReply()
-            aiResultReply()
+            aiModeReply(localizationService)
+            aiConfirmReply(localizationService)
+            aiResultReply(localizationService)
 
             // Legacy NLP replies (disabled for now)
             // nlpConfirmCreateGroupReply()

@@ -9,6 +9,7 @@ import ai.moneymanager.domain.model.nlp.AiPendingAction
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.FinanceOperationService
+import ai.moneymanager.service.LocalizationService
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
@@ -17,7 +18,8 @@ import java.time.LocalDate
 @Component
 class TransactionAiHandler(
     private val categoryService: CategoryService,
-    private val financeOperationService: FinanceOperationService
+    private val financeOperationService: FinanceOperationService,
+    private val localizationService: LocalizationService
 ) : AiDomainHandler {
 
     override fun canHandle(command: BotCommand): Boolean = when (command) {
@@ -33,26 +35,28 @@ class TransactionAiHandler(
         command: BotCommand,
         context: MoneyManagerContext
     ): AiPreparationResult {
+        val lang = context.userInfo?.language
         val groupId = context.userInfo?.activeGroupId
-            ?: return AiPreparationResult.ImmediateResult(NO_ACTIVE_GROUP)
+            ?: return AiPreparationResult.ImmediateResult(localizationService.t("ai.error.no_active_group", lang))
         val creatorId = context.userInfo?.telegramUserId
-            ?: return AiPreparationResult.ImmediateResult(NO_USER)
+            ?: return AiPreparationResult.ImmediateResult(localizationService.t("ai.error.no_user", lang))
 
         return when (command) {
             is BotCommand.AddExpense -> prepareAdd(
-                groupId, creatorId, CategoryType.EXPENSE, command.amount, command.category, command.description
+                groupId, creatorId, CategoryType.EXPENSE, command.amount, command.category, command.description, lang
             )
             is BotCommand.AddIncome -> prepareAdd(
-                groupId, creatorId, CategoryType.INCOME, command.amount, command.category, command.description
+                groupId, creatorId, CategoryType.INCOME, command.amount, command.category, command.description, lang
             )
-            else -> AiPreparationResult.ImmediateResult(UNKNOWN_COMMAND_MESSAGE)
+            else -> AiPreparationResult.ImmediateResult(localizationService.t("ai.error.unknown_command", lang))
         }
     }
 
     override fun execute(action: AiPendingAction, context: MoneyManagerContext): String {
-        if (action !is AiPendingAction.TransactionAction) return UNKNOWN_COMMAND_MESSAGE
+        val lang = context.userInfo?.language
+        if (action !is AiPendingAction.TransactionAction) return localizationService.t("ai.error.unknown_command", lang)
         return when (action) {
-            is AiPendingAction.TransactionAction.Add -> executeAdd(action)
+            is AiPendingAction.TransactionAction.Add -> executeAdd(action, lang)
         }
     }
 
@@ -62,19 +66,20 @@ class TransactionAiHandler(
         type: CategoryType,
         amount: Double,
         categoryName: String?,
-        description: String?
+        description: String?,
+        lang: String?
     ): AiPreparationResult {
         if (amount <= 0) {
-            return AiPreparationResult.ImmediateResult(AMOUNT_NOT_POSITIVE)
+            return AiPreparationResult.ImmediateResult(localizationService.t("ai.transaction.amount_not_positive", lang))
         }
         if (categoryName.isNullOrBlank()) {
-            return AiPreparationResult.ImmediateResult(categoryMissing(type))
+            return AiPreparationResult.ImmediateResult(categoryMissing(type, lang))
         }
 
         val available = categoryService.getCategoriesByGroupAndType(groupId, type)
         val matches = available.filter { matchesEntityName(it.name, categoryName) }
         return when (matches.size) {
-            0 -> AiPreparationResult.ImmediateResult(categoryNotFound(categoryName, available))
+            0 -> AiPreparationResult.ImmediateResult(categoryNotFound(categoryName, available, lang))
             1 -> AiPreparationResult.RequiresConfirmation(
                 AiPendingAction.TransactionAction.Add(
                     groupId = groupId,
@@ -86,13 +91,15 @@ class TransactionAiHandler(
                     operationDate = LocalDate.now()
                 )
             )
-            else -> AiPreparationResult.ImmediateResult(ambiguousCategory(categoryName))
+            else -> AiPreparationResult.ImmediateResult(
+                localizationService.t("ai.transaction.category_ambiguous", lang, categoryName)
+            )
         }
     }
 
-    private fun executeAdd(action: AiPendingAction.TransactionAction.Add): String {
+    private fun executeAdd(action: AiPendingAction.TransactionAction.Add, lang: String?): String {
         val categoryId = action.category.id
-            ?: return CATEGORY_HAS_NO_ID
+            ?: return localizationService.t("ai.category.no_id", lang)
         financeOperationService.save(
             groupId = action.groupId,
             creatorId = action.creatorId,
@@ -107,47 +114,26 @@ class TransactionAiHandler(
         val iconPart = action.category.icon?.let { "$it " } ?: ""
         val descPart = action.description?.let { " ($it)" } ?: ""
         val amountText = formatAmount(BigDecimal.valueOf(action.amount))
-        return "✅ ${typeLabel(action.type)} добавлен: $iconPart«${action.category.name}» — $amountText$descPart"
+        val key = if (action.type == CategoryType.EXPENSE)
+            "ai.transaction.add.success.expense"
+        else
+            "ai.transaction.add.success.income"
+        return localizationService.t(key, lang, iconPart, action.category.name, amountText, descPart)
     }
 
-    private fun typeLabel(type: CategoryType): String = when (type) {
-        CategoryType.EXPENSE -> EXPENSE_LABEL
-        CategoryType.INCOME -> INCOME_LABEL
+    private fun categoryMissing(type: CategoryType, lang: String?): String {
+        val key = if (type == CategoryType.EXPENSE)
+            "ai.transaction.category_missing.expense"
+        else
+            "ai.transaction.category_missing.income"
+        return localizationService.t(key, lang)
     }
 
-    private fun categoryMissing(type: CategoryType): String {
-        val hint = when (type) {
-            CategoryType.EXPENSE -> EXPENSE_HINT
-            CategoryType.INCOME -> INCOME_HINT
-        }
-        return "❓ Укажи категорию. Например: $hint"
-    }
-
-    private fun ambiguousCategory(name: String): String =
-        "❓ Нашёл несколько категорий «$name» — уточни название."
-
-    private fun categoryNotFound(name: String, available: List<Category>): String {
+    private fun categoryNotFound(name: String, available: List<Category>, lang: String?): String {
         if (available.isEmpty()) {
-            return "❌ В активной группе нет категорий для этого типа. Создай хотя бы одну: «создай категорию $name»."
+            return localizationService.t("ai.transaction.category_not_found_empty", lang, name)
         }
         val list = available.joinToString(", ") { it.name }
-        return "❌ Категория «$name» не найдена. Доступные: $list."
-    }
-
-    companion object {
-        private const val NO_ACTIVE_GROUP =
-            "⚠️ Нет активной группы. Сначала создай группу — «создай группу Семья»."
-        private const val NO_USER =
-            "❌ Не удалось определить пользователя. Попробуй ещё раз."
-        private const val UNKNOWN_COMMAND_MESSAGE =
-            "❌ Не удалось обработать команду. Попробуй переформулировать."
-        private const val AMOUNT_NOT_POSITIVE =
-            "⚠️ Сумма должна быть больше нуля."
-        private const val CATEGORY_HAS_NO_ID =
-            "❌ Ошибка: у категории нет ID."
-        private const val EXPENSE_LABEL = "Расход"
-        private const val INCOME_LABEL = "Доход"
-        private const val EXPENSE_HINT = "«кофе 500»"
-        private const val INCOME_HINT = "«зарплата 500000»"
+        return localizationService.t("ai.transaction.category_not_found", lang, name, list)
     }
 }

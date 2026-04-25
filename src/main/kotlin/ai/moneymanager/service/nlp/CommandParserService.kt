@@ -4,6 +4,7 @@ import ai.moneymanager.chat.config.GeminiProperties
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.domain.model.nlp.BotFunctions
 import ai.moneymanager.domain.model.nlp.arguments.AddExpenseArgs
+import ai.moneymanager.service.AiPromptService
 import ai.moneymanager.domain.model.nlp.arguments.AddIncomeArgs
 import ai.moneymanager.domain.model.nlp.arguments.ChangeCategoryIconArgs
 import ai.moneymanager.domain.model.nlp.arguments.CreateCategoryArgs
@@ -35,7 +36,8 @@ import org.springframework.stereotype.Service
 @Service
 class CommandParserService(
     private val geminiProperties: GeminiProperties,
-    private val argsMapper: GeminiArgsMapper
+    private val argsMapper: GeminiArgsMapper,
+    private val aiPromptService: AiPromptService
 ) {
     private lateinit var client: Client
     private lateinit var config: GenerateContentConfig
@@ -63,7 +65,7 @@ class CommandParserService(
         val deleteAllCategoriesMethod = botFunctionMethod(GeminiFunction.DELETE_ALL_CATEGORIES)
         val listCategoriesMethod = botFunctionMethod(GeminiFunction.LIST_CATEGORIES, String::class.java)
 
-        val systemContent = Content.fromParts(Part.fromText(SYSTEM_PROMPT))
+        val systemContent = Content.fromParts(Part.fromText(aiPromptService.systemPrompt))
 
         config = GenerateContentConfig.builder()
             .tools(
@@ -126,7 +128,7 @@ class CommandParserService(
                 .build()
 
             // Добавляем инструкцию для транскрибации
-            val textPart = Part.fromText("Распознай речь и определи намерение пользователя.")
+            val textPart = Part.fromText(aiPromptService.voiceTranscriptionPrompt)
 
             val content = Content.builder()
                 .parts(listOf(audioPart, textPart))
@@ -263,39 +265,5 @@ class CommandParserService(
     companion object {
         private const val HTTP_TOO_MANY_REQUESTS = 429
         private val RETRY_AFTER_REGEX = Regex("""Please retry in (\d+(?:\.\d+)?)s""")
-
-        private val SYSTEM_PROMPT = """
-            Ты — ассистент Telegram бота для учета финансов. Твоя задача — понять намерение пользователя и вызвать соответствующую функцию.
-
-            === ГРУППЫ ===
-            - "создай группу друзья", "новая группа семья" → createGroup
-            - "удали группу друзья", "убери группу семья" → deleteGroup
-
-            === ФИНАНСОВЫЕ ОПЕРАЦИИ ===
-            - "купил кофе 500", "потратил 1000 на такси" → addExpense (amount=500, category="Кофе")
-            - "получил зарплату 500000", "подарили 10000" → addIncome
-            - ВСЕГДА вызывай addExpense/addIncome, если в сообщении есть сумма, даже если категория не указана — передавай category=null. Бот сам попросит уточнить категорию. НЕ уходи в outOfContext из-за отсутствия категории.
-            - НЕ угадывай категорию по смыслу, если её нет в сообщении — передавай null
-
-            === КАТЕГОРИИ ===
-            - "создай категорию Кино", "добавь категорию Спорт" → createCategory (name="Кино", type="EXPENSE"/"INCOME", icon=опционально)
-              Тип определяй из контекста: «кино», «такси», «ресторан», «покупки» → EXPENSE; «зарплата», «премия», «фриланс», «подарок» → INCOME
-              Если тип неочевиден — по умолчанию EXPENSE (пользователь увидит и сможет отменить)
-              Если пользователь дал эмодзи — передай как icon. Иначе icon=null
-            - "удали категорию Такси", "убери категорию Кино" → deleteCategory (name, type опционально)
-            - "переименуй Продукты в Еда", "переименуй категорию X в Y" → renameCategory (oldName, newName, type опционально)
-            - "замени иконку Зарплата на 💵", "поставь 🎬 на Кино" → changeCategoryIcon (name, newIcon, type опционально)
-            - "удали все категории", "очисти все категории" → deleteAllCategories (без аргументов)
-            - "покажи категории", "покажи категории расходов", "список доходов" → listCategories (type опционально)
-
-            === ПРАВИЛА ===
-            - Всегда вызывай ровно одну функцию, не отвечай текстом
-            - Никогда не отвечай текстом, всегда function call
-            - Если сообщение не про финансы/группы/категории (математика, погода, общие вопросы) → outOfContext
-            - Если сомневаешься в намерении → outOfContext
-            - Для finance-операций: если сумма не указана → outOfContext
-            - Валюта по умолчанию — тенге (KZT)
-            - type для категорий — строго "EXPENSE" или "INCOME" (заглавные)
-        """.trimIndent()
     }
 }

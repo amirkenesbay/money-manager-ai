@@ -4,6 +4,7 @@ import ai.moneymanager.chat.dialog.moneyManagerDialog
 import ai.moneymanager.chat.transition.ai.handler.AiDomainHandler
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
+import ai.moneymanager.service.AiPromptService
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.FinanceHistoryService
 import ai.moneymanager.service.FinanceOperationService
@@ -37,6 +38,7 @@ class MoneyManagerChatConfig(
     private val financeReportService: FinanceReportService,
     private val notificationService: NotificationService,
     private val localizationService: LocalizationService,
+    private val aiPromptService: AiPromptService,
     private val aiDomainHandlers: List<AiDomainHandler>
 ) {
 
@@ -56,6 +58,6 @@ class MoneyManagerChatConfig(
                 }
             }
 
-            moneyManagerDialog(userInfoService, groupService, categoryService, commandParserService, telegramFileService, geminiService, financeOperationService, financeHistoryService, financeReportService, notificationService, localizationService, aiDomainHandlers)
+            moneyManagerDialog(userInfoService, groupService, categoryService, commandParserService, telegramFileService, geminiService, financeOperationService, financeHistoryService, financeReportService, notificationService, localizationService, aiPromptService, aiDomainHandlers)
         }
 }
