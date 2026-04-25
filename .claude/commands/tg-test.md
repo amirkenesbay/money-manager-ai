@@ -2,8 +2,8 @@ Test the Money Manager AI bot via Telegram MCP (telegram-mcp).
 
 ## Bot Info
 
-- Bot username: `@moneyManagerAIbot`
-- Bot chat ID: `8554230883`
+- Bot username: `@money_manager_ai_test_bot`
+- Bot chat ID: `8544527424`
 
 ## Available MCP Tools
 
@@ -41,7 +41,7 @@ If no arguments, show current bot state.
 
 ### Execution Rules
 
-1. **Always use chat_id `8554230883`** for all MCP calls.
+1. **Always use chat_id `8544527424`** for all MCP calls.
 
 2. **After every action** (send_message or press_inline_button), call `list_messages` with limit=2 to see the bot's response, then `list_inline_buttons` on the latest bot message to see available buttons.
 
