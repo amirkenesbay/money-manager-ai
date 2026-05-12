@@ -10,11 +10,13 @@ import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.service.CategoryService
+import ai.moneymanager.service.LocalizationService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType
 
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.categoryActionsTransitions(
-    categoryService: CategoryService
+    categoryService: CategoryService,
+    localizationService: LocalizationService
 ) {
     transition {
         name = "Select category from list"
@@ -41,10 +43,11 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.categoryActionsTransit
             val newName = update.message.text ?: return@textInputFlow
             val categoryId = context.currentCategory?.id ?: return@textInputFlow
 
+            val lang = context.userInfo?.language
             val updatedCategory = categoryService.updateCategoryName(categoryId, newName)
             if (updatedCategory != null) {
                 context.currentCategory = updatedCategory
-                context.renameConfirmation = "✅ Название изменено на «${updatedCategory.name}»"
+                context.renameConfirmation = localizationService.t("category.edit_name.success", lang, updatedCategory.name)
                 context.textInputResponse = true
                 context.refreshCategoryList(categoryService)
             }

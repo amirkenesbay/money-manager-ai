@@ -15,6 +15,9 @@ private const val SHORT_DATE_PATTERN = "dd.MM"
 private const val SECTION_RULE = "━━━━━━━━━━━━━━━━━━━━━"
 private const val POSITIVE_SIGN = "+"
 private const val NEGATIVE_SIGN = "−"
+private const val ICON_NAME_SEPARATOR = " "
+private const val DESCRIPTION_PREFIX = " ("
+private const val DESCRIPTION_SUFFIX = ")"
 
 const val DEFAULT_CATEGORY_ICON: String = "📌"
 
@@ -30,6 +33,12 @@ const val SECTION_SEPARATOR: String = "\n" + SECTION_RULE
 const val SECTION_SEPARATOR_WITH_BLANK_LINE: String = "\n\n" + SECTION_RULE
 
 fun formatAmount(amount: BigDecimal): String = "${amountFormat.format(amount)}$CURRENCY_SYMBOL"
+
+fun formatIconPrefix(icon: String?): String =
+    icon?.takeIf { it.isNotBlank() }?.let { "$it$ICON_NAME_SEPARATOR" } ?: ""
+
+fun formatDescriptionSuffix(description: String?): String =
+    description?.takeIf { it.isNotBlank() }?.let { "$DESCRIPTION_PREFIX$it$DESCRIPTION_SUFFIX" } ?: ""
 
 fun formatSignedAmount(type: CategoryType, amount: BigDecimal): String {
     val sign = when (type) {

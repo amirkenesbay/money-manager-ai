@@ -25,7 +25,8 @@ sealed class BotCommand {
     data class AddExpense(
         val amount: Double,
         val category: String?,
-        val description: String?
+        val description: String?,
+        val suggestedCategoryIcon: String?
     ) : BotCommand()
 
     /**
@@ -34,7 +35,8 @@ sealed class BotCommand {
     data class AddIncome(
         val amount: Double,
         val category: String?,
-        val description: String?
+        val description: String?,
+        val suggestedCategoryIcon: String?
     ) : BotCommand()
 
     /**

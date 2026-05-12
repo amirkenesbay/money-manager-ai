@@ -4,19 +4,21 @@ import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.GroupService
+import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.UserInfoService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.groupDialogTransitions(
     groupService: GroupService,
     categoryService: CategoryService,
-    userInfoService: UserInfoService
+    userInfoService: UserInfoService,
+    localizationService: LocalizationService
 ) {
     openGroupManagementTransition()
-    createGroupTransitions(groupService)
+    createGroupTransitions(groupService, localizationService)
     viewGroupsListTransitions(groupService)
     groupActionsTransitions(groupService, userInfoService)
-    editGroupTransitions(groupService)
+    editGroupTransitions(groupService, localizationService)
     deleteGroupTransitions(groupService, categoryService)
     groupBackTransitions()
 }

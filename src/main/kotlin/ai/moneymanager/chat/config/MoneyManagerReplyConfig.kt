@@ -3,6 +3,8 @@ package ai.moneymanager.chat.config
 import ai.moneymanager.chat.reply.ai.aiConfirmReply
 import ai.moneymanager.chat.reply.ai.aiModeReply
 import ai.moneymanager.chat.reply.ai.aiResultReply
+import ai.moneymanager.chat.reply.ai.aiTransactionPickCategoryAllReply
+import ai.moneymanager.chat.reply.ai.aiTransactionPickCategoryReply
 import ai.moneymanager.chat.reply.category.*
 import ai.moneymanager.chat.reply.finance.financeManagementReply
 import ai.moneymanager.chat.reply.finance.financeOperationSavedReply
@@ -35,9 +37,12 @@ import ai.moneymanager.chat.reply.notification.*
 import ai.moneymanager.chat.reply.nlp.nlpConfirmCreateGroupReply
 import ai.moneymanager.chat.reply.nlp.nlpConfirmDeleteGroupReply
 import ai.moneymanager.chat.reply.nlp.nlpResponseReply
+import ai.moneymanager.chat.reply.settings.languageSelectReply
+import ai.moneymanager.chat.reply.settings.settingsReply
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.service.FinanceHistoryService
+import ai.moneymanager.service.LocalizationService
 import kz.rmr.chatmachinist.api.reply.RepliesBuilder
 import kz.rmr.chatmachinist.api.reply.replies
 import org.springframework.context.annotation.Bean
@@ -47,97 +52,104 @@ import org.springframework.context.annotation.Configuration
 class MoneyManagerReplyConfig {
     @Bean
     fun replyBuilder(
-        financeHistoryService: FinanceHistoryService
+        financeHistoryService: FinanceHistoryService,
+        localizationService: LocalizationService
     ): RepliesBuilder<MoneyManagerState, MoneyManagerContext> {
         return replies {
             chatName = "Money Manager Chat"
 
             // Money replies
-            menuReply()
+            menuReply(localizationService)
+
+            // Settings replies
+            settingsReply(localizationService)
+            languageSelectReply(localizationService)
 
             // Balance replies
-            balanceOnboardingPromptReply()
-            balanceOnboardingEnterAmountReply()
-            balanceViewReply()
+            balanceOnboardingPromptReply(localizationService)
+            balanceOnboardingEnterAmountReply(localizationService)
+            balanceViewReply(localizationService)
 
             // Finance replies
-            financeManagementReply(financeHistoryService)
-            financeSelectCategoryReply()
-            financeNoCategoriesWarningReply()
-            financeEnterAmountReply()
-            financeEnterCommentReply()
-            financeSelectDateReply()
-            financeCalendarReply()
-            financeSelectYearReply()
-            financeSelectMonthReply()
-            financeOperationSavedReply()
+            financeManagementReply(financeHistoryService, localizationService)
+            financeSelectCategoryReply(localizationService)
+            financeNoCategoriesWarningReply(localizationService)
+            financeEnterAmountReply(localizationService)
+            financeEnterCommentReply(localizationService)
+            financeSelectDateReply(localizationService)
+            financeCalendarReply(localizationService)
+            financeSelectYearReply(localizationService)
+            financeSelectMonthReply(localizationService)
+            financeOperationSavedReply(localizationService)
 
             // Finance report replies
-            financeReportMenuReply()
-            financeReportComparisonReply()
-            financeReportAnalyticsReply()
-            financeReportMembersReply()
-            financeReportCategorySelectReply()
-            financeReportCategoryViewReply()
+            financeReportMenuReply(localizationService)
+            financeReportComparisonReply(localizationService)
+            financeReportAnalyticsReply(localizationService)
+            financeReportMembersReply(localizationService)
+            financeReportCategorySelectReply(localizationService)
+            financeReportCategoryViewReply(localizationService)
 
             // Finance history replies
-            financeHistoryReply()
-            financeHistorySelectStartDateReply()
-            financeHistorySelectEndDateReply()
-            financeHistoryCalendarReply()
-            financeHistorySelectYearReply()
-            financeHistorySelectMonthReply()
+            financeHistoryReply(localizationService)
+            financeHistorySelectStartDateReply(localizationService)
+            financeHistorySelectEndDateReply(localizationService)
+            financeHistoryCalendarReply(localizationService)
+            financeHistorySelectYearReply(localizationService)
+            financeHistorySelectMonthReply(localizationService)
 
             // Group replies
-            groupManagementReply()
-            groupCreateEnterNameReply()
-            groupInviteShowReply()
-            groupJoinConfirmReply()
-            groupListReply()
-            groupActionsReply()
-            groupMembersReply()
-            groupEditEnterNameReply()
-            groupDeleteConfirmReply()
+            groupManagementReply(localizationService)
+            groupCreateEnterNameReply(localizationService)
+            groupInviteShowReply(localizationService)
+            groupJoinConfirmReply(localizationService)
+            groupListReply(localizationService)
+            groupActionsReply(localizationService)
+            groupMembersReply(localizationService)
+            groupEditEnterNameReply(localizationService)
+            groupDeleteConfirmReply(localizationService)
 
             // Category replies
-            categoryManagementReply()
-            categoryNoGroupWarningReply()
-            categoryCreateSelectTypeReply()
-            categoryCreateEnterNameReply()
-            categoryCreateResultReply()
-            categoryListSelectTypeReply()
-            categoryListReply()
-            categoryActionsReply()
-            categoryEditIconReply()
-            categoryEditNameReply()
-            categoryDeleteConfirmReply()
-            categoryDeleteAllConfirmReply()
+            categoryManagementReply(localizationService)
+            categoryNoGroupWarningReply(localizationService)
+            categoryCreateSelectTypeReply(localizationService)
+            categoryCreateEnterNameReply(localizationService)
+            categoryCreateResultReply(localizationService)
+            categoryListSelectTypeReply(localizationService)
+            categoryListReply(localizationService)
+            categoryActionsReply(localizationService)
+            categoryEditIconReply(localizationService)
+            categoryEditNameReply(localizationService)
+            categoryDeleteConfirmReply(localizationService)
+            categoryDeleteAllConfirmReply(localizationService)
 
             // Notification replies
-            notificationTimezoneSelectReply()
-            notificationTimezoneExtendedReply()
-            notificationCreateIconReply()
-            notificationListReply()
-            notificationActionsReply()
-            notificationCreateNameReply()
-            notificationCreateFrequencyReply()
-            notificationCreateCustomUnitReply()
-            notificationCreateCustomNReply()
-            notificationCreateDayOfWeekReply()
-            notificationCreateDayOfMonthReply()
-            notificationCreateMonthReply()
-            notificationCreateSelectHourReply()
-            notificationCreateSelectMinuteReply()
-            notificationCreateConfirmReply()
-            notificationEditMenuReply()
-            notificationEditNameReply()
-            notificationDeleteConfirmReply()
-            notificationDeleteAllConfirmReply()
+            notificationTimezoneSelectReply(localizationService)
+            notificationTimezoneExtendedReply(localizationService)
+            notificationCreateIconReply(localizationService)
+            notificationListReply(localizationService)
+            notificationActionsReply(localizationService)
+            notificationCreateNameReply(localizationService)
+            notificationCreateFrequencyReply(localizationService)
+            notificationCreateCustomUnitReply(localizationService)
+            notificationCreateCustomNReply(localizationService)
+            notificationCreateDayOfWeekReply(localizationService)
+            notificationCreateDayOfMonthReply(localizationService)
+            notificationCreateMonthReply(localizationService)
+            notificationCreateSelectHourReply(localizationService)
+            notificationCreateSelectMinuteReply(localizationService)
+            notificationCreateConfirmReply(localizationService)
+            notificationEditMenuReply(localizationService)
+            notificationEditNameReply(localizationService)
+            notificationDeleteConfirmReply(localizationService)
+            notificationDeleteAllConfirmReply(localizationService)
 
             // AI replies
-            aiModeReply()
-            aiConfirmReply()
-            aiResultReply()
+            aiModeReply(localizationService)
+            aiConfirmReply(localizationService)
+            aiTransactionPickCategoryReply(localizationService)
+            aiTransactionPickCategoryAllReply(localizationService)
+            aiResultReply(localizationService)
 
             // Legacy NLP replies (disabled for now)
             // nlpConfirmCreateGroupReply()

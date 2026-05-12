@@ -32,3 +32,7 @@ spring:
       auto-index-creation: true
   main:
     banner-mode: off
+  messages:
+    basename: messages
+    encoding: UTF-8
+    fallback-to-system-locale: false

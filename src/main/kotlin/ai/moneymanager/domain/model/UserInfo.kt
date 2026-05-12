@@ -9,6 +9,7 @@ data class UserInfo(
     val lastName: String?,
     val telegramUserId: Long?,
     val languageCode: String?,
+    val language: String? = null,
     val activeGroupId: ObjectId? = null,
     val groupIds: Set<ObjectId> = emptySet(),
     val timezone: String? = null,

@@ -16,9 +16,12 @@ import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
 
+private const val MONTH_DIVIDER = "─────────────────────"
+
 @Service
 class FinanceHistoryService(
-    private val financeOperationRepository: FinanceOperationRepository
+    private val financeOperationRepository: FinanceOperationRepository,
+    private val localizationService: LocalizationService
 ) {
 
     fun getRecentOperations(groupId: ObjectId, limit: Int): List<FinanceOperationEntity> =
@@ -28,14 +31,19 @@ class FinanceHistoryService(
                 PageRequest.of(0, limit)
             )
 
-    fun generateReport(groupId: ObjectId, startDate: LocalDate, endDate: LocalDate): String {
+    fun generateReport(
+        groupId: ObjectId,
+        startDate: LocalDate,
+        endDate: LocalDate,
+        language: String?
+    ): String {
         val operations = financeOperationRepository
             .findByGroupIdAndOperationDateBetweenOrderByOperationDateDesc(groupId, startDate, endDate)
 
-        val header = buildReportHeader(startDate, endDate)
+        val header = buildReportHeader(startDate, endDate, language)
 
         if (operations.isEmpty()) {
-            return "$header\n\nНет операций за выбранный период"
+            return "$header\n\n${localizationService.t("finance.history.empty", language)}"
         }
 
         val incomes = operations.filter { it.type == CategoryType.INCOME }
@@ -46,43 +54,55 @@ class FinanceHistoryService(
         return buildString {
             append(header)
             append(SECTION_SEPARATOR)
-            appendSection("📈 Доходы:", incomes, totalIncome)
-            appendSection("📉 Расходы:", expenses, totalExpense)
-            appendBalanceLine(totalIncome, totalExpense)
+            appendSection(localizationService.t("finance.history.section.income", language), incomes, totalIncome, language)
+            appendSection(localizationService.t("finance.history.section.expense", language), expenses, totalExpense, language)
+            appendBalanceLine(totalIncome, totalExpense, language)
         }
     }
 
-    private fun buildReportHeader(startDate: LocalDate, endDate: LocalDate): String {
-        val title = buildReportTitle(startDate, endDate)
-        val dateRange = "📅 ${startDate.format(dateFormatter)} – ${endDate.format(dateFormatter)}"
+    private fun buildReportHeader(startDate: LocalDate, endDate: LocalDate, language: String?): String {
+        val title = buildReportTitle(startDate, endDate, language)
+        val dateRange = localizationService.t(
+            "finance.history.date_range",
+            language,
+            startDate.format(dateFormatter),
+            endDate.format(dateFormatter)
+        )
         return "$title\n$dateRange"
     }
 
-    private fun buildReportTitle(startDate: LocalDate, endDate: LocalDate): String {
+    private fun buildReportTitle(startDate: LocalDate, endDate: LocalDate, language: String?): String {
         val isFullMonth = startDate.dayOfMonth == 1
             && startDate.year == endDate.year
             && startDate.month == endDate.month
             && endDate == startDate.withDayOfMonth(startDate.lengthOfMonth())
 
         return if (isFullMonth) {
-            val monthName = startDate.month.getDisplayName(TextStyle.FULL_STANDALONE, Locale.of("ru"))
+            val monthName = startDate.month
+                .getDisplayName(TextStyle.FULL_STANDALONE, localeFor(language))
                 .replaceFirstChar { it.uppercaseChar() }
-            "📋 Отчёт за $monthName ${startDate.year}"
+            localizationService.t("finance.history.title.month", language, monthName, startDate.year)
         } else {
-            "📋 Отчёт за ${startDate.format(dateFormatter)} – ${endDate.format(dateFormatter)}"
+            localizationService.t(
+                "finance.history.title.range",
+                language,
+                startDate.format(dateFormatter),
+                endDate.format(dateFormatter)
+            )
         }
     }
 
     private fun StringBuilder.appendSection(
         title: String,
         operations: List<FinanceOperationEntity>,
-        total: BigDecimal
+        total: BigDecimal,
+        language: String?
     ) {
         if (operations.isEmpty()) return
         append("\n\n$title")
         appendCategoryLines(operations)
-        append("\n─────────────────────")
-        append("\nИтого: ${formatAmount(total)}")
+        append("\n$MONTH_DIVIDER")
+        append("\n${localizationService.t("finance.history.total", language, formatAmount(total))}")
     }
 
     private fun StringBuilder.appendCategoryLines(operations: List<FinanceOperationEntity>) {
@@ -95,13 +115,20 @@ class FinanceHistoryService(
             }
     }
 
-    private fun StringBuilder.appendBalanceLine(totalIncome: BigDecimal, totalExpense: BigDecimal) {
+    private fun StringBuilder.appendBalanceLine(
+        totalIncome: BigDecimal,
+        totalExpense: BigDecimal,
+        language: String?
+    ) {
         val balance = totalIncome.subtract(totalExpense)
         val sign = if (balance >= BigDecimal.ZERO) "+" else ""
         append(SECTION_SEPARATOR_WITH_BLANK_LINE)
-        append("\n💰 Баланс: $sign${formatAmount(balance)}")
+        append("\n${localizationService.t("finance.history.balance", language, "$sign${formatAmount(balance)}")}")
     }
 
     private fun sumAmounts(operations: List<FinanceOperationEntity>): BigDecimal =
         operations.fold(BigDecimal.ZERO) { acc, op -> acc.add(op.amount) }
+
+    private fun localeFor(language: String?): Locale =
+        Locale.of(language ?: LocalizationService.FALLBACK_LANGUAGE)
 }

@@ -7,13 +7,15 @@ data class CreateGroupArgs(
 data class AddExpenseArgs(
     val amount: Double,
     val category: String? = null,
-    val description: String? = null
+    val description: String? = null,
+    val suggestedCategoryIcon: String? = null
 )
 
 data class AddIncomeArgs(
     val amount: Double,
     val category: String? = null,
-    val description: String? = null
+    val description: String? = null,
+    val suggestedCategoryIcon: String? = null
 )
 
 data class DeleteGroupArgs(

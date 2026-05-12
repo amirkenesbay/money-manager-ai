@@ -8,6 +8,7 @@ import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.domain.model.QuickTemplates
 import ai.moneymanager.service.CategoryService
+import ai.moneymanager.service.LocalizationService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType
 import org.slf4j.LoggerFactory
@@ -16,7 +17,8 @@ private val log = LoggerFactory.getLogger("CreateCategoryTransitions")
 private const val MAX_CATEGORY_NAME_LENGTH = 50
 
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createCategoryTransitions(
-    categoryService: CategoryService
+    categoryService: CategoryService,
+    localizationService: LocalizationService
 ) {
     transition {
         name = "Start category creation - check active group exists"
@@ -78,13 +80,15 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createCategoryTransiti
 
     QuickTemplates.ALL_CATEGORIES.forEach { template ->
         transition {
-            name = "Quick create: ${template.name}"
+            name = "Quick create: ${template.nameKey}"
             condition {
                 from = MoneyManagerState.CATEGORY_CREATE_ENTER_NAME
                 button = template.buttonType
             }
             action {
-                context.categoryNameInput = template.name
+                val lang = context.userInfo?.language
+                val resolvedName = localizationService.t(template.nameKey, lang)
+                context.categoryNameInput = resolvedName
                 context.categoryIconInput = template.icon
                 context.isQuickCategoryCreation = true
                 context.manualTextInputActive = false
@@ -92,11 +96,11 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createCategoryTransiti
 
                 val activeGroupId = context.userInfo?.activeGroupId
                 val categoryType = context.categoryTypeInput ?: CategoryType.EXPENSE
-                log.info("Quick creating category: name='${template.name}', icon='${template.icon}', type=$categoryType, activeGroupId=$activeGroupId")
+                log.info("Quick creating category: name='$resolvedName', icon='${template.icon}', type=$categoryType, activeGroupId=$activeGroupId")
 
                 if (activeGroupId != null) {
                     context.currentCategory = categoryService.createCategory(
-                        name = template.name,
+                        name = resolvedName,
                         icon = template.icon,
                         type = categoryType,
                         groupId = activeGroupId
@@ -120,10 +124,11 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createCategoryTransiti
         action {
             context.manualTextInputActive = false
             context.customNameInputMode = false
+            val lang = context.userInfo?.language
             val categoryName = update.message.text?.trim()
                 ?.takeIf { it.isNotBlank() }
                 ?.take(MAX_CATEGORY_NAME_LENGTH)
-                ?: "Новая категория"
+                ?: localizationService.t("category.create.fallback_name", lang)
             context.categoryNameInput = categoryName
 
             val activeGroupId = context.userInfo?.activeGroupId

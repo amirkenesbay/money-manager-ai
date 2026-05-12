@@ -28,19 +28,24 @@ class FinanceReportService(
     private val formatter: FinanceReportFormatter
 ) {
 
-    fun generateComparisonReport(groupId: ObjectId, previousMonthStart: LocalDate): String {
-        val report = buildComparisonReport(groupId, previousMonthStart)
-        return formatter.formatComparison(report)
+    fun generateComparisonReport(groupId: ObjectId, previousMonthStart: LocalDate, language: String?): String {
+        val report = buildComparisonReport(groupId, previousMonthStart, language)
+        return formatter.formatComparison(report, language)
     }
 
-    fun generateAnalyticsReport(groupId: ObjectId, monthStart: LocalDate): String {
-        val report = buildAnalyticsReport(groupId, monthStart)
-        return formatter.formatAnalytics(report)
+    fun generateAnalyticsReport(groupId: ObjectId, monthStart: LocalDate, language: String?): String {
+        val report = buildAnalyticsReport(groupId, monthStart, language)
+        return formatter.formatAnalytics(report, language)
     }
 
-    fun generateMembersReport(groupId: ObjectId, monthStart: LocalDate, memberNames: Map<Long, String>): String {
-        val report = buildMembersReport(groupId, monthStart, memberNames)
-        return formatter.formatMembers(report)
+    fun generateMembersReport(
+        groupId: ObjectId,
+        monthStart: LocalDate,
+        memberNames: Map<Long, String>,
+        language: String?
+    ): String {
+        val report = buildMembersReport(groupId, monthStart, memberNames, language)
+        return formatter.formatMembers(report, language)
     }
 
     fun generateCategoryReport(
@@ -48,14 +53,19 @@ class FinanceReportService(
         categoryId: ObjectId,
         categoryIcon: String?,
         categoryName: String,
+        language: String?,
         months: Int = 6
     ): String {
-        val report = buildCategoryReport(groupId, categoryId, categoryIcon, categoryName, months)
-        return formatter.formatCategory(report)
+        val report = buildCategoryReport(groupId, categoryId, categoryIcon, categoryName, months, language)
+        return formatter.formatCategory(report, language)
     }
 
 
-    private fun buildComparisonReport(groupId: ObjectId, previousMonthStart: LocalDate): ComparisonReport {
+    private fun buildComparisonReport(
+        groupId: ObjectId,
+        previousMonthStart: LocalDate,
+        language: String?
+    ): ComparisonReport {
         val currentMonthStart = previousMonthStart.plusMonths(1)
 
         val previousOps = findMonthOperations(groupId, previousMonthStart)
@@ -65,8 +75,8 @@ class FinanceReportService(
         val currentExpenses = currentOps.filterByType(CategoryType.EXPENSE)
 
         return ComparisonReport(
-            previousMonthName = monthNameShort(previousMonthStart),
-            currentMonthName = monthNameShort(currentMonthStart),
+            previousMonthName = monthNameShort(previousMonthStart, language),
+            currentMonthName = monthNameShort(currentMonthStart, language),
             year = formatYearRange(previousMonthStart, currentMonthStart),
             previousExpenseTotal = sumAmounts(previousExpenses),
             currentExpenseTotal = sumAmounts(currentExpenses),
@@ -97,21 +107,21 @@ class FinanceReportService(
             .sortedByDescending { it.currentAmount.subtract(it.previousAmount).abs() }
     }
 
-    private fun buildAnalyticsReport(groupId: ObjectId, monthStart: LocalDate): AnalyticsReport {
+    private fun buildAnalyticsReport(groupId: ObjectId, monthStart: LocalDate, language: String?): AnalyticsReport {
         val operations = findMonthOperations(groupId, monthStart)
         val expenses = operations.filterByType(CategoryType.EXPENSE)
         val totalExpense = sumAmounts(expenses)
 
         return AnalyticsReport(
-            monthName = monthNameFull(monthStart),
+            monthName = monthNameFull(monthStart, language),
             year = monthStart.year,
             totalExpense = totalExpense,
             totalIncome = sumAmounts(operations.filterByType(CategoryType.INCOME)),
             operationCount = operations.size,
             daysInMonth = monthStart.lengthOfMonth(),
             topExpenses = buildTopExpenses(expenses, limit = 3),
-            maxExpense = buildMaxExpense(expenses),
-            mostExpensiveDay = buildMostExpensiveDay(expenses),
+            maxExpense = buildMaxExpense(expenses, language),
+            mostExpensiveDay = buildMostExpensiveDay(expenses, language),
             isEmpty = operations.isEmpty()
         )
     }
@@ -122,18 +132,18 @@ class FinanceReportService(
             .sortedByDescending { it.total }
             .take(limit)
 
-    private fun buildMaxExpense(expenses: List<FinanceOperationEntity>): MaxExpense? {
+    private fun buildMaxExpense(expenses: List<FinanceOperationEntity>, language: String?): MaxExpense? {
         val max = expenses.maxByOrNull { it.amount } ?: return null
         return MaxExpense(
             amount = max.amount,
             icon = max.categoryIcon ?: DEFAULT_CATEGORY_ICON,
             categoryName = max.categoryName,
             day = max.operationDate.dayOfMonth,
-            monthShort = monthNameShort(max.operationDate)
+            monthShort = monthNameShort(max.operationDate, language)
         )
     }
 
-    private fun buildMostExpensiveDay(expenses: List<FinanceOperationEntity>): ExpensiveDay? {
+    private fun buildMostExpensiveDay(expenses: List<FinanceOperationEntity>, language: String?): ExpensiveDay? {
         val entry = expenses
             .groupBy { it.operationDate }
             .mapValues { (_, ops) -> sumAmounts(ops) }
@@ -141,7 +151,7 @@ class FinanceReportService(
 
         return ExpensiveDay(
             day = entry.key.dayOfMonth,
-            monthName = monthNameFull(entry.key),
+            monthName = monthNameFull(entry.key, language),
             total = entry.value
         )
     }
@@ -149,14 +159,15 @@ class FinanceReportService(
     private fun buildMembersReport(
         groupId: ObjectId,
         monthStart: LocalDate,
-        memberNames: Map<Long, String>
+        memberNames: Map<Long, String>,
+        language: String?
     ): MembersReport {
         val operations = findMonthOperations(groupId, monthStart)
         val expenses = operations.filterByType(CategoryType.EXPENSE)
         val incomes = operations.filterByType(CategoryType.INCOME)
 
         return MembersReport(
-            monthName = monthNameFull(monthStart),
+            monthName = monthNameFull(monthStart, language),
             year = monthStart.year,
             expensesByMember = buildMemberTotals(expenses, memberNames),
             incomesByMember = buildMemberTotals(incomes, memberNames),
@@ -184,9 +195,10 @@ class FinanceReportService(
         categoryId: ObjectId,
         categoryIcon: String?,
         categoryName: String,
-        months: Int
+        months: Int,
+        language: String?
     ): CategoryReport {
-        val monthsData = loadCategoryMonthsData(groupId, categoryId, months)
+        val monthsData = loadCategoryMonthsData(groupId, categoryId, months, language)
 
         return CategoryReport(
             icon = categoryIcon ?: DEFAULT_CATEGORY_ICON,
@@ -200,7 +212,8 @@ class FinanceReportService(
     private fun loadCategoryMonthsData(
         groupId: ObjectId,
         categoryId: ObjectId,
-        months: Int
+        months: Int,
+        language: String?
     ): List<CategoryMonthData> {
         val now = LocalDate.now()
         val periodStart = now.minusMonths((months - 1).toLong()).withDayOfMonth(1)
@@ -214,13 +227,13 @@ class FinanceReportService(
             val yearMonth = YearMonth.from(now.minusMonths(offset.toLong()))
             val ops = opsByMonth[yearMonth] ?: emptyList()
             CategoryMonthData(
-                label = "${monthNameShort(yearMonth.atDay(1))} ${yearMonth.year}",
+                label = "${monthNameShort(yearMonth.atDay(1), language)} ${yearMonth.year}",
                 total = sumAmounts(ops),
                 count = ops.size
             )
         }
     }
-    
+
     private fun findMonthOperations(groupId: ObjectId, monthStart: LocalDate): List<FinanceOperationEntity> {
         val monthEnd = monthStart.withDayOfMonth(monthStart.lengthOfMonth())
         return findOperations(groupId, monthStart, monthEnd)
@@ -249,11 +262,14 @@ class FinanceReportService(
         if (previousMonth.year == currentMonth.year) "${previousMonth.year}"
         else "${previousMonth.year}/${currentMonth.year}"
 
-    private fun monthNameShort(date: LocalDate): String =
-        date.month.getDisplayName(TextStyle.SHORT_STANDALONE, Locale.of("ru"))
+    private fun monthNameShort(date: LocalDate, language: String?): String =
+        date.month.getDisplayName(TextStyle.SHORT_STANDALONE, localeFor(language))
             .replaceFirstChar { it.uppercaseChar() }
 
-    private fun monthNameFull(date: LocalDate): String =
-        date.month.getDisplayName(TextStyle.FULL_STANDALONE, Locale.of("ru"))
+    private fun monthNameFull(date: LocalDate, language: String?): String =
+        date.month.getDisplayName(TextStyle.FULL_STANDALONE, localeFor(language))
             .replaceFirstChar { it.uppercaseChar() }
+
+    private fun localeFor(language: String?): Locale =
+        Locale.of(language ?: LocalizationService.FALLBACK_LANGUAGE)
 }

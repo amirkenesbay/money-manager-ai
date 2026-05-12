@@ -4,39 +4,43 @@ import ai.moneymanager.chat.reply.common.dateFormatter
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
+import ai.moneymanager.service.LocalizationService
 import kz.rmr.chatmachinist.api.reply.RepliesBuilder
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeHistoryReply() {
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeHistoryReply(
+    localizationService: LocalizationService
+) {
     reply {
         state = MoneyManagerState.FINANCE_HISTORY_VIEW
 
         message {
-            text = context.historyReport ?: "Загрузка..."
+            val lang = context.userInfo?.language
+            text = context.historyReport ?: localizationService.t("finance.history.loading", lang)
 
             keyboard {
                 buttonRow {
                     button {
-                        text = "Сегодня"
+                        text = localizationService.t("finance.date.button.today", lang)
                         type = MoneyManagerButtonType.HISTORY_DAY_TODAY
                     }
                     button {
-                        text = "Вчера"
+                        text = localizationService.t("finance.date.button.yesterday", lang)
                         type = MoneyManagerButtonType.HISTORY_DAY_YESTERDAY
                     }
                     button {
-                        text = "Позавчера"
+                        text = localizationService.t("finance.date.button.before_yesterday", lang)
                         type = MoneyManagerButtonType.HISTORY_DAY_BEFORE_YESTERDAY
                     }
                 }
                 buttonRow {
                     button {
-                        text = "📅 Изменить период"
+                        text = localizationService.t("finance.history.button.change_period", lang)
                         type = MoneyManagerButtonType.CHANGE_PERIOD
                     }
                 }
                 buttonRow {
                     button {
-                        text = "◀\uFE0F Назад"
+                        text = localizationService.t("common.back", lang)
                         type = MoneyManagerButtonType.BACK_TO_FINANCE
                     }
                 }
@@ -45,39 +49,42 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeHistoryReply()
     }
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeHistorySelectStartDateReply() {
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeHistorySelectStartDateReply(
+    localizationService: LocalizationService
+) {
     reply {
         state = MoneyManagerState.FINANCE_HISTORY_SELECT_START_DATE
 
         message {
-            text = "📅 Выберите начало периода"
+            val lang = context.userInfo?.language
+            text = localizationService.t("finance.history.start_date.title", lang)
 
             keyboard {
                 buttonRow {
                     button {
-                        text = "Этот месяц"
+                        text = localizationService.t("finance.history.button.this_month", lang)
                         type = MoneyManagerButtonType.QUICK_PERIOD_THIS_MONTH
                     }
                     button {
-                        text = "Прошлый месяц"
+                        text = localizationService.t("finance.history.button.last_month", lang)
                         type = MoneyManagerButtonType.QUICK_PERIOD_LAST_MONTH
                     }
                 }
                 buttonRow {
                     button {
-                        text = "Этот год"
+                        text = localizationService.t("finance.history.button.this_year", lang)
                         type = MoneyManagerButtonType.QUICK_PERIOD_THIS_YEAR
                     }
                 }
                 buttonRow {
                     button {
-                        text = "📅 Календарь"
+                        text = localizationService.t("finance.date.button.calendar", lang)
                         type = MoneyManagerButtonType.OPEN_CALENDAR
                     }
                 }
                 buttonRow {
                     button {
-                        text = "◀\uFE0F Назад"
+                        text = localizationService.t("common.back", lang)
                         type = MoneyManagerButtonType.BACK_TO_HISTORY
                     }
                 }
@@ -86,41 +93,40 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeHistorySelectS
     }
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeHistorySelectEndDateReply() {
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeHistorySelectEndDateReply(
+    localizationService: LocalizationService
+) {
     reply {
         state = MoneyManagerState.FINANCE_HISTORY_SELECT_END_DATE
 
         message {
+            val lang = context.userInfo?.language
             val startFormatted = context.historyStartDate?.let {
                 dateFormatter.format(it)
             } ?: ""
 
-            text = """
-                |📅 Начало: $startFormatted
-                |
-                |Выберите конец периода:
-            """.trimMargin()
+            text = localizationService.t("finance.history.end_date.title", lang, startFormatted)
 
             keyboard {
                 buttonRow {
                     button {
-                        text = "Сегодня"
+                        text = localizationService.t("finance.date.button.today", lang)
                         type = MoneyManagerButtonType.QUICK_DATE_TODAY
                     }
                     button {
-                        text = "Вчера"
+                        text = localizationService.t("finance.date.button.yesterday", lang)
                         type = MoneyManagerButtonType.QUICK_DATE_YESTERDAY
                     }
                 }
                 buttonRow {
                     button {
-                        text = "📅 Календарь"
+                        text = localizationService.t("finance.date.button.calendar", lang)
                         type = MoneyManagerButtonType.OPEN_CALENDAR
                     }
                 }
                 buttonRow {
                     button {
-                        text = "◀\uFE0F Назад"
+                        text = localizationService.t("common.back", lang)
                         type = MoneyManagerButtonType.BACK_TO_HISTORY
                     }
                 }
@@ -129,12 +135,15 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeHistorySelectE
     }
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeHistoryCalendarReply() {
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeHistoryCalendarReply(
+    localizationService: LocalizationService
+) {
     reply {
         state = MoneyManagerState.FINANCE_HISTORY_CALENDAR
 
         message {
-            text = "📅 Выберите дату"
+            val lang = context.userInfo?.language
+            text = localizationService.t("finance.date.select.title", lang)
             val year = context.calendarYear
             val month = context.calendarMonth
 
@@ -142,7 +151,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeHistoryCalenda
                 calendar(year, month)
                 buttonRow {
                     button {
-                        text = "◀\uFE0F Назад"
+                        text = localizationService.t("common.back", lang)
                         type = MoneyManagerButtonType.BACK_TO_HISTORY
                     }
                 }
@@ -151,19 +160,22 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeHistoryCalenda
     }
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeHistorySelectYearReply() {
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeHistorySelectYearReply(
+    localizationService: LocalizationService
+) {
     reply {
         state = MoneyManagerState.FINANCE_HISTORY_SELECT_YEAR
 
         message {
-            text = "📅 Выберите год"
+            val lang = context.userInfo?.language
+            text = localizationService.t("finance.date.year.title", lang)
             val year = context.calendarYear
 
             keyboard {
                 yearPicker(year)
                 buttonRow {
                     button {
-                        text = "◀\uFE0F Назад"
+                        text = localizationService.t("common.back", lang)
                         type = MoneyManagerButtonType.BACK_TO_CALENDAR
                     }
                 }
@@ -172,19 +184,22 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeHistorySelectY
     }
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeHistorySelectMonthReply() {
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeHistorySelectMonthReply(
+    localizationService: LocalizationService
+) {
     reply {
         state = MoneyManagerState.FINANCE_HISTORY_SELECT_MONTH
 
         message {
-            text = "📅 Выберите месяц"
+            val lang = context.userInfo?.language
+            text = localizationService.t("finance.date.month.title", lang)
             val year = context.calendarYear
 
             keyboard {
                 monthPicker(year)
                 buttonRow {
                     button {
-                        text = "◀\uFE0F Назад"
+                        text = localizationService.t("common.back", lang)
                         type = MoneyManagerButtonType.BACK_TO_CALENDAR
                     }
                 }

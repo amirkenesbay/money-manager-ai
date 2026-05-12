@@ -4,47 +4,54 @@ import ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
+import ai.moneymanager.service.LocalizationService
 import kz.rmr.chatmachinist.api.reply.RepliesBuilder
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeReportMenuReply() {
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeReportMenuReply(
+    localizationService: LocalizationService
+) {
     reply {
         state = MoneyManagerState.FINANCE_REPORT_MENU
 
         message {
+            val lang = context.userInfo?.language
+            val title = localizationService.t("finance.report.menu.title", lang)
+            val subtitle = localizationService.t("finance.report.menu.subtitle", lang)
+
             text = """
-                |📈 Отчёты
+                |$title
                 |
-                |Выбери тип отчёта:
+                |$subtitle
             """.trimMargin()
 
             keyboard {
                 buttonRow {
                     button {
-                        text = "📊 Сравнение месяцев"
+                        text = localizationService.t("finance.report.button.comparison", lang)
                         type = MoneyManagerButtonType.REPORT_COMPARISON
                     }
                 }
                 buttonRow {
                     button {
-                        text = "📈 Аналитика"
+                        text = localizationService.t("finance.report.button.analytics", lang)
                         type = MoneyManagerButtonType.REPORT_ANALYTICS
                     }
                 }
                 buttonRow {
                     button {
-                        text = "👥 По участникам"
+                        text = localizationService.t("finance.report.button.members", lang)
                         type = MoneyManagerButtonType.REPORT_BY_MEMBERS
                     }
                 }
                 buttonRow {
                     button {
-                        text = "📂 По категории"
+                        text = localizationService.t("finance.report.button.category", lang)
                         type = MoneyManagerButtonType.REPORT_BY_CATEGORY
                     }
                 }
                 buttonRow {
                     button {
-                        text = "◀\uFE0F Назад"
+                        text = localizationService.t("common.back", lang)
                         type = MoneyManagerButtonType.BACK_TO_FINANCE
                     }
                 }
@@ -53,29 +60,40 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeReportMenuRepl
     }
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeReportComparisonReply() {
-    reportWithNavigationReply(MoneyManagerState.FINANCE_REPORT_COMPARISON)
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeReportComparisonReply(
+    localizationService: LocalizationService
+) {
+    reportWithNavigationReply(MoneyManagerState.FINANCE_REPORT_COMPARISON, localizationService)
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeReportAnalyticsReply() {
-    reportWithNavigationReply(MoneyManagerState.FINANCE_REPORT_ANALYTICS)
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeReportAnalyticsReply(
+    localizationService: LocalizationService
+) {
+    reportWithNavigationReply(MoneyManagerState.FINANCE_REPORT_ANALYTICS, localizationService)
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeReportMembersReply() {
-    reportWithNavigationReply(MoneyManagerState.FINANCE_REPORT_MEMBERS)
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeReportMembersReply(
+    localizationService: LocalizationService
+) {
+    reportWithNavigationReply(MoneyManagerState.FINANCE_REPORT_MEMBERS, localizationService)
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeReportCategorySelectReply() {
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeReportCategorySelectReply(
+    localizationService: LocalizationService
+) {
     reply {
         state = MoneyManagerState.FINANCE_REPORT_CATEGORY_SELECT
 
         message {
+            val lang = context.userInfo?.language
             val categories = context.categories
+            val title = localizationService.t("finance.report.category.title", lang)
+            val subtitle = localizationService.t("finance.report.category.subtitle", lang)
 
             text = """
-                |📂 Отчёт по категории
+                |$title
                 |
-                |Выбери категорию:
+                |$subtitle
             """.trimMargin()
 
             keyboard {
@@ -90,7 +108,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeReportCategory
                 }
                 buttonRow {
                     button {
-                        text = "◀\uFE0F Назад"
+                        text = localizationService.t("common.back", lang)
                         type = MoneyManagerButtonType.BACK_TO_REPORT_MENU
                     }
                 }
@@ -99,17 +117,20 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeReportCategory
     }
 }
 
-fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeReportCategoryViewReply() {
+fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeReportCategoryViewReply(
+    localizationService: LocalizationService
+) {
     reply {
         state = MoneyManagerState.FINANCE_REPORT_CATEGORY_VIEW
 
         message {
-            text = context.reportText ?: "Загрузка..."
+            val lang = context.userInfo?.language
+            text = context.reportText ?: localizationService.t("finance.report.loading", lang)
 
             keyboard {
                 buttonRow {
                     button {
-                        text = "◀\uFE0F Назад"
+                        text = localizationService.t("common.back", lang)
                         type = MoneyManagerButtonType.BACK_TO_REPORT_MENU
                     }
                 }
@@ -119,28 +140,30 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeReportCategory
 }
 
 private fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.reportWithNavigationReply(
-    reportState: MoneyManagerState
+    reportState: MoneyManagerState,
+    localizationService: LocalizationService
 ) {
     reply {
         state = reportState
 
         message {
-            text = context.reportText ?: "Загрузка..."
+            val lang = context.userInfo?.language
+            text = context.reportText ?: localizationService.t("finance.report.loading", lang)
 
             keyboard {
                 buttonRow {
                     button {
-                        text = "◀ Пред."
+                        text = localizationService.t("finance.report.button.prev", lang)
                         type = MoneyManagerButtonType.REPORT_PREV
                     }
                     button {
-                        text = "▶ След."
+                        text = localizationService.t("finance.report.button.next", lang)
                         type = MoneyManagerButtonType.REPORT_NEXT
                     }
                 }
                 buttonRow {
                     button {
-                        text = "◀\uFE0F Назад"
+                        text = localizationService.t("common.back", lang)
                         type = MoneyManagerButtonType.BACK_TO_REPORT_MENU
                     }
                 }

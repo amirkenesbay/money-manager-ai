@@ -12,7 +12,6 @@ import org.telegram.telegrambots.meta.api.objects.User
 @Service
 class UserInfoService(
     private val userRepository: UserInfoRepository,
-    private val groupService: GroupService,
     @Value("\${chat-machinist.bot.token}")
     private val botToken: String
 ) : DefaultAbsSender(
@@ -24,14 +23,7 @@ class UserInfoService(
 
         if (userInfo == null) {
             val entity = userRepository.save(mapUserModel(telegramUserInfo))
-
-            groupService.createPersonalGroup(
-                userId = telegramUserInfo.id,
-                userName = telegramUserInfo.userName
-            )
-
-            val updatedEntity = userRepository.findUserInfoEntityByTelegramUserId(telegramUserInfo.id)
-            return mapEntity(updatedEntity ?: entity)
+            return mapEntity(entity)
         }
 
         return mapEntity(userInfo)
@@ -45,6 +37,12 @@ class UserInfoService(
     fun updateTimezone(telegramUserId: Long, timezone: String): UserInfo? {
         val entity = userRepository.findUserInfoEntityByTelegramUserId(telegramUserId) ?: return null
         val updated = userRepository.save(entity.copy(timezone = timezone))
+        return mapEntity(updated)
+    }
+
+    fun updateLanguage(telegramUserId: Long, language: String): UserInfo? {
+        val entity = userRepository.findUserInfoEntityByTelegramUserId(telegramUserId) ?: return null
+        val updated = userRepository.save(entity.copy(language = language))
         return mapEntity(updated)
     }
 
@@ -80,6 +78,7 @@ class UserInfoService(
             lastName = it.lastName,
             telegramUserId = it.telegramUserId,
             languageCode = it.languageCode,
+            language = it.language,
             activeGroupId = it.activeGroupId,
             groupIds = it.groupIds,
             timezone = it.timezone,

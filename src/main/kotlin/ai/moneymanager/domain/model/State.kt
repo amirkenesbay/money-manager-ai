@@ -23,6 +23,10 @@ enum class MoneyManagerState {
     GROUP_EDIT_ENTER_NAME,
     GROUP_DELETE_CONFIRM,
 
+    // -------- SETTINGS --------
+    SETTINGS,
+    LANGUAGE_SELECT,
+
     // -------- BALANCE --------
     BALANCE_ONBOARDING_PROMPT,
     BALANCE_ONBOARDING_ENTER_AMOUNT,
@@ -64,6 +68,8 @@ enum class MoneyManagerState {
     // -------- AI --------
     AI_MODE,
     AI_CONFIRM,
+    AI_TRANSACTION_PICK_CATEGORY,
+    AI_TRANSACTION_PICK_CATEGORY_ALL,
     AI_RESULT,
 
     // -------- CATEGORIES --------
@@ -204,6 +210,14 @@ enum class MoneyManagerButtonType {
     BACK_TO_FINANCE,
     BACK_TO_FINANCE_DATE,
     BACK_TO_CALENDAR,
+    BACK_TO_SETTINGS,
+
+    // Settings
+    SETTINGS,
+    OPEN_LANGUAGE_PICKER,
+    LANGUAGE_RU,
+    LANGUAGE_EN,
+    LANGUAGE_KK,
 
     // NLP
     CONFIRM_NLP_ACTION,
@@ -213,6 +227,10 @@ enum class MoneyManagerButtonType {
 
     // AI
     CONFIRM_AI_ACTION,
+    AI_PICK_DIFFERENT_CATEGORY,
+    AI_PICK_SHOW_ALL,
+    AI_PICK_BACK_TO_CONFIRM,
+    AI_PICK_CATEGORY_ITEM,
 
     // Notification navigation
     CREATE_NOTIFICATION,
@@ -289,6 +307,10 @@ class MoneyManagerContext {
     var currentCategory: Category? = null
     var categories: List<Category> = emptyList()
     var isQuickCategoryCreation: Boolean = false
+
+    // -------- SETTINGS --------
+    var languageReturnToSettings: Boolean = false
+    var languageJustChanged: Boolean = false
 
     // -------- UI FEEDBACK --------
     var renameConfirmation: String? = null
@@ -385,4 +407,5 @@ class MoneyManagerContext {
     var pendingAiAction: AiPendingAction? = null
     var aiResultMessage: String? = null
     var aiRedirectState: MoneyManagerState? = null
+    var aiCategoriesCache: List<Category>? = null
 }

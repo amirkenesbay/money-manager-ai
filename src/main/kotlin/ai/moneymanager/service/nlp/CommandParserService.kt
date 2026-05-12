@@ -4,6 +4,7 @@ import ai.moneymanager.chat.config.GeminiProperties
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.domain.model.nlp.BotFunctions
 import ai.moneymanager.domain.model.nlp.arguments.AddExpenseArgs
+import ai.moneymanager.service.AiPromptService
 import ai.moneymanager.domain.model.nlp.arguments.AddIncomeArgs
 import ai.moneymanager.domain.model.nlp.arguments.ChangeCategoryIconArgs
 import ai.moneymanager.domain.model.nlp.arguments.CreateCategoryArgs
@@ -35,7 +36,8 @@ import org.springframework.stereotype.Service
 @Service
 class CommandParserService(
     private val geminiProperties: GeminiProperties,
-    private val argsMapper: GeminiArgsMapper
+    private val argsMapper: GeminiArgsMapper,
+    private val aiPromptService: AiPromptService
 ) {
     private lateinit var client: Client
     private lateinit var config: GenerateContentConfig
@@ -51,8 +53,8 @@ class CommandParserService(
         // Получаем методы из BotFunctions для function calling
         val createGroupMethod = botFunctionMethod(GeminiFunction.CREATE_GROUP, String::class.java)
         val deleteGroupMethod = botFunctionMethod(GeminiFunction.DELETE_GROUP, String::class.java)
-        val addExpenseMethod = botFunctionMethod(GeminiFunction.ADD_EXPENSE, Double::class.java, String::class.java, String::class.java)
-        val addIncomeMethod = botFunctionMethod(GeminiFunction.ADD_INCOME, Double::class.java, String::class.java, String::class.java)
+        val addExpenseMethod = botFunctionMethod(GeminiFunction.ADD_EXPENSE, Double::class.java, String::class.java, String::class.java, String::class.java)
+        val addIncomeMethod = botFunctionMethod(GeminiFunction.ADD_INCOME, Double::class.java, String::class.java, String::class.java, String::class.java)
         val outOfContextMethod = botFunctionMethod(GeminiFunction.OUT_OF_CONTEXT, String::class.java)
 
         // Category functions
@@ -63,7 +65,7 @@ class CommandParserService(
         val deleteAllCategoriesMethod = botFunctionMethod(GeminiFunction.DELETE_ALL_CATEGORIES)
         val listCategoriesMethod = botFunctionMethod(GeminiFunction.LIST_CATEGORIES, String::class.java)
 
-        val systemContent = Content.fromParts(Part.fromText(SYSTEM_PROMPT))
+        val systemContent = Content.fromParts(Part.fromText(aiPromptService.systemPrompt))
 
         config = GenerateContentConfig.builder()
             .tools(
@@ -96,13 +98,10 @@ class CommandParserService(
     private fun botFunctionMethod(function: GeminiFunction, vararg parameterTypes: Class<*>) =
         BotFunctions::class.java.getMethod(function.functionName, *parameterTypes)
 
-    fun parseCommand(userMessage: String): BotCommand {
+    fun parseCommand(userMessage: String, categoryContext: String? = null): BotCommand {
         return try {
-            val response = client.models.generateContent(
-                geminiProperties.model,
-                userMessage,
-                config
-            )
+            val content = contentWithCategoryContext(categoryContext, Part.fromText(userMessage))
+            val response = client.models.generateContent(geminiProperties.model, content, config)
             processResponse(response, userMessage)
         } catch (e: Exception) {
             log.error("CommandParser error: ${e.message}", e)
@@ -111,7 +110,7 @@ class CommandParserService(
     }
 
     /** @param audioBytes байты аудио файла (OGG/OPUS от Telegram) */
-    fun parseVoiceCommand(audioBytes: ByteArray): BotCommand {
+    fun parseVoiceCommand(audioBytes: ByteArray, categoryContext: String? = null): BotCommand {
         return try {
             log.info("🎤 Processing voice message: ${audioBytes.size} bytes")
 
@@ -119,30 +118,31 @@ class CommandParserService(
             val audioPart = Part.builder()
                 .inlineData(
                     Blob.builder()
-                        .mimeType("audio/ogg")
+                        .mimeType(VOICE_MIME_TYPE)
                         .data(audioBytes)
                         .build()
                 )
                 .build()
 
             // Добавляем инструкцию для транскрибации
-            val textPart = Part.fromText("Распознай речь и определи намерение пользователя.")
+            val textPart = Part.fromText(aiPromptService.voiceTranscriptionPrompt)
 
-            val content = Content.builder()
-                .parts(listOf(audioPart, textPart))
-                .build()
+            val content = contentWithCategoryContext(categoryContext, audioPart, textPart)
+            val response = client.models.generateContent(geminiProperties.model, content, config)
 
-            val response = client.models.generateContent(
-                geminiProperties.model,
-                content,
-                config
-            )
-
-            processResponse(response, "[voice message]")
+            processResponse(response, VOICE_MESSAGE_PLACEHOLDER)
         } catch (e: Exception) {
             log.error("Voice CommandParser error: ${e.message}", e)
             classifyError(e)
         }
+    }
+
+    private fun contentWithCategoryContext(categoryContext: String?, vararg parts: Part): Content {
+        val allParts = buildList {
+            if (!categoryContext.isNullOrBlank()) add(Part.fromText(categoryContext))
+            addAll(parts)
+        }
+        return Content.builder().parts(allParts).build()
     }
 
     private fun classifyError(e: Exception): BotCommand {
@@ -202,12 +202,12 @@ class CommandParserService(
 
                 GeminiFunction.ADD_EXPENSE -> {
                     val dto = argsMapper.map<AddExpenseArgs>(args)
-                    BotCommand.AddExpense(dto.amount, dto.category, dto.description)
+                    BotCommand.AddExpense(dto.amount, dto.category, dto.description, dto.suggestedCategoryIcon)
                 }
 
                 GeminiFunction.ADD_INCOME -> {
                     val dto = argsMapper.map<AddIncomeArgs>(args)
-                    BotCommand.AddIncome(dto.amount, dto.category, dto.description)
+                    BotCommand.AddIncome(dto.amount, dto.category, dto.description, dto.suggestedCategoryIcon)
                 }
 
                 GeminiFunction.OUT_OF_CONTEXT -> {
@@ -262,40 +262,8 @@ class CommandParserService(
 
     companion object {
         private const val HTTP_TOO_MANY_REQUESTS = 429
+        private const val VOICE_MIME_TYPE = "audio/ogg"
+        private const val VOICE_MESSAGE_PLACEHOLDER = "[voice message]"
         private val RETRY_AFTER_REGEX = Regex("""Please retry in (\d+(?:\.\d+)?)s""")
-
-        private val SYSTEM_PROMPT = """
-            Ты — ассистент Telegram бота для учета финансов. Твоя задача — понять намерение пользователя и вызвать соответствующую функцию.
-
-            === ГРУППЫ ===
-            - "создай группу друзья", "новая группа семья" → createGroup
-            - "удали группу друзья", "убери группу семья" → deleteGroup
-
-            === ФИНАНСОВЫЕ ОПЕРАЦИИ ===
-            - "купил кофе 500", "потратил 1000 на такси" → addExpense (amount=500, category="Кофе")
-            - "получил зарплату 500000", "подарили 10000" → addIncome
-            - ВСЕГДА вызывай addExpense/addIncome, если в сообщении есть сумма, даже если категория не указана — передавай category=null. Бот сам попросит уточнить категорию. НЕ уходи в outOfContext из-за отсутствия категории.
-            - НЕ угадывай категорию по смыслу, если её нет в сообщении — передавай null
-
-            === КАТЕГОРИИ ===
-            - "создай категорию Кино", "добавь категорию Спорт" → createCategory (name="Кино", type="EXPENSE"/"INCOME", icon=опционально)
-              Тип определяй из контекста: «кино», «такси», «ресторан», «покупки» → EXPENSE; «зарплата», «премия», «фриланс», «подарок» → INCOME
-              Если тип неочевиден — по умолчанию EXPENSE (пользователь увидит и сможет отменить)
-              Если пользователь дал эмодзи — передай как icon. Иначе icon=null
-            - "удали категорию Такси", "убери категорию Кино" → deleteCategory (name, type опционально)
-            - "переименуй Продукты в Еда", "переименуй категорию X в Y" → renameCategory (oldName, newName, type опционально)
-            - "замени иконку Зарплата на 💵", "поставь 🎬 на Кино" → changeCategoryIcon (name, newIcon, type опционально)
-            - "удали все категории", "очисти все категории" → deleteAllCategories (без аргументов)
-            - "покажи категории", "покажи категории расходов", "список доходов" → listCategories (type опционально)
-
-            === ПРАВИЛА ===
-            - Всегда вызывай ровно одну функцию, не отвечай текстом
-            - Никогда не отвечай текстом, всегда function call
-            - Если сообщение не про финансы/группы/категории (математика, погода, общие вопросы) → outOfContext
-            - Если сомневаешься в намерении → outOfContext
-            - Для finance-операций: если сумма не указана → outOfContext
-            - Валюта по умолчанию — тенге (KZT)
-            - type для категорий — строго "EXPENSE" или "INCOME" (заглавные)
-        """.trimIndent()
     }
 }

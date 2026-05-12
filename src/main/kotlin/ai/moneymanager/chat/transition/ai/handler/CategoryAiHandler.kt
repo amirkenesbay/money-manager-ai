@@ -8,12 +8,14 @@ import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.domain.model.nlp.AiPendingAction
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.service.CategoryService
+import ai.moneymanager.service.LocalizationService
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Component
 
 @Component
 class CategoryAiHandler(
-    private val categoryService: CategoryService
+    private val categoryService: CategoryService,
+    private val localizationService: LocalizationService
 ) : AiDomainHandler {
 
     override fun canHandle(command: BotCommand): Boolean = when (command) {
@@ -33,37 +35,39 @@ class CategoryAiHandler(
         command: BotCommand,
         context: MoneyManagerContext
     ): AiPreparationResult {
+        val lang = context.userInfo?.language
         val groupId = context.userInfo?.activeGroupId
-            ?: return AiPreparationResult.ImmediateResult(NO_ACTIVE_GROUP)
+            ?: return AiPreparationResult.ImmediateResult(localizationService.t("ai.error.no_active_group", lang))
 
         return when (command) {
-            is BotCommand.CreateCategory -> prepareCreate(command, groupId)
-            is BotCommand.DeleteCategory -> prepareDelete(command, groupId)
-            is BotCommand.RenameCategory -> prepareRename(command, groupId)
-            is BotCommand.ChangeCategoryIcon -> prepareChangeIcon(command, groupId)
-            is BotCommand.DeleteAllCategories -> prepareDeleteAll(groupId)
+            is BotCommand.CreateCategory -> prepareCreate(command, lang)
+            is BotCommand.DeleteCategory -> prepareDelete(command, groupId, lang)
+            is BotCommand.RenameCategory -> prepareRename(command, groupId, lang)
+            is BotCommand.ChangeCategoryIcon -> prepareChangeIcon(command, groupId, lang)
+            is BotCommand.DeleteAllCategories -> prepareDeleteAll(groupId, lang)
             is BotCommand.ListCategories -> prepareList(command, groupId, context)
-            else -> AiPreparationResult.ImmediateResult(UNKNOWN_COMMAND_MESSAGE)
+            else -> AiPreparationResult.ImmediateResult(localizationService.t("ai.error.unknown_command", lang))
         }
     }
 
     override fun execute(action: AiPendingAction, context: MoneyManagerContext): String {
-        if (action !is AiPendingAction.CategoryAction) return UNKNOWN_COMMAND_MESSAGE
+        val lang = context.userInfo?.language
+        if (action !is AiPendingAction.CategoryAction) return localizationService.t("ai.error.unknown_command", lang)
         return when (action) {
-            is AiPendingAction.CategoryAction.Create -> executeCreate(action, context)
-            is AiPendingAction.CategoryAction.Delete -> executeDelete(action)
-            is AiPendingAction.CategoryAction.Rename -> executeRename(action)
-            is AiPendingAction.CategoryAction.ChangeIcon -> executeChangeIcon(action)
-            is AiPendingAction.CategoryAction.DeleteAll -> executeDeleteAll(action)
+            is AiPendingAction.CategoryAction.Create -> executeCreate(action, context, lang)
+            is AiPendingAction.CategoryAction.Delete -> executeDelete(action, lang)
+            is AiPendingAction.CategoryAction.Rename -> executeRename(action, lang)
+            is AiPendingAction.CategoryAction.ChangeIcon -> executeChangeIcon(action, lang)
+            is AiPendingAction.CategoryAction.DeleteAll -> executeDeleteAll(action, lang)
         }
     }
 
     // ========== PREPARE ==========
 
-    private fun prepareCreate(cmd: BotCommand.CreateCategory, groupId: ObjectId): AiPreparationResult {
+    private fun prepareCreate(cmd: BotCommand.CreateCategory, lang: String?): AiPreparationResult {
         val type = parseCategoryType(cmd.type)
             ?: return AiPreparationResult.ImmediateResult(
-                "❓ Не понял тип категории «${cmd.name}». Уточни: это расход или доход?"
+                localizationService.t("ai.category.create.unknown_type", lang, cmd.name)
             )
         val icon = cmd.icon?.takeIf { isValidIcon(it) }
         return AiPreparationResult.RequiresConfirmation(
@@ -71,51 +75,51 @@ class CategoryAiHandler(
         )
     }
 
-    private fun prepareDelete(cmd: BotCommand.DeleteCategory, groupId: ObjectId): AiPreparationResult {
+    private fun prepareDelete(cmd: BotCommand.DeleteCategory, groupId: ObjectId, lang: String?): AiPreparationResult {
         val type = cmd.type?.let { parseCategoryType(it) }
         val matches = findCategories(groupId, cmd.name, type)
         return when (matches.size) {
-            0 -> AiPreparationResult.ImmediateResult(categoryNotFound(cmd.name))
+            0 -> AiPreparationResult.ImmediateResult(categoryNotFound(cmd.name, lang))
             1 -> AiPreparationResult.RequiresConfirmation(
                 AiPendingAction.CategoryAction.Delete(matches.first())
             )
-            else -> AiPreparationResult.ImmediateResult(ambiguousType(cmd.name))
+            else -> AiPreparationResult.ImmediateResult(ambiguousType(cmd.name, lang))
         }
     }
 
-    private fun prepareRename(cmd: BotCommand.RenameCategory, groupId: ObjectId): AiPreparationResult {
+    private fun prepareRename(cmd: BotCommand.RenameCategory, groupId: ObjectId, lang: String?): AiPreparationResult {
         val type = cmd.type?.let { parseCategoryType(it) }
         val matches = findCategories(groupId, cmd.oldName, type)
         return when (matches.size) {
-            0 -> AiPreparationResult.ImmediateResult(categoryNotFound(cmd.oldName))
+            0 -> AiPreparationResult.ImmediateResult(categoryNotFound(cmd.oldName, lang))
             1 -> AiPreparationResult.RequiresConfirmation(
                 AiPendingAction.CategoryAction.Rename(matches.first(), cmd.newName.trim())
             )
-            else -> AiPreparationResult.ImmediateResult(ambiguousType(cmd.oldName))
+            else -> AiPreparationResult.ImmediateResult(ambiguousType(cmd.oldName, lang))
         }
     }
 
-    private fun prepareChangeIcon(cmd: BotCommand.ChangeCategoryIcon, groupId: ObjectId): AiPreparationResult {
+    private fun prepareChangeIcon(cmd: BotCommand.ChangeCategoryIcon, groupId: ObjectId, lang: String?): AiPreparationResult {
         if (!isValidIcon(cmd.newIcon)) {
             return AiPreparationResult.ImmediateResult(
-                "❌ Иконка должна быть эмодзи (например 🎬, 💵, 🛒). Попробуй ещё раз."
+                localizationService.t("ai.category.change_icon.invalid", lang)
             )
         }
         val type = cmd.type?.let { parseCategoryType(it) }
         val matches = findCategories(groupId, cmd.name, type)
         return when (matches.size) {
-            0 -> AiPreparationResult.ImmediateResult(categoryNotFound(cmd.name))
+            0 -> AiPreparationResult.ImmediateResult(categoryNotFound(cmd.name, lang))
             1 -> AiPreparationResult.RequiresConfirmation(
                 AiPendingAction.CategoryAction.ChangeIcon(matches.first(), cmd.newIcon.trim())
             )
-            else -> AiPreparationResult.ImmediateResult(ambiguousType(cmd.name))
+            else -> AiPreparationResult.ImmediateResult(ambiguousType(cmd.name, lang))
         }
     }
 
-    private fun prepareDeleteAll(groupId: ObjectId): AiPreparationResult {
+    private fun prepareDeleteAll(groupId: ObjectId, lang: String?): AiPreparationResult {
         val all = categoryService.getCategoriesByGroup(groupId)
         if (all.isEmpty()) {
-            return AiPreparationResult.ImmediateResult("📋 У тебя пока нет категорий — удалять нечего.")
+            return AiPreparationResult.ImmediateResult(localizationService.t("ai.category.delete_all.empty", lang))
         }
         return AiPreparationResult.RequiresConfirmation(
             AiPendingAction.CategoryAction.DeleteAll(groupId, all.size)
@@ -140,49 +144,67 @@ class CategoryAiHandler(
 
     private fun executeCreate(
         action: AiPendingAction.CategoryAction.Create,
-        context: MoneyManagerContext
+        context: MoneyManagerContext,
+        lang: String?
     ): String {
-        val groupId = context.userInfo?.activeGroupId ?: return NO_ACTIVE_GROUP
+        val groupId = context.userInfo?.activeGroupId
+            ?: return localizationService.t("ai.error.no_active_group", lang)
         val created = categoryService.createCategory(action.name, action.icon, action.type, groupId)
-            ?: return "❌ Категория «${action.name}» (${typeLabel(action.type)}) уже существует."
+            ?: return localizationService.t(
+                "ai.category.create.duplicate",
+                lang,
+                action.name,
+                typeLabel(action.type, lang)
+            )
         val iconPart = created.icon?.let { "$it " } ?: ""
-        return "✅ Категория $iconPart«${created.name}» (${typeLabel(created.type)}) создана."
+        return localizationService.t(
+            "ai.category.create.success",
+            lang,
+            iconPart,
+            created.name,
+            typeLabel(created.type, lang)
+        )
     }
 
-    private fun executeDelete(action: AiPendingAction.CategoryAction.Delete): String {
+    private fun executeDelete(action: AiPendingAction.CategoryAction.Delete, lang: String?): String {
         val categoryId = action.category.id
-            ?: return "❌ Ошибка: у категории нет ID."
+            ?: return localizationService.t("ai.category.no_id", lang)
         val success = categoryService.deleteCategory(categoryId)
         return if (success) {
             val iconPart = action.category.icon?.let { "$it " } ?: ""
-            "✅ Категория $iconPart«${action.category.name}» удалена."
+            localizationService.t("ai.category.delete.success", lang, iconPart, action.category.name)
         } else {
-            "❌ Не удалось удалить категорию «${action.category.name}»."
+            localizationService.t("ai.category.delete.failed", lang, action.category.name)
         }
     }
 
-    private fun executeRename(action: AiPendingAction.CategoryAction.Rename): String {
+    private fun executeRename(action: AiPendingAction.CategoryAction.Rename, lang: String?): String {
         val categoryId = action.category.id
-            ?: return "❌ Ошибка: у категории нет ID."
+            ?: return localizationService.t("ai.category.no_id", lang)
         val updated = categoryService.updateCategoryName(categoryId, action.newName)
-            ?: return "❌ Не удалось переименовать категорию «${action.category.name}»."
-        return "✅ Переименовано: «${action.category.name}» → «${updated.name}»."
+            ?: return localizationService.t("ai.category.rename.failed", lang, action.category.name)
+        return localizationService.t("ai.category.rename.success", lang, action.category.name, updated.name)
     }
 
-    private fun executeChangeIcon(action: AiPendingAction.CategoryAction.ChangeIcon): String {
+    private fun executeChangeIcon(action: AiPendingAction.CategoryAction.ChangeIcon, lang: String?): String {
         val categoryId = action.category.id
-            ?: return "❌ Ошибка: у категории нет ID."
+            ?: return localizationService.t("ai.category.no_id", lang)
         val updated = categoryService.updateCategoryIcon(categoryId, action.newIcon)
-            ?: return "❌ Не удалось изменить иконку «${action.category.name}»."
-        return "✅ Иконка обновлена: ${updated.icon ?: "—"} «${updated.name}»."
+            ?: return localizationService.t("ai.category.change_icon.failed", lang, action.category.name)
+        return localizationService.t(
+            "ai.category.change_icon.success",
+            lang,
+            updated.icon ?: "—",
+            updated.name
+        )
     }
 
-    private fun executeDeleteAll(action: AiPendingAction.CategoryAction.DeleteAll): String {
+    private fun executeDeleteAll(action: AiPendingAction.CategoryAction.DeleteAll, lang: String?): String {
         val deletedCount = categoryService.deleteAllCategoriesForGroup(action.groupId)
         return if (deletedCount > 0) {
-            "✅ Удалено категорий: $deletedCount."
+            localizationService.t("ai.category.delete_all.success", lang, deletedCount)
         } else {
-            "❌ Не удалось удалить категории."
+            localizationService.t("ai.category.delete_all.failed", lang)
         }
     }
 
@@ -205,28 +227,25 @@ class CategoryAiHandler(
 
     private fun parseCategoryType(raw: String?): CategoryType? {
         if (raw == null) return null
-        return when (raw.trim().uppercase()) {
-            "EXPENSE", "РАСХОД", "РАСХОДЫ" -> CategoryType.EXPENSE
-            "INCOME", "ДОХОД", "ДОХОДЫ" -> CategoryType.INCOME
-            else -> null
+        val normalized = raw.trim().uppercase()
+        runCatching { CategoryType.valueOf(normalized) }.getOrNull()?.let { return it }
+        LocalizationService.SUPPORTED_LANGUAGES.forEach { lang ->
+            CategoryType.entries.forEach { type ->
+                val label = localizationService.t("ai.type.${type.name.lowercase()}", lang).uppercase()
+                if (normalized == label) return type
+            }
         }
+        return null
     }
 
-    private fun typeLabel(type: CategoryType): String = when (type) {
-        CategoryType.EXPENSE -> "Расход"
-        CategoryType.INCOME -> "Доход"
+    private fun typeLabel(type: CategoryType, lang: String?): String = when (type) {
+        CategoryType.EXPENSE -> localizationService.t("ai.type.expense", lang)
+        CategoryType.INCOME -> localizationService.t("ai.type.income", lang)
     }
 
-    private fun categoryNotFound(name: String): String =
-        "❌ Категория «$name» не найдена. Проверь название или посмотри список: «покажи категории»."
+    private fun categoryNotFound(name: String, lang: String?): String =
+        localizationService.t("ai.category.not_found", lang, name)
 
-    private fun ambiguousType(name: String): String =
-        "❓ Найдено несколько категорий «$name» (есть и расход, и доход). Уточни тип."
-
-    companion object {
-        private const val NO_ACTIVE_GROUP =
-            "⚠️ Нет активной группы. Сначала создай группу — «создай группу Семья»."
-        private const val UNKNOWN_COMMAND_MESSAGE =
-            "❌ Не удалось обработать команду. Попробуй переформулировать."
-    }
+    private fun ambiguousType(name: String, lang: String?): String =
+        localizationService.t("ai.category.ambiguous", lang, name)
 }

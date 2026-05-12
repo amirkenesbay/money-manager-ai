@@ -8,9 +8,25 @@ import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
+private data class DefaultCategorySeed(val nameKey: String, val icon: String, val type: CategoryType)
+
+private val DEFAULT_CATEGORY_SEEDS = listOf(
+    DefaultCategorySeed("category.default.expense.groceries.name", "🛒", CategoryType.EXPENSE),
+    DefaultCategorySeed("category.default.expense.transport.name", "🚗", CategoryType.EXPENSE),
+    DefaultCategorySeed("category.default.expense.entertainment.name", "🎬", CategoryType.EXPENSE),
+    DefaultCategorySeed("category.default.expense.health.name", "💊", CategoryType.EXPENSE),
+    DefaultCategorySeed("category.default.expense.clothes.name", "👕", CategoryType.EXPENSE),
+    DefaultCategorySeed("category.default.expense.education.name", "📚", CategoryType.EXPENSE),
+    DefaultCategorySeed("category.default.expense.other.name", "📦", CategoryType.EXPENSE),
+    DefaultCategorySeed("category.default.income.salary.name", "💰", CategoryType.INCOME),
+    DefaultCategorySeed("category.default.income.gifts.name", "🎁", CategoryType.INCOME),
+    DefaultCategorySeed("category.default.income.other.name", "📦", CategoryType.INCOME),
+)
+
 @Service
 class CategoryService(
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val localizationService: LocalizationService
 ) {
 
     private val log = LoggerFactory.getLogger(CategoryService::class.java)
@@ -111,24 +127,16 @@ class CategoryService(
         return saved.count()
     }
 
-    fun createDefaultCategories(groupId: ObjectId) {
-        val defaultExpenseCategories = listOf(
-            CategoryEntity(name = "Продукты", icon = "🛒", type = CategoryType.EXPENSE, groupId = groupId),
-            CategoryEntity(name = "Транспорт", icon = "🚗", type = CategoryType.EXPENSE, groupId = groupId),
-            CategoryEntity(name = "Развлечения", icon = "🎬", type = CategoryType.EXPENSE, groupId = groupId),
-            CategoryEntity(name = "Здоровье", icon = "💊", type = CategoryType.EXPENSE, groupId = groupId),
-            CategoryEntity(name = "Одежда", icon = "👕", type = CategoryType.EXPENSE, groupId = groupId),
-            CategoryEntity(name = "Образование", icon = "📚", type = CategoryType.EXPENSE, groupId = groupId),
-            CategoryEntity(name = "Другое", icon = "📦", type = CategoryType.EXPENSE, groupId = groupId)
-        )
-
-        val defaultIncomeCategories = listOf(
-            CategoryEntity(name = "Зарплата", icon = "💰", type = CategoryType.INCOME, groupId = groupId),
-            CategoryEntity(name = "Подарки", icon = "🎁", type = CategoryType.INCOME, groupId = groupId),
-            CategoryEntity(name = "Другое", icon = "📦", type = CategoryType.INCOME, groupId = groupId)
-        )
-
-        categoryRepository.saveAll(defaultExpenseCategories + defaultIncomeCategories)
+    fun createDefaultCategories(groupId: ObjectId, language: String) {
+        val entities = DEFAULT_CATEGORY_SEEDS.map { seed ->
+            CategoryEntity(
+                name = localizationService.t(seed.nameKey, language),
+                icon = seed.icon,
+                type = seed.type,
+                groupId = groupId
+            )
+        }
+        categoryRepository.saveAll(entities)
     }
 
     private fun mapToModel(entity: CategoryEntity): Category {

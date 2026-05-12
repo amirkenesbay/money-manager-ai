@@ -612,6 +612,21 @@ These features will add new states, entities (Transaction), and extend the NLP c
 
 ## Clean Code Principles
 
+> **Mandatory for Claude — non-negotiable, on every task without exception.**
+> SOLID, DRY, KISS, YAGNI and the rest of the principles below are not aspirational guidelines — they are a hard contract. Every code change Claude produces must satisfy them. "I will refactor later" is forbidden; extraction and dedup happen in the same change that introduces the duplication.
+
+### Mandatory pre-edit and pre-commit duplicate scan (run every time)
+
+Before writing new code, and again before announcing a change is ready / staging it for commit, Claude MUST run this explicit checklist:
+
+1. **Grep before writing.** For any new transition / reply / handler / service method, grep the touched layer for similar function bodies, identical literal strings, or duplicated control flow. If similar code exists — parameterize and reuse it; do not copy.
+2. **Compare new code to its siblings.** When adding two `data class` variants of the same sealed parent, two `execute*`/`parse*`/`handle*` methods, or two transitions/replies that differ only by `state`/`type`/`event` — extract the shared body into a private helper before staging. Two near-identical 9-arg service calls in two methods = a refactor missed, not "acceptable".
+3. **Hunt repeated literals.** Any string / number / emoji / format pattern that appears in two or more places goes into `chat/reply/common/FormatHelpers.kt` (or the appropriate enum/object) in the same change. Inline duplication of icons (`"🛒 "`), wrappers (`" (…)"`), or i18n keys is forbidden.
+4. **Pre-commit `git diff --cached` re-read.** Before reporting a task as done, re-read the staged diff hunk-by-hunk specifically looking for: repeated blocks, identical save/load calls, parallel `when` branches that share most of their body, near-duplicate `describe()` / `successMessage()` / `executeX()` methods. Anything found must be fixed in the same commit.
+5. **Kill YAGNI wrappers.** Single-line forwarders like `private fun renderX(x: X) = x.name` are dead weight — inline them. Do not introduce an abstraction layer for a future need that does not exist yet.
+
+A failed scan blocks the commit. If Claude is asked to commit and the scan surfaces duplication, the duplication is fixed first; only then does the commit proceed.
+
 All code must strictly follow these principles:
 
 ### SOLID
