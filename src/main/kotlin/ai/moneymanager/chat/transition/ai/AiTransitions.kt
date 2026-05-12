@@ -5,6 +5,7 @@ import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.service.AiPromptService
+import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.GeminiService
 import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.TelegramFileService
@@ -15,6 +16,7 @@ import kz.rmr.chatmachinist.model.EventType
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiDialogTransitions(
     commandParserService: CommandParserService,
     telegramFileService: TelegramFileService,
+    categoryService: CategoryService,
     geminiService: GeminiService,
     localizationService: LocalizationService,
     aiPromptService: AiPromptService,
@@ -45,7 +47,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiDialogTransitions(
             }
         }
         action {
-            processAiText(commandParserService, telegramFileService, domainHandlers, geminiService, localizationService, aiPromptService)
+            processAiText(commandParserService, telegramFileService, categoryService, domainHandlers, geminiService, localizationService, aiPromptService)
         }
         then {
             to = MoneyManagerState.AI_MODE
@@ -61,7 +63,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiDialogTransitions(
             eventType = EventType.VOICE
         }
         action {
-            processAiVoice(commandParserService, telegramFileService, domainHandlers, geminiService, localizationService, aiPromptService)
+            processAiVoice(commandParserService, telegramFileService, categoryService, domainHandlers, geminiService, localizationService, aiPromptService)
         }
         then {
             to = MoneyManagerState.AI_MODE
@@ -81,7 +83,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiDialogTransitions(
             }
         }
         action {
-            processAiText(commandParserService, telegramFileService, domainHandlers, geminiService, localizationService, aiPromptService)
+            processAiText(commandParserService, telegramFileService, categoryService, domainHandlers, geminiService, localizationService, aiPromptService)
         }
         then {
             to = MoneyManagerState.AI_MODE
@@ -97,7 +99,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiDialogTransitions(
             eventType = EventType.VOICE
         }
         action {
-            processAiVoice(commandParserService, telegramFileService, domainHandlers, geminiService, localizationService, aiPromptService)
+            processAiVoice(commandParserService, telegramFileService, categoryService, domainHandlers, geminiService, localizationService, aiPromptService)
         }
         then {
             to = MoneyManagerState.AI_MODE

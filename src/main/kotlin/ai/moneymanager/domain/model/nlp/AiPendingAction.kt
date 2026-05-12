@@ -1,6 +1,8 @@
 package ai.moneymanager.domain.model.nlp
 
 import ai.moneymanager.chat.reply.common.formatAmount
+import ai.moneymanager.chat.reply.common.formatDescriptionSuffix
+import ai.moneymanager.chat.reply.common.formatIconPrefix
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.service.LocalizationService
@@ -93,15 +95,62 @@ sealed class AiPendingAction {
             val description: String?,
             val operationDate: LocalDate
         ) : TransactionAction() {
-            override fun describe(localizationService: LocalizationService, language: String?): String {
-                val iconPart = category.icon?.let { "$it " } ?: ""
-                val descPart = description?.takeIf { it.isNotBlank() }?.let { " ($it)" } ?: ""
-                val amountText = formatAmount(BigDecimal.valueOf(amount))
-                val key = if (type == CategoryType.EXPENSE)
-                    "ai.confirm.transaction.add.expense"
-                else
-                    "ai.confirm.transaction.add.income"
-                return localizationService.t(key, language, iconPart, category.name, amountText, descPart)
+            override fun describe(localizationService: LocalizationService, language: String?): String =
+                renderTransactionConfirmation(
+                    localizationService, language, type, amount, description,
+                    categoryName = category.name,
+                    icon = category.icon,
+                    expenseKey = CONFIRM_ADD_EXPENSE_KEY,
+                    incomeKey = CONFIRM_ADD_INCOME_KEY
+                )
+        }
+
+        data class AddWithNewCategory(
+            val groupId: ObjectId,
+            val creatorId: Long,
+            val type: CategoryType,
+            val amount: Double,
+            val suggestedCategoryName: String,
+            val suggestedCategoryIcon: String,
+            val description: String?,
+            val operationDate: LocalDate
+        ) : TransactionAction() {
+            override fun describe(localizationService: LocalizationService, language: String?): String =
+                renderTransactionConfirmation(
+                    localizationService, language, type, amount, description,
+                    categoryName = suggestedCategoryName,
+                    icon = suggestedCategoryIcon,
+                    expenseKey = CONFIRM_ADD_WITH_NEW_CATEGORY_EXPENSE_KEY,
+                    incomeKey = CONFIRM_ADD_WITH_NEW_CATEGORY_INCOME_KEY
+                )
+        }
+
+        companion object {
+            private const val CONFIRM_ADD_EXPENSE_KEY = "ai.confirm.transaction.add.expense"
+            private const val CONFIRM_ADD_INCOME_KEY = "ai.confirm.transaction.add.income"
+            private const val CONFIRM_ADD_WITH_NEW_CATEGORY_EXPENSE_KEY = "ai.confirm.transaction.add_with_new_category.expense"
+            private const val CONFIRM_ADD_WITH_NEW_CATEGORY_INCOME_KEY = "ai.confirm.transaction.add_with_new_category.income"
+
+            private fun renderTransactionConfirmation(
+                localizationService: LocalizationService,
+                language: String?,
+                type: CategoryType,
+                amount: Double,
+                description: String?,
+                categoryName: String,
+                icon: String?,
+                expenseKey: String,
+                incomeKey: String
+            ): String {
+                val key = if (type == CategoryType.EXPENSE) expenseKey else incomeKey
+                return localizationService.t(
+                    key,
+                    language,
+                    formatIconPrefix(icon),
+                    categoryName,
+                    formatAmount(BigDecimal.valueOf(amount)),
+                    formatDescriptionSuffix(description)
+                )
             }
         }
     }

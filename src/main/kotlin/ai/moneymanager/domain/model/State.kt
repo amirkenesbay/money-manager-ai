@@ -401,4 +401,5 @@ class MoneyManagerContext {
     var pendingAiAction: AiPendingAction? = null
     var aiResultMessage: String? = null
     var aiRedirectState: MoneyManagerState? = null
+    var aiCategoriesCache: List<Category>? = null
 }

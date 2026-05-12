@@ -1,7 +1,12 @@
 package ai.moneymanager.chat.transition.ai.handler
 
+import ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.chat.reply.common.formatAmount
+import ai.moneymanager.chat.reply.common.formatDescriptionSuffix
+import ai.moneymanager.chat.reply.common.formatIconPrefix
+import ai.moneymanager.chat.transition.ai.extractLeadingNonLetters
 import ai.moneymanager.chat.transition.ai.matchesEntityName
+import ai.moneymanager.chat.transition.ai.stripLeadingNonLetters
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.MoneyManagerContext
@@ -14,6 +19,11 @@ import org.bson.types.ObjectId
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.time.LocalDate
+
+private const val SUCCESS_KEY_EXPENSE = "ai.transaction.add.success.expense"
+private const val SUCCESS_KEY_INCOME = "ai.transaction.add.success.income"
+private const val SUCCESS_NEW_CATEGORY_SUFFIX_KEY = "ai.transaction.add.success.new_category_suffix"
+private const val NO_CATEGORY_ID_KEY = "ai.category.no_id"
 
 @Component
 class TransactionAiHandler(
@@ -43,10 +53,14 @@ class TransactionAiHandler(
 
         return when (command) {
             is BotCommand.AddExpense -> prepareAdd(
-                groupId, creatorId, CategoryType.EXPENSE, command.amount, command.category, command.description, lang
+                groupId, creatorId, CategoryType.EXPENSE, command.amount,
+                command.category, command.description, command.suggestedCategoryIcon,
+                context.aiCategoriesCache, lang
             )
             is BotCommand.AddIncome -> prepareAdd(
-                groupId, creatorId, CategoryType.INCOME, command.amount, command.category, command.description, lang
+                groupId, creatorId, CategoryType.INCOME, command.amount,
+                command.category, command.description, command.suggestedCategoryIcon,
+                context.aiCategoriesCache, lang
             )
             else -> AiPreparationResult.ImmediateResult(localizationService.t("ai.error.unknown_command", lang))
         }
@@ -57,6 +71,7 @@ class TransactionAiHandler(
         if (action !is AiPendingAction.TransactionAction) return localizationService.t("ai.error.unknown_command", lang)
         return when (action) {
             is AiPendingAction.TransactionAction.Add -> executeAdd(action, lang)
+            is AiPendingAction.TransactionAction.AddWithNewCategory -> executeAddWithNewCategory(action, lang)
         }
     }
 
@@ -67,6 +82,8 @@ class TransactionAiHandler(
         amount: Double,
         categoryName: String?,
         description: String?,
+        suggestedCategoryIcon: String?,
+        cachedCategories: List<Category>?,
         lang: String?
     ): AiPreparationResult {
         if (amount <= 0) {
@@ -76,18 +93,39 @@ class TransactionAiHandler(
             return AiPreparationResult.ImmediateResult(categoryMissing(type, lang))
         }
 
-        val available = categoryService.getCategoriesByGroupAndType(groupId, type)
+        val available = cachedCategories?.filter { it.type == type }
+            ?: categoryService.getCategoriesByGroupAndType(groupId, type)
         val matches = available.filter { matchesEntityName(it.name, categoryName) }
-        return when (matches.size) {
-            0 -> AiPreparationResult.ImmediateResult(categoryNotFound(categoryName, available, lang))
-            1 -> AiPreparationResult.RequiresConfirmation(
+        val trimmedDescription = description?.trim()?.takeIf { it.isNotEmpty() }
+        val cleanCategoryName = stripLeadingNonLetters(categoryName).takeIf { it.isNotBlank() }
+            ?: return AiPreparationResult.ImmediateResult(categoryMissing(type, lang))
+        val effectiveIcon = suggestedCategoryIcon
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+            ?: extractLeadingNonLetters(categoryName)
+            ?: DEFAULT_CATEGORY_ICON
+        val resolved = resolveSingleMatch(matches, categoryName, cleanCategoryName)
+        return when {
+            resolved != null -> AiPreparationResult.RequiresConfirmation(
                 AiPendingAction.TransactionAction.Add(
                     groupId = groupId,
                     creatorId = creatorId,
                     type = type,
                     amount = amount,
-                    category = matches.first(),
-                    description = description?.trim()?.takeIf { it.isNotEmpty() },
+                    category = resolved,
+                    description = trimmedDescription,
+                    operationDate = LocalDate.now()
+                )
+            )
+            matches.isEmpty() -> AiPreparationResult.RequiresConfirmation(
+                AiPendingAction.TransactionAction.AddWithNewCategory(
+                    groupId = groupId,
+                    creatorId = creatorId,
+                    type = type,
+                    amount = amount,
+                    suggestedCategoryName = cleanCategoryName,
+                    suggestedCategoryIcon = effectiveIcon,
+                    description = trimmedDescription,
                     operationDate = LocalDate.now()
                 )
             )
@@ -97,28 +135,114 @@ class TransactionAiHandler(
         }
     }
 
-    private fun executeAdd(action: AiPendingAction.TransactionAction.Add, lang: String?): String {
-        val categoryId = action.category.id
-            ?: return localizationService.t("ai.category.no_id", lang)
-        financeOperationService.save(
+    private fun executeAdd(action: AiPendingAction.TransactionAction.Add, lang: String?): String =
+        saveAndReport(
             groupId = action.groupId,
             creatorId = action.creatorId,
             type = action.type,
             amount = action.amount,
-            categoryId = categoryId,
-            categoryName = action.category.name,
-            categoryIcon = action.category.icon,
+            category = action.category,
             operationDate = action.operationDate,
-            description = action.description
+            description = action.description,
+            isNewCategory = false,
+            lang = lang
         )
-        val iconPart = action.category.icon?.let { "$it " } ?: ""
-        val descPart = action.description?.let { " ($it)" } ?: ""
-        val amountText = formatAmount(BigDecimal.valueOf(action.amount))
-        val key = if (action.type == CategoryType.EXPENSE)
-            "ai.transaction.add.success.expense"
-        else
-            "ai.transaction.add.success.income"
-        return localizationService.t(key, lang, iconPart, action.category.name, amountText, descPart)
+
+    private fun executeAddWithNewCategory(
+        action: AiPendingAction.TransactionAction.AddWithNewCategory,
+        lang: String?
+    ): String {
+        val (category, isNew) = ensureCategory(action) ?: return localizationService.t(NO_CATEGORY_ID_KEY, lang)
+        return saveAndReport(
+            groupId = action.groupId,
+            creatorId = action.creatorId,
+            type = action.type,
+            amount = action.amount,
+            category = category,
+            operationDate = action.operationDate,
+            description = action.description,
+            isNewCategory = isNew,
+            lang = lang
+        )
+    }
+
+    private fun saveAndReport(
+        groupId: ObjectId,
+        creatorId: Long,
+        type: CategoryType,
+        amount: Double,
+        category: Category,
+        operationDate: LocalDate,
+        description: String?,
+        isNewCategory: Boolean,
+        lang: String?
+    ): String {
+        val categoryId = category.id ?: return localizationService.t(NO_CATEGORY_ID_KEY, lang)
+        financeOperationService.save(
+            groupId = groupId,
+            creatorId = creatorId,
+            type = type,
+            amount = amount,
+            categoryId = categoryId,
+            categoryName = category.name,
+            categoryIcon = category.icon,
+            operationDate = operationDate,
+            description = description
+        )
+        return successMessage(type, category, amount, description, lang, isNewCategory)
+    }
+
+    private fun ensureCategory(
+        action: AiPendingAction.TransactionAction.AddWithNewCategory
+    ): Pair<Category, Boolean>? {
+        val created = categoryService.createCategory(
+            name = action.suggestedCategoryName,
+            icon = action.suggestedCategoryIcon,
+            type = action.type,
+            groupId = action.groupId
+        )
+        if (created != null) return created to true
+        val existing = categoryService.getCategoriesByGroupAndType(action.groupId, action.type)
+            .firstOrNull { matchesEntityName(it.name, action.suggestedCategoryName) }
+            ?: return null
+        return existing to false
+    }
+
+    private fun successMessage(
+        type: CategoryType,
+        category: Category,
+        amount: Double,
+        description: String?,
+        lang: String?,
+        isNewCategory: Boolean
+    ): String {
+        val key = if (type == CategoryType.EXPENSE) SUCCESS_KEY_EXPENSE else SUCCESS_KEY_INCOME
+        val baseMessage = localizationService.t(
+            key,
+            lang,
+            formatIconPrefix(category.icon),
+            category.name,
+            formatAmount(BigDecimal.valueOf(amount)),
+            formatDescriptionSuffix(description)
+        )
+        if (!isNewCategory) return baseMessage
+        return baseMessage + localizationService.t(SUCCESS_NEW_CATEGORY_SUFFIX_KEY, lang)
+    }
+
+    private fun resolveSingleMatch(
+        matches: List<Category>,
+        rawSearch: String,
+        cleanSearch: String
+    ): Category? {
+        if (matches.size <= 1) return matches.firstOrNull()
+        matches.firstOrNull { it.name.equals(cleanSearch, ignoreCase = true) }
+            ?.let { return it }
+        val leadingIcon = extractLeadingNonLetters(rawSearch)
+        if (leadingIcon != null) {
+            matches.firstOrNull { it.icon == leadingIcon }
+                ?.let { return it }
+        }
+        return null
     }
 
     private fun categoryMissing(type: CategoryType, lang: String?): String {
@@ -127,13 +251,5 @@ class TransactionAiHandler(
         else
             "ai.transaction.category_missing.income"
         return localizationService.t(key, lang)
-    }
-
-    private fun categoryNotFound(name: String, available: List<Category>, lang: String?): String {
-        if (available.isEmpty()) {
-            return localizationService.t("ai.transaction.category_not_found_empty", lang, name)
-        }
-        val list = available.joinToString(", ") { it.name }
-        return localizationService.t("ai.transaction.category_not_found", lang, name, list)
     }
 }

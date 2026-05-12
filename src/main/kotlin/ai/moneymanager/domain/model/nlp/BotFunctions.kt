@@ -18,23 +18,25 @@ object BotFunctions {
     /**
      * Add an expense (money spent).
      * @param amount expense amount in tenge (KZT)
-     * @param category expense category, in the user's original language (e.g. "Groceries", "Продукты", "Азық-түлік")
+     * @param category expense category, in the user's original language. If a semantically matching category exists in the user's active categories list, pass its EXACT name. Otherwise propose a generalized name (e.g. "Продукты" instead of "Кола", "Транспорт" instead of "Бензин").
      * @param description short description of what was bought
+     * @param suggestedCategoryIcon emoji to use ONLY when the proposed category does not yet exist in the user's active list and the bot will need to create it. One emoji that fits the generalized category (e.g. "🛒" for groceries, "🚗" for transport). Pass null when reusing an existing category.
      * @return JSON with the operation result
      */
     @JvmStatic
-    fun addExpense(amount: Double, category: String?, description: String?) {
+    fun addExpense(amount: Double, category: String?, description: String?, suggestedCategoryIcon: String?) {
     }
 
     /**
      * Add an income (money received).
      * @param amount income amount in tenge (KZT)
-     * @param category income category, in the user's original language (e.g. "Salary", "Зарплата", "Жалақы")
+     * @param category income category, in the user's original language. If a semantically matching category exists in the user's active categories list, pass its EXACT name. Otherwise propose a generalized name.
      * @param description short description of where the money came from
+     * @param suggestedCategoryIcon emoji to use ONLY when the proposed category does not yet exist in the user's active list. Pass null when reusing an existing category.
      * @return JSON with the operation result
      */
     @JvmStatic
-    fun addIncome(amount: Double, category: String?, description: String?) {
+    fun addIncome(amount: Double, category: String?, description: String?, suggestedCategoryIcon: String?) {
     }
 
     /**

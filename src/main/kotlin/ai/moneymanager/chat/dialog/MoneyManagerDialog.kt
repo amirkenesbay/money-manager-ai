@@ -61,7 +61,7 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
         categoryDialogTransitions(categoryService, groupService, localizationService)
         financeDialogTransitions(categoryService, financeOperationService, financeHistoryService, financeReportService, userInfoService, groupService)
         notificationDialogTransitions(notificationService, userInfoService)
-        aiDialogTransitions(commandParserService, telegramFileService, geminiService, localizationService, aiPromptService, aiDomainHandlers)
+        aiDialogTransitions(commandParserService, telegramFileService, categoryService, geminiService, localizationService, aiPromptService, aiDomainHandlers)
         // Legacy NLP disabled for now
         // nlpDialogTransitions(commandParserService, groupService, userInfoService, telegramFileService, geminiService)
     }

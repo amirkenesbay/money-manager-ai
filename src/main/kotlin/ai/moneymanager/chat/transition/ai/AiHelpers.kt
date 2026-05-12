@@ -2,11 +2,13 @@ package ai.moneymanager.chat.transition.ai
 
 import ai.moneymanager.chat.transition.ai.handler.AiDomainHandler
 import ai.moneymanager.chat.transition.ai.handler.AiPreparationResult
+import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.service.AiFeedback
 import ai.moneymanager.service.AiPromptService
+import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.GeminiService
 import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.TelegramFileService
@@ -22,9 +24,10 @@ internal val aiLog = LoggerFactory.getLogger("AiTransitions")
 internal const val MAX_VOICE_DURATION_SECONDS = 180
 
 fun matchesEntityName(entityName: String, searchName: String): Boolean {
-    val normalizedEntity = entityName.lowercase().trim()
-    val normalizedSearch = searchName.lowercase().trim()
+    val normalizedEntity = stripLeadingNonLetters(entityName).lowercase()
+    val normalizedSearch = stripLeadingNonLetters(searchName).lowercase()
 
+    if (normalizedEntity.isEmpty() || normalizedSearch.isEmpty()) return false
     if (normalizedEntity == normalizedSearch) return true
 
     val translitEntity = Junidecode.unidecode(normalizedEntity).lowercase()
@@ -33,16 +36,40 @@ fun matchesEntityName(entityName: String, searchName: String): Boolean {
     return translitEntity == translitSearch
 }
 
+internal fun stripLeadingNonLetters(value: String): String {
+    val trimmed = value.trim()
+    return trimmed.substring(indexOfFirstLetterOrDigit(trimmed)).trimStart()
+}
+
+internal fun extractLeadingNonLetters(value: String): String? {
+    val trimmed = value.trim()
+    val cut = indexOfFirstLetterOrDigit(trimmed)
+    if (cut == 0) return null
+    return trimmed.substring(0, cut).trim().takeIf { it.isNotEmpty() }
+}
+
+private fun indexOfFirstLetterOrDigit(value: String): Int {
+    var index = 0
+    while (index < value.length) {
+        val codePoint = value.codePointAt(index)
+        if (Character.isLetterOrDigit(codePoint)) return index
+        index += Character.charCount(codePoint)
+    }
+    return value.length
+}
+
 internal fun clearAiContext(context: MoneyManagerContext) {
     context.pendingAiAction = null
     context.aiResultMessage = null
     context.aiRedirectState = null
+    context.aiCategoriesCache = null
 }
 
 internal fun handleAiText(
     update: Update,
     context: MoneyManagerContext,
     commandParserService: CommandParserService,
+    categoryService: CategoryService,
     domainHandlers: List<AiDomainHandler>,
     geminiService: GeminiService,
     localizationService: LocalizationService,
@@ -53,7 +80,8 @@ internal fun handleAiText(
     val lang = context.userInfo?.language
     aiLog.info("🧠 AI processing text: $userMessage")
     feedback.show(localizationService.t("ai.feedback.thinking", lang))
-    val command = commandParserService.parseCommand(userMessage)
+    val categoryContext = loadAndCacheCategoryContext(context, categoryService, aiPromptService)
+    val command = commandParserService.parseCommand(userMessage, categoryContext)
     showErrorStageIfNeeded(command, feedback, localizationService, lang)
     processAiCommand(command, context, domainHandlers, geminiService, localizationService, aiPromptService)
 }
@@ -63,6 +91,7 @@ internal fun handleAiVoice(
     context: MoneyManagerContext,
     commandParserService: CommandParserService,
     telegramFileService: TelegramFileService,
+    categoryService: CategoryService,
     domainHandlers: List<AiDomainHandler>,
     geminiService: GeminiService,
     localizationService: LocalizationService,
@@ -88,7 +117,8 @@ internal fun handleAiVoice(
     }
 
     feedback.show(localizationService.t("ai.feedback.voice_processing", lang))
-    val command = commandParserService.parseVoiceCommand(audioBytes)
+    val categoryContext = loadAndCacheCategoryContext(context, categoryService, aiPromptService)
+    val command = commandParserService.parseVoiceCommand(audioBytes, categoryContext)
     showErrorStageIfNeeded(command, feedback, localizationService, lang)
     processAiCommand(command, context, domainHandlers, geminiService, localizationService, aiPromptService)
 }
@@ -96,6 +126,7 @@ internal fun handleAiVoice(
 internal fun ActionContext<MoneyManagerState, MoneyManagerContext>.processAiText(
     commandParserService: CommandParserService,
     telegramFileService: TelegramFileService,
+    categoryService: CategoryService,
     domainHandlers: List<AiDomainHandler>,
     geminiService: GeminiService,
     localizationService: LocalizationService,
@@ -103,13 +134,14 @@ internal fun ActionContext<MoneyManagerState, MoneyManagerContext>.processAiText
 ) {
     val chatId = update.message?.chatId ?: return
     telegramFileService.withAiFeedback(chatId) { feedback ->
-        handleAiText(update, context, commandParserService, domainHandlers, geminiService, localizationService, aiPromptService, feedback)
+        handleAiText(update, context, commandParserService, categoryService, domainHandlers, geminiService, localizationService, aiPromptService, feedback)
     }
 }
 
 internal fun ActionContext<MoneyManagerState, MoneyManagerContext>.processAiVoice(
     commandParserService: CommandParserService,
     telegramFileService: TelegramFileService,
+    categoryService: CategoryService,
     domainHandlers: List<AiDomainHandler>,
     geminiService: GeminiService,
     localizationService: LocalizationService,
@@ -122,6 +154,7 @@ internal fun ActionContext<MoneyManagerState, MoneyManagerContext>.processAiVoic
             context,
             commandParserService,
             telegramFileService,
+            categoryService,
             domainHandlers,
             geminiService,
             localizationService,
@@ -129,6 +162,20 @@ internal fun ActionContext<MoneyManagerState, MoneyManagerContext>.processAiVoic
             feedback
         )
     }
+}
+
+private fun loadAndCacheCategoryContext(
+    context: MoneyManagerContext,
+    categoryService: CategoryService,
+    aiPromptService: AiPromptService
+): String? {
+    val groupId = context.userInfo?.activeGroupId ?: run {
+        context.aiCategoriesCache = null
+        return null
+    }
+    val categories: List<Category> = categoryService.getCategoriesByGroup(groupId)
+    context.aiCategoriesCache = categories
+    return aiPromptService.categoryContextPreamble(categories)
 }
 
 private fun showErrorStageIfNeeded(

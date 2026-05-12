@@ -53,8 +53,8 @@ class CommandParserService(
         // Получаем методы из BotFunctions для function calling
         val createGroupMethod = botFunctionMethod(GeminiFunction.CREATE_GROUP, String::class.java)
         val deleteGroupMethod = botFunctionMethod(GeminiFunction.DELETE_GROUP, String::class.java)
-        val addExpenseMethod = botFunctionMethod(GeminiFunction.ADD_EXPENSE, Double::class.java, String::class.java, String::class.java)
-        val addIncomeMethod = botFunctionMethod(GeminiFunction.ADD_INCOME, Double::class.java, String::class.java, String::class.java)
+        val addExpenseMethod = botFunctionMethod(GeminiFunction.ADD_EXPENSE, Double::class.java, String::class.java, String::class.java, String::class.java)
+        val addIncomeMethod = botFunctionMethod(GeminiFunction.ADD_INCOME, Double::class.java, String::class.java, String::class.java, String::class.java)
         val outOfContextMethod = botFunctionMethod(GeminiFunction.OUT_OF_CONTEXT, String::class.java)
 
         // Category functions
@@ -98,13 +98,10 @@ class CommandParserService(
     private fun botFunctionMethod(function: GeminiFunction, vararg parameterTypes: Class<*>) =
         BotFunctions::class.java.getMethod(function.functionName, *parameterTypes)
 
-    fun parseCommand(userMessage: String): BotCommand {
+    fun parseCommand(userMessage: String, categoryContext: String? = null): BotCommand {
         return try {
-            val response = client.models.generateContent(
-                geminiProperties.model,
-                userMessage,
-                config
-            )
+            val content = contentWithCategoryContext(categoryContext, Part.fromText(userMessage))
+            val response = client.models.generateContent(geminiProperties.model, content, config)
             processResponse(response, userMessage)
         } catch (e: Exception) {
             log.error("CommandParser error: ${e.message}", e)
@@ -113,7 +110,7 @@ class CommandParserService(
     }
 
     /** @param audioBytes байты аудио файла (OGG/OPUS от Telegram) */
-    fun parseVoiceCommand(audioBytes: ByteArray): BotCommand {
+    fun parseVoiceCommand(audioBytes: ByteArray, categoryContext: String? = null): BotCommand {
         return try {
             log.info("🎤 Processing voice message: ${audioBytes.size} bytes")
 
@@ -121,7 +118,7 @@ class CommandParserService(
             val audioPart = Part.builder()
                 .inlineData(
                     Blob.builder()
-                        .mimeType("audio/ogg")
+                        .mimeType(VOICE_MIME_TYPE)
                         .data(audioBytes)
                         .build()
                 )
@@ -130,21 +127,22 @@ class CommandParserService(
             // Добавляем инструкцию для транскрибации
             val textPart = Part.fromText(aiPromptService.voiceTranscriptionPrompt)
 
-            val content = Content.builder()
-                .parts(listOf(audioPart, textPart))
-                .build()
+            val content = contentWithCategoryContext(categoryContext, audioPart, textPart)
+            val response = client.models.generateContent(geminiProperties.model, content, config)
 
-            val response = client.models.generateContent(
-                geminiProperties.model,
-                content,
-                config
-            )
-
-            processResponse(response, "[voice message]")
+            processResponse(response, VOICE_MESSAGE_PLACEHOLDER)
         } catch (e: Exception) {
             log.error("Voice CommandParser error: ${e.message}", e)
             classifyError(e)
         }
+    }
+
+    private fun contentWithCategoryContext(categoryContext: String?, vararg parts: Part): Content {
+        val allParts = buildList {
+            if (!categoryContext.isNullOrBlank()) add(Part.fromText(categoryContext))
+            addAll(parts)
+        }
+        return Content.builder().parts(allParts).build()
     }
 
     private fun classifyError(e: Exception): BotCommand {
@@ -204,12 +202,12 @@ class CommandParserService(
 
                 GeminiFunction.ADD_EXPENSE -> {
                     val dto = argsMapper.map<AddExpenseArgs>(args)
-                    BotCommand.AddExpense(dto.amount, dto.category, dto.description)
+                    BotCommand.AddExpense(dto.amount, dto.category, dto.description, dto.suggestedCategoryIcon)
                 }
 
                 GeminiFunction.ADD_INCOME -> {
                     val dto = argsMapper.map<AddIncomeArgs>(args)
-                    BotCommand.AddIncome(dto.amount, dto.category, dto.description)
+                    BotCommand.AddIncome(dto.amount, dto.category, dto.description, dto.suggestedCategoryIcon)
                 }
 
                 GeminiFunction.OUT_OF_CONTEXT -> {
@@ -264,6 +262,8 @@ class CommandParserService(
 
     companion object {
         private const val HTTP_TOO_MANY_REQUESTS = 429
+        private const val VOICE_MIME_TYPE = "audio/ogg"
+        private const val VOICE_MESSAGE_PLACEHOLDER = "[voice message]"
         private val RETRY_AFTER_REGEX = Regex("""Please retry in (\d+(?:\.\d+)?)s""")
     }
 }
