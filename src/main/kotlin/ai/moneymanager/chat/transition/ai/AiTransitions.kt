@@ -1,26 +1,17 @@
 package ai.moneymanager.chat.transition.ai
 
-import ai.moneymanager.chat.transition.ai.handler.AiDomainHandler
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
-import ai.moneymanager.service.AiPromptService
-import ai.moneymanager.service.CategoryService
-import ai.moneymanager.service.GeminiService
+import ai.moneymanager.domain.model.nlp.AiPendingAction
 import ai.moneymanager.service.LocalizationService
-import ai.moneymanager.service.TelegramFileService
-import ai.moneymanager.service.nlp.CommandParserService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType
 
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiDialogTransitions(
-    commandParserService: CommandParserService,
-    telegramFileService: TelegramFileService,
-    categoryService: CategoryService,
-    geminiService: GeminiService,
-    localizationService: LocalizationService,
-    aiPromptService: AiPromptService,
-    domainHandlers: List<AiDomainHandler>
+    actionExecutor: AiActionExecutor,
+    requestHandler: AiRequestHandler,
+    localizationService: LocalizationService
 ) {
     transition {
         name = "Open AI mode from menu"
@@ -29,7 +20,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiDialogTransitions(
             button = MoneyManagerButtonType.AI_ASSISTANT
         }
         action {
-            clearAiContext(context)
+            actionExecutor.clear(context)
         }
         then {
             to = MoneyManagerState.AI_MODE
@@ -47,7 +38,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiDialogTransitions(
             }
         }
         action {
-            processAiText(commandParserService, telegramFileService, categoryService, domainHandlers, geminiService, localizationService, aiPromptService)
+            requestHandler.processText(this)
         }
         then {
             to = MoneyManagerState.AI_MODE
@@ -63,7 +54,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiDialogTransitions(
             eventType = EventType.VOICE
         }
         action {
-            processAiVoice(commandParserService, telegramFileService, categoryService, domainHandlers, geminiService, localizationService, aiPromptService)
+            requestHandler.processVoice(this)
         }
         then {
             to = MoneyManagerState.AI_MODE
@@ -83,7 +74,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiDialogTransitions(
             }
         }
         action {
-            processAiText(commandParserService, telegramFileService, categoryService, domainHandlers, geminiService, localizationService, aiPromptService)
+            requestHandler.processText(this)
         }
         then {
             to = MoneyManagerState.AI_MODE
@@ -99,7 +90,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiDialogTransitions(
             eventType = EventType.VOICE
         }
         action {
-            processAiVoice(commandParserService, telegramFileService, categoryService, domainHandlers, geminiService, localizationService, aiPromptService)
+            requestHandler.processVoice(this)
         }
         then {
             to = MoneyManagerState.AI_MODE
@@ -165,26 +156,70 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiDialogTransitions(
             button = MoneyManagerButtonType.CONFIRM_AI_ACTION
         }
         action {
-            val lang = context.userInfo?.language
-            val action = context.pendingAiAction
-            if (action == null) {
-                context.aiResultMessage = localizationService.t("ai.error.parse", lang)
-                return@action
-            }
-            val handler = domainHandlers.firstOrNull { it.canExecute(action) }
-                ?: run {
-                    context.aiResultMessage = localizationService.t("ai.error.unhandled", lang)
-                    context.pendingAiAction = null
-                    return@action
-                }
-            val message = handler.execute(action, context)
-            context.aiResultMessage = message
-            context.pendingAiAction = null
+            actionExecutor.execute(context)
         }
         then {
             to = MoneyManagerState.AI_RESULT
         }
     }
+
+    transition {
+        name = "Open AI category picker"
+        condition {
+            from = MoneyManagerState.AI_CONFIRM
+            button = MoneyManagerButtonType.AI_PICK_DIFFERENT_CATEGORY
+        }
+        then {
+            to = MoneyManagerState.AI_TRANSACTION_PICK_CATEGORY
+        }
+    }
+
+    transition {
+        name = "AI picker show all"
+        condition {
+            from = MoneyManagerState.AI_TRANSACTION_PICK_CATEGORY
+            button = MoneyManagerButtonType.AI_PICK_SHOW_ALL
+        }
+        then {
+            to = MoneyManagerState.AI_TRANSACTION_PICK_CATEGORY_ALL
+        }
+    }
+
+    transition {
+        name = "AI picker back from top to confirm"
+        condition {
+            from = MoneyManagerState.AI_TRANSACTION_PICK_CATEGORY
+            button = MoneyManagerButtonType.AI_PICK_BACK_TO_CONFIRM
+        }
+        then {
+            to = MoneyManagerState.AI_CONFIRM
+        }
+    }
+
+    transition {
+        name = "AI picker back from all to confirm"
+        condition {
+            from = MoneyManagerState.AI_TRANSACTION_PICK_CATEGORY_ALL
+            button = MoneyManagerButtonType.AI_PICK_BACK_TO_CONFIRM
+        }
+        then {
+            to = MoneyManagerState.AI_CONFIRM
+        }
+    }
+
+    aiPickerCategoryClickTransition(
+        transitionName = "AI picker top: select category",
+        fromState = MoneyManagerState.AI_TRANSACTION_PICK_CATEGORY,
+        actionExecutor = actionExecutor,
+        localizationService = localizationService
+    )
+
+    aiPickerCategoryClickTransition(
+        transitionName = "AI picker all: select category",
+        fromState = MoneyManagerState.AI_TRANSACTION_PICK_CATEGORY_ALL,
+        actionExecutor = actionExecutor,
+        localizationService = localizationService
+    )
 
     transition {
         name = "Cancel AI action"
@@ -193,7 +228,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiDialogTransitions(
             button = MoneyManagerButtonType.CANCEL
         }
         action {
-            clearAiContext(context)
+            actionExecutor.clear(context)
         }
         then {
             to = MoneyManagerState.AI_MODE
@@ -207,7 +242,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiDialogTransitions(
             button = MoneyManagerButtonType.BACK_TO_MENU
         }
         action {
-            clearAiContext(context)
+            actionExecutor.clear(context)
         }
         then {
             to = MoneyManagerState.MENU
@@ -221,10 +256,51 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiDialogTransitions(
             button = MoneyManagerButtonType.BACK_TO_MENU
         }
         action {
-            clearAiContext(context)
+            actionExecutor.clear(context)
         }
         then {
             to = MoneyManagerState.MENU
+        }
+    }
+}
+
+private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiPickerCategoryClickTransition(
+    transitionName: String,
+    fromState: MoneyManagerState,
+    actionExecutor: AiActionExecutor,
+    localizationService: LocalizationService
+) {
+    transition {
+        name = transitionName
+        condition {
+            from = fromState
+            button = MoneyManagerButtonType.AI_PICK_CATEGORY_ITEM
+        }
+        action {
+            val lang = context.userInfo?.language
+            val text = buttonText
+            val currentAction = context.pendingAiAction as? AiPendingAction.TransactionAction
+            if (text == null || currentAction == null) {
+                context.aiResultMessage = localizationService.t("ai.error.parse", lang)
+                context.pendingAiAction = null
+                return@action
+            }
+            val transactionType = when (currentAction) {
+                is AiPendingAction.TransactionAction.Add -> currentAction.type
+                is AiPendingAction.TransactionAction.AddWithNewCategory -> currentAction.type
+            }
+            val candidates = context.aiCategoriesCache.orEmpty().filter { it.type == transactionType }
+            val chosen = findCategoryByButtonText(text, candidates)
+            if (chosen == null) {
+                context.aiResultMessage = localizationService.t("ai.error.unhandled", lang)
+                context.pendingAiAction = null
+                return@action
+            }
+            context.pendingAiAction = currentAction.withCategory(chosen)
+            actionExecutor.execute(context)
+        }
+        then {
+            to = MoneyManagerState.AI_RESULT
         }
     }
 }

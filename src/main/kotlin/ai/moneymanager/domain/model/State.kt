@@ -68,6 +68,8 @@ enum class MoneyManagerState {
     // -------- AI --------
     AI_MODE,
     AI_CONFIRM,
+    AI_TRANSACTION_PICK_CATEGORY,
+    AI_TRANSACTION_PICK_CATEGORY_ALL,
     AI_RESULT,
 
     // -------- CATEGORIES --------
@@ -225,6 +227,10 @@ enum class MoneyManagerButtonType {
 
     // AI
     CONFIRM_AI_ACTION,
+    AI_PICK_DIFFERENT_CATEGORY,
+    AI_PICK_SHOW_ALL,
+    AI_PICK_BACK_TO_CONFIRM,
+    AI_PICK_CATEGORY_ITEM,
 
     // Notification navigation
     CREATE_NOTIFICATION,

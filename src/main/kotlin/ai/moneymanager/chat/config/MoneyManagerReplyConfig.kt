@@ -3,6 +3,8 @@ package ai.moneymanager.chat.config
 import ai.moneymanager.chat.reply.ai.aiConfirmReply
 import ai.moneymanager.chat.reply.ai.aiModeReply
 import ai.moneymanager.chat.reply.ai.aiResultReply
+import ai.moneymanager.chat.reply.ai.aiTransactionPickCategoryAllReply
+import ai.moneymanager.chat.reply.ai.aiTransactionPickCategoryReply
 import ai.moneymanager.chat.reply.category.*
 import ai.moneymanager.chat.reply.finance.financeManagementReply
 import ai.moneymanager.chat.reply.finance.financeOperationSavedReply
@@ -145,6 +147,8 @@ class MoneyManagerReplyConfig {
             // AI replies
             aiModeReply(localizationService)
             aiConfirmReply(localizationService)
+            aiTransactionPickCategoryReply(localizationService)
+            aiTransactionPickCategoryAllReply(localizationService)
             aiResultReply(localizationService)
 
             // Legacy NLP replies (disabled for now)

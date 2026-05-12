@@ -1,7 +1,8 @@
 package ai.moneymanager.chat.dialog
 
+import ai.moneymanager.chat.transition.ai.AiActionExecutor
+import ai.moneymanager.chat.transition.ai.AiRequestHandler
 import ai.moneymanager.chat.transition.ai.aiDialogTransitions
-import ai.moneymanager.chat.transition.ai.handler.AiDomainHandler
 import ai.moneymanager.chat.transition.balance.balanceDialogTransitions
 import ai.moneymanager.chat.transition.balance.loadCurrentBalance
 import ai.moneymanager.chat.transition.category.categoryDialogTransitions
@@ -19,14 +20,11 @@ import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.FinanceHistoryService
 import ai.moneymanager.service.FinanceOperationService
 import ai.moneymanager.service.FinanceReportService
-import ai.moneymanager.service.AiPromptService
-import ai.moneymanager.service.GeminiService
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.TelegramFileService
 import ai.moneymanager.service.NotificationService
 import ai.moneymanager.service.UserInfoService
-import ai.moneymanager.service.nlp.CommandParserService
 import kz.rmr.chatmachinist.api.transition.ChatBuilder
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType
@@ -38,16 +36,14 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
     userInfoService: UserInfoService,
     groupService: GroupService,
     categoryService: CategoryService,
-    commandParserService: CommandParserService,
     telegramFileService: TelegramFileService,
-    geminiService: GeminiService,
     financeOperationService: FinanceOperationService,
     financeHistoryService: FinanceHistoryService,
     financeReportService: FinanceReportService,
     notificationService: NotificationService,
     localizationService: LocalizationService,
-    aiPromptService: AiPromptService,
-    aiDomainHandlers: List<AiDomainHandler>
+    aiActionExecutor: AiActionExecutor,
+    aiRequestHandler: AiRequestHandler
 ) {
     dialog {
         name = "Money Manager Dialog"
@@ -61,7 +57,7 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
         categoryDialogTransitions(categoryService, groupService, localizationService)
         financeDialogTransitions(categoryService, financeOperationService, financeHistoryService, financeReportService, userInfoService, groupService)
         notificationDialogTransitions(notificationService, userInfoService)
-        aiDialogTransitions(commandParserService, telegramFileService, categoryService, geminiService, localizationService, aiPromptService, aiDomainHandlers)
+        aiDialogTransitions(aiActionExecutor, aiRequestHandler, localizationService)
         // Legacy NLP disabled for now
         // nlpDialogTransitions(commandParserService, groupService, userInfoService, telegramFileService, geminiService)
     }
