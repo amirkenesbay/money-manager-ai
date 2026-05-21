@@ -58,6 +58,7 @@ val chatMachinistMongoVersion: String by project
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
+    implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("com.chatmachinist:chat-machinist:$chatMachinistVersion")
     implementation("com.chatmachinist:chat-machinist-mongo-persistence-starter:$chatMachinistMongoVersion")
