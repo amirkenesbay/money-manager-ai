@@ -20,6 +20,10 @@ telegram:
     api-url: "https://api.telegram.org/file/bot"
 
 debug: false
+
+server:
+  port: ${SERVER_PORT:8080}
+
 spring:
   mongodb:
     database: moneyManagerBot
