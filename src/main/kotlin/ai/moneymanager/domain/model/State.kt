@@ -68,6 +68,7 @@ enum class MoneyManagerState {
     // -------- AI --------
     AI_MODE,
     AI_CONFIRM,
+    AI_CONFIRM_BATCH,
     AI_TRANSACTION_PICK_CATEGORY,
     AI_TRANSACTION_PICK_CATEGORY_ALL,
     AI_RESULT,
@@ -405,6 +406,8 @@ class MoneyManagerContext {
 
     // -------- AI --------
     var pendingAiAction: AiPendingAction? = null
+    var pendingAiActions: List<AiPendingAction> = emptyList()
+    var aiBatchNotes: List<String> = emptyList()
     var aiResultMessage: String? = null
     var aiRedirectState: MoneyManagerState? = null
     var aiCategoriesCache: List<Category>? = null

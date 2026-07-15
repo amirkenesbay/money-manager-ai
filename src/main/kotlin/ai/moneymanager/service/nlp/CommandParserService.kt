@@ -98,19 +98,26 @@ class CommandParserService(
     private fun botFunctionMethod(function: GeminiFunction, vararg parameterTypes: Class<*>) =
         BotFunctions::class.java.getMethod(function.functionName, *parameterTypes)
 
-    fun parseCommand(userMessage: String, categoryContext: String? = null): BotCommand {
+    fun parseCommand(userMessage: String, categoryContext: String? = null): BotCommand =
+        parseCommands(userMessage, categoryContext).first()
+
+    /** @param audioBytes байты аудио файла (OGG/OPUS от Telegram) */
+    fun parseVoiceCommand(audioBytes: ByteArray, categoryContext: String? = null): BotCommand =
+        parseVoiceCommands(audioBytes, categoryContext).first()
+
+    fun parseCommands(userMessage: String, categoryContext: String? = null): List<BotCommand> {
         return try {
             val content = contentWithCategoryContext(categoryContext, Part.fromText(userMessage))
             val response = client.models.generateContent(geminiProperties.model, content, config)
             processResponse(response, userMessage)
         } catch (e: Exception) {
             log.error("CommandParser error: ${e.message}", e)
-            classifyError(e)
+            listOf(classifyError(e))
         }
     }
 
     /** @param audioBytes байты аудио файла (OGG/OPUS от Telegram) */
-    fun parseVoiceCommand(audioBytes: ByteArray, categoryContext: String? = null): BotCommand {
+    fun parseVoiceCommands(audioBytes: ByteArray, categoryContext: String? = null): List<BotCommand> {
         return try {
             log.info("🎤 Processing voice message: ${audioBytes.size} bytes")
 
@@ -133,7 +140,7 @@ class CommandParserService(
             processResponse(response, VOICE_MESSAGE_PLACEHOLDER)
         } catch (e: Exception) {
             log.error("Voice CommandParser error: ${e.message}", e)
-            classifyError(e)
+            listOf(classifyError(e))
         }
     }
 
@@ -167,16 +174,17 @@ class CommandParserService(
         return match.groupValues[1].toDoubleOrNull()?.toLong()?.coerceAtLeast(1L)
     }
 
-    private fun processResponse(response: com.google.genai.types.GenerateContentResponse, originalMessage: String): BotCommand {
-        val functionCall = response.functionCalls()?.firstOrNull()
+    private fun processResponse(response: com.google.genai.types.GenerateContentResponse, originalMessage: String): List<BotCommand> {
+        val functionCalls = response.functionCalls().orEmpty()
 
-        return if (functionCall != null) {
+        if (functionCalls.isEmpty()) {
+            log.info("🤖 Gemini text response: ${response.text()}")
+            return listOf(BotCommand.OutOfContext(originalMessage))
+        }
+
+        return functionCalls.map { functionCall ->
             log.info("🤖 Gemini function call: ${functionCall.name()} with args: ${functionCall.args()}")
             parseFunctionCall(functionCall, originalMessage)
-        } else {
-            val responseText = response.text()
-            log.info("🤖 Gemini text response: $responseText")
-            BotCommand.OutOfContext(originalMessage)
         }
     }
 

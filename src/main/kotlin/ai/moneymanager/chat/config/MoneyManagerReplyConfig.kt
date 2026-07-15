@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.config
 
+import ai.moneymanager.chat.reply.ai.aiConfirmBatchReply
 import ai.moneymanager.chat.reply.ai.aiConfirmReply
 import ai.moneymanager.chat.reply.ai.aiModeReply
 import ai.moneymanager.chat.reply.ai.aiResultReply
@@ -147,6 +148,7 @@ class MoneyManagerReplyConfig {
             // AI replies
             aiModeReply(localizationService)
             aiConfirmReply(localizationService)
+            aiConfirmBatchReply(localizationService)
             aiTransactionPickCategoryReply(localizationService)
             aiTransactionPickCategoryAllReply(localizationService)
             aiResultReply(localizationService)
