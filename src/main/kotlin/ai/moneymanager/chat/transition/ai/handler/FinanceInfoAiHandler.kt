@@ -1,0 +1,81 @@
+package ai.moneymanager.chat.transition.ai.handler
+
+import ai.moneymanager.chat.reply.common.formatBalanceBreakdown
+import ai.moneymanager.domain.model.MoneyManagerContext
+import ai.moneymanager.domain.model.nlp.AiPendingAction
+import ai.moneymanager.domain.model.nlp.BotCommand
+import ai.moneymanager.service.FinanceHistoryService
+import ai.moneymanager.service.FinanceOperationService
+import ai.moneymanager.service.FinanceReportService
+import ai.moneymanager.service.GroupService
+import ai.moneymanager.service.LocalizationService
+import org.bson.types.ObjectId
+import java.math.BigDecimal
+import java.time.LocalDate
+import org.springframework.stereotype.Component
+
+private val VALID_MONTH_RANGE = 1..12
+private val VALID_YEAR_RANGE = 2000..2100
+
+@Component
+class FinanceInfoAiHandler(
+    private val groupService: GroupService,
+    private val financeOperationService: FinanceOperationService,
+    private val financeReportService: FinanceReportService,
+    private val financeHistoryService: FinanceHistoryService,
+    private val localizationService: LocalizationService
+) : AiDomainHandler {
+
+    override fun canHandle(command: BotCommand): Boolean = when (command) {
+        is BotCommand.ShowBalance,
+        is BotCommand.ShowReport,
+        is BotCommand.ShowHistory -> true
+        else -> false
+    }
+
+    override fun canExecute(action: AiPendingAction): Boolean = false
+
+    override fun prepareAction(
+        command: BotCommand,
+        context: MoneyManagerContext
+    ): AiPreparationResult {
+        val lang = context.userInfo?.language
+        val groupId = context.userInfo?.activeGroupId
+            ?: return AiPreparationResult.ImmediateResult(localizationService.t("ai.error.no_active_group", lang))
+
+        val message = when (command) {
+            is BotCommand.ShowBalance -> renderBalance(groupId, lang)
+            is BotCommand.ShowReport -> renderReport(command, groupId, lang)
+            is BotCommand.ShowHistory -> renderHistory(command, groupId, lang)
+            else -> localizationService.t("ai.error.unknown_command", lang)
+        }
+        return AiPreparationResult.ImmediateResult(message)
+    }
+
+    override fun execute(action: AiPendingAction, context: MoneyManagerContext): String =
+        localizationService.t("ai.error.unknown_command", context.userInfo?.language)
+
+    private fun renderBalance(groupId: ObjectId, lang: String?): String {
+        val initialBalance = groupService.getGroup(groupId)?.initialBalance ?: BigDecimal.ZERO
+        val breakdown = financeOperationService.calculateBalance(groupId, initialBalance)
+        return formatBalanceBreakdown(breakdown, localizationService, lang)
+    }
+
+    private fun renderReport(command: BotCommand.ShowReport, groupId: ObjectId, lang: String?): String {
+        val now = LocalDate.now()
+        val month = command.month?.takeIf { it in VALID_MONTH_RANGE } ?: now.monthValue
+        val year = command.year?.takeIf { it in VALID_YEAR_RANGE } ?: now.year
+        return financeReportService.generateAnalyticsReport(groupId, LocalDate.of(year, month, 1), lang)
+    }
+
+    private fun renderHistory(command: BotCommand.ShowHistory, groupId: ObjectId, lang: String?): String {
+        val now = LocalDate.now()
+        val start = parseDate(command.startDate) ?: now.withDayOfMonth(1)
+        val end = parseDate(command.endDate) ?: now
+        val (from, to) = if (start <= end) start to end else end to start
+        return financeHistoryService.generateReport(groupId, from, to, lang)
+    }
+
+    private fun parseDate(raw: String?): LocalDate? =
+        raw?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+}

@@ -3,8 +3,11 @@ package ai.moneymanager.domain.model.nlp
 import ai.moneymanager.chat.reply.common.formatAmount
 import ai.moneymanager.chat.reply.common.formatDescriptionSuffix
 import ai.moneymanager.chat.reply.common.formatIconPrefix
+import ai.moneymanager.chat.reply.common.formatTime
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.MoneyGroup
+import ai.moneymanager.repository.entity.NotificationEntity
 import ai.moneymanager.service.LocalizationService
 import org.bson.types.ObjectId
 import java.math.BigDecimal
@@ -85,44 +88,115 @@ sealed class AiPendingAction {
         }
     }
 
-    sealed class TransactionAction : AiPendingAction() {
-        data class Add(
-            val groupId: ObjectId,
-            val creatorId: Long,
-            val type: CategoryType,
-            val amount: Double,
-            val category: Category,
-            val description: String?,
-            val operationDate: LocalDate
-        ) : TransactionAction() {
+    sealed class GroupAction : AiPendingAction() {
+        data class Create(
+            val name: String
+        ) : GroupAction() {
             override fun describe(localizationService: LocalizationService, language: String?): String =
-                renderTransactionConfirmation(
-                    localizationService, language, type, amount, description,
-                    categoryName = category.name,
-                    icon = category.icon,
-                    expenseKey = CONFIRM_ADD_EXPENSE_KEY,
-                    incomeKey = CONFIRM_ADD_INCOME_KEY
+                localizationService.t("ai.confirm.group.create", language, name)
+        }
+
+        data class Delete(
+            val group: MoneyGroup
+        ) : GroupAction() {
+            override fun describe(localizationService: LocalizationService, language: String?): String =
+                localizationService.t("ai.confirm.group.delete", language, group.name, group.memberIds.size)
+        }
+    }
+
+    sealed class NotificationAction : AiPendingAction() {
+        data class CreateDaily(
+            val name: String,
+            val hour: Int,
+            val minute: Int
+        ) : NotificationAction() {
+            override fun describe(localizationService: LocalizationService, language: String?): String =
+                localizationService.t(
+                    "ai.confirm.notification.create_daily",
+                    language,
+                    name,
+                    formatTime(hour, minute)
                 )
         }
 
+        data class Delete(
+            val notification: NotificationEntity
+        ) : NotificationAction() {
+            override fun describe(localizationService: LocalizationService, language: String?): String =
+                localizationService.t(
+                    "ai.confirm.notification.delete",
+                    language,
+                    formatIconPrefix(notification.icon),
+                    notification.name
+                )
+        }
+    }
+
+    sealed class TransactionAction : AiPendingAction() {
+        abstract val groupId: ObjectId
+        abstract val creatorId: Long
+        abstract val type: CategoryType
+        abstract val amount: Double
+        abstract val description: String?
+        abstract val operationDate: LocalDate
+        abstract val categoryDisplayName: String
+        abstract val categoryDisplayIcon: String?
+        abstract val isNewCategory: Boolean
+
+        override fun describe(localizationService: LocalizationService, language: String?): String {
+            val key = when {
+                isNewCategory && type == CategoryType.EXPENSE -> CONFIRM_ADD_WITH_NEW_CATEGORY_EXPENSE_KEY
+                isNewCategory -> CONFIRM_ADD_WITH_NEW_CATEGORY_INCOME_KEY
+                type == CategoryType.EXPENSE -> CONFIRM_ADD_EXPENSE_KEY
+                else -> CONFIRM_ADD_INCOME_KEY
+            }
+            return render(localizationService, language, key)
+        }
+
+        fun describeBatchItem(localizationService: LocalizationService, language: String?): String {
+            val key = if (type == CategoryType.EXPENSE) BATCH_ITEM_EXPENSE_KEY else BATCH_ITEM_INCOME_KEY
+            val base = render(localizationService, language, key)
+            if (!isNewCategory) return base
+            return base + localizationService.t(BATCH_ITEM_NEW_CATEGORY_KEY, language)
+        }
+
+        private fun render(localizationService: LocalizationService, language: String?, key: String): String =
+            localizationService.t(
+                key,
+                language,
+                formatIconPrefix(categoryDisplayIcon),
+                categoryDisplayName,
+                formatAmount(BigDecimal.valueOf(amount)),
+                formatDescriptionSuffix(description)
+            )
+
+        data class Add(
+            override val groupId: ObjectId,
+            override val creatorId: Long,
+            override val type: CategoryType,
+            override val amount: Double,
+            val category: Category,
+            override val description: String?,
+            override val operationDate: LocalDate
+        ) : TransactionAction() {
+            override val categoryDisplayName: String get() = category.name
+            override val categoryDisplayIcon: String? get() = category.icon
+            override val isNewCategory: Boolean get() = false
+        }
+
         data class AddWithNewCategory(
-            val groupId: ObjectId,
-            val creatorId: Long,
-            val type: CategoryType,
-            val amount: Double,
+            override val groupId: ObjectId,
+            override val creatorId: Long,
+            override val type: CategoryType,
+            override val amount: Double,
             val suggestedCategoryName: String,
             val suggestedCategoryIcon: String,
-            val description: String?,
-            val operationDate: LocalDate
+            override val description: String?,
+            override val operationDate: LocalDate
         ) : TransactionAction() {
-            override fun describe(localizationService: LocalizationService, language: String?): String =
-                renderTransactionConfirmation(
-                    localizationService, language, type, amount, description,
-                    categoryName = suggestedCategoryName,
-                    icon = suggestedCategoryIcon,
-                    expenseKey = CONFIRM_ADD_WITH_NEW_CATEGORY_EXPENSE_KEY,
-                    incomeKey = CONFIRM_ADD_WITH_NEW_CATEGORY_INCOME_KEY
-                )
+            override val categoryDisplayName: String get() = suggestedCategoryName
+            override val categoryDisplayIcon: String get() = suggestedCategoryIcon
+            override val isNewCategory: Boolean get() = true
         }
 
         companion object {
@@ -130,28 +204,9 @@ sealed class AiPendingAction {
             private const val CONFIRM_ADD_INCOME_KEY = "ai.confirm.transaction.add.income"
             private const val CONFIRM_ADD_WITH_NEW_CATEGORY_EXPENSE_KEY = "ai.confirm.transaction.add_with_new_category.expense"
             private const val CONFIRM_ADD_WITH_NEW_CATEGORY_INCOME_KEY = "ai.confirm.transaction.add_with_new_category.income"
-
-            private fun renderTransactionConfirmation(
-                localizationService: LocalizationService,
-                language: String?,
-                type: CategoryType,
-                amount: Double,
-                description: String?,
-                categoryName: String,
-                icon: String?,
-                expenseKey: String,
-                incomeKey: String
-            ): String {
-                val key = if (type == CategoryType.EXPENSE) expenseKey else incomeKey
-                return localizationService.t(
-                    key,
-                    language,
-                    formatIconPrefix(icon),
-                    categoryName,
-                    formatAmount(BigDecimal.valueOf(amount)),
-                    formatDescriptionSuffix(description)
-                )
-            }
+            private const val BATCH_ITEM_EXPENSE_KEY = "ai.confirm.batch.item.expense"
+            private const val BATCH_ITEM_INCOME_KEY = "ai.confirm.batch.item.income"
+            private const val BATCH_ITEM_NEW_CATEGORY_KEY = "ai.confirm.batch.item.new_category"
         }
     }
 }

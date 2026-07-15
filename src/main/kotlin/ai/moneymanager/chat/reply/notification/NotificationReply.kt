@@ -1,6 +1,7 @@
 package ai.moneymanager.chat.reply.notification
 
 import ai.moneymanager.chat.reply.common.backButton
+import ai.moneymanager.chat.reply.common.formatTime
 import ai.moneymanager.chat.reply.common.cancelButton
 import ai.moneymanager.chat.reply.common.confirmAndCancelButtons
 import ai.moneymanager.chat.transition.notification.POPULAR_TIMEZONES
@@ -710,7 +711,7 @@ fun formatFrequencyShort(
     localizationService: LocalizationService,
     language: String?
 ): String {
-    val timeStr = "%02d:%02d".format(n.hour, n.minute)
+    val timeStr = formatTime(n.hour, n.minute)
     val dowName = dayOfWeekName(n.dayOfWeek, language)
     val monthN = monthName(n.monthOfYear, language)
     return when (n.frequencyType) {
@@ -738,7 +739,7 @@ fun buildNotificationSummary(
     localizationService: LocalizationService,
     language: String?
 ): String {
-    val timeStr = "%02d:%02d".format(context.notifHour ?: 0, context.notifMinute ?: 0)
+    val timeStr = formatTime(context.notifHour ?: 0, context.notifMinute ?: 0)
     val freqStr = buildFrequencyString(context, localizationService, language)
     val name = context.notifNameInput ?: context.currentNotification?.name ?: ""
     val icon = context.notifIconInput ?: context.currentNotification?.icon

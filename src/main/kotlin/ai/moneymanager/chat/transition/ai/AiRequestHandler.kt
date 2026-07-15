@@ -49,9 +49,9 @@ class AiRequestHandler(
         log.info("🧠 AI processing text: $userMessage")
         feedback.show(localizationService.t("ai.feedback.thinking", lang))
         val categoryContext = loadAndCacheCategoryContext(context)
-        val command = commandParserService.parseCommand(userMessage, categoryContext)
-        showErrorStageIfNeeded(command, feedback, lang)
-        actionExecutor.processCommand(command, context)
+        val commands = commandParserService.parseCommands(userMessage, categoryContext)
+        showErrorStageIfNeeded(commands, feedback, lang)
+        actionExecutor.processCommands(commands, context)
     }
 
     private fun handleVoice(update: Update, context: MoneyManagerContext, feedback: AiFeedback) {
@@ -75,9 +75,9 @@ class AiRequestHandler(
 
         feedback.show(localizationService.t("ai.feedback.voice_processing", lang))
         val categoryContext = loadAndCacheCategoryContext(context)
-        val command = commandParserService.parseVoiceCommand(audioBytes, categoryContext)
-        showErrorStageIfNeeded(command, feedback, lang)
-        actionExecutor.processCommand(command, context)
+        val commands = commandParserService.parseVoiceCommands(audioBytes, categoryContext)
+        showErrorStageIfNeeded(commands, feedback, lang)
+        actionExecutor.processCommands(commands, context)
     }
 
     private fun loadAndCacheCategoryContext(context: MoneyManagerContext): String? {
@@ -90,11 +90,12 @@ class AiRequestHandler(
         return aiPromptService.categoryContextPreamble(categories)
     }
 
-    private fun showErrorStageIfNeeded(command: BotCommand, feedback: AiFeedback, language: String?) {
-        when (command) {
-            is BotCommand.RateLimitError -> feedback.show(localizationService.t("ai.feedback.rate_limit", language))
-            is BotCommand.ServiceError -> feedback.show(localizationService.t("ai.feedback.service_error", language))
-            else -> Unit
+    private fun showErrorStageIfNeeded(commands: List<BotCommand>, feedback: AiFeedback, language: String?) {
+        when {
+            commands.any { it is BotCommand.RateLimitError } ->
+                feedback.show(localizationService.t("ai.feedback.rate_limit", language))
+            commands.any { it is BotCommand.ServiceError } ->
+                feedback.show(localizationService.t("ai.feedback.service_error", language))
         }
     }
 }

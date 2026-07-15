@@ -1,7 +1,9 @@
 package ai.moneymanager.chat.reply.common
 
+import ai.moneymanager.domain.model.BalanceBreakdown
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.UserInfo
+import ai.moneymanager.service.LocalizationService
 import java.math.BigDecimal
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
@@ -18,8 +20,14 @@ private const val NEGATIVE_SIGN = "−"
 private const val ICON_NAME_SEPARATOR = " "
 private const val DESCRIPTION_PREFIX = " ("
 private const val DESCRIPTION_SUFFIX = ")"
+private const val TIME_PATTERN = "%02d:%02d"
 
 const val DEFAULT_CATEGORY_ICON: String = "📌"
+
+private const val BOT_USERNAME = "moneyManagerAIbot"
+private const val INVITE_LINK_TEMPLATE = "https://t.me/%s?start=join_%s"
+
+fun buildInviteLink(inviteToken: String): String = INVITE_LINK_TEMPLATE.format(BOT_USERNAME, inviteToken)
 
 private val amountFormat = DecimalFormat(
     AMOUNT_PATTERN,
@@ -34,6 +42,8 @@ const val SECTION_SEPARATOR_WITH_BLANK_LINE: String = "\n\n" + SECTION_RULE
 
 fun formatAmount(amount: BigDecimal): String = "${amountFormat.format(amount)}$CURRENCY_SYMBOL"
 
+fun formatTime(hour: Int, minute: Int): String = TIME_PATTERN.format(hour, minute)
+
 fun formatIconPrefix(icon: String?): String =
     icon?.takeIf { it.isNotBlank() }?.let { "$it$ICON_NAME_SEPARATOR" } ?: ""
 
@@ -47,6 +57,20 @@ fun formatSignedAmount(type: CategoryType, amount: BigDecimal): String {
     }
     return "$sign${formatAmount(amount)}"
 }
+
+fun formatBalanceBreakdown(
+    balance: BalanceBreakdown,
+    localizationService: LocalizationService,
+    language: String?
+): String = """
+    |${localizationService.t("balance.view.title", language)}
+    |
+    |${localizationService.t("balance.view.initial", language, formatAmount(balance.initial))}
+    |${localizationService.t("balance.view.income", language, formatAmount(balance.income))}
+    |${localizationService.t("balance.view.expense", language, formatAmount(balance.expense))}
+    |
+    |${localizationService.t("balance.view.total", language, formatAmount(balance.total))}
+""".trimMargin()
 
 fun formatUserDisplayName(userInfo: UserInfo?, fallbackId: Long): String {
     if (userInfo == null) return "ID $fallbackId"

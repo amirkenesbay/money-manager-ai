@@ -1,6 +1,7 @@
 package ai.moneymanager.chat.reply.group
 
 import ai.moneymanager.chat.reply.common.backButton
+import ai.moneymanager.chat.reply.common.buildInviteLink
 import ai.moneymanager.chat.reply.common.cancelButton
 import ai.moneymanager.chat.reply.common.confirmAndCancelButtons
 import ai.moneymanager.chat.reply.common.formatUserDisplayName
@@ -125,7 +126,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupInviteShowReply(
             val backText = localizationService.t("common.back", lang)
 
             if (group != null) {
-                val botUsername = "moneyManagerAIbot"
                 val title = localizationService.t("group.invite.title", lang, group.name)
                 val description = localizationService.t("group.invite.description", lang)
                 val activeNotice = if (!context.inviteFromActions) {
@@ -136,7 +136,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupInviteShowReply(
                     |$title
                     |
                     |$description
-                    |https://t.me/$botUsername?start=join_${group.inviteToken}$activeNotice
+                    |${buildInviteLink(group.inviteToken)}$activeNotice
                 """.trimMargin()
             } else {
                 text = localizationService.t("group.error.not_found", lang)

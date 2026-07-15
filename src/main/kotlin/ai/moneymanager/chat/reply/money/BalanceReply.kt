@@ -1,7 +1,7 @@
 package ai.moneymanager.chat.reply.money
 
 import ai.moneymanager.chat.reply.common.backButton
-import ai.moneymanager.chat.reply.common.formatAmount
+import ai.moneymanager.chat.reply.common.formatBalanceBreakdown
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
@@ -79,21 +79,12 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.balanceViewReply(
         message {
             val lang = context.userInfo?.language
             val balance = context.currentBalance
-            val title = localizationService.t("balance.view.title", lang)
 
             text = if (balance != null) {
-                """
-                    |$title
-                    |
-                    |${localizationService.t("balance.view.initial", lang, formatAmount(balance.initial))}
-                    |${localizationService.t("balance.view.income", lang, formatAmount(balance.income))}
-                    |${localizationService.t("balance.view.expense", lang, formatAmount(balance.expense))}
-                    |
-                    |${localizationService.t("balance.view.total", lang, formatAmount(balance.total))}
-                """.trimMargin()
+                formatBalanceBreakdown(balance, localizationService, lang)
             } else {
                 """
-                    |$title
+                    |${localizationService.t("balance.view.title", lang)}
                     |
                     |${localizationService.t("balance.view.empty", lang)}
                 """.trimMargin()

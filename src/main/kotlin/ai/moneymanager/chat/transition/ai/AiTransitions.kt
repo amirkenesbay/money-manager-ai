@@ -112,11 +112,42 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiDialogTransitions(
     }
 
     transition {
+        name = "Show AI hints"
+        condition {
+            from = MoneyManagerState.AI_MODE
+            button = MoneyManagerButtonType.WHAT_TO_ASK
+        }
+        action {
+            actionExecutor.clear(context)
+            context.aiResultMessage = localizationService.t("ai.hints", context.userInfo?.language)
+        }
+        then {
+            to = MoneyManagerState.AI_RESULT
+        }
+    }
+
+    transition {
+        name = "Route AI to batch confirm"
+        condition {
+            from = MoneyManagerState.AI_MODE
+            eventType = EventType.TRIGGERED
+            guard { context.pendingAiActions.isNotEmpty() }
+        }
+        then {
+            to = MoneyManagerState.AI_CONFIRM_BATCH
+        }
+    }
+
+    transition {
         name = "Route AI to result"
         condition {
             from = MoneyManagerState.AI_MODE
             eventType = EventType.TRIGGERED
-            guard { context.pendingAiAction == null && context.aiResultMessage != null }
+            guard {
+                context.pendingAiAction == null &&
+                    context.pendingAiActions.isEmpty() &&
+                    context.aiResultMessage != null
+            }
         }
         then {
             to = MoneyManagerState.AI_RESULT
@@ -222,9 +253,37 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiDialogTransitions(
     )
 
     transition {
+        name = "Confirm AI batch"
+        condition {
+            from = MoneyManagerState.AI_CONFIRM_BATCH
+            button = MoneyManagerButtonType.CONFIRM_AI_ACTION
+        }
+        action {
+            actionExecutor.executeBatch(context)
+        }
+        then {
+            to = MoneyManagerState.AI_RESULT
+        }
+    }
+
+    transition {
         name = "Cancel AI action"
         condition {
             from = MoneyManagerState.AI_CONFIRM
+            button = MoneyManagerButtonType.CANCEL
+        }
+        action {
+            actionExecutor.clear(context)
+        }
+        then {
+            to = MoneyManagerState.AI_MODE
+        }
+    }
+
+    transition {
+        name = "Cancel AI batch"
+        condition {
+            from = MoneyManagerState.AI_CONFIRM_BATCH
             button = MoneyManagerButtonType.CANCEL
         }
         action {
@@ -285,11 +344,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiPickerCatego
                 context.pendingAiAction = null
                 return@action
             }
-            val transactionType = when (currentAction) {
-                is AiPendingAction.TransactionAction.Add -> currentAction.type
-                is AiPendingAction.TransactionAction.AddWithNewCategory -> currentAction.type
-            }
-            val candidates = context.aiCategoriesCache.orEmpty().filter { it.type == transactionType }
+            val candidates = context.aiCategoriesCache.orEmpty().filter { it.type == currentAction.type }
             val chosen = findCategoryByButtonText(text, candidates)
             if (chosen == null) {
                 context.aiResultMessage = localizationService.t("ai.error.unhandled", lang)

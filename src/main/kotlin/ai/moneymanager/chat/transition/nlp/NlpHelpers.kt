@@ -43,7 +43,15 @@ internal val BotCommand.targetState: MoneyManagerState
         is BotCommand.RenameCategory,
         is BotCommand.ChangeCategoryIcon,
         BotCommand.DeleteAllCategories,
-        is BotCommand.ListCategories -> MoneyManagerState.NLP_RESPONSE
+        is BotCommand.ListCategories,
+        BotCommand.ListGroups,
+        is BotCommand.SwitchGroup,
+        BotCommand.ShowBalance,
+        is BotCommand.ShowReport,
+        is BotCommand.ShowHistory,
+        BotCommand.ListNotifications,
+        is BotCommand.CreateNotification,
+        is BotCommand.DeleteNotification -> MoneyManagerState.NLP_RESPONSE
     }
 
 internal fun clearNlpContext(context: MoneyManagerContext) {
@@ -121,8 +129,16 @@ internal fun processNlpCommand(
         is BotCommand.RenameCategory,
         is BotCommand.ChangeCategoryIcon,
         BotCommand.DeleteAllCategories,
-        is BotCommand.ListCategories -> {
-            // Категориальные команды обрабатываются в новом AI-флоу.
+        is BotCommand.ListCategories,
+        BotCommand.ListGroups,
+        is BotCommand.SwitchGroup,
+        BotCommand.ShowBalance,
+        is BotCommand.ShowReport,
+        is BotCommand.ShowHistory,
+        BotCommand.ListNotifications,
+        is BotCommand.CreateNotification,
+        is BotCommand.DeleteNotification -> {
+            // Эти команды обрабатываются в новом AI-флоу (AI_MODE).
             context.nlpResponse = PARSE_ERROR_MESSAGE
             context.nlpTargetState = MoneyManagerState.NLP_RESPONSE
         }

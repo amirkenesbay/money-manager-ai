@@ -9,10 +9,15 @@ import ai.moneymanager.domain.model.nlp.arguments.AddIncomeArgs
 import ai.moneymanager.domain.model.nlp.arguments.ChangeCategoryIconArgs
 import ai.moneymanager.domain.model.nlp.arguments.CreateCategoryArgs
 import ai.moneymanager.domain.model.nlp.arguments.CreateGroupArgs
+import ai.moneymanager.domain.model.nlp.arguments.CreateNotificationArgs
 import ai.moneymanager.domain.model.nlp.arguments.DeleteCategoryArgs
 import ai.moneymanager.domain.model.nlp.arguments.DeleteGroupArgs
+import ai.moneymanager.domain.model.nlp.arguments.DeleteNotificationArgs
 import ai.moneymanager.domain.model.nlp.arguments.ListCategoriesArgs
 import ai.moneymanager.domain.model.nlp.arguments.RenameCategoryArgs
+import ai.moneymanager.domain.model.nlp.arguments.ShowHistoryArgs
+import ai.moneymanager.domain.model.nlp.arguments.ShowReportArgs
+import ai.moneymanager.domain.model.nlp.arguments.SwitchGroupArgs
 import ai.moneymanager.domain.model.nlp.enum.GeminiFunction
 import ai.moneymanager.mapper.GeminiArgsMapper
 import com.google.genai.Client
@@ -65,6 +70,16 @@ class CommandParserService(
         val deleteAllCategoriesMethod = botFunctionMethod(GeminiFunction.DELETE_ALL_CATEGORIES)
         val listCategoriesMethod = botFunctionMethod(GeminiFunction.LIST_CATEGORIES, String::class.java)
 
+        // Group / balance / report / history / notification functions
+        val listGroupsMethod = botFunctionMethod(GeminiFunction.LIST_GROUPS)
+        val switchGroupMethod = botFunctionMethod(GeminiFunction.SWITCH_GROUP, String::class.java)
+        val showBalanceMethod = botFunctionMethod(GeminiFunction.SHOW_BALANCE)
+        val showReportMethod = botFunctionMethod(GeminiFunction.SHOW_REPORT, Double::class.javaObjectType, Double::class.javaObjectType)
+        val showHistoryMethod = botFunctionMethod(GeminiFunction.SHOW_HISTORY, String::class.java, String::class.java)
+        val listNotificationsMethod = botFunctionMethod(GeminiFunction.LIST_NOTIFICATIONS)
+        val createNotificationMethod = botFunctionMethod(GeminiFunction.CREATE_NOTIFICATION, String::class.java, Double::class.java, Double::class.javaObjectType)
+        val deleteNotificationMethod = botFunctionMethod(GeminiFunction.DELETE_NOTIFICATION, String::class.java)
+
         val systemContent = Content.fromParts(Part.fromText(aiPromptService.systemPrompt))
 
         config = GenerateContentConfig.builder()
@@ -73,7 +88,9 @@ class CommandParserService(
                     .functions(
                         createGroupMethod, deleteGroupMethod, addExpenseMethod, addIncomeMethod, outOfContextMethod,
                         createCategoryMethod, deleteCategoryMethod, renameCategoryMethod,
-                        changeCategoryIconMethod, deleteAllCategoriesMethod, listCategoriesMethod
+                        changeCategoryIconMethod, deleteAllCategoriesMethod, listCategoriesMethod,
+                        listGroupsMethod, switchGroupMethod, showBalanceMethod, showReportMethod, showHistoryMethod,
+                        listNotificationsMethod, createNotificationMethod, deleteNotificationMethod
                     )
                     .build()
             )
@@ -98,19 +115,26 @@ class CommandParserService(
     private fun botFunctionMethod(function: GeminiFunction, vararg parameterTypes: Class<*>) =
         BotFunctions::class.java.getMethod(function.functionName, *parameterTypes)
 
-    fun parseCommand(userMessage: String, categoryContext: String? = null): BotCommand {
+    fun parseCommand(userMessage: String, categoryContext: String? = null): BotCommand =
+        parseCommands(userMessage, categoryContext).first()
+
+    /** @param audioBytes байты аудио файла (OGG/OPUS от Telegram) */
+    fun parseVoiceCommand(audioBytes: ByteArray, categoryContext: String? = null): BotCommand =
+        parseVoiceCommands(audioBytes, categoryContext).first()
+
+    fun parseCommands(userMessage: String, categoryContext: String? = null): List<BotCommand> {
         return try {
             val content = contentWithCategoryContext(categoryContext, Part.fromText(userMessage))
             val response = client.models.generateContent(geminiProperties.model, content, config)
             processResponse(response, userMessage)
         } catch (e: Exception) {
             log.error("CommandParser error: ${e.message}", e)
-            classifyError(e)
+            listOf(classifyError(e))
         }
     }
 
     /** @param audioBytes байты аудио файла (OGG/OPUS от Telegram) */
-    fun parseVoiceCommand(audioBytes: ByteArray, categoryContext: String? = null): BotCommand {
+    fun parseVoiceCommands(audioBytes: ByteArray, categoryContext: String? = null): List<BotCommand> {
         return try {
             log.info("🎤 Processing voice message: ${audioBytes.size} bytes")
 
@@ -133,7 +157,7 @@ class CommandParserService(
             processResponse(response, VOICE_MESSAGE_PLACEHOLDER)
         } catch (e: Exception) {
             log.error("Voice CommandParser error: ${e.message}", e)
-            classifyError(e)
+            listOf(classifyError(e))
         }
     }
 
@@ -167,16 +191,17 @@ class CommandParserService(
         return match.groupValues[1].toDoubleOrNull()?.toLong()?.coerceAtLeast(1L)
     }
 
-    private fun processResponse(response: com.google.genai.types.GenerateContentResponse, originalMessage: String): BotCommand {
-        val functionCall = response.functionCalls()?.firstOrNull()
+    private fun processResponse(response: com.google.genai.types.GenerateContentResponse, originalMessage: String): List<BotCommand> {
+        val functionCalls = response.functionCalls().orEmpty()
 
-        return if (functionCall != null) {
+        if (functionCalls.isEmpty()) {
+            log.info("🤖 Gemini text response: ${response.text()}")
+            return listOf(BotCommand.OutOfContext(originalMessage))
+        }
+
+        return functionCalls.map { functionCall ->
             log.info("🤖 Gemini function call: ${functionCall.name()} with args: ${functionCall.args()}")
             parseFunctionCall(functionCall, originalMessage)
-        } else {
-            val responseText = response.text()
-            log.info("🤖 Gemini text response: $responseText")
-            BotCommand.OutOfContext(originalMessage)
         }
     }
 
@@ -248,6 +273,43 @@ class CommandParserService(
                 GeminiFunction.LIST_CATEGORIES -> {
                     val dto = argsMapper.map<ListCategoriesArgs>(args)
                     BotCommand.ListCategories(dto.type?.trim()?.takeIf { it.isNotEmpty() })
+                }
+
+                GeminiFunction.LIST_GROUPS -> BotCommand.ListGroups
+
+                GeminiFunction.SWITCH_GROUP -> {
+                    val dto = argsMapper.map<SwitchGroupArgs>(args)
+                    if (dto.groupName.isBlank()) return BotCommand.ParseError("groupName is blank")
+                    BotCommand.SwitchGroup(dto.groupName.trim())
+                }
+
+                GeminiFunction.SHOW_BALANCE -> BotCommand.ShowBalance
+
+                GeminiFunction.SHOW_REPORT -> {
+                    val dto = argsMapper.map<ShowReportArgs>(args)
+                    BotCommand.ShowReport(dto.month?.toInt(), dto.year?.toInt())
+                }
+
+                GeminiFunction.SHOW_HISTORY -> {
+                    val dto = argsMapper.map<ShowHistoryArgs>(args)
+                    BotCommand.ShowHistory(
+                        dto.startDate?.trim()?.takeIf { it.isNotEmpty() },
+                        dto.endDate?.trim()?.takeIf { it.isNotEmpty() }
+                    )
+                }
+
+                GeminiFunction.LIST_NOTIFICATIONS -> BotCommand.ListNotifications
+
+                GeminiFunction.CREATE_NOTIFICATION -> {
+                    val dto = argsMapper.map<CreateNotificationArgs>(args)
+                    if (dto.name.isBlank()) return BotCommand.ParseError("notification name is blank")
+                    BotCommand.CreateNotification(dto.name.trim(), dto.hour.toInt(), dto.minute?.toInt() ?: 0)
+                }
+
+                GeminiFunction.DELETE_NOTIFICATION -> {
+                    val dto = argsMapper.map<DeleteNotificationArgs>(args)
+                    if (dto.name.isBlank()) return BotCommand.ParseError("notification name is blank")
+                    BotCommand.DeleteNotification(dto.name.trim())
                 }
 
                 null -> {

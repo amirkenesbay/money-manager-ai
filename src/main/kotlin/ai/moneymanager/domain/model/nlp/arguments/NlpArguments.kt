@@ -25,3 +25,27 @@ data class DeleteGroupArgs(
 data class OutOfContextArgs(
     val originalMessage: String
 )
+
+data class SwitchGroupArgs(
+    val groupName: String
+)
+
+data class ShowReportArgs(
+    val month: Double? = null,
+    val year: Double? = null
+)
+
+data class ShowHistoryArgs(
+    val startDate: String? = null,
+    val endDate: String? = null
+)
+
+data class CreateNotificationArgs(
+    val name: String,
+    val hour: Double,
+    val minute: Double? = null
+)
+
+data class DeleteNotificationArgs(
+    val name: String
+)
