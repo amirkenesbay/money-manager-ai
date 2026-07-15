@@ -96,4 +96,40 @@ sealed class BotCommand {
     data class ListCategories(
         val type: String?
     ) : BotCommand()
+
+    // ===== GROUPS =====
+
+    object ListGroups : BotCommand()
+
+    data class SwitchGroup(
+        val groupName: String
+    ) : BotCommand()
+
+    // ===== BALANCE / REPORTS / HISTORY =====
+
+    object ShowBalance : BotCommand()
+
+    data class ShowReport(
+        val month: Int?,
+        val year: Int?
+    ) : BotCommand()
+
+    data class ShowHistory(
+        val startDate: String?,
+        val endDate: String?
+    ) : BotCommand()
+
+    // ===== NOTIFICATIONS =====
+
+    object ListNotifications : BotCommand()
+
+    data class CreateNotification(
+        val name: String,
+        val hour: Int,
+        val minute: Int
+    ) : BotCommand()
+
+    data class DeleteNotification(
+        val name: String
+    ) : BotCommand()
 }

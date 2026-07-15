@@ -13,7 +13,21 @@ enum class GeminiFunction(val functionName: String) {
     RENAME_CATEGORY("renameCategory"),
     CHANGE_CATEGORY_ICON("changeCategoryIcon"),
     DELETE_ALL_CATEGORIES("deleteAllCategories"),
-    LIST_CATEGORIES("listCategories");
+    LIST_CATEGORIES("listCategories"),
+
+    // Groups
+    LIST_GROUPS("listGroups"),
+    SWITCH_GROUP("switchGroup"),
+
+    // Balance / reports / history
+    SHOW_BALANCE("showBalance"),
+    SHOW_REPORT("showReport"),
+    SHOW_HISTORY("showHistory"),
+
+    // Notifications
+    LIST_NOTIFICATIONS("listNotifications"),
+    CREATE_NOTIFICATION("createNotification"),
+    DELETE_NOTIFICATION("deleteNotification");
 
     companion object {
         fun from(name: String?): GeminiFunction? =

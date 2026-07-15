@@ -3,8 +3,11 @@ package ai.moneymanager.domain.model.nlp
 import ai.moneymanager.chat.reply.common.formatAmount
 import ai.moneymanager.chat.reply.common.formatDescriptionSuffix
 import ai.moneymanager.chat.reply.common.formatIconPrefix
+import ai.moneymanager.chat.reply.common.formatTime
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.MoneyGroup
+import ai.moneymanager.repository.entity.NotificationEntity
 import ai.moneymanager.service.LocalizationService
 import org.bson.types.ObjectId
 import java.math.BigDecimal
@@ -82,6 +85,50 @@ sealed class AiPendingAction {
         ) : CategoryAction() {
             override fun describe(localizationService: LocalizationService, language: String?): String =
                 localizationService.t("ai.confirm.category.delete_all", language, count)
+        }
+    }
+
+    sealed class GroupAction : AiPendingAction() {
+        data class Create(
+            val name: String
+        ) : GroupAction() {
+            override fun describe(localizationService: LocalizationService, language: String?): String =
+                localizationService.t("ai.confirm.group.create", language, name)
+        }
+
+        data class Delete(
+            val group: MoneyGroup
+        ) : GroupAction() {
+            override fun describe(localizationService: LocalizationService, language: String?): String =
+                localizationService.t("ai.confirm.group.delete", language, group.name, group.memberIds.size)
+        }
+    }
+
+    sealed class NotificationAction : AiPendingAction() {
+        data class CreateDaily(
+            val name: String,
+            val hour: Int,
+            val minute: Int
+        ) : NotificationAction() {
+            override fun describe(localizationService: LocalizationService, language: String?): String =
+                localizationService.t(
+                    "ai.confirm.notification.create_daily",
+                    language,
+                    name,
+                    formatTime(hour, minute)
+                )
+        }
+
+        data class Delete(
+            val notification: NotificationEntity
+        ) : NotificationAction() {
+            override fun describe(localizationService: LocalizationService, language: String?): String =
+                localizationService.t(
+                    "ai.confirm.notification.delete",
+                    language,
+                    formatIconPrefix(notification.icon),
+                    notification.name
+                )
         }
     }
 
