@@ -20,6 +20,7 @@ private const val BATCH_LINE_SEPARATOR = "\n"
 private const val BATCH_SECTION_SEPARATOR = "\n\n"
 private const val BATCH_TOTALS_SEPARATOR = " · "
 private const val CONFIRM_YES_KEY = "ai.confirm.button.yes"
+private const val HINTS_BUTTON_KEY = "ai.mode.button.hints"
 private const val CONFIRM_SAVE_ALL_KEY = "ai.confirm.button.save_all"
 private const val BATCH_TITLE_KEY = "ai.confirm.batch.title"
 private const val BATCH_NOTES_KEY = "ai.confirm.batch.notes"
@@ -45,6 +46,12 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.aiModeReply(
             text = localizationService.t("ai.mode.intro", lang)
 
             keyboard {
+                buttonRow {
+                    button {
+                        text = localizationService.t(HINTS_BUTTON_KEY, lang)
+                        type = MoneyManagerButtonType.WHAT_TO_ASK
+                    }
+                }
                 backButton(text = localizationService.t("common.back_to_menu", lang))
             }
         }
@@ -209,9 +216,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.aiResultReply(
             newMessage = false
             val lang = context.userInfo?.language
 
-            val body = context.aiResultMessage ?: localizationService.t("ai.result.empty", lang)
-            val suffix = localizationService.t("ai.result.suffix", lang)
-            text = body + suffix
+            text = context.aiResultMessage ?: localizationService.t("ai.result.empty", lang)
 
             keyboard {
                 buttonRow {

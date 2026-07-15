@@ -112,6 +112,21 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiDialogTransitions(
     }
 
     transition {
+        name = "Show AI hints"
+        condition {
+            from = MoneyManagerState.AI_MODE
+            button = MoneyManagerButtonType.WHAT_TO_ASK
+        }
+        action {
+            actionExecutor.clear(context)
+            context.aiResultMessage = localizationService.t("ai.hints", context.userInfo?.language)
+        }
+        then {
+            to = MoneyManagerState.AI_RESULT
+        }
+    }
+
+    transition {
         name = "Route AI to batch confirm"
         condition {
             from = MoneyManagerState.AI_MODE
