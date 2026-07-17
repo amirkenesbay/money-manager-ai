@@ -1,6 +1,7 @@
 package ai.moneymanager.chat.transition.ai.handler
 
 import ai.moneymanager.chat.reply.common.formatIconPrefix
+import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.chat.reply.common.formatTime
 import ai.moneymanager.chat.reply.notification.formatFrequencyShort
 import ai.moneymanager.chat.transition.ai.matchesEntityName
@@ -74,8 +75,8 @@ class NotificationAiHandler(
                 "ai.notification.list.item",
                 lang,
                 status,
-                formatIconPrefix(notification.icon),
-                notification.name,
+                escapeHtml(formatIconPrefix(notification.icon)),
+                escapeHtml(notification.name),
                 frequency
             )
         }
@@ -96,10 +97,10 @@ class NotificationAiHandler(
         val matches = findNotifications(userId, name)
         return when {
             matches.isEmpty() -> AiPreparationResult.ImmediateResult(
-                localizationService.t("ai.notification.not_found", lang, name)
+                localizationService.t("ai.notification.not_found", lang, escapeHtml(name))
             )
             matches.size > 1 -> AiPreparationResult.ImmediateResult(
-                localizationService.t("ai.notification.ambiguous", lang, name)
+                localizationService.t("ai.notification.ambiguous", lang, escapeHtml(name))
             )
             else -> AiPreparationResult.RequiresConfirmation(
                 AiPendingAction.NotificationAction.Delete(matches.first())
@@ -133,7 +134,7 @@ class NotificationAiHandler(
         val message = localizationService.t(
             "ai.notification.created",
             lang,
-            action.name,
+            escapeHtml(action.name),
             formatTime(action.hour, action.minute)
         )
         if (timezone != null) return message
@@ -144,9 +145,9 @@ class NotificationAiHandler(
         val notificationId = action.notification.id
             ?: return localizationService.t("ai.notification.delete.failed", lang, action.notification.name)
         return if (notificationService.deleteNotification(notificationId)) {
-            localizationService.t("ai.notification.deleted", lang, action.notification.name)
+            localizationService.t("ai.notification.deleted", lang, escapeHtml(action.notification.name))
         } else {
-            localizationService.t("ai.notification.delete.failed", lang, action.notification.name)
+            localizationService.t("ai.notification.delete.failed", lang, escapeHtml(action.notification.name))
         }
     }
 

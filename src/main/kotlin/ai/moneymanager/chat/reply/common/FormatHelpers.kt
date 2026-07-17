@@ -14,7 +14,6 @@ private const val THOUSANDS_SEPARATOR = ' '
 private const val CURRENCY_SYMBOL = "₸"
 private const val DATE_PATTERN = "dd.MM.yyyy"
 private const val SHORT_DATE_PATTERN = "dd.MM"
-private const val SECTION_RULE = "━━━━━━━━━━━━━━━━━━━━━"
 private const val POSITIVE_SIGN = "+"
 private const val NEGATIVE_SIGN = "−"
 private const val ICON_NAME_SEPARATOR = " "
@@ -37,10 +36,16 @@ private val amountFormat = DecimalFormat(
 val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern(DATE_PATTERN)
 val shortDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern(SHORT_DATE_PATTERN)
 
-const val SECTION_SEPARATOR: String = "\n" + SECTION_RULE
-const val SECTION_SEPARATOR_WITH_BLANK_LINE: String = "\n\n" + SECTION_RULE
-
 fun formatAmount(amount: BigDecimal): String = "${amountFormat.format(amount)}$CURRENCY_SYMBOL"
+
+/** Telegram HTML parse mode: жирный текст. Использовать только на экранах с parseMode = HTML. */
+fun bold(text: String): String = "<b>$text</b>"
+
+/** Экранирование пользовательского текста для экранов с parseMode = HTML. */
+fun escapeHtml(text: String): String = text
+    .replace("&", "&amp;")
+    .replace("<", "&lt;")
+    .replace(">", "&gt;")
 
 fun formatTime(hour: Int, minute: Int): String = TIME_PATTERN.format(hour, minute)
 
@@ -63,13 +68,13 @@ fun formatBalanceBreakdown(
     localizationService: LocalizationService,
     language: String?
 ): String = """
-    |${localizationService.t("balance.view.title", language)}
+    |${bold(localizationService.t("balance.view.title", language))}
     |
     |${localizationService.t("balance.view.initial", language, formatAmount(balance.initial))}
     |${localizationService.t("balance.view.income", language, formatAmount(balance.income))}
     |${localizationService.t("balance.view.expense", language, formatAmount(balance.expense))}
     |
-    |${localizationService.t("balance.view.total", language, formatAmount(balance.total))}
+    |${bold(localizationService.t("balance.view.total", language, formatAmount(balance.total)))}
 """.trimMargin()
 
 fun formatUserDisplayName(userInfo: UserInfo?, fallbackId: Long): String {

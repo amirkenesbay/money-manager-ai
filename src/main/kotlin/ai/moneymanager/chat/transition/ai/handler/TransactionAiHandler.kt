@@ -4,6 +4,7 @@ import ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.chat.reply.common.formatAmount
 import ai.moneymanager.chat.reply.common.formatDescriptionSuffix
 import ai.moneymanager.chat.reply.common.formatIconPrefix
+import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.chat.transition.ai.extractLeadingNonLetters
 import ai.moneymanager.chat.transition.ai.matchesEntityName
 import ai.moneymanager.chat.transition.ai.resolveOperationDate
@@ -132,7 +133,7 @@ class TransactionAiHandler(
                 )
             )
             else -> AiPreparationResult.ImmediateResult(
-                localizationService.t("ai.transaction.category_ambiguous", lang, categoryName)
+                localizationService.t("ai.transaction.category_ambiguous", lang, escapeHtml(categoryName))
             )
         }
     }
@@ -222,8 +223,8 @@ class TransactionAiHandler(
         val baseMessage = localizationService.t(
             key,
             lang,
-            formatIconPrefix(category.icon),
-            category.name,
+            escapeHtml(formatIconPrefix(category.icon)),
+            escapeHtml(category.name),
             formatAmount(BigDecimal.valueOf(amount)),
             formatDescriptionSuffix(description)
         )

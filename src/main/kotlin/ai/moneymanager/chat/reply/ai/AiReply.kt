@@ -2,6 +2,7 @@ package ai.moneymanager.chat.reply.ai
 
 import ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.chat.reply.common.backButton
+import ai.moneymanager.chat.reply.common.bold
 import ai.moneymanager.chat.reply.common.formatAmount
 import ai.moneymanager.chat.transition.ai.rankCategoriesByProposed
 import ai.moneymanager.domain.model.Category
@@ -13,6 +14,7 @@ import ai.moneymanager.domain.model.nlp.AiPendingAction
 import ai.moneymanager.service.LocalizationService
 import kz.rmr.chatmachinist.api.reply.KeyboardBuilder
 import kz.rmr.chatmachinist.api.reply.RepliesBuilder
+import kz.rmr.chatmachinist.api.reply.ParseMode
 import java.math.BigDecimal
 
 private const val PICKER_TOP_N = 5
@@ -105,6 +107,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.aiConfirmBatchReply(
 
         message {
             newMessage = true
+            parseMode = ParseMode.HTML
             val ctx = context
             val lang = ctx.userInfo?.language
 
@@ -114,7 +117,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.aiConfirmBatchReply(
             val body = buildString {
                 append(items)
                 val totals = batchTotalsLine(ctx.pendingAiActions, localizationService, lang)
-                if (totals.isNotEmpty()) append(BATCH_SECTION_SEPARATOR).append(totals)
+                if (totals.isNotEmpty()) append(BATCH_SECTION_SEPARATOR).append(bold(totals))
                 if (ctx.aiBatchNotes.isNotEmpty()) {
                     append(localizationService.t(BATCH_NOTES_KEY, lang, ctx.aiBatchNotes.joinToString(BATCH_LINE_SEPARATOR)))
                 }
@@ -214,6 +217,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.aiResultReply(
 
         message {
             newMessage = true
+            parseMode = ParseMode.HTML
             val lang = context.userInfo?.language
 
             text = context.aiResultMessage ?: localizationService.t("ai.result.empty", lang)

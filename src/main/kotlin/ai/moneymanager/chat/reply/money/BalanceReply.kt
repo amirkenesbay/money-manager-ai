@@ -6,6 +6,7 @@ import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.service.LocalizationService
+import kz.rmr.chatmachinist.api.reply.ParseMode
 import kz.rmr.chatmachinist.api.reply.RepliesBuilder
 
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.balanceOnboardingPromptReply(
@@ -77,6 +78,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.balanceViewReply(
         state = MoneyManagerState.BALANCE_VIEW
 
         message {
+            parseMode = ParseMode.HTML
             val lang = context.userInfo?.language
             val balance = context.currentBalance
 

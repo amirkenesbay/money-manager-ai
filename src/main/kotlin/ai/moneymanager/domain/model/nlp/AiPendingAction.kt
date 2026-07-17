@@ -4,6 +4,7 @@ import ai.moneymanager.chat.reply.common.formatAmount
 import ai.moneymanager.chat.reply.common.formatDescriptionSuffix
 import ai.moneymanager.chat.reply.common.formatIconPrefix
 import ai.moneymanager.chat.reply.common.formatTime
+import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.MoneyGroup
@@ -155,7 +156,7 @@ sealed class AiPendingAction {
 
         fun describeBatchItem(localizationService: LocalizationService, language: String?): String {
             val key = if (type == CategoryType.EXPENSE) BATCH_ITEM_EXPENSE_KEY else BATCH_ITEM_INCOME_KEY
-            val base = render(localizationService, language, key)
+            val base = escapeHtml(render(localizationService, language, key))
             if (!isNewCategory) return base
             return base + localizationService.t(BATCH_ITEM_NEW_CATEGORY_KEY, language)
         }

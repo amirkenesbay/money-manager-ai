@@ -1,7 +1,8 @@
 package ai.moneymanager.chat.reply.finance
 
 import ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON
-import ai.moneymanager.chat.reply.common.SECTION_SEPARATOR_WITH_BLANK_LINE
+import ai.moneymanager.chat.reply.common.bold
+import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.chat.reply.common.formatSignedAmount
 import ai.moneymanager.chat.reply.common.shortDateFormatter
 import ai.moneymanager.domain.model.CategoryType
@@ -11,6 +12,7 @@ import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import ai.moneymanager.service.FinanceHistoryService
 import ai.moneymanager.service.LocalizationService
+import kz.rmr.chatmachinist.api.reply.ParseMode
 import kz.rmr.chatmachinist.api.reply.RepliesBuilder
 
 private const val RECENT_OPERATIONS_LIMIT = 5
@@ -23,8 +25,9 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeManagementRepl
         state = MoneyManagerState.FINANCE_MANAGEMENT
 
         message {
+            parseMode = ParseMode.HTML
             val lang = context.userInfo?.language
-            val title = localizationService.t("finance.management.title", lang)
+            val title = bold(localizationService.t("finance.management.title", lang))
             val body = localizationService.t("finance.management.body", lang)
             val details = context.buildFinanceDetails(localizationService, lang)
             val recentSection = context.buildRecentOperationsSection(financeHistoryService, localizationService, lang)
@@ -73,10 +76,10 @@ private fun MoneyManagerContext.buildFinanceDetails(
 ): String = buildString {
     selectedCategory?.let {
         val icon = it.icon ?: DEFAULT_CATEGORY_ICON
-        append(localizationService.t("finance.management.detail.category", lang, icon, it.name))
+        append(localizationService.t("finance.management.detail.category", lang, icon, escapeHtml(it.name)))
     }
     financeAmount?.let { append(localizationService.t("finance.management.detail.amount", lang, it)) }
-    financeComment?.let { append(localizationService.t("finance.management.detail.comment", lang, it)) }
+    financeComment?.let { append(localizationService.t("finance.management.detail.comment", lang, escapeHtml(it))) }
     selectedDate?.let { append(localizationService.t("finance.management.detail.date", lang, it)) }
 }
 
@@ -91,8 +94,7 @@ private fun MoneyManagerContext.buildRecentOperationsSection(
 
     val header = localizationService.t("finance.management.recent_header", lang)
     return buildString {
-        append(SECTION_SEPARATOR_WITH_BLANK_LINE)
-        append("\n$header")
+        append("\n\n$header")
         operations.forEach { append("\n${formatRecentOperation(it)}") }
     }
 }
@@ -100,7 +102,7 @@ private fun MoneyManagerContext.buildRecentOperationsSection(
 private fun formatRecentOperation(operation: FinanceOperationEntity): String {
     val date = operation.operationDate.format(shortDateFormatter)
     val icon = operation.categoryIcon ?: DEFAULT_CATEGORY_ICON
-    return "$date $icon ${operation.categoryName} ${formatSignedAmount(operation.type, operation.amount)}"
+    return "$date $icon ${escapeHtml(operation.categoryName)} ${formatSignedAmount(operation.type, operation.amount)}"
 }
 
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeOperationSavedReply(
@@ -110,12 +112,13 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeOperationSaved
         state = MoneyManagerState.FINANCE_OPERATION_SAVED
 
         message {
+            parseMode = ParseMode.HTML
             val lang = context.userInfo?.language
             val titleKey = when (context.financeOperationType) {
                 CategoryType.INCOME -> "finance.saved.title.income"
                 else -> "finance.saved.title.expense"
             }
-            val title = localizationService.t(titleKey, lang)
+            val title = bold(localizationService.t(titleKey, lang))
             val details = context.buildFinanceDetails(localizationService, lang)
 
             text = """

@@ -1,6 +1,7 @@
 package ai.moneymanager.chat.transition.ai.handler
 
 import ai.moneymanager.chat.reply.common.buildInviteLink
+import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.chat.transition.ai.matchesEntityName
 import ai.moneymanager.domain.model.MoneyGroup
 import ai.moneymanager.domain.model.MoneyManagerContext
@@ -89,15 +90,15 @@ class GroupAiHandler(
     ): AiPreparationResult {
         val matches = findGroups(userId, name)
         val message = when {
-            matches.isEmpty() -> localizationService.t("ai.group.not_found", lang, name)
-            matches.size > 1 -> localizationService.t("ai.group.ambiguous", lang, name)
+            matches.isEmpty() -> localizationService.t("ai.group.not_found", lang, escapeHtml(name))
+            matches.size > 1 -> localizationService.t("ai.group.ambiguous", lang, escapeHtml(name))
             matches.first().id == context.userInfo?.activeGroupId ->
-                localizationService.t("ai.group.switch.already", lang, matches.first().name)
+                localizationService.t("ai.group.switch.already", lang, escapeHtml(matches.first().name))
             else -> {
                 val group = matches.first()
                 groupService.switchActiveGroup(userId, group.id!!)
                 refreshUserInfo(userId, context)
-                localizationService.t("ai.group.switched", lang, group.name)
+                localizationService.t("ai.group.switched", lang, escapeHtml(group.name))
             }
         }
         return AiPreparationResult.ImmediateResult(message)
@@ -113,7 +114,7 @@ class GroupAiHandler(
                 if (group.ownerId == userId) append(OWNER_MARKER)
                 if (group.id == activeGroupId) append(ACTIVE_MARKER)
             }
-            localizationService.t("ai.group.list.item", lang, group.name, group.memberIds.size, markers)
+            localizationService.t("ai.group.list.item", lang, escapeHtml(group.name), group.memberIds.size, markers)
         }
         return buildString {
             append(localizationService.t("ai.group.list.title", lang))
@@ -131,9 +132,9 @@ class GroupAiHandler(
         lang: String?
     ): String {
         val created = groupService.createGroup(userId, action.name)
-            ?: return localizationService.t("ai.group.create.duplicate", lang, action.name)
+            ?: return localizationService.t("ai.group.create.duplicate", lang, escapeHtml(action.name))
         refreshUserInfo(userId, context)
-        return localizationService.t("ai.group.created", lang, created.name, buildInviteLink(created.inviteToken))
+        return localizationService.t("ai.group.created", lang, escapeHtml(created.name), buildInviteLink(created.inviteToken))
     }
 
     private fun executeDelete(
@@ -148,7 +149,7 @@ class GroupAiHandler(
             return localizationService.t("ai.group.delete.failed", lang, action.group.name)
         }
         refreshUserInfo(userId, context)
-        return localizationService.t("ai.group.deleted", lang, action.group.name)
+        return localizationService.t("ai.group.deleted", lang, escapeHtml(action.group.name))
     }
 
     private fun findGroups(userId: Long, name: String): List<MoneyGroup> =

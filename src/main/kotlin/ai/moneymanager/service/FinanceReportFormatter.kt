@@ -4,8 +4,8 @@ import ai.moneymanager.domain.model.report.AnalyticsReport
 import ai.moneymanager.domain.model.report.CategoryComparison
 import ai.moneymanager.domain.model.report.CategoryMonthData
 import ai.moneymanager.domain.model.report.CategoryReport
-import ai.moneymanager.chat.reply.common.SECTION_SEPARATOR
-import ai.moneymanager.chat.reply.common.SECTION_SEPARATOR_WITH_BLANK_LINE
+import ai.moneymanager.chat.reply.common.bold
+import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.chat.reply.common.formatAmount
 import ai.moneymanager.domain.model.report.ComparisonReport
 import ai.moneymanager.domain.model.report.MembersReport
@@ -23,12 +23,11 @@ class FinanceReportFormatter(
 ) {
 
     fun formatComparison(report: ComparisonReport, language: String?): String = buildString {
-        append(localizationService.t(
+        append(bold(localizationService.t(
             "finance.report.comparison.title",
             language,
             report.previousMonthName, report.currentMonthName, report.year
-        ))
-        append(SECTION_SEPARATOR)
+        )))
 
         if (report.isEmpty) {
             append("\n\n${localizationService.t("finance.report.comparison.empty", language)}")
@@ -67,14 +66,13 @@ class FinanceReportFormatter(
         val previousSign = if (previousBalance >= BigDecimal.ZERO) "+" else ""
         val currentSign = if (currentBalance >= BigDecimal.ZERO) "+" else ""
 
-        append(SECTION_SEPARATOR_WITH_BLANK_LINE)
-        append("\n")
-        append(localizationService.t(
+        append("\n\n")
+        append(bold(localizationService.t(
             "finance.report.comparison.balance",
             language,
             "$previousSign${formatAmount(previousBalance)}",
             "$currentSign${formatAmount(currentBalance)}"
-        ))
+        )))
         appendDelta(previousBalance, currentBalance)
     }
 
@@ -86,7 +84,7 @@ class FinanceReportFormatter(
             val arrow = deltaArrow(percentChange)
             val warning = if (percentChange > 20) "  ⚠️" else ""
             append(
-                "\n$icon $name  ${formatAmount(previousAmount)} → ${formatAmount(currentAmount)}  $arrow ${
+                "\n$icon ${escapeHtml(name)}  ${formatAmount(previousAmount)} → ${formatAmount(currentAmount)}  $arrow ${
                     abs(
                         percentChange
                     )
@@ -96,8 +94,7 @@ class FinanceReportFormatter(
     }
 
     fun formatAnalytics(report: AnalyticsReport, language: String?): String = buildString {
-        append(localizationService.t("finance.report.analytics.title", language, report.monthName, report.year.toString()))
-        append(SECTION_SEPARATOR)
+        append(bold(localizationService.t("finance.report.analytics.title", language, report.monthName, report.year.toString())))
 
         if (report.isEmpty) {
             append("\n\n${localizationService.t("finance.report.analytics.empty", language)}")
@@ -144,7 +141,7 @@ class FinanceReportFormatter(
         append(localizationService.t("finance.report.analytics.top_expenses", language))
         report.topExpenses.forEachIndexed { index, (icon, name, total) ->
             val percent = percentOf(total, report.totalExpense)
-            append("\n${index + 1}. $icon $name — ${formatAmount(total)} ($percent%)")
+            append("\n${index + 1}. $icon ${escapeHtml(name)} — ${formatAmount(total)} ($percent%)")
         }
     }
 
@@ -154,7 +151,7 @@ class FinanceReportFormatter(
         append(localizationService.t(
             "finance.report.analytics.max",
             language,
-            formatAmount(max.amount), max.icon, max.categoryName, max.day, max.monthShort
+            formatAmount(max.amount), max.icon, escapeHtml(max.categoryName), max.day, max.monthShort
         ))
     }
 
@@ -169,8 +166,7 @@ class FinanceReportFormatter(
     }
 
     fun formatMembers(report: MembersReport, language: String?): String = buildString {
-        append(localizationService.t("finance.report.members.title", language, report.monthName, report.year.toString()))
-        append(SECTION_SEPARATOR)
+        append(bold(localizationService.t("finance.report.members.title", language, report.monthName, report.year.toString())))
 
         if (report.isEmpty) {
             append("\n\n${localizationService.t("finance.report.members.empty", language)}")
@@ -195,7 +191,7 @@ class FinanceReportFormatter(
     private fun StringBuilder.appendMemberLines(members: List<MemberTotal>, total: BigDecimal) {
         members.forEach { (name, amount) ->
             val percent = percentOf(amount, total)
-            append("\n  $name — ${formatAmount(amount)} ($percent%)")
+            append("\n  ${escapeHtml(name)} — ${formatAmount(amount)} ($percent%)")
         }
     }
 
@@ -206,18 +202,16 @@ class FinanceReportFormatter(
     ) {
         val balance = totalIncome.subtract(totalExpense)
         val sign = if (balance >= BigDecimal.ZERO) "+" else ""
-        append(SECTION_SEPARATOR_WITH_BLANK_LINE)
-        append("\n")
-        append(localizationService.t("finance.report.members.balance", language, "$sign${formatAmount(balance)}"))
+        append("\n\n")
+        append(bold(localizationService.t("finance.report.members.balance", language, "$sign${formatAmount(balance)}")))
     }
 
     fun formatCategory(report: CategoryReport, language: String?): String = buildString {
-        append(localizationService.t(
+        append(bold(localizationService.t(
             "finance.report.category.title_with_period",
             language,
-            report.icon, report.categoryName, report.months
-        ))
-        append(SECTION_SEPARATOR)
+            report.icon, escapeHtml(report.categoryName), report.months
+        )))
         append("\n")
 
         appendBarChart(report.monthsData, report.maxAmount, language)
@@ -251,8 +245,7 @@ class FinanceReportFormatter(
 
         val totalOperations = monthsData.sumOf { it.count }
 
-        append(SECTION_SEPARATOR_WITH_BLANK_LINE)
-        append("\n")
+        append("\n\n")
         append(localizationService.t("finance.report.category.average", language, formatAmount(average)))
         append("\n")
         append(localizationService.t("finance.report.category.total_operations", language, totalOperations))

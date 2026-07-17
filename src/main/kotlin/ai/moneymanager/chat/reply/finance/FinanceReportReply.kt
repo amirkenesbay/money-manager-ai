@@ -5,6 +5,7 @@ import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.service.LocalizationService
+import kz.rmr.chatmachinist.api.reply.ParseMode
 import kz.rmr.chatmachinist.api.reply.RepliesBuilder
 
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeReportMenuReply(
@@ -124,6 +125,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeReportCategory
         state = MoneyManagerState.FINANCE_REPORT_CATEGORY_VIEW
 
         message {
+            parseMode = ParseMode.HTML
             val lang = context.userInfo?.language
             text = context.reportText ?: localizationService.t("finance.report.loading", lang)
 
@@ -147,6 +149,7 @@ private fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.reportWithNav
         state = reportState
 
         message {
+            parseMode = ParseMode.HTML
             val lang = context.userInfo?.language
             text = context.reportText ?: localizationService.t("finance.report.loading", lang)
 

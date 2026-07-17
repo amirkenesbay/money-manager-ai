@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.transition.ai.handler
 
+import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.chat.transition.ai.matchesEntityName
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
@@ -67,7 +68,7 @@ class CategoryAiHandler(
     private fun prepareCreate(cmd: BotCommand.CreateCategory, lang: String?): AiPreparationResult {
         val type = parseCategoryType(cmd.type)
             ?: return AiPreparationResult.ImmediateResult(
-                localizationService.t("ai.category.create.unknown_type", lang, cmd.name)
+                localizationService.t("ai.category.create.unknown_type", lang, escapeHtml(cmd.name))
             )
         val icon = cmd.icon?.takeIf { isValidIcon(it) }
         return AiPreparationResult.RequiresConfirmation(
@@ -153,15 +154,15 @@ class CategoryAiHandler(
             ?: return localizationService.t(
                 "ai.category.create.duplicate",
                 lang,
-                action.name,
+                escapeHtml(action.name),
                 typeLabel(action.type, lang)
             )
         val iconPart = created.icon?.let { "$it " } ?: ""
         return localizationService.t(
             "ai.category.create.success",
             lang,
-            iconPart,
-            created.name,
+            escapeHtml(iconPart),
+            escapeHtml(created.name),
             typeLabel(created.type, lang)
         )
     }
@@ -172,9 +173,9 @@ class CategoryAiHandler(
         val success = categoryService.deleteCategory(categoryId)
         return if (success) {
             val iconPart = action.category.icon?.let { "$it " } ?: ""
-            localizationService.t("ai.category.delete.success", lang, iconPart, action.category.name)
+            localizationService.t("ai.category.delete.success", lang, escapeHtml(iconPart), escapeHtml(action.category.name))
         } else {
-            localizationService.t("ai.category.delete.failed", lang, action.category.name)
+            localizationService.t("ai.category.delete.failed", lang, escapeHtml(action.category.name))
         }
     }
 
@@ -182,20 +183,20 @@ class CategoryAiHandler(
         val categoryId = action.category.id
             ?: return localizationService.t("ai.category.no_id", lang)
         val updated = categoryService.updateCategoryName(categoryId, action.newName)
-            ?: return localizationService.t("ai.category.rename.failed", lang, action.category.name)
-        return localizationService.t("ai.category.rename.success", lang, action.category.name, updated.name)
+            ?: return localizationService.t("ai.category.rename.failed", lang, escapeHtml(action.category.name))
+        return localizationService.t("ai.category.rename.success", lang, escapeHtml(action.category.name), escapeHtml(updated.name))
     }
 
     private fun executeChangeIcon(action: AiPendingAction.CategoryAction.ChangeIcon, lang: String?): String {
         val categoryId = action.category.id
             ?: return localizationService.t("ai.category.no_id", lang)
         val updated = categoryService.updateCategoryIcon(categoryId, action.newIcon)
-            ?: return localizationService.t("ai.category.change_icon.failed", lang, action.category.name)
+            ?: return localizationService.t("ai.category.change_icon.failed", lang, escapeHtml(action.category.name))
         return localizationService.t(
             "ai.category.change_icon.success",
             lang,
-            updated.icon ?: "—",
-            updated.name
+            escapeHtml(updated.icon ?: "—"),
+            escapeHtml(updated.name)
         )
     }
 
@@ -244,8 +245,8 @@ class CategoryAiHandler(
     }
 
     private fun categoryNotFound(name: String, lang: String?): String =
-        localizationService.t("ai.category.not_found", lang, name)
+        localizationService.t("ai.category.not_found", lang, escapeHtml(name))
 
     private fun ambiguousType(name: String, lang: String?): String =
-        localizationService.t("ai.category.ambiguous", lang, name)
+        localizationService.t("ai.category.ambiguous", lang, escapeHtml(name))
 }

@@ -2,6 +2,7 @@ package ai.moneymanager.chat.transition.ai
 
 import ai.moneymanager.chat.transition.ai.handler.AiDomainHandler
 import ai.moneymanager.chat.transition.ai.handler.AiPreparationResult
+import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.nlp.AiPendingAction
 import ai.moneymanager.domain.model.nlp.BotCommand
@@ -144,7 +145,7 @@ class AiActionExecutor(
         val prompt = aiPromptService.outOfContextPrompt(command.originalMessage, replyLanguage)
         val response = geminiService.generateText(prompt)
         log.info("AI out of context, dynamic=${response != null}, replyLanguage=$replyLanguage")
-        return response ?: localizationService.t(KEY_ERROR_OUT_OF_CONTEXT_FALLBACK, lang)
+        return response?.let { escapeHtml(it) } ?: localizationService.t(KEY_ERROR_OUT_OF_CONTEXT_FALLBACK, lang)
     }
 
     private fun dispatchToHandler(command: BotCommand, context: MoneyManagerContext, lang: String?) {
