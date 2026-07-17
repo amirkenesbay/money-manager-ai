@@ -10,9 +10,22 @@ import ai.moneymanager.service.GeminiService
 import ai.moneymanager.service.LocalizationService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
+import java.util.Locale
 
 private const val MAX_BATCH_OPERATIONS = 10
 private const val BATCH_RESULT_SEPARATOR = "\n"
+private const val IMMEDIATE_RESULT_LOG_PREVIEW = 80
+
+private const val KEY_ERROR_PARSE = "ai.error.parse"
+private const val KEY_ERROR_UNHANDLED = "ai.error.unhandled"
+private const val KEY_ERROR_SERVICE = "ai.error.service"
+private const val KEY_ERROR_RATE_LIMIT = "ai.error.rate_limit"
+private const val KEY_ERROR_RATE_LIMIT_HINT = "ai.error.rate_limit_with_hint"
+private const val KEY_ERROR_OUT_OF_CONTEXT_FALLBACK = "ai.error.out_of_context_fallback"
+private const val KEY_BATCH_RESULT_TITLE = "ai.batch.result.title"
+private const val KEY_BATCH_LIMIT_EXCEEDED = "ai.batch.limit_exceeded"
+private const val KEY_BATCH_SKIPPED_OUT_OF_CONTEXT = "ai.batch.skipped_out_of_context"
+private const val KEY_BATCH_SKIPPED_UNSUPPORTED = "ai.batch.skipped_unsupported"
 
 @Component
 class AiActionExecutor(
@@ -23,21 +36,16 @@ class AiActionExecutor(
 ) {
     private val log = LoggerFactory.getLogger(AiActionExecutor::class.java)
 
+    // ========== EXECUTE (confirmed actions) ==========
+
     fun execute(context: MoneyManagerContext) {
         val lang = context.userInfo?.language
         val action = context.pendingAiAction
         if (action == null) {
-            context.aiResultMessage = localizationService.t("ai.error.parse", lang)
+            context.aiResultMessage = localizationService.t(KEY_ERROR_PARSE, lang)
             return
         }
-        val handler = domainHandlers.firstOrNull { it.canExecute(action) }
-        if (handler == null) {
-            context.aiResultMessage = localizationService.t("ai.error.unhandled", lang)
-            context.pendingAiAction = null
-            return
-        }
-        val message = handler.execute(action, context)
-        context.aiResultMessage = message
+        context.aiResultMessage = executeAction(action, context, lang)
         context.pendingAiAction = null
     }
 
@@ -45,20 +53,38 @@ class AiActionExecutor(
         val lang = context.userInfo?.language
         val actions = context.pendingAiActions
         if (actions.isEmpty()) {
-            context.aiResultMessage = localizationService.t("ai.error.parse", lang)
+            context.aiResultMessage = localizationService.t(KEY_ERROR_PARSE, lang)
             return
         }
-        val messages = actions.map { action ->
-            val handler = domainHandlers.firstOrNull { it.canExecute(action) }
-            handler?.execute(action, context) ?: localizationService.t("ai.error.unhandled", lang)
-        }
+        val receipts = actions.map { executeAction(it, context, lang) }
         context.aiResultMessage = localizationService.t(
-            "ai.batch.result.title",
+            KEY_BATCH_RESULT_TITLE,
             lang,
-            messages.joinToString(BATCH_RESULT_SEPARATOR)
+            receipts.joinToString(BATCH_RESULT_SEPARATOR)
         )
         context.pendingAiActions = emptyList()
         context.aiBatchNotes = emptyList()
+    }
+
+    private fun executeAction(action: AiPendingAction, context: MoneyManagerContext, lang: String?): String =
+        domainHandlers.firstOrNull { it.canExecute(action) }
+            ?.execute(action, context)
+            ?: localizationService.t(KEY_ERROR_UNHANDLED, lang)
+
+    fun processCommand(command: BotCommand, context: MoneyManagerContext) {
+        val lang = context.userInfo?.language
+        clear(context)
+
+        val serviceIssue = serviceIssueMessage(command, lang)
+        if (serviceIssue != null) {
+            context.aiResultMessage = serviceIssue
+            return
+        }
+        if (command is BotCommand.OutOfContext) {
+            context.aiResultMessage = outOfContextReply(command, lang)
+            return
+        }
+        dispatchToHandler(command, context, lang)
     }
 
     fun processCommands(commands: List<BotCommand>, context: MoneyManagerContext) {
@@ -76,20 +102,80 @@ class AiActionExecutor(
             prepareBatchItem(command, context, lang, actions, notes)
         }
         if (commands.size > MAX_BATCH_OPERATIONS) {
-            notes += localizationService.t("ai.batch.limit_exceeded", lang, MAX_BATCH_OPERATIONS)
+            notes += localizationService.t(KEY_BATCH_LIMIT_EXCEEDED, lang, MAX_BATCH_OPERATIONS)
         }
-        log.info("📦 AI batch: ${commands.size} commands → ${actions.size} actions, ${notes.size} notes")
+        log.info("AI batch: ${commands.size} commands → ${actions.size} actions, ${notes.size} notes")
+        applyBatchOutcome(actions, notes, context, lang)
+    }
 
-        when {
-            actions.isEmpty() -> context.aiResultMessage = notes
-                .joinToString(BATCH_RESULT_SEPARATOR)
-                .ifEmpty { localizationService.t("ai.error.parse", lang) }
+    fun clear(context: MoneyManagerContext) {
+        context.pendingAiAction = null
+        context.pendingAiActions = emptyList()
+        context.aiBatchNotes = emptyList()
+        context.aiResultMessage = null
+        context.aiRedirectState = null
+        // aiCategoriesCache is rewritten per request in AiRequestHandler; keep it for picker rendering.
+    }
 
-            actions.size == 1 && notes.isEmpty() -> context.pendingAiAction = actions.first()
+    private fun serviceIssueMessage(command: BotCommand, lang: String?): String? = when (command) {
+        is BotCommand.ParseError -> {
+            log.info("AI ParseError: ${command.error}")
+            localizationService.t(KEY_ERROR_PARSE, lang)
+        }
 
-            else -> {
-                context.pendingAiActions = actions
-                context.aiBatchNotes = notes
+        is BotCommand.RateLimitError -> {
+            log.info("AI rate limit, retryAfter=${command.retryAfterSeconds}s")
+            command.retryAfterSeconds
+                ?.let { localizationService.t(KEY_ERROR_RATE_LIMIT_HINT, lang, it) }
+                ?: localizationService.t(KEY_ERROR_RATE_LIMIT, lang)
+        }
+
+        is BotCommand.ServiceError -> {
+            log.info("AI service error")
+            localizationService.t(KEY_ERROR_SERVICE, lang)
+        }
+
+        else -> null
+    }
+
+    private fun outOfContextReply(command: BotCommand.OutOfContext, lang: String?): String {
+        val replyLanguage = Locale.of(lang ?: LocalizationService.FALLBACK_LANGUAGE)
+            .getDisplayLanguage(Locale.ENGLISH)
+        val prompt = aiPromptService.outOfContextPrompt(command.originalMessage, replyLanguage)
+        val response = geminiService.generateText(prompt)
+        log.info("AI out of context, dynamic=${response != null}, replyLanguage=$replyLanguage")
+        return response ?: localizationService.t(KEY_ERROR_OUT_OF_CONTEXT_FALLBACK, lang)
+    }
+
+    private fun dispatchToHandler(command: BotCommand, context: MoneyManagerContext, lang: String?) {
+        val handler = domainHandlers.firstOrNull { it.canHandle(command) }
+        if (handler == null) {
+            log.info("AI: no handler for $command")
+            context.aiResultMessage = localizationService.t(KEY_ERROR_UNHANDLED, lang)
+            return
+        }
+        applyPreparationResult(handler.prepareAction(command, context), context, lang)
+    }
+
+    private fun applyPreparationResult(
+        result: AiPreparationResult,
+        context: MoneyManagerContext,
+        lang: String?
+    ) {
+        when (result) {
+            is AiPreparationResult.RequiresConfirmation -> {
+                context.pendingAiAction = result.action
+                log.info("AI prepared action: ${result.action.describe(localizationService, lang)}")
+            }
+
+            is AiPreparationResult.ImmediateResult -> {
+                context.aiResultMessage = result.message
+                log.info("AI immediate result: ${result.message.take(IMMEDIATE_RESULT_LOG_PREVIEW)}")
+            }
+
+            is AiPreparationResult.StateRedirect -> {
+                context.aiRedirectState = result.state
+                log.info("AI redirect to ${result.state}")
             }
         }
     }
@@ -102,91 +188,39 @@ class AiActionExecutor(
         notes: MutableList<String>
     ) {
         if (command is BotCommand.OutOfContext) {
-            notes += localizationService.t("ai.batch.skipped_out_of_context", lang)
+            notes += localizationService.t(KEY_BATCH_SKIPPED_OUT_OF_CONTEXT, lang)
             return
         }
         val handler = domainHandlers.firstOrNull { it.canHandle(command) }
         if (handler == null) {
-            notes += localizationService.t("ai.batch.skipped_unsupported", lang)
+            notes += localizationService.t(KEY_BATCH_SKIPPED_UNSUPPORTED, lang)
             return
         }
         when (val result = handler.prepareAction(command, context)) {
             is AiPreparationResult.RequiresConfirmation -> actions += result.action
             is AiPreparationResult.ImmediateResult -> notes += result.message
             is AiPreparationResult.StateRedirect ->
-                notes += localizationService.t("ai.batch.skipped_unsupported", lang)
+                notes += localizationService.t(KEY_BATCH_SKIPPED_UNSUPPORTED, lang)
         }
     }
 
-    fun processCommand(command: BotCommand, context: MoneyManagerContext) {
-        val lang = context.userInfo?.language
-        clear(context)
+    private fun applyBatchOutcome(
+        actions: List<AiPendingAction>,
+        notes: List<String>,
+        context: MoneyManagerContext,
+        lang: String?
+    ) {
+        when {
+            actions.isEmpty() -> context.aiResultMessage = notes
+                .joinToString(BATCH_RESULT_SEPARATOR)
+                .ifEmpty { localizationService.t(KEY_ERROR_PARSE, lang) }
 
-        when (command) {
-            is BotCommand.OutOfContext -> {
-                val replyLanguage = java.util.Locale.of(lang ?: LocalizationService.FALLBACK_LANGUAGE)
-                    .getDisplayLanguage(java.util.Locale.ENGLISH)
-                val prompt = aiPromptService.outOfContextPrompt(command.originalMessage, replyLanguage)
-                val response = geminiService.generateText(prompt)
-                context.aiResultMessage = response ?: localizationService.t("ai.error.out_of_context_fallback", lang)
-                log.info("⚠️ AI: Out of context, dynamic=${response != null}, replyLanguage=$replyLanguage")
-                return
-            }
+            actions.size == 1 && notes.isEmpty() -> context.pendingAiAction = actions.first()
 
-            is BotCommand.ParseError -> {
-                context.aiResultMessage = localizationService.t("ai.error.parse", lang)
-                log.info("❌ AI ParseError: ${command.error}")
-                return
-            }
-
-            is BotCommand.RateLimitError -> {
-                context.aiResultMessage = command.retryAfterSeconds
-                    ?.let { localizationService.t("ai.error.rate_limit_with_hint", lang, it) }
-                    ?: localizationService.t("ai.error.rate_limit", lang)
-                log.info("⏳ AI rate limit, retryAfter=${command.retryAfterSeconds}s")
-                return
-            }
-
-            is BotCommand.ServiceError -> {
-                context.aiResultMessage = localizationService.t("ai.error.service", lang)
-                log.info("⚠️ AI service error")
-                return
-            }
-
-            else -> Unit
-        }
-
-        val handler = domainHandlers.firstOrNull { it.canHandle(command) }
-        if (handler == null) {
-            context.aiResultMessage = localizationService.t("ai.error.unhandled", lang)
-            log.info("⚠️ AI: no handler for $command")
-            return
-        }
-
-        when (val result = handler.prepareAction(command, context)) {
-            is AiPreparationResult.RequiresConfirmation -> {
-                context.pendingAiAction = result.action
-                log.info("✅ AI prepared action: ${result.action.describe(localizationService, lang)}")
-            }
-
-            is AiPreparationResult.ImmediateResult -> {
-                context.aiResultMessage = result.message
-                log.info("✅ AI immediate result: ${result.message.take(80)}")
-            }
-
-            is AiPreparationResult.StateRedirect -> {
-                context.aiRedirectState = result.state
-                log.info("✅ AI redirect to ${result.state}")
+            else -> {
+                context.pendingAiActions = actions
+                context.aiBatchNotes = notes
             }
         }
-    }
-
-    fun clear(context: MoneyManagerContext) {
-        context.pendingAiAction = null
-        context.pendingAiActions = emptyList()
-        context.aiBatchNotes = emptyList()
-        context.aiResultMessage = null
-        context.aiRedirectState = null
-        // aiCategoriesCache is rewritten per request in AiRequestHandler; keep it for picker rendering.
     }
 }

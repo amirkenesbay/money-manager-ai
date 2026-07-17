@@ -15,8 +15,17 @@ import kz.rmr.chatmachinist.model.ActionContext
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.objects.Update
+import org.telegram.telegrambots.meta.api.objects.Voice
 
 private const val MAX_VOICE_DURATION_SECONDS = 180
+
+private const val KEY_FEEDBACK_THINKING = "ai.feedback.thinking"
+private const val KEY_FEEDBACK_VOICE_RECEIVED = "ai.feedback.voice_received"
+private const val KEY_FEEDBACK_VOICE_PROCESSING = "ai.feedback.voice_processing"
+private const val KEY_FEEDBACK_RATE_LIMIT = "ai.feedback.rate_limit"
+private const val KEY_FEEDBACK_SERVICE_ERROR = "ai.feedback.service_error"
+private const val KEY_ERROR_VOICE_TOO_LONG = "ai.error.voice_too_long"
+private const val KEY_ERROR_VOICE_DOWNLOAD = "ai.error.voice_download"
 
 @Component
 class AiRequestHandler(
@@ -46,38 +55,59 @@ class AiRequestHandler(
     private fun handleText(update: Update, context: MoneyManagerContext, feedback: AiFeedback) {
         val userMessage = update.message?.text ?: return
         val lang = context.userInfo?.language
-        log.info("🧠 AI processing text: $userMessage")
-        feedback.show(localizationService.t("ai.feedback.thinking", lang))
-        val categoryContext = loadAndCacheCategoryContext(context)
-        val commands = commandParserService.parseCommands(userMessage, categoryContext)
-        showErrorStageIfNeeded(commands, feedback, lang)
-        actionExecutor.processCommands(commands, context)
+        log.info("AI processing text: $userMessage")
+        feedback.show(localizationService.t(KEY_FEEDBACK_THINKING, lang))
+        parseAndExecute(context, feedback, lang) { categoryContext ->
+            commandParserService.parseCommands(userMessage, categoryContext)
+        }
     }
 
     private fun handleVoice(update: Update, context: MoneyManagerContext, feedback: AiFeedback) {
         val voice = update.message?.voice ?: return
         val lang = context.userInfo?.language
-        log.info("🎤 AI processing voice: ${voice.duration}s")
-
-        if (voice.duration > MAX_VOICE_DURATION_SECONDS) {
-            actionExecutor.clear(context)
-            context.aiResultMessage = localizationService.t("ai.error.voice_too_long", lang, voice.duration)
-            return
+        log.info("AI processing voice: ${voice.duration}s")
+        val audioBytes = downloadVoiceOrReportError(voice, context, feedback, lang) ?: return
+        feedback.show(localizationService.t(KEY_FEEDBACK_VOICE_PROCESSING, lang))
+        parseAndExecute(context, feedback, lang) { categoryContext ->
+            commandParserService.parseVoiceCommands(audioBytes, categoryContext)
         }
+    }
 
-        feedback.show(localizationService.t("ai.feedback.voice_received", lang))
-        val audioBytes = telegramFileService.downloadVoice(voice)
-        if (audioBytes == null) {
-            actionExecutor.clear(context)
-            context.aiResultMessage = localizationService.t("ai.error.voice_download", lang)
-            return
-        }
-
-        feedback.show(localizationService.t("ai.feedback.voice_processing", lang))
-        val categoryContext = loadAndCacheCategoryContext(context)
-        val commands = commandParserService.parseVoiceCommands(audioBytes, categoryContext)
+    /** Общий хвост text/voice: контекст категорий → парсинг → стадия ошибки → выполнение. */
+    private fun parseAndExecute(
+        context: MoneyManagerContext,
+        feedback: AiFeedback,
+        lang: String?,
+        parse: (categoryContext: String?) -> List<BotCommand>
+    ) {
+        val commands = parse(loadAndCacheCategoryContext(context))
         showErrorStageIfNeeded(commands, feedback, lang)
         actionExecutor.processCommands(commands, context)
+    }
+
+    /** Валидация длительности и скачивание голосового; null — ошибка уже записана в контекст. */
+    private fun downloadVoiceOrReportError(
+        voice: Voice,
+        context: MoneyManagerContext,
+        feedback: AiFeedback,
+        lang: String?
+    ): ByteArray? {
+        if (voice.duration > MAX_VOICE_DURATION_SECONDS) {
+            reportError(context, KEY_ERROR_VOICE_TOO_LONG, lang, voice.duration)
+            return null
+        }
+        feedback.show(localizationService.t(KEY_FEEDBACK_VOICE_RECEIVED, lang))
+        val audioBytes = telegramFileService.downloadVoice(voice)
+        if (audioBytes == null) {
+            reportError(context, KEY_ERROR_VOICE_DOWNLOAD, lang)
+            return null
+        }
+        return audioBytes
+    }
+
+    private fun reportError(context: MoneyManagerContext, key: String, lang: String?, vararg args: Any) {
+        actionExecutor.clear(context)
+        context.aiResultMessage = localizationService.t(key, lang, *args)
     }
 
     private fun loadAndCacheCategoryContext(context: MoneyManagerContext): String? {
@@ -93,9 +123,10 @@ class AiRequestHandler(
     private fun showErrorStageIfNeeded(commands: List<BotCommand>, feedback: AiFeedback, language: String?) {
         when {
             commands.any { it is BotCommand.RateLimitError } ->
-                feedback.show(localizationService.t("ai.feedback.rate_limit", language))
+                feedback.show(localizationService.t(KEY_FEEDBACK_RATE_LIMIT, language))
+
             commands.any { it is BotCommand.ServiceError } ->
-                feedback.show(localizationService.t("ai.feedback.service_error", language))
+                feedback.show(localizationService.t(KEY_FEEDBACK_SERVICE_ERROR, language))
         }
     }
 }

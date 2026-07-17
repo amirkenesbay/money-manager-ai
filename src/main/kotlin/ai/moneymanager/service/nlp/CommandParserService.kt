@@ -136,7 +136,7 @@ class CommandParserService(
     /** @param audioBytes байты аудио файла (OGG/OPUS от Telegram) */
     fun parseVoiceCommands(audioBytes: ByteArray, categoryContext: String? = null): List<BotCommand> {
         return try {
-            log.info("🎤 Processing voice message: ${audioBytes.size} bytes")
+            log.info("Processing voice message: ${audioBytes.size} bytes")
 
             // Создаём Part с аудио данными
             val audioPart = Part.builder()
@@ -206,24 +206,17 @@ class CommandParserService(
     }
 
     private fun parseFunctionCall(functionCall: FunctionCall, originalMessage: String): BotCommand {
-
         val args = functionCall.args().orElse(emptyMap())
         val function = GeminiFunction.from(functionCall.name().orElse(null))
+            ?: return BotCommand.OutOfContext(originalMessage)
 
         return try {
             when (function) {
-                GeminiFunction.CREATE_GROUP -> {
-                    val dto = argsMapper.map<CreateGroupArgs>(args)
-                    // Можно добавить простую валидацию:
-                    if (dto.groupName.isBlank()) return BotCommand.ParseError("groupName is blank")
-                    BotCommand.CreateGroup(dto.groupName)
-                }
+                GeminiFunction.CREATE_GROUP ->
+                    BotCommand.CreateGroup(requireText(argsMapper.map<CreateGroupArgs>(args).groupName, FIELD_GROUP_NAME))
 
-                GeminiFunction.DELETE_GROUP -> {
-                    val dto = argsMapper.map<DeleteGroupArgs>(args)
-                    if (dto.groupName.isBlank()) return BotCommand.ParseError("groupName is blank")
-                    BotCommand.DeleteGroup(dto.groupName)
-                }
+                GeminiFunction.DELETE_GROUP ->
+                    BotCommand.DeleteGroup(requireText(argsMapper.map<DeleteGroupArgs>(args).groupName, FIELD_GROUP_NAME))
 
                 GeminiFunction.ADD_EXPENSE -> {
                     val dto = argsMapper.map<AddExpenseArgs>(args)
@@ -235,53 +228,49 @@ class CommandParserService(
                     BotCommand.AddIncome(dto.amount, dto.category, dto.description, dto.suggestedCategoryIcon)
                 }
 
-                GeminiFunction.OUT_OF_CONTEXT -> {
-                    // можно мапить, а можно просто использовать originalMessage
-                    // val dto = argsMapper.map<OutOfContextArgs>(args)
-                    BotCommand.OutOfContext(originalMessage)
-                }
+                GeminiFunction.OUT_OF_CONTEXT -> BotCommand.OutOfContext(originalMessage)
 
                 GeminiFunction.CREATE_CATEGORY -> {
                     val dto = argsMapper.map<CreateCategoryArgs>(args)
-                    if (dto.name.isBlank()) return BotCommand.ParseError("category name is blank")
-                    if (dto.type.isBlank()) return BotCommand.ParseError("category type is blank")
-                    BotCommand.CreateCategory(dto.name.trim(), dto.type.trim(), dto.icon?.trim()?.takeIf { it.isNotEmpty() })
+                    BotCommand.CreateCategory(
+                        requireText(dto.name, FIELD_CATEGORY_NAME),
+                        requireText(dto.type, FIELD_CATEGORY_TYPE),
+                        dto.icon.normalizedOrNull()
+                    )
                 }
 
                 GeminiFunction.DELETE_CATEGORY -> {
                     val dto = argsMapper.map<DeleteCategoryArgs>(args)
-                    if (dto.name.isBlank()) return BotCommand.ParseError("category name is blank")
-                    BotCommand.DeleteCategory(dto.name.trim(), dto.type?.trim()?.takeIf { it.isNotEmpty() })
+                    BotCommand.DeleteCategory(requireText(dto.name, FIELD_CATEGORY_NAME), dto.type.normalizedOrNull())
                 }
 
                 GeminiFunction.RENAME_CATEGORY -> {
                     val dto = argsMapper.map<RenameCategoryArgs>(args)
-                    if (dto.oldName.isBlank() || dto.newName.isBlank()) return BotCommand.ParseError("category name is blank")
-                    BotCommand.RenameCategory(dto.oldName.trim(), dto.newName.trim(), dto.type?.trim()?.takeIf { it.isNotEmpty() })
+                    BotCommand.RenameCategory(
+                        requireText(dto.oldName, FIELD_CATEGORY_NAME),
+                        requireText(dto.newName, FIELD_CATEGORY_NAME),
+                        dto.type.normalizedOrNull()
+                    )
                 }
 
                 GeminiFunction.CHANGE_CATEGORY_ICON -> {
                     val dto = argsMapper.map<ChangeCategoryIconArgs>(args)
-                    if (dto.name.isBlank() || dto.newIcon.isBlank()) return BotCommand.ParseError("category fields are blank")
-                    BotCommand.ChangeCategoryIcon(dto.name.trim(), dto.newIcon.trim(), dto.type?.trim()?.takeIf { it.isNotEmpty() })
+                    BotCommand.ChangeCategoryIcon(
+                        requireText(dto.name, FIELD_CATEGORY_NAME),
+                        requireText(dto.newIcon, FIELD_CATEGORY_ICON),
+                        dto.type.normalizedOrNull()
+                    )
                 }
 
-                GeminiFunction.DELETE_ALL_CATEGORIES -> {
-                    BotCommand.DeleteAllCategories
-                }
+                GeminiFunction.DELETE_ALL_CATEGORIES -> BotCommand.DeleteAllCategories
 
-                GeminiFunction.LIST_CATEGORIES -> {
-                    val dto = argsMapper.map<ListCategoriesArgs>(args)
-                    BotCommand.ListCategories(dto.type?.trim()?.takeIf { it.isNotEmpty() })
-                }
+                GeminiFunction.LIST_CATEGORIES ->
+                    BotCommand.ListCategories(argsMapper.map<ListCategoriesArgs>(args).type.normalizedOrNull())
 
                 GeminiFunction.LIST_GROUPS -> BotCommand.ListGroups
 
-                GeminiFunction.SWITCH_GROUP -> {
-                    val dto = argsMapper.map<SwitchGroupArgs>(args)
-                    if (dto.groupName.isBlank()) return BotCommand.ParseError("groupName is blank")
-                    BotCommand.SwitchGroup(dto.groupName.trim())
-                }
+                GeminiFunction.SWITCH_GROUP ->
+                    BotCommand.SwitchGroup(requireText(argsMapper.map<SwitchGroupArgs>(args).groupName, FIELD_GROUP_NAME))
 
                 GeminiFunction.SHOW_BALANCE -> BotCommand.ShowBalance
 
@@ -292,40 +281,47 @@ class CommandParserService(
 
                 GeminiFunction.SHOW_HISTORY -> {
                     val dto = argsMapper.map<ShowHistoryArgs>(args)
-                    BotCommand.ShowHistory(
-                        dto.startDate?.trim()?.takeIf { it.isNotEmpty() },
-                        dto.endDate?.trim()?.takeIf { it.isNotEmpty() }
-                    )
+                    BotCommand.ShowHistory(dto.startDate.normalizedOrNull(), dto.endDate.normalizedOrNull())
                 }
 
                 GeminiFunction.LIST_NOTIFICATIONS -> BotCommand.ListNotifications
 
                 GeminiFunction.CREATE_NOTIFICATION -> {
                     val dto = argsMapper.map<CreateNotificationArgs>(args)
-                    if (dto.name.isBlank()) return BotCommand.ParseError("notification name is blank")
-                    BotCommand.CreateNotification(dto.name.trim(), dto.hour.toInt(), dto.minute?.toInt() ?: 0)
+                    BotCommand.CreateNotification(
+                        requireText(dto.name, FIELD_NOTIFICATION_NAME),
+                        dto.hour.toInt(),
+                        dto.minute?.toInt() ?: 0
+                    )
                 }
 
-                GeminiFunction.DELETE_NOTIFICATION -> {
-                    val dto = argsMapper.map<DeleteNotificationArgs>(args)
-                    if (dto.name.isBlank()) return BotCommand.ParseError("notification name is blank")
-                    BotCommand.DeleteNotification(dto.name.trim())
-                }
-
-                null -> {
-                    BotCommand.OutOfContext(originalMessage)
-                }
+                GeminiFunction.DELETE_NOTIFICATION ->
+                    BotCommand.DeleteNotification(requireText(argsMapper.map<DeleteNotificationArgs>(args).name, FIELD_NOTIFICATION_NAME))
             }
         } catch (e: Exception) {
-            // Любая проблема маппинга/типов → ParseError (или OutOfContext, как хочешь)
-            BotCommand.ParseError("Invalid function args for ${functionCall.name().orElse("unknown")}: ${e.message}")
+            // Любая проблема маппинга/валидации → ParseError
+            BotCommand.ParseError("Invalid function args for ${functionCall.name().orElse(UNKNOWN_FUNCTION_NAME)}: ${e.message}")
         }
     }
+
+    private fun requireText(value: String, field: String): String {
+        require(value.isNotBlank()) { "$field is blank" }
+        return value.trim()
+    }
+
+    private fun String?.normalizedOrNull(): String? = this?.trim()?.takeIf { it.isNotEmpty() }
 
     companion object {
         private const val HTTP_TOO_MANY_REQUESTS = 429
         private const val VOICE_MIME_TYPE = "audio/ogg"
         private const val VOICE_MESSAGE_PLACEHOLDER = "[voice message]"
         private val RETRY_AFTER_REGEX = Regex("""Please retry in (\d+(?:\.\d+)?)s""")
+
+        private const val FIELD_GROUP_NAME = "groupName"
+        private const val FIELD_CATEGORY_NAME = "category name"
+        private const val FIELD_CATEGORY_TYPE = "category type"
+        private const val FIELD_CATEGORY_ICON = "category icon"
+        private const val FIELD_NOTIFICATION_NAME = "notification name"
+        private const val UNKNOWN_FUNCTION_NAME = "unknown"
     }
 }
