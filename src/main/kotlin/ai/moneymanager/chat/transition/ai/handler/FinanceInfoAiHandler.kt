@@ -1,6 +1,8 @@
 package ai.moneymanager.chat.transition.ai.handler
 
 import ai.moneymanager.chat.reply.common.formatBalanceBreakdown
+import ai.moneymanager.chat.transition.ai.parseIsoDateOrNull
+import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.nlp.AiPendingAction
 import ai.moneymanager.domain.model.nlp.BotCommand
@@ -70,12 +72,16 @@ class FinanceInfoAiHandler(
 
     private fun renderHistory(command: BotCommand.ShowHistory, groupId: ObjectId, lang: String?): String {
         val now = LocalDate.now()
-        val start = parseDate(command.startDate) ?: now.withDayOfMonth(1)
-        val end = parseDate(command.endDate) ?: now
+        val start = parseIsoDateOrNull(command.startDate) ?: now.withDayOfMonth(1)
+        val end = parseIsoDateOrNull(command.endDate) ?: now
         val (from, to) = if (start <= end) start to end else end to start
-        return financeHistoryService.generateReport(groupId, from, to, lang)
+        return financeHistoryService.generateReport(
+            groupId, from, to, lang,
+            typeFilter = parseCategoryType(command.type),
+            categoryFilter = command.categoryFilter
+        )
     }
 
-    private fun parseDate(raw: String?): LocalDate? =
-        raw?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+    private fun parseCategoryType(raw: String?): CategoryType? =
+        raw?.let { runCatching { CategoryType.valueOf(it.trim().uppercase()) }.getOrNull() }
 }

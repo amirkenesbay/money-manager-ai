@@ -5,6 +5,10 @@ import ai.moneymanager.chat.reply.common.SECTION_SEPARATOR
 import ai.moneymanager.chat.reply.common.SECTION_SEPARATOR_WITH_BLANK_LINE
 import ai.moneymanager.chat.reply.common.dateFormatter
 import ai.moneymanager.chat.reply.common.formatAmount
+import ai.moneymanager.chat.reply.common.formatDescriptionSuffix
+import ai.moneymanager.chat.reply.common.formatSignedAmount
+import ai.moneymanager.chat.reply.common.shortDateFormatter
+import ai.moneymanager.chat.transition.ai.matchesEntityName
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.repository.FinanceOperationRepository
 import ai.moneymanager.repository.entity.FinanceOperationEntity
@@ -35,15 +39,22 @@ class FinanceHistoryService(
         groupId: ObjectId,
         startDate: LocalDate,
         endDate: LocalDate,
-        language: String?
+        language: String?,
+        typeFilter: CategoryType? = null,
+        categoryFilter: String? = null
     ): String {
         val operations = financeOperationRepository
             .findByGroupIdAndOperationDateBetweenOrderByOperationDateDesc(groupId, startDate, endDate)
+            .filter { typeFilter == null || it.type == typeFilter }
+            .filter { categoryFilter == null || matchesCategoryFilter(it, categoryFilter) }
 
         val header = buildReportHeader(startDate, endDate, language)
 
         if (operations.isEmpty()) {
             return "$header\n\n${localizationService.t("finance.history.empty", language)}"
+        }
+        if (categoryFilter != null) {
+            return buildItemizedReport(header, operations, language)
         }
 
         val incomes = operations.filter { it.type == CategoryType.INCOME }
@@ -59,6 +70,28 @@ class FinanceHistoryService(
             appendBalanceLine(totalIncome, totalExpense, language)
         }
     }
+
+    /** Поимённый список операций (с датами) — для запросов с фильтром по категории/ключевому слову. */
+    private fun buildItemizedReport(
+        header: String,
+        operations: List<FinanceOperationEntity>,
+        language: String?
+    ): String = buildString {
+        append(header)
+        append(SECTION_SEPARATOR)
+        operations.forEach { operation ->
+            val icon = operation.categoryIcon ?: DEFAULT_CATEGORY_ICON
+            append("\n${operation.operationDate.format(shortDateFormatter)} $icon ${operation.categoryName}")
+            append(" — ${formatSignedAmount(operation.type, operation.amount)}")
+            append(formatDescriptionSuffix(operation.description))
+        }
+        append("\n$MONTH_DIVIDER")
+        append("\n${localizationService.t("finance.history.total", language, formatAmount(sumAmounts(operations)))}")
+    }
+
+    private fun matchesCategoryFilter(operation: FinanceOperationEntity, filter: String): Boolean =
+        matchesEntityName(operation.categoryName, filter) ||
+            operation.description?.contains(filter, ignoreCase = true) == true
 
     private fun buildReportHeader(startDate: LocalDate, endDate: LocalDate, language: String?): String {
         val title = buildReportTitle(startDate, endDate, language)

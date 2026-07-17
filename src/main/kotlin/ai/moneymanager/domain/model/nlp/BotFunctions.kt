@@ -21,10 +21,11 @@ object BotFunctions {
      * @param category expense category, in the user's original language. If a semantically matching category exists in the user's active categories list, pass its EXACT name. Otherwise propose a generalized name (e.g. "Продукты" instead of "Кола", "Транспорт" instead of "Бензин").
      * @param description short description of what was bought
      * @param suggestedCategoryIcon emoji to use ONLY when the proposed category does not yet exist in the user's active list and the bot will need to create it. One emoji that fits the generalized category (e.g. "🛒" for groceries, "🚗" for transport). Pass null when reusing an existing category.
+     * @param operationDate ISO date YYYY-MM-DD when the user names the day the operation happened ("вчера", "yesterday", "10 июля") — compute it from the current date. Pass null when the operation is today.
      * @return JSON with the operation result
      */
     @JvmStatic
-    fun addExpense(amount: Double, category: String?, description: String?, suggestedCategoryIcon: String?) {
+    fun addExpense(amount: Double, category: String?, description: String?, suggestedCategoryIcon: String?, operationDate: String?) {
     }
 
     /**
@@ -33,10 +34,11 @@ object BotFunctions {
      * @param category income category, in the user's original language. If a semantically matching category exists in the user's active categories list, pass its EXACT name. Otherwise propose a generalized name.
      * @param description short description of where the money came from
      * @param suggestedCategoryIcon emoji to use ONLY when the proposed category does not yet exist in the user's active list. Pass null when reusing an existing category.
+     * @param operationDate ISO date YYYY-MM-DD when the user names the day the operation happened. Pass null when the operation is today.
      * @return JSON with the operation result
      */
     @JvmStatic
-    fun addIncome(amount: Double, category: String?, description: String?, suggestedCategoryIcon: String?) {
+    fun addIncome(amount: Double, category: String?, description: String?, suggestedCategoryIcon: String?, operationDate: String?) {
     }
 
     /**
@@ -149,12 +151,14 @@ object BotFunctions {
     }
 
     /**
-     * Show the operations history for a period.
+     * Show the operations history for a period. Use for QUESTIONS about past spending/income.
      * @param startDate optional period start in ISO format YYYY-MM-DD; defaults to the first day of the current month
      * @param endDate optional period end in ISO format YYYY-MM-DD; defaults to today
+     * @param type optional filter: "EXPENSE" — only spending, "INCOME" — only income. If omitted — both.
+     * @param categoryFilter optional category name or keyword to filter by (e.g. "такси", "зарплата"). With this filter the bot returns an itemized list with dates.
      */
     @JvmStatic
-    fun showHistory(startDate: String?, endDate: String?) {
+    fun showHistory(startDate: String?, endDate: String?, type: String?, categoryFilter: String?) {
     }
 
     // ===== NOTIFICATIONS =====

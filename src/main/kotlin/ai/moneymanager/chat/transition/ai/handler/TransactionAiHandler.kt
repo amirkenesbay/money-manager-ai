@@ -6,6 +6,7 @@ import ai.moneymanager.chat.reply.common.formatDescriptionSuffix
 import ai.moneymanager.chat.reply.common.formatIconPrefix
 import ai.moneymanager.chat.transition.ai.extractLeadingNonLetters
 import ai.moneymanager.chat.transition.ai.matchesEntityName
+import ai.moneymanager.chat.transition.ai.resolveOperationDate
 import ai.moneymanager.chat.transition.ai.stripLeadingNonLetters
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
@@ -55,12 +56,12 @@ class TransactionAiHandler(
             is BotCommand.AddExpense -> prepareAdd(
                 groupId, creatorId, CategoryType.EXPENSE, command.amount,
                 command.category, command.description, command.suggestedCategoryIcon,
-                context.aiCategoriesCache, lang
+                resolveOperationDate(command.operationDate), context.aiCategoriesCache, lang
             )
             is BotCommand.AddIncome -> prepareAdd(
                 groupId, creatorId, CategoryType.INCOME, command.amount,
                 command.category, command.description, command.suggestedCategoryIcon,
-                context.aiCategoriesCache, lang
+                resolveOperationDate(command.operationDate), context.aiCategoriesCache, lang
             )
             else -> AiPreparationResult.ImmediateResult(localizationService.t("ai.error.unknown_command", lang))
         }
@@ -83,6 +84,7 @@ class TransactionAiHandler(
         categoryName: String?,
         description: String?,
         suggestedCategoryIcon: String?,
+        operationDate: LocalDate,
         cachedCategories: List<Category>?,
         lang: String?
     ): AiPreparationResult {
@@ -114,7 +116,7 @@ class TransactionAiHandler(
                     amount = amount,
                     category = resolved,
                     description = trimmedDescription,
-                    operationDate = LocalDate.now()
+                    operationDate = operationDate
                 )
             )
             matches.isEmpty() -> AiPreparationResult.RequiresConfirmation(
@@ -126,7 +128,7 @@ class TransactionAiHandler(
                     suggestedCategoryName = cleanCategoryName,
                     suggestedCategoryIcon = effectiveIcon,
                     description = trimmedDescription,
-                    operationDate = LocalDate.now()
+                    operationDate = operationDate
                 )
             )
             else -> AiPreparationResult.ImmediateResult(

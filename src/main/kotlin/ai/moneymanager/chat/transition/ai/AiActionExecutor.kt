@@ -210,16 +210,17 @@ class AiActionExecutor(
         context: MoneyManagerContext,
         lang: String?
     ) {
+        val distinctNotes = notes.distinct()
         when {
-            actions.isEmpty() -> context.aiResultMessage = notes
+            actions.isEmpty() -> context.aiResultMessage = distinctNotes
                 .joinToString(BATCH_RESULT_SEPARATOR)
                 .ifEmpty { localizationService.t(KEY_ERROR_PARSE, lang) }
 
-            actions.size == 1 && notes.isEmpty() -> context.pendingAiAction = actions.first()
+            actions.size == 1 && distinctNotes.isEmpty() -> context.pendingAiAction = actions.first()
 
             else -> {
                 context.pendingAiActions = actions
-                context.aiBatchNotes = notes
+                context.aiBatchNotes = distinctNotes
             }
         }
     }

@@ -26,7 +26,8 @@ sealed class BotCommand {
         val amount: Double,
         val category: String?,
         val description: String?,
-        val suggestedCategoryIcon: String?
+        val suggestedCategoryIcon: String?,
+        val operationDate: String?
     ) : BotCommand()
 
     /**
@@ -36,7 +37,8 @@ sealed class BotCommand {
         val amount: Double,
         val category: String?,
         val description: String?,
-        val suggestedCategoryIcon: String?
+        val suggestedCategoryIcon: String?,
+        val operationDate: String?
     ) : BotCommand()
 
     /**
@@ -116,7 +118,9 @@ sealed class BotCommand {
 
     data class ShowHistory(
         val startDate: String?,
-        val endDate: String?
+        val endDate: String?,
+        val type: String?,
+        val categoryFilter: String?
     ) : BotCommand()
 
     // ===== NOTIFICATIONS =====

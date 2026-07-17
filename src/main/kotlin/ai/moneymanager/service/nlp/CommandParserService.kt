@@ -58,8 +58,8 @@ class CommandParserService(
         // Получаем методы из BotFunctions для function calling
         val createGroupMethod = botFunctionMethod(GeminiFunction.CREATE_GROUP, String::class.java)
         val deleteGroupMethod = botFunctionMethod(GeminiFunction.DELETE_GROUP, String::class.java)
-        val addExpenseMethod = botFunctionMethod(GeminiFunction.ADD_EXPENSE, Double::class.java, String::class.java, String::class.java, String::class.java)
-        val addIncomeMethod = botFunctionMethod(GeminiFunction.ADD_INCOME, Double::class.java, String::class.java, String::class.java, String::class.java)
+        val addExpenseMethod = botFunctionMethod(GeminiFunction.ADD_EXPENSE, Double::class.java, String::class.java, String::class.java, String::class.java, String::class.java)
+        val addIncomeMethod = botFunctionMethod(GeminiFunction.ADD_INCOME, Double::class.java, String::class.java, String::class.java, String::class.java, String::class.java)
         val outOfContextMethod = botFunctionMethod(GeminiFunction.OUT_OF_CONTEXT, String::class.java)
 
         // Category functions
@@ -75,7 +75,7 @@ class CommandParserService(
         val switchGroupMethod = botFunctionMethod(GeminiFunction.SWITCH_GROUP, String::class.java)
         val showBalanceMethod = botFunctionMethod(GeminiFunction.SHOW_BALANCE)
         val showReportMethod = botFunctionMethod(GeminiFunction.SHOW_REPORT, Double::class.javaObjectType, Double::class.javaObjectType)
-        val showHistoryMethod = botFunctionMethod(GeminiFunction.SHOW_HISTORY, String::class.java, String::class.java)
+        val showHistoryMethod = botFunctionMethod(GeminiFunction.SHOW_HISTORY, String::class.java, String::class.java, String::class.java, String::class.java)
         val listNotificationsMethod = botFunctionMethod(GeminiFunction.LIST_NOTIFICATIONS)
         val createNotificationMethod = botFunctionMethod(GeminiFunction.CREATE_NOTIFICATION, String::class.java, Double::class.java, Double::class.javaObjectType)
         val deleteNotificationMethod = botFunctionMethod(GeminiFunction.DELETE_NOTIFICATION, String::class.java)
@@ -163,6 +163,7 @@ class CommandParserService(
 
     private fun contentWithCategoryContext(categoryContext: String?, vararg parts: Part): Content {
         val allParts = buildList {
+            add(Part.fromText(aiPromptService.currentDatePreamble()))
             if (!categoryContext.isNullOrBlank()) add(Part.fromText(categoryContext))
             addAll(parts)
         }
@@ -220,12 +221,18 @@ class CommandParserService(
 
                 GeminiFunction.ADD_EXPENSE -> {
                     val dto = argsMapper.map<AddExpenseArgs>(args)
-                    BotCommand.AddExpense(dto.amount, dto.category, dto.description, dto.suggestedCategoryIcon)
+                    BotCommand.AddExpense(
+                        dto.amount, dto.category, dto.description,
+                        dto.suggestedCategoryIcon, dto.operationDate.normalizedOrNull()
+                    )
                 }
 
                 GeminiFunction.ADD_INCOME -> {
                     val dto = argsMapper.map<AddIncomeArgs>(args)
-                    BotCommand.AddIncome(dto.amount, dto.category, dto.description, dto.suggestedCategoryIcon)
+                    BotCommand.AddIncome(
+                        dto.amount, dto.category, dto.description,
+                        dto.suggestedCategoryIcon, dto.operationDate.normalizedOrNull()
+                    )
                 }
 
                 GeminiFunction.OUT_OF_CONTEXT -> BotCommand.OutOfContext(originalMessage)
@@ -281,7 +288,12 @@ class CommandParserService(
 
                 GeminiFunction.SHOW_HISTORY -> {
                     val dto = argsMapper.map<ShowHistoryArgs>(args)
-                    BotCommand.ShowHistory(dto.startDate.normalizedOrNull(), dto.endDate.normalizedOrNull())
+                    BotCommand.ShowHistory(
+                        dto.startDate.normalizedOrNull(),
+                        dto.endDate.normalizedOrNull(),
+                        dto.type.normalizedOrNull(),
+                        dto.categoryFilter.normalizedOrNull()
+                    )
                 }
 
                 GeminiFunction.LIST_NOTIFICATIONS -> BotCommand.ListNotifications

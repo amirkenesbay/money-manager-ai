@@ -5,6 +5,9 @@ import ai.moneymanager.domain.model.CategoryType
 import org.springframework.core.io.ClassPathResource
 import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
+import java.time.LocalDate
+import java.time.format.TextStyle
+import java.util.Locale
 
 private const val SYSTEM_PROMPT_PATH = "prompts/ai-system-prompt.md"
 private const val VOICE_TRANSCRIPTION_PROMPT_PATH = "prompts/ai-voice-transcription.md"
@@ -12,6 +15,8 @@ private const val OUT_OF_CONTEXT_PROMPT_PATH = "prompts/ai-out-of-context.md"
 
 private const val PLACEHOLDER_USER_MESSAGE = "{userMessage}"
 private const val PLACEHOLDER_REPLY_LANGUAGE = "{replyLanguage}"
+
+private const val CURRENT_DATE_TEMPLATE = "Today is %s (%s)."
 
 private const val CATEGORY_CONTEXT_HEADER =
     "User's active categories for the current group (use the EXACT name when a semantically applicable one exists; do NOT propose a new one in that case):"
@@ -37,6 +42,12 @@ class AiPromptService {
         outOfContextTemplate
             .replace(PLACEHOLDER_USER_MESSAGE, userMessage)
             .replace(PLACEHOLDER_REPLY_LANGUAGE, replyLanguage)
+
+    fun currentDatePreamble(): String {
+        val today = LocalDate.now()
+        val weekday = today.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
+        return CURRENT_DATE_TEMPLATE.format(today, weekday)
+    }
 
     fun categoryContextPreamble(categories: List<Category>): String {
         if (categories.isEmpty()) {

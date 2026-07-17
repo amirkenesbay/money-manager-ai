@@ -8,14 +8,16 @@ data class AddExpenseArgs(
     val amount: Double,
     val category: String? = null,
     val description: String? = null,
-    val suggestedCategoryIcon: String? = null
+    val suggestedCategoryIcon: String? = null,
+    val operationDate: String? = null
 )
 
 data class AddIncomeArgs(
     val amount: Double,
     val category: String? = null,
     val description: String? = null,
-    val suggestedCategoryIcon: String? = null
+    val suggestedCategoryIcon: String? = null,
+    val operationDate: String? = null
 )
 
 data class DeleteGroupArgs(
@@ -37,7 +39,9 @@ data class ShowReportArgs(
 
 data class ShowHistoryArgs(
     val startDate: String? = null,
-    val endDate: String? = null
+    val endDate: String? = null,
+    val type: String? = null,
+    val categoryFilter: String? = null
 )
 
 data class CreateNotificationArgs(
