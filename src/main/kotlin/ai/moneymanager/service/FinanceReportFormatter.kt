@@ -96,7 +96,7 @@ class FinanceReportFormatter(
     }
 
     fun formatAnalytics(report: AnalyticsReport, language: String?): String = buildString {
-        append(localizationService.t("finance.report.analytics.title", language, report.monthName, report.year))
+        append(localizationService.t("finance.report.analytics.title", language, report.monthName, report.year.toString()))
         append(SECTION_SEPARATOR)
 
         if (report.isEmpty) {
@@ -169,7 +169,7 @@ class FinanceReportFormatter(
     }
 
     fun formatMembers(report: MembersReport, language: String?): String = buildString {
-        append(localizationService.t("finance.report.members.title", language, report.monthName, report.year))
+        append(localizationService.t("finance.report.members.title", language, report.monthName, report.year.toString()))
         append(SECTION_SEPARATOR)
 
         if (report.isEmpty) {

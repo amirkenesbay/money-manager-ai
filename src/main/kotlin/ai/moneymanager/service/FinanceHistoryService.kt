@@ -94,7 +94,19 @@ class FinanceHistoryService(
             operation.description?.contains(filter, ignoreCase = true) == true
 
     private fun buildReportHeader(startDate: LocalDate, endDate: LocalDate, language: String?): String {
-        val title = buildReportTitle(startDate, endDate, language)
+        // Диапазонный заголовок уже содержит обе даты — отдельная строка с периодом нужна только месячному.
+        if (!isFullMonth(startDate, endDate)) {
+            return localizationService.t(
+                "finance.history.title.range",
+                language,
+                startDate.format(dateFormatter),
+                endDate.format(dateFormatter)
+            )
+        }
+        val monthName = startDate.month
+            .getDisplayName(TextStyle.FULL_STANDALONE, localeFor(language))
+            .replaceFirstChar { it.uppercaseChar() }
+        val title = localizationService.t("finance.history.title.month", language, monthName, startDate.year.toString())
         val dateRange = localizationService.t(
             "finance.history.date_range",
             language,
@@ -104,26 +116,11 @@ class FinanceHistoryService(
         return "$title\n$dateRange"
     }
 
-    private fun buildReportTitle(startDate: LocalDate, endDate: LocalDate, language: String?): String {
-        val isFullMonth = startDate.dayOfMonth == 1
+    private fun isFullMonth(startDate: LocalDate, endDate: LocalDate): Boolean =
+        startDate.dayOfMonth == 1
             && startDate.year == endDate.year
             && startDate.month == endDate.month
             && endDate == startDate.withDayOfMonth(startDate.lengthOfMonth())
-
-        return if (isFullMonth) {
-            val monthName = startDate.month
-                .getDisplayName(TextStyle.FULL_STANDALONE, localeFor(language))
-                .replaceFirstChar { it.uppercaseChar() }
-            localizationService.t("finance.history.title.month", language, monthName, startDate.year)
-        } else {
-            localizationService.t(
-                "finance.history.title.range",
-                language,
-                startDate.format(dateFormatter),
-                endDate.format(dateFormatter)
-            )
-        }
-    }
 
     private fun StringBuilder.appendSection(
         title: String,

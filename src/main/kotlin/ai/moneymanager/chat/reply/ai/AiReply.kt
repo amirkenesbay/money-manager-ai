@@ -213,7 +213,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.aiResultReply(
         state = MoneyManagerState.AI_RESULT
 
         message {
-            newMessage = false
+            newMessage = true
             val lang = context.userInfo?.language
 
             text = context.aiResultMessage ?: localizationService.t("ai.result.empty", lang)
