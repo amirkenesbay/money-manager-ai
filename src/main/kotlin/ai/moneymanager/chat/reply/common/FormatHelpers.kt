@@ -41,6 +41,22 @@ fun formatAmount(amount: BigDecimal): String = "${amountFormat.format(amount)}$C
 /** Telegram HTML parse mode: жирный текст. Использовать только на экранах с parseMode = HTML. */
 fun bold(text: String): String = "<b>$text</b>"
 
+fun italic(text: String): String = "<i>$text</i>"
+
+/** Моноширинная строка — колонки цифр и баров не пляшут. */
+fun code(text: String): String = "<code>$text</code>"
+
+/** Моноширинный блок: настоящее табличное выравнивание для бар-чартов. */
+fun pre(text: String): String = "<pre>$text</pre>"
+
+/** Блок с вертикальной чертой — визуально выделенные итоги. */
+fun blockquote(text: String): String = "<blockquote>$text</blockquote>"
+
+/** Сворачиваемый блок — длинные списки не заваливают экран. */
+fun expandableBlockquote(text: String): String = "<blockquote expandable>$text</blockquote>"
+
+fun link(label: String, url: String): String = "<a href=\"$url\">$label</a>"
+
 private const val BAR_WIDTH = 12
 private const val BAR_FILLED = "█"
 private const val BAR_EMPTY = "░"
@@ -89,7 +105,7 @@ fun formatBalanceBreakdown(
     |${localizationService.t("balance.view.income", language, formatAmount(balance.income))}
     |${localizationService.t("balance.view.expense", language, formatAmount(balance.expense))}
     |
-    |${bold(localizationService.t("balance.view.total", language, formatAmount(balance.total)))}
+    |${blockquote(bold(localizationService.t("balance.view.total", language, formatAmount(balance.total))))}
 """.trimMargin()
 
 fun formatUserDisplayName(userInfo: UserInfo?, fallbackId: Long): String {

@@ -5,6 +5,10 @@ import ai.moneymanager.domain.model.report.CategoryComparison
 import ai.moneymanager.domain.model.report.CategoryMonthData
 import ai.moneymanager.domain.model.report.CategoryReport
 import ai.moneymanager.chat.reply.common.bold
+import ai.moneymanager.chat.reply.common.pre
+import ai.moneymanager.chat.reply.common.italic
+import ai.moneymanager.chat.reply.common.code
+import ai.moneymanager.chat.reply.common.blockquote
 import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.chat.reply.common.formatAmount
 import ai.moneymanager.chat.reply.common.progressBar
@@ -65,9 +69,12 @@ class FinanceReportFormatter(
         currentValue: BigDecimal,
         maxValue: BigDecimal
     ) {
-        append("\n\n$title")
-        append("\n$previousLabel\n${progressBar(previousValue, maxValue)} ${formatAmount(previousValue)}")
-        append("\n$currentLabel\n${progressBar(currentValue, maxValue)} ${formatAmount(currentValue)}")
+        val labelWidth = maxOf(previousLabel.length, currentLabel.length)
+        val rows = listOf(previousLabel to previousValue, currentLabel to currentValue)
+            .joinToString("\n") { (label, value) ->
+                "${label.padEnd(labelWidth)} ${progressBar(value, maxValue)} ${formatAmount(value)}"
+            }
+        append("\n\n$title\n${pre(rows)}")
     }
 
     private fun StringBuilder.appendBalanceSection(report: ComparisonReport, language: String?) {
@@ -77,12 +84,12 @@ class FinanceReportFormatter(
         val currentSign = if (currentBalance >= BigDecimal.ZERO) "+" else ""
 
         append("\n\n")
-        append(bold(localizationService.t(
+        append(blockquote(bold(localizationService.t(
             "finance.report.comparison.balance",
             language,
             "$previousSign${formatAmount(previousBalance)}",
             "$currentSign${formatAmount(currentBalance)}"
-        )))
+        ))))
     }
 
     private fun StringBuilder.appendTopChanges(comparisons: List<CategoryComparison>, language: String?) {
@@ -149,28 +156,28 @@ class FinanceReportFormatter(
         val maxTotal = report.topExpenses.maxOf { it.total }
         report.topExpenses.forEach { (icon, name, total) ->
             val percent = percentOf(total, report.totalExpense)
-            append("\n$icon ${escapeHtml(name)} · $percent%\n${progressBar(total, maxTotal)} ${formatAmount(total)}")
+            append("\n$icon ${escapeHtml(name)} · ${italic("$percent%")}\n${code("${progressBar(total, maxTotal)} ${formatAmount(total)}")}")
         }
     }
 
     private fun StringBuilder.appendMaxExpense(report: AnalyticsReport, language: String?) {
         val max = report.maxExpense ?: return
         append("\n\n")
-        append(localizationService.t(
+        append(blockquote(localizationService.t(
             "finance.report.analytics.max",
             language,
             formatAmount(max.amount), max.icon, escapeHtml(max.categoryName), max.day, max.monthShort
-        ))
+        )))
     }
 
     private fun StringBuilder.appendMostExpensiveDay(report: AnalyticsReport, language: String?) {
         val day = report.mostExpensiveDay ?: return
         append("\n")
-        append(localizationService.t(
+        append(blockquote(localizationService.t(
             "finance.report.analytics.most_expensive_day",
             language,
             day.day, day.monthName, formatAmount(day.total)
-        ))
+        )))
     }
 
     fun formatMembers(report: MembersReport, language: String?): String = buildString {
@@ -200,7 +207,7 @@ class FinanceReportFormatter(
         val maxAmount = members.maxOfOrNull { it.total } ?: BigDecimal.ZERO
         members.forEach { (name, amount) ->
             val percent = percentOf(amount, total)
-            append("\n${escapeHtml(name)} · $percent%\n${progressBar(amount, maxAmount)} ${formatAmount(amount)}")
+            append("\n${escapeHtml(name)} · ${italic("$percent%")}\n${code("${progressBar(amount, maxAmount)} ${formatAmount(amount)}")}")
         }
     }
 
@@ -212,7 +219,7 @@ class FinanceReportFormatter(
         val balance = totalIncome.subtract(totalExpense)
         val sign = if (balance >= BigDecimal.ZERO) "+" else ""
         append("\n\n")
-        append(bold(localizationService.t("finance.report.members.balance", language, "$sign${formatAmount(balance)}")))
+        append(blockquote(bold(localizationService.t("finance.report.members.balance", language, "$sign${formatAmount(balance)}"))))
     }
 
     fun formatCategory(report: CategoryReport, language: String?): String = buildString {
@@ -232,12 +239,14 @@ class FinanceReportFormatter(
         maxAmount: BigDecimal,
         language: String?
     ) {
-        monthsData.forEach { (label, total, _) ->
+        val labelWidth = monthsData.maxOfOrNull { it.label.length } ?: 0
+        val rows = monthsData.joinToString("\n") { (label, total, _) ->
             val maxMarker = if (total.compareTo(maxAmount) == 0 && total.isPositive()) {
                 localizationService.t("finance.report.category.max_marker", language)
             } else ""
-            append("\n$label  ${progressBar(total, maxAmount)} ${formatAmount(total)}$maxMarker")
+            "${label.padEnd(labelWidth)} ${progressBar(total, maxAmount)} ${formatAmount(total)}$maxMarker"
         }
+        append("\n${pre(rows)}")
     }
 
     private fun StringBuilder.appendCategorySummary(monthsData: List<CategoryMonthData>, language: String?) {

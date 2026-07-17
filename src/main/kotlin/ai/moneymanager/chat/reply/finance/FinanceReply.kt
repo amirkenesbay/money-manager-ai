@@ -2,6 +2,7 @@ package ai.moneymanager.chat.reply.finance
 
 import ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.chat.reply.common.bold
+import ai.moneymanager.chat.reply.common.code
 import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.chat.reply.common.formatSignedAmount
 import ai.moneymanager.chat.reply.common.shortDateFormatter
@@ -106,7 +107,7 @@ private fun MoneyManagerContext.buildRecentOperationsSection(
 
 private fun formatRecentOperation(operation: FinanceOperationEntity): String {
     val icon = operation.categoryIcon ?: DEFAULT_CATEGORY_ICON
-    return "$icon ${escapeHtml(operation.categoryName)}  ${formatSignedAmount(operation.type, operation.amount)}"
+    return "$icon ${escapeHtml(operation.categoryName)}  ${code(formatSignedAmount(operation.type, operation.amount))}"
 }
 
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeOperationSavedReply(

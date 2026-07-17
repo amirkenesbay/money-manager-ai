@@ -4,6 +4,7 @@ import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.domain.model.nlp.AiPendingAction
+import ai.moneymanager.chat.reply.common.expandableBlockquote
 import ai.moneymanager.service.LocalizationService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType
@@ -119,7 +120,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.aiDialogTransitions(
         }
         action {
             actionExecutor.clear(context)
-            context.aiResultMessage = localizationService.t("ai.hints", context.userInfo?.language)
+            context.aiResultMessage = expandableBlockquote(localizationService.t("ai.hints", context.userInfo?.language))
         }
         then {
             to = MoneyManagerState.AI_RESULT

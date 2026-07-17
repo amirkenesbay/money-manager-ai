@@ -2,6 +2,9 @@ package ai.moneymanager.service
 
 import ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.chat.reply.common.bold
+import ai.moneymanager.chat.reply.common.italic
+import ai.moneymanager.chat.reply.common.code
+import ai.moneymanager.chat.reply.common.blockquote
 import ai.moneymanager.chat.reply.common.dateFormatter
 import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.chat.reply.common.formatAmount
@@ -79,12 +82,12 @@ class FinanceHistoryService(
         append("\n")
         operations.forEach { operation ->
             val icon = operation.categoryIcon ?: DEFAULT_CATEGORY_ICON
-            append("\n${operation.operationDate.format(shortDateFormatter)} $icon ${escapeHtml(operation.categoryName)}")
-            append(" ${formatSignedAmount(operation.type, operation.amount)}")
+            append("\n${italic(operation.operationDate.format(shortDateFormatter))} $icon ${escapeHtml(operation.categoryName)}")
+            append(" ${code(formatSignedAmount(operation.type, operation.amount))}")
             append(escapeHtml(formatDescriptionSuffix(operation.description)))
         }
         append("\n\n")
-        append(bold(localizationService.t("finance.history.total", language, formatAmount(sumAmounts(operations)))))
+        append(blockquote(bold(localizationService.t("finance.history.total", language, formatAmount(sumAmounts(operations))))))
     }
 
     private fun matchesCategoryFilter(operation: FinanceOperationEntity, filter: String): Boolean =
@@ -132,7 +135,7 @@ class FinanceHistoryService(
         append("\n\n$title")
         appendCategoryLines(operations)
         append("\n\n")
-        append(bold(localizationService.t("finance.history.total", language, formatAmount(total))))
+        append(blockquote(bold(localizationService.t("finance.history.total", language, formatAmount(total)))))
     }
 
     private fun StringBuilder.appendCategoryLines(operations: List<FinanceOperationEntity>) {
@@ -142,7 +145,7 @@ class FinanceHistoryService(
             .sortedByDescending { it.third }
         val maxTotal = totals.maxOfOrNull { it.third } ?: BigDecimal.ZERO
         totals.forEach { (icon, name, total) ->
-            append("\n$icon ${escapeHtml(name)}\n${progressBar(total, maxTotal)} ${formatAmount(total)}")
+            append("\n$icon ${escapeHtml(name)}\n${code("${progressBar(total, maxTotal)} ${formatAmount(total)}")}")
         }
     }
 
@@ -154,7 +157,7 @@ class FinanceHistoryService(
         val balance = totalIncome.subtract(totalExpense)
         val sign = if (balance >= BigDecimal.ZERO) "+" else ""
         append("\n\n")
-        append(bold(localizationService.t("finance.history.balance", language, "$sign${formatAmount(balance)}")))
+        append(blockquote(bold(localizationService.t("finance.history.balance", language, "$sign${formatAmount(balance)}"))))
     }
 
     private fun sumAmounts(operations: List<FinanceOperationEntity>): BigDecimal =

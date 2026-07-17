@@ -1,6 +1,7 @@
 package ai.moneymanager.chat.transition.ai.handler
 
 import ai.moneymanager.chat.reply.common.buildInviteLink
+import ai.moneymanager.chat.reply.common.link
 import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.chat.transition.ai.matchesEntityName
 import ai.moneymanager.domain.model.MoneyGroup
@@ -134,7 +135,11 @@ class GroupAiHandler(
         val created = groupService.createGroup(userId, action.name)
             ?: return localizationService.t("ai.group.create.duplicate", lang, escapeHtml(action.name))
         refreshUserInfo(userId, context)
-        return localizationService.t("ai.group.created", lang, escapeHtml(created.name), buildInviteLink(created.inviteToken))
+        val inviteAnchor = link(
+            localizationService.t("ai.group.invite_link_label", lang),
+            buildInviteLink(created.inviteToken)
+        )
+        return localizationService.t("ai.group.created", lang, escapeHtml(created.name), inviteAnchor)
     }
 
     private fun executeDelete(
