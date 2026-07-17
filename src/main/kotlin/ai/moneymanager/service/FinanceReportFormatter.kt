@@ -7,15 +7,17 @@ import ai.moneymanager.domain.model.report.CategoryReport
 import ai.moneymanager.chat.reply.common.bold
 import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.chat.reply.common.formatAmount
+import ai.moneymanager.chat.reply.common.progressBar
 import ai.moneymanager.domain.model.report.ComparisonReport
 import ai.moneymanager.domain.model.report.MembersReport
 import ai.moneymanager.domain.model.report.MemberTotal
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.math.RoundingMode
-import kotlin.math.abs
 
-private const val BAR_WIDTH = 12
+private const val TOP_CHANGES_LIMIT = 3
+private const val TREND_UP_MARKER = "🔺"
+private const val TREND_DOWN_MARKER = "🔻"
 
 @Component
 class FinanceReportFormatter(
@@ -34,30 +36,38 @@ class FinanceReportFormatter(
             return@buildString
         }
 
-        appendExpenseSection(report, language)
-        appendIncomeSection(report, language)
+        val maxValue = listOf(
+            report.previousExpenseTotal, report.currentExpenseTotal,
+            report.previousIncomeTotal, report.currentIncomeTotal
+        ).max()
+
+        appendComparisonSection(
+            localizationService.t("finance.report.comparison.section.expense", language),
+            report.previousMonthName, report.previousExpenseTotal,
+            report.currentMonthName, report.currentExpenseTotal,
+            maxValue
+        )
+        appendComparisonSection(
+            localizationService.t("finance.report.comparison.section.income", language),
+            report.previousMonthName, report.previousIncomeTotal,
+            report.currentMonthName, report.currentIncomeTotal,
+            maxValue
+        )
         appendBalanceSection(report, language)
+        appendTopChanges(report.categoryComparisons, language)
     }
 
-    private fun StringBuilder.appendExpenseSection(report: ComparisonReport, language: String?) {
-        append("\n\n")
-        append(localizationService.t(
-            "finance.report.comparison.expense",
-            language,
-            formatAmount(report.previousExpenseTotal), formatAmount(report.currentExpenseTotal)
-        ))
-        appendDelta(report.previousExpenseTotal, report.currentExpenseTotal)
-        appendCategoryLines(report.categoryComparisons)
-    }
-
-    private fun StringBuilder.appendIncomeSection(report: ComparisonReport, language: String?) {
-        append("\n\n")
-        append(localizationService.t(
-            "finance.report.comparison.income",
-            language,
-            formatAmount(report.previousIncomeTotal), formatAmount(report.currentIncomeTotal)
-        ))
-        appendDelta(report.previousIncomeTotal, report.currentIncomeTotal)
+    private fun StringBuilder.appendComparisonSection(
+        title: String,
+        previousLabel: String,
+        previousValue: BigDecimal,
+        currentLabel: String,
+        currentValue: BigDecimal,
+        maxValue: BigDecimal
+    ) {
+        append("\n\n$title")
+        append("\n$previousLabel\n${progressBar(previousValue, maxValue)} ${formatAmount(previousValue)}")
+        append("\n$currentLabel\n${progressBar(currentValue, maxValue)} ${formatAmount(currentValue)}")
     }
 
     private fun StringBuilder.appendBalanceSection(report: ComparisonReport, language: String?) {
@@ -73,23 +83,20 @@ class FinanceReportFormatter(
             "$previousSign${formatAmount(previousBalance)}",
             "$currentSign${formatAmount(currentBalance)}"
         )))
-        appendDelta(previousBalance, currentBalance)
     }
 
-    private fun StringBuilder.appendCategoryLines(comparisons: List<CategoryComparison>) {
-        if (comparisons.isEmpty()) return
-        append("\n")
-        comparisons.forEach { (icon, name, previousAmount, currentAmount) ->
-            val percentChange = calculatePercentChange(previousAmount, currentAmount)
-            val arrow = deltaArrow(percentChange)
-            val warning = if (percentChange > 20) "  ⚠️" else ""
-            append(
-                "\n$icon ${escapeHtml(name)}  ${formatAmount(previousAmount)} → ${formatAmount(currentAmount)}  $arrow ${
-                    abs(
-                        percentChange
-                    )
-                }%$warning"
-            )
+    private fun StringBuilder.appendTopChanges(comparisons: List<CategoryComparison>, language: String?) {
+        val top = comparisons
+            .filter { it.currentAmount.compareTo(it.previousAmount) != 0 }
+            .take(TOP_CHANGES_LIMIT)
+        if (top.isEmpty()) return
+        append("\n\n")
+        append(localizationService.t("finance.report.comparison.top_changes", language))
+        top.forEach { (icon, name, previousAmount, currentAmount) ->
+            val diff = currentAmount.subtract(previousAmount)
+            val marker = if (diff > BigDecimal.ZERO) TREND_UP_MARKER else TREND_DOWN_MARKER
+            val sign = if (diff > BigDecimal.ZERO) "+" else "−"
+            append("\n$marker $icon ${escapeHtml(name)}  $sign${formatAmount(diff.abs())}")
         }
     }
 
@@ -139,9 +146,10 @@ class FinanceReportFormatter(
 
         append("\n\n")
         append(localizationService.t("finance.report.analytics.top_expenses", language))
-        report.topExpenses.forEachIndexed { index, (icon, name, total) ->
+        val maxTotal = report.topExpenses.maxOf { it.total }
+        report.topExpenses.forEach { (icon, name, total) ->
             val percent = percentOf(total, report.totalExpense)
-            append("\n${index + 1}. $icon ${escapeHtml(name)} — ${formatAmount(total)} ($percent%)")
+            append("\n$icon ${escapeHtml(name)} · $percent%\n${progressBar(total, maxTotal)} ${formatAmount(total)}")
         }
     }
 
@@ -189,9 +197,10 @@ class FinanceReportFormatter(
     }
 
     private fun StringBuilder.appendMemberLines(members: List<MemberTotal>, total: BigDecimal) {
+        val maxAmount = members.maxOfOrNull { it.total } ?: BigDecimal.ZERO
         members.forEach { (name, amount) ->
             val percent = percentOf(amount, total)
-            append("\n  ${escapeHtml(name)} — ${formatAmount(amount)} ($percent%)")
+            append("\n${escapeHtml(name)} · $percent%\n${progressBar(amount, maxAmount)} ${formatAmount(amount)}")
         }
     }
 
@@ -224,16 +233,10 @@ class FinanceReportFormatter(
         language: String?
     ) {
         monthsData.forEach { (label, total, _) ->
-            val filled = if (maxAmount.isPositive()) {
-                total.multiply(BigDecimal.valueOf(BAR_WIDTH.toLong()))
-                    .divide(maxAmount, 0, RoundingMode.HALF_UP).toInt()
-            } else 0
-            val empty = BAR_WIDTH - filled
-            val bar = "█".repeat(filled) + "░".repeat(empty)
             val maxMarker = if (total.compareTo(maxAmount) == 0 && total.isPositive()) {
                 localizationService.t("finance.report.category.max_marker", language)
             } else ""
-            append("\n$label  $bar ${formatAmount(total)}$maxMarker")
+            append("\n$label  ${progressBar(total, maxAmount)} ${formatAmount(total)}$maxMarker")
         }
     }
 
@@ -264,30 +267,10 @@ class FinanceReportFormatter(
         }
     }
 
-    private fun StringBuilder.appendDelta(previous: BigDecimal, current: BigDecimal) {
-        if (previous.isZero() && current.isZero()) return
-        val percent = calculatePercentChange(previous, current)
-        val arrow = deltaArrow(percent)
-        append(" ($arrow ${abs(percent)}%)")
-    }
-
-    private fun calculatePercentChange(previous: BigDecimal, current: BigDecimal): Int =
-        if (previous.isPositive()) {
-            current.subtract(previous).multiply(BigDecimal.valueOf(100))
-                .divide(previous, 0, RoundingMode.HALF_UP).toInt()
-        } else if (current.isPositive()) 100 else 0
-
-    private fun deltaArrow(percent: Int): String = when {
-        percent > 0 -> "↑"
-        percent < 0 -> "↓"
-        else -> "→"
-    }
-
     private fun percentOf(part: BigDecimal, total: BigDecimal): BigDecimal =
         if (total.isPositive()) {
             part.multiply(BigDecimal.valueOf(100)).divide(total, 0, RoundingMode.HALF_UP)
         } else BigDecimal.ZERO
 
     private fun BigDecimal.isPositive(): Boolean = compareTo(BigDecimal.ZERO) > 0
-    private fun BigDecimal.isZero(): Boolean = compareTo(BigDecimal.ZERO) == 0
 }

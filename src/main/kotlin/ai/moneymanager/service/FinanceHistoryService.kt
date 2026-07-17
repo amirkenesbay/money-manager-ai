@@ -7,6 +7,7 @@ import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.chat.reply.common.formatAmount
 import ai.moneymanager.chat.reply.common.formatDescriptionSuffix
 import ai.moneymanager.chat.reply.common.formatSignedAmount
+import ai.moneymanager.chat.reply.common.progressBar
 import ai.moneymanager.chat.reply.common.shortDateFormatter
 import ai.moneymanager.chat.transition.ai.matchesEntityName
 import ai.moneymanager.domain.model.CategoryType
@@ -135,13 +136,14 @@ class FinanceHistoryService(
     }
 
     private fun StringBuilder.appendCategoryLines(operations: List<FinanceOperationEntity>) {
-        operations
+        val totals = operations
             .groupBy { (it.categoryIcon ?: DEFAULT_CATEGORY_ICON) to it.categoryName }
             .map { (key, ops) -> Triple(key.first, key.second, sumAmounts(ops)) }
             .sortedByDescending { it.third }
-            .forEach { (icon, name, total) ->
-                append("\n$icon ${escapeHtml(name)} — ${formatAmount(total)}")
-            }
+        val maxTotal = totals.maxOfOrNull { it.third } ?: BigDecimal.ZERO
+        totals.forEach { (icon, name, total) ->
+            append("\n$icon ${escapeHtml(name)}\n${progressBar(total, maxTotal)} ${formatAmount(total)}")
+        }
     }
 
     private fun StringBuilder.appendBalanceLine(

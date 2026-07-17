@@ -95,14 +95,18 @@ private fun MoneyManagerContext.buildRecentOperationsSection(
     val header = localizationService.t("finance.management.recent_header", lang)
     return buildString {
         append("\n\n$header")
-        operations.forEach { append("\n${formatRecentOperation(it)}") }
+        operations
+            .groupBy { it.operationDate }
+            .forEach { (date, dayOperations) ->
+                append("\n\n${bold(date.format(shortDateFormatter))}")
+                dayOperations.forEach { append("\n${formatRecentOperation(it)}") }
+            }
     }
 }
 
 private fun formatRecentOperation(operation: FinanceOperationEntity): String {
-    val date = operation.operationDate.format(shortDateFormatter)
     val icon = operation.categoryIcon ?: DEFAULT_CATEGORY_ICON
-    return "$date $icon ${escapeHtml(operation.categoryName)} ${formatSignedAmount(operation.type, operation.amount)}"
+    return "$icon ${escapeHtml(operation.categoryName)}  ${formatSignedAmount(operation.type, operation.amount)}"
 }
 
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeOperationSavedReply(

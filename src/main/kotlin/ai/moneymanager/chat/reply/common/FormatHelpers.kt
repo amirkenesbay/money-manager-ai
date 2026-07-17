@@ -41,6 +41,21 @@ fun formatAmount(amount: BigDecimal): String = "${amountFormat.format(amount)}$C
 /** Telegram HTML parse mode: жирный текст. Использовать только на экранах с parseMode = HTML. */
 fun bold(text: String): String = "<b>$text</b>"
 
+private const val BAR_WIDTH = 12
+private const val BAR_FILLED = "█"
+private const val BAR_EMPTY = "░"
+
+/** Горизонтальный бар: доля value от max, ширина фиксированная — не переносится. */
+fun progressBar(value: BigDecimal, max: BigDecimal, width: Int = BAR_WIDTH): String {
+    val filled = if (max > BigDecimal.ZERO) {
+        value.multiply(BigDecimal.valueOf(width.toLong()))
+            .divide(max, 0, java.math.RoundingMode.HALF_UP)
+            .toInt()
+            .coerceIn(0, width)
+    } else 0
+    return BAR_FILLED.repeat(filled) + BAR_EMPTY.repeat(width - filled)
+}
+
 /** Экранирование пользовательского текста для экранов с parseMode = HTML. */
 fun escapeHtml(text: String): String = text
     .replace("&", "&amp;")
