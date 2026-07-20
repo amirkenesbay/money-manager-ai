@@ -17,6 +17,9 @@ ai:
   rate-limit:
     daily-requests-per-user: 10
 
+notifications:
+  alert-chat-id: ${ALERT_CHAT_ID:#{null}}
+
 telegram:
   file:
     max-voice-duration-seconds: 180 # 3 минуты

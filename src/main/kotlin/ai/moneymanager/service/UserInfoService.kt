@@ -12,6 +12,7 @@ import org.telegram.telegrambots.meta.api.objects.User
 @Service
 class UserInfoService(
     private val userRepository: UserInfoRepository,
+    private val adminNotificationService: AdminNotificationService,
     @Value("\${chat-machinist.bot.token}")
     private val botToken: String
 ) : DefaultAbsSender(
@@ -23,7 +24,9 @@ class UserInfoService(
 
         if (userInfo == null) {
             val entity = userRepository.save(mapUserModel(telegramUserInfo))
-            return mapEntity(entity)
+            val newUser = mapEntity(entity)
+            adminNotificationService.notifyNewUser(newUser)
+            return newUser
         }
 
         return mapEntity(userInfo)
