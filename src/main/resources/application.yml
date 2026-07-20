@@ -13,6 +13,10 @@ gemini:
   api-key: ${GEMINI_API_KEY}
   model: gemini-2.5-flash-lite
 
+ai:
+  rate-limit:
+    daily-requests-per-user: 10
+
 telegram:
   file:
     max-voice-duration-seconds: 180 # 3 минуты

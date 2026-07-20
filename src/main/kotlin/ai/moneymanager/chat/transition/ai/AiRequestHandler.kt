@@ -6,6 +6,8 @@ import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.service.AiFeedback
 import ai.moneymanager.service.AiPromptService
+import ai.moneymanager.service.AiRateLimitResult
+import ai.moneymanager.service.AiRateLimitService
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.TelegramFileService
@@ -26,6 +28,7 @@ private const val KEY_FEEDBACK_RATE_LIMIT = "ai.feedback.rate_limit"
 private const val KEY_FEEDBACK_SERVICE_ERROR = "ai.feedback.service_error"
 private const val KEY_ERROR_VOICE_TOO_LONG = "ai.error.voice_too_long"
 private const val KEY_ERROR_VOICE_DOWNLOAD = "ai.error.voice_download"
+private const val KEY_ERROR_DAILY_LIMIT = "ai.error.daily_limit"
 
 @Component
 class AiRequestHandler(
@@ -34,6 +37,7 @@ class AiRequestHandler(
     private val categoryService: CategoryService,
     private val aiPromptService: AiPromptService,
     private val localizationService: LocalizationService,
+    private val aiRateLimitService: AiRateLimitService,
     private val actionExecutor: AiActionExecutor
 ) {
     private val log = LoggerFactory.getLogger(AiRequestHandler::class.java)
@@ -55,6 +59,7 @@ class AiRequestHandler(
     private fun handleText(update: Update, context: MoneyManagerContext, feedback: AiFeedback) {
         val userMessage = update.message?.text ?: return
         val lang = context.userInfo?.language
+        if (!checkRateLimit(context, lang)) return
         log.info("AI processing text: $userMessage")
         feedback.show(localizationService.t(KEY_FEEDBACK_THINKING, lang))
         parseAndExecute(context, feedback, lang) { categoryContext ->
@@ -65,12 +70,26 @@ class AiRequestHandler(
     private fun handleVoice(update: Update, context: MoneyManagerContext, feedback: AiFeedback) {
         val voice = update.message?.voice ?: return
         val lang = context.userInfo?.language
+        if (!checkRateLimit(context, lang)) return
         log.info("AI processing voice: ${voice.duration}s")
         val audioBytes = downloadVoiceOrReportError(voice, context, feedback, lang) ?: return
         feedback.show(localizationService.t(KEY_FEEDBACK_VOICE_PROCESSING, lang))
         parseAndExecute(context, feedback, lang) { categoryContext ->
             commandParserService.parseVoiceCommands(audioBytes, categoryContext)
         }
+    }
+
+    /** Дневная квота AI-запросов на юзера. Проверяется до любого сетевого вызова к Gemini. */
+    private fun checkRateLimit(context: MoneyManagerContext, lang: String?): Boolean {
+        val userId = context.userInfo?.telegramUserId ?: return true
+        val result = aiRateLimitService.tryConsume(userId)
+        if (result is AiRateLimitResult.Exceeded) {
+            actionExecutor.clear(context)
+            val resetInHours = (result.resetInSeconds / 3600).coerceAtLeast(1)
+            context.aiResultMessage = localizationService.t(KEY_ERROR_DAILY_LIMIT, lang, result.limit, resetInHours)
+            return false
+        }
+        return true
     }
 
     /** Общий хвост text/voice: контекст категорий → парсинг → стадия ошибки → выполнение. */
