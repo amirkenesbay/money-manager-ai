@@ -41,10 +41,10 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.operationListReply(
             }
 
             keyboard {
-                operations.forEach { operation ->
+                operations.forEachIndexed { index, operation ->
                     buttonRow {
                         button {
-                            text = operationListItemText(operation)
+                            text = operationListItemText(index, operation)
                             type = MoneyManagerButtonType.OPERATION_LIST_ITEM
                         }
                     }
@@ -295,7 +295,8 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.operationDeleteConfir
     }
 }
 
-private fun operationListItemText(operation: FinanceOperationEntity): String = operationListButtonText(
+private fun operationListItemText(index: Int, operation: FinanceOperationEntity): String = operationListButtonText(
+    index = index,
     date = operation.operationDate.format(dateFormatter),
     icon = operation.categoryIcon,
     categoryName = operation.categoryName,

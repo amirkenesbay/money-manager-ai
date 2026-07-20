@@ -69,14 +69,15 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.operationSelec
         }
         action {
             val text = buttonText
-            val operation = context.operationsList.firstOrNull { operation ->
+            val operation = context.operationsList.withIndex().firstOrNull { (index, operation) ->
                 operationListButtonText(
+                    index = index,
                     date = operation.operationDate.format(dateFormatter),
                     icon = operation.categoryIcon,
                     categoryName = operation.categoryName,
                     signedAmount = formatSignedAmount(operation.type, operation.amount)
                 ) == text
-            }
+            }?.value
             context.selectedOperation = operation
             if (operation != null) {
                 context.categories = categoryService.getCategoriesByGroupAndType(operation.groupId, operation.type)

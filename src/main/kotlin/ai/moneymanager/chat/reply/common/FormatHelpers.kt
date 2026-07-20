@@ -87,9 +87,13 @@ fun formatIconPrefix(icon: String?): String =
 fun formatDescriptionSuffix(description: String?): String =
     description?.takeIf { it.isNotBlank() }?.let { "$DESCRIPTION_PREFIX$it$DESCRIPTION_SUFFIX" } ?: ""
 
-/** Текст кнопки операции в списке для редактирования — общий для reply-экрана и transition-матчинга по buttonText. */
-fun operationListButtonText(date: String, icon: String?, categoryName: String, signedAmount: String): String =
-    "$date ${icon ?: DEFAULT_CATEGORY_ICON} $categoryName $signedAmount"
+/**
+ * Текст кнопки операции в списке для редактирования — общий для reply-экрана и transition-матчинга по buttonText.
+ * Номер обязателен: операции часто повторяются (та же дата/категория/сумма), без него кнопки визуально
+ * дублируются и матчинг по тексту всегда выбирал бы первую совпавшую — вторая становилась недостижимой.
+ */
+fun operationListButtonText(index: Int, date: String, icon: String?, categoryName: String, signedAmount: String): String =
+    "${index + 1}. $date ${icon ?: DEFAULT_CATEGORY_ICON} $categoryName $signedAmount"
 
 /** Текст кнопки категории («иконка имя») — общий для reply-экранов и transition-матчинга по buttonText. */
 fun categoryButtonText(category: Category): String =
