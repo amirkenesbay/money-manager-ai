@@ -8,7 +8,9 @@ import org.telegram.telegrambots.bots.DefaultAbsSender
 import org.telegram.telegrambots.bots.DefaultBotOptions
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 
-private const val NEW_USER_MESSAGE_TEMPLATE = "🆕 Новый пользователь: %s (id %d)"
+private const val NEW_USER_MESSAGE_TEMPLATE = "🆕 Новый пользователь: %s, %s (id %d)"
+private const val NO_USERNAME_PLACEHOLDER = "без username"
+private const val NO_NAME_PLACEHOLDER = "без имени"
 
 /** Служебные уведомления админу в alert-чат — не путать с юзер-фейсинг сообщениями бота. */
 @Service
@@ -23,9 +25,9 @@ class AdminNotificationService(
 
     fun notifyNewUser(user: UserInfo) {
         val chatId = alertChatId ?: return
-        val label = user.username?.let { "@$it" }
-            ?: listOfNotNull(user.firstName, user.lastName).joinToString(" ").ifBlank { "без имени" }
-        val text = NEW_USER_MESSAGE_TEMPLATE.format(label, user.telegramUserId)
+        val username = user.username?.let { "@$it" } ?: NO_USERNAME_PLACEHOLDER
+        val fullName = listOfNotNull(user.firstName, user.lastName).joinToString(" ").ifBlank { NO_NAME_PLACEHOLDER }
+        val text = NEW_USER_MESSAGE_TEMPLATE.format(username, fullName, user.telegramUserId)
 
         runCatching {
             execute(SendMessage(chatId, text))
