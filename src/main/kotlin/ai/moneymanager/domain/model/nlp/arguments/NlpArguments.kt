@@ -53,3 +53,14 @@ data class CreateNotificationArgs(
 data class DeleteNotificationArgs(
     val name: String
 )
+
+data class DeleteLastOperationArgs(
+    val type: String? = null
+)
+
+data class EditLastOperationArgs(
+    val type: String? = null,
+    val newAmount: Double? = null,
+    val newCategory: String? = null,
+    val newOperationDate: String? = null
+)

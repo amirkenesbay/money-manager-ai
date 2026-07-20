@@ -29,6 +29,14 @@ import ai.moneymanager.chat.reply.finance.financeSelectCategoryReply
 import ai.moneymanager.chat.reply.finance.financeSelectDateReply
 import ai.moneymanager.chat.reply.finance.financeSelectMonthReply
 import ai.moneymanager.chat.reply.finance.financeSelectYearReply
+import ai.moneymanager.chat.reply.finance.operationListReply
+import ai.moneymanager.chat.reply.finance.operationActionsReply
+import ai.moneymanager.chat.reply.finance.operationEditAmountReply
+import ai.moneymanager.chat.reply.finance.operationEditSelectTypeReply
+import ai.moneymanager.chat.reply.finance.operationEditSelectCategoryReply
+import ai.moneymanager.chat.reply.finance.operationEditDateReply
+import ai.moneymanager.chat.reply.finance.operationEditCommentReply
+import ai.moneymanager.chat.reply.finance.operationDeleteConfirmReply
 import ai.moneymanager.chat.reply.group.*
 import ai.moneymanager.chat.reply.money.balanceOnboardingEnterAmountReply
 import ai.moneymanager.chat.reply.money.balanceOnboardingPromptReply
@@ -98,6 +106,16 @@ class MoneyManagerReplyConfig {
             financeHistoryCalendarReply(localizationService)
             financeHistorySelectYearReply(localizationService)
             financeHistorySelectMonthReply(localizationService)
+
+            // Operation edit replies
+            operationListReply(localizationService)
+            operationActionsReply(localizationService)
+            operationEditAmountReply(localizationService)
+            operationEditSelectTypeReply(localizationService)
+            operationEditSelectCategoryReply(localizationService)
+            operationEditDateReply(localizationService)
+            operationEditCommentReply(localizationService)
+            operationDeleteConfirmReply(localizationService)
 
             // Group replies
             groupManagementReply(localizationService)

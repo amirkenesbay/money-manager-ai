@@ -2,6 +2,7 @@ package ai.moneymanager.domain.model
 
 import ai.moneymanager.domain.model.nlp.AiPendingAction
 import ai.moneymanager.domain.model.nlp.BotCommand
+import ai.moneymanager.repository.entity.FinanceOperationEntity
 import ai.moneymanager.repository.entity.NotificationEntity
 import com.fasterxml.jackson.annotation.JsonFormat
 import java.time.DayOfWeek
@@ -59,6 +60,16 @@ enum class MoneyManagerState {
     FINANCE_HISTORY_CALENDAR,
     FINANCE_HISTORY_SELECT_YEAR,
     FINANCE_HISTORY_SELECT_MONTH,
+
+    // -------- OPERATION EDIT --------
+    OPERATION_LIST,
+    OPERATION_ACTIONS,
+    OPERATION_EDIT_SELECT_TYPE,
+    OPERATION_EDIT_AMOUNT,
+    OPERATION_EDIT_DATE,
+    OPERATION_EDIT_COMMENT,
+    OPERATION_EDIT_SELECT_CATEGORY,
+    OPERATION_DELETE_CONFIRM,
 
     // -------- NLP --------
     NLP_CONFIRM_CREATE_GROUP,
@@ -173,6 +184,21 @@ enum class MoneyManagerButtonType {
     CREATE_CATEGORY_FROM_FINANCE,
     FINANCE_HISTORY,
     FINANCE_REPORT,
+    FINANCE_EDIT_OPERATIONS,
+
+    // Operation edit
+    OPERATION_LIST_ITEM,
+    OPERATION_EDIT_AMOUNT_BTN,
+    OPERATION_EDIT_TYPE_BTN,
+    OPERATION_EDIT_DATE_BTN,
+    OPERATION_EDIT_COMMENT_BTN,
+    OPERATION_EDIT_CATEGORY_BTN,
+    OPERATION_DELETE_BTN,
+    OPERATION_TYPE_EXPENSE,
+    OPERATION_TYPE_INCOME,
+    OPERATION_CATEGORY_ITEM,
+    BACK_TO_OPERATION_LIST,
+    BACK_TO_OPERATION_ACTIONS,
 
     // Report
     REPORT_COMPARISON,
@@ -351,6 +377,18 @@ class MoneyManagerContext {
         financeAmount = null
         financeComment = null
         selectedDate = null
+    }
+
+    // -------- OPERATION EDIT --------
+    var operationsList: List<FinanceOperationEntity> = emptyList()
+    var selectedOperation: FinanceOperationEntity? = null
+    var operationEditField: String? = null
+    var operationEditError: Boolean = false
+
+    fun clearOperationEdit() {
+        selectedOperation = null
+        operationEditField = null
+        operationEditError = false
     }
 
     // -------- REPORT --------

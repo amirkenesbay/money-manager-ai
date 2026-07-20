@@ -3,11 +3,13 @@ package ai.moneymanager.domain.model.nlp
 import ai.moneymanager.chat.reply.common.formatAmount
 import ai.moneymanager.chat.reply.common.formatDescriptionSuffix
 import ai.moneymanager.chat.reply.common.formatIconPrefix
+import ai.moneymanager.chat.reply.common.formatSignedAmount
 import ai.moneymanager.chat.reply.common.formatTime
 import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.MoneyGroup
+import ai.moneymanager.repository.entity.FinanceOperationEntity
 import ai.moneymanager.repository.entity.NotificationEntity
 import ai.moneymanager.service.LocalizationService
 import org.bson.types.ObjectId
@@ -130,6 +132,48 @@ sealed class AiPendingAction {
                     formatIconPrefix(notification.icon),
                     notification.name
                 )
+        }
+    }
+
+    sealed class RecentOperationAction : AiPendingAction() {
+        data class Delete(
+            val operation: FinanceOperationEntity
+        ) : RecentOperationAction() {
+            override fun describe(localizationService: LocalizationService, language: String?): String =
+                localizationService.t(
+                    "ai.confirm.operation.delete",
+                    language,
+                    formatIconPrefix(operation.categoryIcon),
+                    operation.categoryName,
+                    formatSignedAmount(operation.type, operation.amount)
+                )
+        }
+
+        data class Edit(
+            val operation: FinanceOperationEntity,
+            val newAmount: BigDecimal?,
+            val newCategory: Category?,
+            val newOperationDate: LocalDate?
+        ) : RecentOperationAction() {
+            override fun describe(localizationService: LocalizationService, language: String?): String {
+                val changes = listOfNotNull(
+                    newAmount?.let { localizationService.t("ai.confirm.operation.edit.amount", language, formatAmount(it)) },
+                    newCategory?.let { localizationService.t("ai.confirm.operation.edit.category", language, formatIconPrefix(it.icon), it.name) },
+                    newOperationDate?.let { localizationService.t("ai.confirm.operation.edit.date", language, it) }
+                ).joinToString(EDIT_CHANGES_SEPARATOR)
+                return localizationService.t(
+                    "ai.confirm.operation.edit",
+                    language,
+                    formatIconPrefix(operation.categoryIcon),
+                    operation.categoryName,
+                    formatSignedAmount(operation.type, operation.amount),
+                    changes
+                )
+            }
+        }
+
+        companion object {
+            private const val EDIT_CHANGES_SEPARATOR = ", "
         }
     }
 

@@ -54,6 +54,19 @@ Parameters:
 Parameters:
 - createNotification: name = what to remind about in the user's language; hour/minute from the message; minute=0 when not given. Only DAILY reminders are supported — for other frequencies still call createNotification with the requested time.
 
+=== RECENT OPERATION EDIT ===
+Use these when the user wants to correct or remove an operation they JUST logged, WITHOUT specifying a date/period (that's a showHistory query instead — see QUERIES section).
+
+| Function | RU | EN | KK |
+|---|---|---|---|
+| deleteLastOperation | «удали последнюю трату», «убери последнюю операцию», «удали последний доход» | "delete the last expense", "undo my last entry" | «соңғы шығынды жой» |
+| editLastOperation | «поменяй сумму на 700», «это было 5000, а не 500», «перенеси на вчера», «это доход, а не расход», «поменяй категорию на такси» | "change the amount to 700", "that was actually income", "move it to yesterday" | «соманы 700-ге өзгерт» |
+
+Parameters:
+- Both: type "EXPENSE"/"INCOME" optional — pass it when the user refers to "последний расход"/"последний доход" specifically; omit for a plain "последнюю операцию"/"last one".
+- editLastOperation: pass ONLY the fields the user is correcting (newAmount, newCategory, newOperationDate) — leave the rest null. newOperationDate in ISO YYYY-MM-DD, computed from the current date same as operationDate elsewhere.
+- These target only the single most recent operation. If the user names a specific past operation by date/description instead ("удали покупку кофе за вторник"), that is NOT supported yet — call outOfContext.
+
 === FINANCIAL OPERATIONS ===
 
 | Function | RU | EN | KK |

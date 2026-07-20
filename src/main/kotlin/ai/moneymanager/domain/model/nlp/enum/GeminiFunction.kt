@@ -27,7 +27,11 @@ enum class GeminiFunction(val functionName: String) {
     // Notifications
     LIST_NOTIFICATIONS("listNotifications"),
     CREATE_NOTIFICATION("createNotification"),
-    DELETE_NOTIFICATION("deleteNotification");
+    DELETE_NOTIFICATION("deleteNotification"),
+
+    // Recent operation edit
+    DELETE_LAST_OPERATION("deleteLastOperation"),
+    EDIT_LAST_OPERATION("editLastOperation");
 
     companion object {
         fun from(name: String?): GeminiFunction? =

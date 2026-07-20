@@ -23,6 +23,8 @@ interface FinanceOperationRepository : MongoRepository<FinanceOperationEntity, O
 
     fun findByGroupId(groupId: ObjectId): List<FinanceOperationEntity>
 
+    fun findByGroupIdAndIdIn(groupId: ObjectId, ids: List<ObjectId>): List<FinanceOperationEntity>
+
     fun findByGroupIdOrderByOperationDateDescAuditInfoCreatedAtDesc(
         groupId: ObjectId,
         pageable: Pageable

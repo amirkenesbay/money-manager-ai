@@ -136,4 +136,17 @@ sealed class BotCommand {
     data class DeleteNotification(
         val name: String
     ) : BotCommand()
+
+    // ===== RECENT OPERATION EDIT =====
+
+    data class DeleteLastOperation(
+        val type: String?
+    ) : BotCommand()
+
+    data class EditLastOperation(
+        val type: String?,
+        val newAmount: Double?,
+        val newCategory: String?,
+        val newOperationDate: String?
+    ) : BotCommand()
 }

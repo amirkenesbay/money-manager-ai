@@ -187,4 +187,25 @@ object BotFunctions {
     @JvmStatic
     fun deleteNotification(name: String) {
     }
+
+    // ===== RECENT OPERATION EDIT =====
+
+    /**
+     * Delete the user's most recently recorded expense or income operation.
+     * @param type optional filter: "EXPENSE" or "INCOME" — delete the last one of that type. If omitted, delete the very last operation regardless of type.
+     */
+    @JvmStatic
+    fun deleteLastOperation(type: String?) {
+    }
+
+    /**
+     * Change a field of the user's most recently recorded operation (correcting a mistake right after logging it).
+     * @param type optional filter: "EXPENSE" or "INCOME" — edit the last one of that type. If omitted, edit the very last operation.
+     * @param newAmount new amount in tenge; pass null when the amount is not being changed
+     * @param newCategory new category name (exact name from the user's active categories list when it matches); pass null when the category is not being changed
+     * @param newOperationDate new date in ISO YYYY-MM-DD when the user corrects the date; pass null when the date is not being changed
+     */
+    @JvmStatic
+    fun editLastOperation(type: String?, newAmount: Double?, newCategory: String?, newOperationDate: String?) {
+    }
 }

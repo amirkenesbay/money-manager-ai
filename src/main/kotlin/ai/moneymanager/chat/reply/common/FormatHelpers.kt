@@ -1,6 +1,7 @@
 package ai.moneymanager.chat.reply.common
 
 import ai.moneymanager.domain.model.BalanceBreakdown
+import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.service.LocalizationService
@@ -85,6 +86,14 @@ fun formatIconPrefix(icon: String?): String =
 
 fun formatDescriptionSuffix(description: String?): String =
     description?.takeIf { it.isNotBlank() }?.let { "$DESCRIPTION_PREFIX$it$DESCRIPTION_SUFFIX" } ?: ""
+
+/** Текст кнопки операции в списке для редактирования — общий для reply-экрана и transition-матчинга по buttonText. */
+fun operationListButtonText(date: String, icon: String?, categoryName: String, signedAmount: String): String =
+    "$date ${icon ?: DEFAULT_CATEGORY_ICON} $categoryName $signedAmount"
+
+/** Текст кнопки категории («иконка имя») — общий для reply-экранов и transition-матчинга по buttonText. */
+fun categoryButtonText(category: Category): String =
+    "${category.icon ?: DEFAULT_CATEGORY_ICON} ${category.name}"
 
 fun formatSignedAmount(type: CategoryType, amount: BigDecimal): String {
     val sign = when (type) {

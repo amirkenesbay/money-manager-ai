@@ -58,4 +58,47 @@ class FinanceOperationService(
         log.info("Saved finance operation: type={}, amount={}, category={}, groupId={}", type, amount, categoryName, groupId)
         return saved
     }
+
+    fun getOperation(groupId: ObjectId, operationId: ObjectId): FinanceOperationEntity? =
+        financeOperationRepository.findByGroupIdAndIdIn(groupId, listOf(operationId)).firstOrNull()
+
+    fun updateAmount(groupId: ObjectId, operationId: ObjectId, amount: BigDecimal): FinanceOperationEntity? =
+        updateOperation(groupId, operationId) { it.copy(amount = amount) }
+
+    fun updateType(groupId: ObjectId, operationId: ObjectId, type: CategoryType): FinanceOperationEntity? =
+        updateOperation(groupId, operationId) { it.copy(type = type) }
+
+    fun updateDate(groupId: ObjectId, operationId: ObjectId, date: LocalDate): FinanceOperationEntity? =
+        updateOperation(groupId, operationId) { it.copy(operationDate = date) }
+
+    fun updateDescription(groupId: ObjectId, operationId: ObjectId, description: String?): FinanceOperationEntity? =
+        updateOperation(groupId, operationId) { it.copy(description = description) }
+
+    fun updateCategory(
+        groupId: ObjectId,
+        operationId: ObjectId,
+        categoryId: ObjectId,
+        categoryName: String,
+        categoryIcon: String?
+    ): FinanceOperationEntity? = updateOperation(groupId, operationId) {
+        it.copy(categoryId = categoryId, categoryName = categoryName, categoryIcon = categoryIcon)
+    }
+
+    fun deleteOperation(groupId: ObjectId, operationId: ObjectId): Boolean {
+        val existing = getOperation(groupId, operationId) ?: return false
+        financeOperationRepository.delete(existing)
+        log.info("Deleted finance operation: id={}, groupId={}", operationId, groupId)
+        return true
+    }
+
+    private fun updateOperation(
+        groupId: ObjectId,
+        operationId: ObjectId,
+        mutate: (FinanceOperationEntity) -> FinanceOperationEntity
+    ): FinanceOperationEntity? {
+        val existing = getOperation(groupId, operationId) ?: return null
+        val saved = financeOperationRepository.save(mutate(existing))
+        log.info("Updated finance operation: id={}, groupId={}", operationId, groupId)
+        return saved
+    }
 }

@@ -62,6 +62,12 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeManagementRepl
                 }
                 buttonRow {
                     button {
+                        text = localizationService.t("finance.button.edit_operations", lang)
+                        type = MoneyManagerButtonType.FINANCE_EDIT_OPERATIONS
+                    }
+                }
+                buttonRow {
+                    button {
                         text = localizationService.t("common.back", lang)
                         type = MoneyManagerButtonType.BACK_TO_MENU
                     }

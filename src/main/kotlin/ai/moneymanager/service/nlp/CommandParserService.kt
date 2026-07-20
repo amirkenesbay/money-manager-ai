@@ -12,7 +12,9 @@ import ai.moneymanager.domain.model.nlp.arguments.CreateGroupArgs
 import ai.moneymanager.domain.model.nlp.arguments.CreateNotificationArgs
 import ai.moneymanager.domain.model.nlp.arguments.DeleteCategoryArgs
 import ai.moneymanager.domain.model.nlp.arguments.DeleteGroupArgs
+import ai.moneymanager.domain.model.nlp.arguments.DeleteLastOperationArgs
 import ai.moneymanager.domain.model.nlp.arguments.DeleteNotificationArgs
+import ai.moneymanager.domain.model.nlp.arguments.EditLastOperationArgs
 import ai.moneymanager.domain.model.nlp.arguments.ListCategoriesArgs
 import ai.moneymanager.domain.model.nlp.arguments.RenameCategoryArgs
 import ai.moneymanager.domain.model.nlp.arguments.ShowHistoryArgs
@@ -80,6 +82,13 @@ class CommandParserService(
         val createNotificationMethod = botFunctionMethod(GeminiFunction.CREATE_NOTIFICATION, String::class.java, Double::class.java, Double::class.javaObjectType)
         val deleteNotificationMethod = botFunctionMethod(GeminiFunction.DELETE_NOTIFICATION, String::class.java)
 
+        // Recent operation edit functions
+        val deleteLastOperationMethod = botFunctionMethod(GeminiFunction.DELETE_LAST_OPERATION, String::class.java)
+        val editLastOperationMethod = botFunctionMethod(
+            GeminiFunction.EDIT_LAST_OPERATION,
+            String::class.java, Double::class.javaObjectType, String::class.java, String::class.java
+        )
+
         val systemContent = Content.fromParts(Part.fromText(aiPromptService.systemPrompt))
 
         config = GenerateContentConfig.builder()
@@ -90,7 +99,8 @@ class CommandParserService(
                         createCategoryMethod, deleteCategoryMethod, renameCategoryMethod,
                         changeCategoryIconMethod, deleteAllCategoriesMethod, listCategoriesMethod,
                         listGroupsMethod, switchGroupMethod, showBalanceMethod, showReportMethod, showHistoryMethod,
-                        listNotificationsMethod, createNotificationMethod, deleteNotificationMethod
+                        listNotificationsMethod, createNotificationMethod, deleteNotificationMethod,
+                        deleteLastOperationMethod, editLastOperationMethod
                     )
                     .build()
             )
@@ -309,6 +319,19 @@ class CommandParserService(
 
                 GeminiFunction.DELETE_NOTIFICATION ->
                     BotCommand.DeleteNotification(requireText(argsMapper.map<DeleteNotificationArgs>(args).name, FIELD_NOTIFICATION_NAME))
+
+                GeminiFunction.DELETE_LAST_OPERATION ->
+                    BotCommand.DeleteLastOperation(argsMapper.map<DeleteLastOperationArgs>(args).type.normalizedOrNull())
+
+                GeminiFunction.EDIT_LAST_OPERATION -> {
+                    val dto = argsMapper.map<EditLastOperationArgs>(args)
+                    BotCommand.EditLastOperation(
+                        dto.type.normalizedOrNull(),
+                        dto.newAmount,
+                        dto.newCategory.normalizedOrNull(),
+                        dto.newOperationDate.normalizedOrNull()
+                    )
+                }
             }
         } catch (e: Exception) {
             // Любая проблема маппинга/валидации → ParseError
