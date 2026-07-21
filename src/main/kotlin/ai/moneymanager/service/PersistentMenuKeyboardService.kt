@@ -12,6 +12,10 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 
 const val MENU_BUTTON_TEXT = "▶️ Открыть меню"
 const val SETTINGS_BUTTON_TEXT = "⚙️ Настройки"
+const val AI_BUTTON_TEXT = "🤖 AI"
+const val REPORT_BUTTON_TEXT = "📊 Отчёт"
+const val ADD_INCOME_BUTTON_TEXT = "💰 Записать доход"
+const val ADD_EXPENSE_BUTTON_TEXT = "💸 Записать трату"
 private const val ATTACH_MESSAGE_TEXT = "👇"
 
 /**
@@ -28,7 +32,12 @@ class PersistentMenuKeyboardService(
 
     fun attach(chatId: Long) {
         val keyboard = ReplyKeyboardMarkup().apply {
-            keyboard = listOf(KeyboardRow(listOf(KeyboardButton(MENU_BUTTON_TEXT), KeyboardButton(SETTINGS_BUTTON_TEXT))))
+            keyboard = listOf(
+                KeyboardRow(listOf(KeyboardButton(MENU_BUTTON_TEXT), KeyboardButton(SETTINGS_BUTTON_TEXT))),
+                KeyboardRow(listOf(KeyboardButton(AI_BUTTON_TEXT))),
+                KeyboardRow(listOf(KeyboardButton(REPORT_BUTTON_TEXT))),
+                KeyboardRow(listOf(KeyboardButton(ADD_INCOME_BUTTON_TEXT), KeyboardButton(ADD_EXPENSE_BUTTON_TEXT)))
+            )
             resizeKeyboard = true
             isPersistent = true
         }

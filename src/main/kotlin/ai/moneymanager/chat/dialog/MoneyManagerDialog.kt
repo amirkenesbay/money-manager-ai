@@ -10,12 +10,15 @@ import ai.moneymanager.chat.transition.finance.financeDialogTransitions
 import ai.moneymanager.chat.transition.group.groupDialogTransitions
 import ai.moneymanager.chat.transition.nlp.nlpDialogTransitions
 import ai.moneymanager.chat.transition.notification.notificationDialogTransitions
+import ai.moneymanager.chat.transition.finance.loadFinanceCategories
 import ai.moneymanager.chat.transition.settings.currencyDialogTransitions
 import ai.moneymanager.chat.transition.settings.languageDialogTransitions
 import ai.moneymanager.chat.transition.settings.settingsDialogTransitions
+import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
+import ai.moneymanager.domain.model.PersistentAction
 import ai.moneymanager.domain.model.StartParameters
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.FinanceHistoryService
@@ -24,9 +27,13 @@ import ai.moneymanager.service.FinanceReportService
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.TelegramFileService
+import ai.moneymanager.service.ADD_EXPENSE_BUTTON_TEXT
+import ai.moneymanager.service.ADD_INCOME_BUTTON_TEXT
+import ai.moneymanager.service.AI_BUTTON_TEXT
 import ai.moneymanager.service.MENU_BUTTON_TEXT
 import ai.moneymanager.service.NotificationService
 import ai.moneymanager.service.PersistentMenuKeyboardService
+import ai.moneymanager.service.REPORT_BUTTON_TEXT
 import ai.moneymanager.service.SETTINGS_BUTTON_TEXT
 import ai.moneymanager.service.UserInfoService
 import kz.rmr.chatmachinist.api.transition.ChatBuilder
@@ -53,7 +60,7 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
     dialog {
         name = "Money Manager Dialog"
 
-        startMoneyManagerDialogTransition(userInfoService, groupService, financeOperationService, telegramFileService, persistentMenuKeyboardService)
+        startMoneyManagerDialogTransition(userInfoService, groupService, categoryService, financeOperationService, telegramFileService, persistentMenuKeyboardService, aiActionExecutor)
         joinGroupDialogTransitions(groupService, userInfoService, financeOperationService, localizationService)
         settingsDialogTransitions()
         languageDialogTransitions(userInfoService, groupService, localizationService)
@@ -69,12 +76,23 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
     }
 }
 
+/** Reply-кнопка → действие, которое нужно выполнить сразу после /start. */
+private val PERSISTENT_BUTTON_ACTIONS: Map<String, PersistentAction> = mapOf(
+    SETTINGS_BUTTON_TEXT to PersistentAction.OPEN_SETTINGS,
+    AI_BUTTON_TEXT to PersistentAction.OPEN_AI,
+    REPORT_BUTTON_TEXT to PersistentAction.OPEN_REPORT,
+    ADD_INCOME_BUTTON_TEXT to PersistentAction.ADD_INCOME,
+    ADD_EXPENSE_BUTTON_TEXT to PersistentAction.ADD_EXPENSE,
+)
+
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyManagerDialogTransition(
     userInfoService: UserInfoService,
     groupService: GroupService,
+    categoryService: CategoryService,
     financeOperationService: FinanceOperationService,
     telegramFileService: TelegramFileService,
-    persistentMenuKeyboardService: PersistentMenuKeyboardService
+    persistentMenuKeyboardService: PersistentMenuKeyboardService,
+    aiActionExecutor: AiActionExecutor
 ) {
     transition {
         name = "Start Money Manager Dialog"
@@ -100,15 +118,15 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
             eventType = EventType.TEXT
 
             guard {
-                update.message?.text == SETTINGS_BUTTON_TEXT
+                update.message?.text in PERSISTENT_BUTTON_ACTIONS
             }
         }
 
         action {
             context.isActive = true
             context.userInfo = userInfoService.getUserInfo(user)
-            context.pendingOpenFinance = false
-            context.pendingOpenSettings = update.message?.text == SETTINGS_BUTTON_TEXT
+            context.pendingPersistentAction = PERSISTENT_BUTTON_ACTIONS[update.message?.text]
+            context.financeOperationType = null
             update.message?.chatId?.let { persistentMenuKeyboardService.attach(it) }
 
             val messageText = update.message?.text
@@ -124,7 +142,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
                         context.pendingGroupOwnerInfo = userInfoService.getUserInfoByTelegramId(group.ownerId)
                     }
                 } else if (parts.size == 2 && parts[1] == StartParameters.OPEN_FINANCE) {
-                    context.pendingOpenFinance = true
+                    context.pendingPersistentAction = PersistentAction.OPEN_FINANCE
                     val chatId = update.message?.chatId
                     val messageId = update.message?.messageId
                     if (chatId != null && messageId != null) {
@@ -166,12 +184,12 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
             eventType = EventType.TRIGGERED
 
             guard {
-                context.pendingGroup == null && context.pendingOpenSettings
+                context.pendingGroup == null && context.pendingPersistentAction == PersistentAction.OPEN_SETTINGS
             }
         }
 
         action {
-            context.pendingOpenSettings = false
+            context.pendingPersistentAction = null
         }
 
         then {
@@ -187,7 +205,9 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
             eventType = EventType.TRIGGERED
 
             guard {
-                context.pendingGroup == null && !context.pendingOpenSettings && context.userInfo?.language == null
+                context.pendingGroup == null &&
+                    context.pendingPersistentAction != PersistentAction.OPEN_SETTINGS &&
+                    context.userInfo?.language == null
             }
         }
 
@@ -205,6 +225,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
 
             guard {
                 context.pendingGroup == null &&
+                    context.pendingPersistentAction != PersistentAction.OPEN_SETTINGS &&
                     context.userInfo?.language != null &&
                     context.userInfo?.onboardingCompleted != true
             }
@@ -212,6 +233,118 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
 
         then {
             to = MoneyManagerState.CURRENCY_SELECT
+        }
+    }
+
+    transition {
+        name = "Open AI mode from persistent button"
+
+        condition {
+            from = MoneyManagerState.STARTED
+            eventType = EventType.TRIGGERED
+
+            guard {
+                context.pendingGroup == null &&
+                    context.userInfo?.language != null &&
+                    context.userInfo?.onboardingCompleted == true &&
+                    context.pendingPersistentAction == PersistentAction.OPEN_AI
+            }
+        }
+
+        action {
+            context.pendingPersistentAction = null
+            aiActionExecutor.clear(context)
+        }
+
+        then {
+            to = MoneyManagerState.AI_MODE
+        }
+    }
+
+    transition {
+        name = "Open report menu from persistent button"
+
+        condition {
+            from = MoneyManagerState.STARTED
+            eventType = EventType.TRIGGERED
+
+            guard {
+                context.pendingGroup == null &&
+                    context.userInfo?.language != null &&
+                    context.userInfo?.onboardingCompleted == true &&
+                    context.pendingPersistentAction == PersistentAction.OPEN_REPORT
+            }
+        }
+
+        action {
+            context.pendingPersistentAction = null
+        }
+
+        then {
+            to = MoneyManagerState.FINANCE_REPORT_MENU
+        }
+    }
+
+    transition {
+        name = "Prepare add income/expense from persistent button"
+
+        condition {
+            from = MoneyManagerState.STARTED
+            eventType = EventType.TRIGGERED
+
+            guard {
+                context.pendingGroup == null &&
+                    context.userInfo?.language != null &&
+                    context.userInfo?.onboardingCompleted == true &&
+                    (context.pendingPersistentAction == PersistentAction.ADD_INCOME || context.pendingPersistentAction == PersistentAction.ADD_EXPENSE)
+            }
+        }
+
+        action {
+            context.financeOperationType = if (context.pendingPersistentAction == PersistentAction.ADD_INCOME) {
+                CategoryType.INCOME
+            } else {
+                CategoryType.EXPENSE
+            }
+            context.pendingPersistentAction = null
+            context.selectedCategory = null
+            loadFinanceCategories(categoryService)
+        }
+
+        then {
+            to = MoneyManagerState.STARTED
+            noReply = true
+            trigger { sameDialog = true }
+        }
+    }
+
+    transition {
+        name = "Route to category list from persistent button"
+
+        condition {
+            from = MoneyManagerState.STARTED
+            eventType = EventType.TRIGGERED
+
+            guard { context.financeOperationType != null && context.categories.isNotEmpty() }
+        }
+
+        then {
+            to = MoneyManagerState.FINANCE_SELECT_CATEGORY
+        }
+    }
+
+    transition {
+        name = "Route to no categories warning from persistent button"
+
+        condition {
+            from = MoneyManagerState.STARTED
+            eventType = EventType.TRIGGERED
+
+            guard { context.financeOperationType != null && context.categories.isEmpty() }
+        }
+
+        then {
+            to = MoneyManagerState.FINANCE_NO_CATEGORIES_WARNING
         }
     }
 
@@ -226,12 +359,12 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
                 context.pendingGroup == null &&
                     context.userInfo?.language != null &&
                     context.userInfo?.onboardingCompleted == true &&
-                    context.pendingOpenFinance
+                    context.pendingPersistentAction == PersistentAction.OPEN_FINANCE
             }
         }
 
         action {
-            context.pendingOpenFinance = false
+            context.pendingPersistentAction = null
             loadCurrentBalance(groupService, financeOperationService)
         }
 
@@ -251,7 +384,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
                 context.pendingGroup == null &&
                     context.userInfo?.language != null &&
                     context.userInfo?.onboardingCompleted == true &&
-                    !context.pendingOpenFinance
+                    context.pendingPersistentAction == null
             }
         }
 

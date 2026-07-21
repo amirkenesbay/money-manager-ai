@@ -317,6 +317,16 @@ enum class MoneyManagerButtonType {
     NOTIFICATION_CONFIRM_CREATE,
 }
 
+/** Действие, которое нужно выполнить сразу после /start — определяется тем, какая persistent reply-кнопка была нажата. */
+enum class PersistentAction {
+    OPEN_FINANCE,
+    OPEN_SETTINGS,
+    OPEN_AI,
+    OPEN_REPORT,
+    ADD_INCOME,
+    ADD_EXPENSE,
+}
+
 class MoneyManagerContext {
     // -------- USER --------
     var userInfo: UserInfo? = null
@@ -359,8 +369,7 @@ class MoneyManagerContext {
     // Set to true on /start so that stale old dialog instances (which remain in MongoDB)
     // cannot accidentally match NLP text transitions.
     var isActive: Boolean = false
-    var pendingOpenFinance: Boolean = false
-    var pendingOpenSettings: Boolean = false
+    var pendingPersistentAction: PersistentAction? = null
 
     // -------- INPUT MODE --------
     var manualTextInputActive: Boolean = false
