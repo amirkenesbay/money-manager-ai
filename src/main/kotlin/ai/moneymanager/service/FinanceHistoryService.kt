@@ -10,6 +10,7 @@ import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.chat.reply.common.formatAmount
 import ai.moneymanager.chat.reply.common.formatDescriptionSuffix
 import ai.moneymanager.chat.reply.common.formatSignedAmount
+import ai.moneymanager.chat.reply.common.pre
 import ai.moneymanager.chat.reply.common.progressBar
 import ai.moneymanager.chat.reply.common.shortDateFormatter
 import ai.moneymanager.chat.transition.ai.matchesEntityName
@@ -144,9 +145,12 @@ class FinanceHistoryService(
             .map { (key, ops) -> Triple(key.first, key.second, sumAmounts(ops)) }
             .sortedByDescending { it.third }
         val maxTotal = totals.maxOfOrNull { it.third } ?: BigDecimal.ZERO
-        totals.forEach { (icon, name, total) ->
-            append("\n$icon ${escapeHtml(name)}\n${code("${progressBar(total, maxTotal)} ${formatAmount(total)}")}")
+        val labelWidth = totals.maxOfOrNull { (icon, name, _) -> "$icon $name".length } ?: 0
+        val rows = totals.joinToString("\n") { (icon, name, total) ->
+            val label = "$icon ${escapeHtml(name)}".padEnd(labelWidth)
+            "$label  ${progressBar(total, maxTotal)} ${formatAmount(total)}"
         }
+        append("\n${pre(rows)}")
     }
 
     private fun StringBuilder.appendBalanceLine(
