@@ -24,6 +24,7 @@ import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.TelegramFileService
 import ai.moneymanager.service.NotificationService
+import ai.moneymanager.service.PersistentMenuKeyboardService
 import ai.moneymanager.service.UserInfoService
 import kz.rmr.chatmachinist.api.transition.ChatBuilder
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
@@ -43,12 +44,13 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
     notificationService: NotificationService,
     localizationService: LocalizationService,
     aiActionExecutor: AiActionExecutor,
-    aiRequestHandler: AiRequestHandler
+    aiRequestHandler: AiRequestHandler,
+    persistentMenuKeyboardService: PersistentMenuKeyboardService
 ) {
     dialog {
         name = "Money Manager Dialog"
 
-        startMoneyManagerDialogTransition(userInfoService, groupService, financeOperationService, telegramFileService)
+        startMoneyManagerDialogTransition(userInfoService, groupService, financeOperationService, telegramFileService, persistentMenuKeyboardService)
         joinGroupDialogTransitions(groupService, userInfoService, financeOperationService, localizationService)
         settingsDialogTransitions()
         languageDialogTransitions(userInfoService, groupService, localizationService)
@@ -63,11 +65,14 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
     }
 }
 
+private const val MENU_BUTTON_TEXT = "▶️ Открыть меню"
+
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyManagerDialogTransition(
     userInfoService: UserInfoService,
     groupService: GroupService,
     financeOperationService: FinanceOperationService,
-    telegramFileService: TelegramFileService
+    telegramFileService: TelegramFileService,
+    persistentMenuKeyboardService: PersistentMenuKeyboardService
 ) {
     transition {
         name = "Start Money Manager Dialog"
@@ -81,10 +86,19 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
             }
         }
 
+        condition {
+            eventType = EventType.TEXT
+
+            guard {
+                update.message?.text == MENU_BUTTON_TEXT
+            }
+        }
+
         action {
             context.isActive = true
             context.userInfo = userInfoService.getUserInfo(user)
             context.pendingOpenFinance = false
+            update.message?.chatId?.let { persistentMenuKeyboardService.attach(it) }
 
             val messageText = update.message?.text
             if (messageText != null) {

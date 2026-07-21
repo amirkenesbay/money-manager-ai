@@ -12,6 +12,7 @@ import ai.moneymanager.service.FinanceReportService
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.NotificationService
+import ai.moneymanager.service.PersistentMenuKeyboardService
 import ai.moneymanager.service.TelegramFileService
 import ai.moneymanager.service.UserInfoService
 import kz.rmr.chatmachinist.api.transition.ChatBuilder
@@ -35,7 +36,8 @@ class MoneyManagerChatConfig(
     private val notificationService: NotificationService,
     private val localizationService: LocalizationService,
     private val aiActionExecutor: AiActionExecutor,
-    private val aiRequestHandler: AiRequestHandler
+    private val aiRequestHandler: AiRequestHandler,
+    private val persistentMenuKeyboardService: PersistentMenuKeyboardService
 ) {
 
     @Bean
@@ -57,7 +59,8 @@ class MoneyManagerChatConfig(
             moneyManagerDialog(
                 userInfoService, groupService, categoryService, telegramFileService,
                 financeOperationService, financeHistoryService, financeReportService,
-                notificationService, localizationService, aiActionExecutor, aiRequestHandler
+                notificationService, localizationService, aiActionExecutor, aiRequestHandler,
+                persistentMenuKeyboardService
             )
         }
 }
