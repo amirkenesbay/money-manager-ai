@@ -10,12 +10,13 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow
 
-private const val MENU_BUTTON_TEXT = "▶️ Открыть меню"
+const val MENU_BUTTON_TEXT = "▶️ Открыть меню"
+const val SETTINGS_BUTTON_TEXT = "⚙️ Настройки"
 private const val ATTACH_MESSAGE_TEXT = "👇"
 
 /**
- * Постоянная reply-кнопка рядом с системной клавиатурой — отдельный UI-слой от основного
- * inline-интерфейса бота. Крепится один раз при /start, дальше просто всегда видна.
+ * Постоянные reply-кнопки рядом с системной клавиатурой — отдельный UI-слой от основного
+ * inline-интерфейса бота. Крепятся один раз при /start, дальше просто всегда видны.
  */
 @Service
 class PersistentMenuKeyboardService(
@@ -27,7 +28,7 @@ class PersistentMenuKeyboardService(
 
     fun attach(chatId: Long) {
         val keyboard = ReplyKeyboardMarkup().apply {
-            keyboard = listOf(KeyboardRow(listOf(KeyboardButton(MENU_BUTTON_TEXT))))
+            keyboard = listOf(KeyboardRow(listOf(KeyboardButton(MENU_BUTTON_TEXT), KeyboardButton(SETTINGS_BUTTON_TEXT))))
             resizeKeyboard = true
             isPersistent = true
         }

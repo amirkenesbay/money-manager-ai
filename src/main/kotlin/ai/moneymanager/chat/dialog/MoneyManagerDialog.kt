@@ -10,6 +10,7 @@ import ai.moneymanager.chat.transition.finance.financeDialogTransitions
 import ai.moneymanager.chat.transition.group.groupDialogTransitions
 import ai.moneymanager.chat.transition.nlp.nlpDialogTransitions
 import ai.moneymanager.chat.transition.notification.notificationDialogTransitions
+import ai.moneymanager.chat.transition.settings.currencyDialogTransitions
 import ai.moneymanager.chat.transition.settings.languageDialogTransitions
 import ai.moneymanager.chat.transition.settings.settingsDialogTransitions
 import ai.moneymanager.domain.model.MoneyManagerButtonType
@@ -23,8 +24,10 @@ import ai.moneymanager.service.FinanceReportService
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.TelegramFileService
+import ai.moneymanager.service.MENU_BUTTON_TEXT
 import ai.moneymanager.service.NotificationService
 import ai.moneymanager.service.PersistentMenuKeyboardService
+import ai.moneymanager.service.SETTINGS_BUTTON_TEXT
 import ai.moneymanager.service.UserInfoService
 import kz.rmr.chatmachinist.api.transition.ChatBuilder
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
@@ -54,6 +57,7 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
         joinGroupDialogTransitions(groupService, userInfoService, financeOperationService, localizationService)
         settingsDialogTransitions()
         languageDialogTransitions(userInfoService, groupService, localizationService)
+        currencyDialogTransitions(groupService)
         balanceDialogTransitions(groupService, userInfoService, financeOperationService)
         groupDialogTransitions(groupService, categoryService, userInfoService, localizationService)
         categoryDialogTransitions(categoryService, groupService, localizationService)
@@ -64,8 +68,6 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
         // nlpDialogTransitions(commandParserService, groupService, userInfoService, telegramFileService, geminiService)
     }
 }
-
-private const val MENU_BUTTON_TEXT = "▶️ Открыть меню"
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyManagerDialogTransition(
     userInfoService: UserInfoService,
@@ -94,10 +96,19 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
             }
         }
 
+        condition {
+            eventType = EventType.TEXT
+
+            guard {
+                update.message?.text == SETTINGS_BUTTON_TEXT
+            }
+        }
+
         action {
             context.isActive = true
             context.userInfo = userInfoService.getUserInfo(user)
             context.pendingOpenFinance = false
+            context.pendingOpenSettings = update.message?.text == SETTINGS_BUTTON_TEXT
             update.message?.chatId?.let { persistentMenuKeyboardService.attach(it) }
 
             val messageText = update.message?.text
@@ -148,6 +159,27 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
     }
 
     transition {
+        name = "Open settings from persistent button"
+
+        condition {
+            from = MoneyManagerState.STARTED
+            eventType = EventType.TRIGGERED
+
+            guard {
+                context.pendingGroup == null && context.pendingOpenSettings
+            }
+        }
+
+        action {
+            context.pendingOpenSettings = false
+        }
+
+        then {
+            to = MoneyManagerState.SETTINGS
+        }
+    }
+
+    transition {
         name = "Show language picker on first start"
 
         condition {
@@ -155,7 +187,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
             eventType = EventType.TRIGGERED
 
             guard {
-                context.pendingGroup == null && context.userInfo?.language == null
+                context.pendingGroup == null && !context.pendingOpenSettings && context.userInfo?.language == null
             }
         }
 
@@ -165,7 +197,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
     }
 
     transition {
-        name = "Show balance onboarding"
+        name = "Show currency picker on first start"
 
         condition {
             from = MoneyManagerState.STARTED
@@ -179,7 +211,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
         }
 
         then {
-            to = MoneyManagerState.BALANCE_ONBOARDING_PROMPT
+            to = MoneyManagerState.CURRENCY_SELECT
         }
     }
 

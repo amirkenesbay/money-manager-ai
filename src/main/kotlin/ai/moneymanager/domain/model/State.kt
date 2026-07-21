@@ -27,6 +27,7 @@ enum class MoneyManagerState {
     // -------- SETTINGS --------
     SETTINGS,
     LANGUAGE_SELECT,
+    CURRENCY_SELECT,
 
     // -------- BALANCE --------
     BALANCE_ONBOARDING_PROMPT,
@@ -245,6 +246,12 @@ enum class MoneyManagerButtonType {
     LANGUAGE_RU,
     LANGUAGE_EN,
     LANGUAGE_KK,
+    OPEN_CURRENCY_PICKER,
+    CURRENCY_KZT,
+    CURRENCY_USD,
+    CURRENCY_RUB,
+    CURRENCY_EUR,
+    CURRENCY_KGS,
 
     // NLP
     CONFIRM_NLP_ACTION,
@@ -338,6 +345,9 @@ class MoneyManagerContext {
     // -------- SETTINGS --------
     var languageReturnToSettings: Boolean = false
     var languageJustChanged: Boolean = false
+    var currencyReturnToSettings: Boolean = false
+    var currencyJustChanged: Boolean = false
+    var currencyForPendingGroupCreation: Boolean = false
 
     // -------- UI FEEDBACK --------
     var renameConfirmation: String? = null
@@ -350,6 +360,7 @@ class MoneyManagerContext {
     // cannot accidentally match NLP text transitions.
     var isActive: Boolean = false
     var pendingOpenFinance: Boolean = false
+    var pendingOpenSettings: Boolean = false
 
     // -------- INPUT MODE --------
     var manualTextInputActive: Boolean = false
