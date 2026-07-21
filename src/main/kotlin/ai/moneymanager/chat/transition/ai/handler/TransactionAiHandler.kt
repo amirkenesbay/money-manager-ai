@@ -9,13 +9,16 @@ import ai.moneymanager.chat.transition.ai.extractLeadingNonLetters
 import ai.moneymanager.chat.transition.ai.matchesEntityName
 import ai.moneymanager.chat.transition.ai.resolveOperationDate
 import ai.moneymanager.chat.transition.ai.stripLeadingNonLetters
+import ai.moneymanager.chat.reply.common.resolveCurrency
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.nlp.AiPendingAction
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.FinanceOperationService
+import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Component
@@ -31,6 +34,7 @@ private const val NO_CATEGORY_ID_KEY = "ai.category.no_id"
 class TransactionAiHandler(
     private val categoryService: CategoryService,
     private val financeOperationService: FinanceOperationService,
+    private val groupService: GroupService,
     private val localizationService: LocalizationService
 ) : AiDomainHandler {
 
@@ -192,7 +196,8 @@ class TransactionAiHandler(
             operationDate = operationDate,
             description = description
         )
-        return successMessage(type, category, amount, description, lang, isNewCategory)
+        val currency = resolveCurrency(groupService, groupId)
+        return successMessage(type, category, amount, description, currency, lang, isNewCategory)
     }
 
     private fun ensureCategory(
@@ -216,6 +221,7 @@ class TransactionAiHandler(
         category: Category,
         amount: Double,
         description: String?,
+        currency: Currency,
         lang: String?,
         isNewCategory: Boolean
     ): String {
@@ -225,7 +231,7 @@ class TransactionAiHandler(
             lang,
             escapeHtml(formatIconPrefix(category.icon)),
             escapeHtml(category.name),
-            formatAmount(BigDecimal.valueOf(amount)),
+            formatAmount(BigDecimal.valueOf(amount), currency),
             formatDescriptionSuffix(description)
         )
         if (!isNewCategory) return baseMessage

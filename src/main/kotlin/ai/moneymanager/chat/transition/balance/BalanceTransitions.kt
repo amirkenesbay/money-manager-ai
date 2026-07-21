@@ -171,6 +171,7 @@ internal fun ActionContext<MoneyManagerState, MoneyManagerContext>.loadCurrentBa
 ) {
     val userId = user.id
     val activeGroup = groupService.getActiveGroup(userId)
+    context.currentGroup = activeGroup
     if (activeGroup?.id == null) {
         context.currentBalance = null
         return

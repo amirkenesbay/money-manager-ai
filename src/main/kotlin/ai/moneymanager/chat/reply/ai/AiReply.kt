@@ -4,13 +4,16 @@ import ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.chat.reply.common.backButton
 import ai.moneymanager.chat.reply.common.bold
 import ai.moneymanager.chat.reply.common.formatAmount
+import ai.moneymanager.chat.reply.common.resolveCurrency
 import ai.moneymanager.chat.transition.ai.rankCategoriesByProposed
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.domain.model.nlp.AiPendingAction
+import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
 import kz.rmr.chatmachinist.api.reply.KeyboardBuilder
 import kz.rmr.chatmachinist.api.reply.RepliesBuilder
@@ -61,7 +64,8 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.aiModeReply(
 }
 
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.aiConfirmReply(
-    localizationService: LocalizationService
+    localizationService: LocalizationService,
+    groupService: GroupService
 ) {
     reply {
         state = MoneyManagerState.AI_CONFIRM
@@ -71,9 +75,10 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.aiConfirmReply(
             val ctx = context
             val lang = ctx.userInfo?.language
             val action = ctx.pendingAiAction
+            val currency = resolveCurrency(groupService, ctx.userInfo?.activeGroupId)
 
             val description = action
-                ?.describe(localizationService, lang)
+                ?.describe(localizationService, currency, lang)
                 ?: localizationService.t("ai.confirm.fallback", lang)
 
             text = localizationService.t("ai.confirm.title", lang, description)
@@ -100,7 +105,8 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.aiConfirmReply(
 }
 
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.aiConfirmBatchReply(
-    localizationService: LocalizationService
+    localizationService: LocalizationService,
+    groupService: GroupService
 ) {
     reply {
         state = MoneyManagerState.AI_CONFIRM_BATCH
@@ -110,13 +116,14 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.aiConfirmBatchReply(
             parseMode = ParseMode.HTML
             val ctx = context
             val lang = ctx.userInfo?.language
+            val currency = resolveCurrency(groupService, ctx.userInfo?.activeGroupId)
 
             val items = ctx.pendingAiActions
-                .mapIndexed { index, action -> "${index + 1}. ${batchItemLine(action, localizationService, lang)}" }
+                .mapIndexed { index, action -> "${index + 1}. ${batchItemLine(action, localizationService, currency, lang)}" }
                 .joinToString(BATCH_LINE_SEPARATOR)
             val body = buildString {
                 append(items)
-                val totals = batchTotalsLine(ctx.pendingAiActions, localizationService, lang)
+                val totals = batchTotalsLine(ctx.pendingAiActions, localizationService, currency, lang)
                 if (totals.isNotEmpty()) append(BATCH_SECTION_SEPARATOR).append(bold(totals))
                 if (ctx.aiBatchNotes.isNotEmpty()) {
                     append(localizationService.t(BATCH_NOTES_KEY, lang, ctx.aiBatchNotes.joinToString(BATCH_LINE_SEPARATOR)))
@@ -298,21 +305,23 @@ private fun countCandidatesOfType(context: MoneyManagerContext, type: CategoryTy
 private fun batchItemLine(
     action: AiPendingAction,
     localizationService: LocalizationService,
+    currency: Currency,
     lang: String?
 ): String = when (action) {
-    is AiPendingAction.TransactionAction -> action.describeBatchItem(localizationService, lang)
-    else -> action.describe(localizationService, lang)
+    is AiPendingAction.TransactionAction -> action.describeBatchItem(localizationService, currency, lang)
+    else -> action.describe(localizationService, currency, lang)
 }
 
 private fun batchTotalsLine(
     actions: List<AiPendingAction>,
     localizationService: LocalizationService,
+    currency: Currency,
     lang: String?
 ): String {
     val transactions = actions.filterIsInstance<AiPendingAction.TransactionAction>()
     val parts = listOfNotNull(
-        batchTotalPart(transactions, CategoryType.EXPENSE, BATCH_TOTALS_EXPENSE_KEY, localizationService, lang),
-        batchTotalPart(transactions, CategoryType.INCOME, BATCH_TOTALS_INCOME_KEY, localizationService, lang)
+        batchTotalPart(transactions, CategoryType.EXPENSE, BATCH_TOTALS_EXPENSE_KEY, localizationService, currency, lang),
+        batchTotalPart(transactions, CategoryType.INCOME, BATCH_TOTALS_INCOME_KEY, localizationService, currency, lang)
     )
     return parts.joinToString(BATCH_TOTALS_SEPARATOR)
 }
@@ -322,9 +331,10 @@ private fun batchTotalPart(
     type: CategoryType,
     key: String,
     localizationService: LocalizationService,
+    currency: Currency,
     lang: String?
 ): String? = transactions
     .filter { it.type == type }
     .sumOf { it.amount }
     .takeIf { it > 0 }
-    ?.let { localizationService.t(key, lang, formatAmount(BigDecimal.valueOf(it))) }
+    ?.let { localizationService.t(key, lang, formatAmount(BigDecimal.valueOf(it), currency)) }

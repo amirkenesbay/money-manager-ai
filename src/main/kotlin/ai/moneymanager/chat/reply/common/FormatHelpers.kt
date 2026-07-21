@@ -3,8 +3,11 @@ package ai.moneymanager.chat.reply.common
 import ai.moneymanager.domain.model.BalanceBreakdown
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.UserInfo
+import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
+import org.bson.types.ObjectId
 import java.math.BigDecimal
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
@@ -12,7 +15,6 @@ import java.time.format.DateTimeFormatter
 
 private const val AMOUNT_PATTERN = "#,##0"
 private const val THOUSANDS_SEPARATOR = ' '
-private const val CURRENCY_SYMBOL = "₸"
 private const val DATE_PATTERN = "dd.MM.yyyy"
 private const val SHORT_DATE_PATTERN = "dd.MM"
 private const val POSITIVE_SIGN = "+"
@@ -37,7 +39,11 @@ private val amountFormat = DecimalFormat(
 val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern(DATE_PATTERN)
 val shortDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern(SHORT_DATE_PATTERN)
 
-fun formatAmount(amount: BigDecimal): String = "${amountFormat.format(amount)}$CURRENCY_SYMBOL"
+fun formatAmount(amount: BigDecimal, currency: Currency): String = "${amountFormat.format(amount)}${currency.symbol}"
+
+/** Единая точка получения валюты группы — используется вместо повторного `getGroup(id)?.currency ?: DEFAULT` по всему коду. */
+fun resolveCurrency(groupService: GroupService, groupId: ObjectId?): Currency =
+    groupId?.let { groupService.getGroup(it)?.currency } ?: Currency.DEFAULT
 
 /** Telegram HTML parse mode: жирный текст. Использовать только на экранах с parseMode = HTML. */
 fun bold(text: String): String = "<b>$text</b>"
@@ -99,26 +105,27 @@ fun operationListButtonText(index: Int, date: String, icon: String?, categoryNam
 fun categoryButtonText(category: Category): String =
     "${category.icon ?: DEFAULT_CATEGORY_ICON} ${category.name}"
 
-fun formatSignedAmount(type: CategoryType, amount: BigDecimal): String {
+fun formatSignedAmount(type: CategoryType, amount: BigDecimal, currency: Currency): String {
     val sign = when (type) {
         CategoryType.INCOME -> POSITIVE_SIGN
         CategoryType.EXPENSE -> NEGATIVE_SIGN
     }
-    return "$sign${formatAmount(amount)}"
+    return "$sign${formatAmount(amount, currency)}"
 }
 
 fun formatBalanceBreakdown(
     balance: BalanceBreakdown,
+    currency: Currency,
     localizationService: LocalizationService,
     language: String?
 ): String = """
     |${bold(localizationService.t("balance.view.title", language))}
     |
-    |${localizationService.t("balance.view.initial", language, formatAmount(balance.initial))}
-    |${localizationService.t("balance.view.income", language, formatAmount(balance.income))}
-    |${localizationService.t("balance.view.expense", language, formatAmount(balance.expense))}
+    |${localizationService.t("balance.view.initial", language, formatAmount(balance.initial, currency))}
+    |${localizationService.t("balance.view.income", language, formatAmount(balance.income, currency))}
+    |${localizationService.t("balance.view.expense", language, formatAmount(balance.expense, currency))}
     |
-    |${blockquote(bold(localizationService.t("balance.view.total", language, formatAmount(balance.total))))}
+    |${blockquote(bold(localizationService.t("balance.view.total", language, formatAmount(balance.total, currency))))}
 """.trimMargin()
 
 fun formatUserDisplayName(userInfo: UserInfo?, fallbackId: Long): String {

@@ -171,5 +171,5 @@ Parameters:
 - If the message is not about finance/groups/categories/reports/balance/reminders (math, weather, general questions) → outOfContext.
 - If the intent is unclear → outOfContext.
 - A spending/income message WITHOUT an amount is a history QUERY → showHistory (see QUERIES section). Call addExpense/addIncome ONLY with a real positive amount taken from the message — never with amount=0.
-- Default currency is Kazakhstani tenge (KZT).
+- The group's currency is provided in a preamble before the user's message. Assume all amounts are in that currency.
 - Category `type` must be exactly "EXPENSE" or "INCOME" (uppercase Latin), regardless of the user's input language.

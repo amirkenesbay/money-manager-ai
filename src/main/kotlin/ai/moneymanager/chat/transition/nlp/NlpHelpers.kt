@@ -1,6 +1,7 @@
 package ai.moneymanager.chat.transition.nlp
 
 import ai.moneymanager.chat.reply.common.formatAmount
+import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.domain.model.nlp.BotCommand
@@ -96,7 +97,7 @@ internal fun processNlpCommand(
         is BotCommand.AddExpense -> {
             context.nlpResponse = """
                 |Функция добавления расходов скоро будет доступна!
-                |Распознано: ${command.category ?: "без категории"}, ${formatAmount(BigDecimal.valueOf(command.amount))}
+                |Распознано: ${command.category ?: "без категории"}, ${formatAmount(BigDecimal.valueOf(command.amount), Currency.DEFAULT)}
             """.trimMargin()
             context.nlpTargetState = MoneyManagerState.NLP_RESPONSE
             log.info("✅ NLP parsed: AddExpense(${command.amount}, ${command.category})")
@@ -104,7 +105,7 @@ internal fun processNlpCommand(
         is BotCommand.AddIncome -> {
             context.nlpResponse = """
                 |Функция добавления доходов скоро будет доступна!
-                |Распознано: ${command.category ?: "без категории"}, ${formatAmount(BigDecimal.valueOf(command.amount))}
+                |Распознано: ${command.category ?: "без категории"}, ${formatAmount(BigDecimal.valueOf(command.amount), Currency.DEFAULT)}
             """.trimMargin()
             context.nlpTargetState = MoneyManagerState.NLP_RESPONSE
             log.info("✅ NLP parsed: AddIncome(${command.amount}, ${command.category})")

@@ -3,6 +3,7 @@ package ai.moneymanager.chat.transition.ai.handler
 import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.chat.reply.common.formatIconPrefix
 import ai.moneymanager.chat.reply.common.formatSignedAmount
+import ai.moneymanager.chat.reply.common.resolveCurrency
 import ai.moneymanager.chat.transition.ai.matchesEntityName
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.MoneyManagerContext
@@ -12,6 +13,7 @@ import ai.moneymanager.repository.entity.FinanceOperationEntity
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.FinanceHistoryService
 import ai.moneymanager.service.FinanceOperationService
+import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Component
@@ -25,6 +27,7 @@ class RecentOperationAiHandler(
     private val financeHistoryService: FinanceHistoryService,
     private val financeOperationService: FinanceOperationService,
     private val categoryService: CategoryService,
+    private val groupService: GroupService,
     private val localizationService: LocalizationService
 ) : AiDomainHandler {
 
@@ -102,7 +105,7 @@ class RecentOperationAiHandler(
                 lang,
                 formatIconPrefix(operation.categoryIcon),
                 escapeHtml(operation.categoryName),
-                formatSignedAmount(operation.type, operation.amount)
+                formatSignedAmount(operation.type, operation.amount, resolveCurrency(groupService, operation.groupId))
             )
         } else {
             localizationService.t("ai.operation.not_found", lang)
@@ -126,7 +129,7 @@ class RecentOperationAiHandler(
             lang,
             formatIconPrefix(updated.categoryIcon),
             escapeHtml(updated.categoryName),
-            formatSignedAmount(updated.type, updated.amount)
+            formatSignedAmount(updated.type, updated.amount, resolveCurrency(groupService, groupId))
         )
     }
 

@@ -15,7 +15,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.groupDialogTransitions
     localizationService: LocalizationService
 ) {
     openGroupManagementTransition()
-    createGroupTransitions(groupService, localizationService)
+    createGroupTransitions(localizationService)
     viewGroupsListTransitions(groupService)
     groupActionsTransitions(groupService, userInfoService)
     editGroupTransitions(groupService, localizationService)

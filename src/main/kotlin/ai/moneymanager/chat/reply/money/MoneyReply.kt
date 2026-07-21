@@ -1,6 +1,7 @@
 package ai.moneymanager.chat.reply.money
 
 import ai.moneymanager.chat.reply.common.formatAmount
+import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
@@ -16,8 +17,9 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.menuReply(
         message {
             val lang = context.userInfo?.language
             val balance = context.currentBalance
+            val currency = context.currentGroup?.currency ?: Currency.DEFAULT
             val header = if (balance != null) {
-                localizationService.t("menu.balance_prefix", lang, formatAmount(balance.total)) + "\n\n"
+                localizationService.t("menu.balance_prefix", lang, formatAmount(balance.total, currency)) + "\n\n"
             } else {
                 ""
             }

@@ -2,6 +2,7 @@ package ai.moneymanager.service
 
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.Currency
 import org.springframework.core.io.ClassPathResource
 import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
@@ -17,6 +18,7 @@ private const val PLACEHOLDER_USER_MESSAGE = "{userMessage}"
 private const val PLACEHOLDER_REPLY_LANGUAGE = "{replyLanguage}"
 
 private const val CURRENT_DATE_TEMPLATE = "Today is %s (%s)."
+private const val CURRENCY_TEMPLATE = "The group's currency is %s. Assume all amounts are in this currency; do not mention or convert to any other currency."
 
 private const val CATEGORY_CONTEXT_HEADER =
     "User's active categories for the current group (use the EXACT name when a semantically applicable one exists; do NOT propose a new one in that case):"
@@ -48,6 +50,8 @@ class AiPromptService {
         val weekday = today.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
         return CURRENT_DATE_TEMPLATE.format(today, weekday)
     }
+
+    fun currencyPreamble(currency: Currency): String = CURRENCY_TEMPLATE.format(currency.name)
 
     fun categoryContextPreamble(categories: List<Category>): String {
         if (categories.isEmpty()) {

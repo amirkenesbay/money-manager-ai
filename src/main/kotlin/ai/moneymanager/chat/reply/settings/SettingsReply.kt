@@ -14,12 +14,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.settingsReply(
 
         message {
             val lang = context.userInfo?.language
-            val confirmation = if (context.languageJustChanged) {
-                context.languageJustChanged = false
-                localizationService.t("language.saved.confirmation", lang) + "\n\n"
-            } else {
-                ""
-            }
+            val confirmation = settingsConfirmationBanner(context, localizationService, lang)
 
             text = confirmation + localizationService.t("settings.title", lang)
 
@@ -32,6 +27,12 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.settingsReply(
                 }
                 buttonRow {
                     button {
+                        text = localizationService.t("settings.button.currency", lang)
+                        type = MoneyManagerButtonType.OPEN_CURRENCY_PICKER
+                    }
+                }
+                buttonRow {
+                    button {
                         text = localizationService.t("common.back", lang)
                         type = MoneyManagerButtonType.BACK_TO_MENU
                     }
@@ -39,4 +40,23 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.settingsReply(
             }
         }
     }
+}
+
+/** Баннер подтверждения после смены языка/валюты — обе настройки возвращают сюда, банер общий. */
+private fun settingsConfirmationBanner(
+    context: MoneyManagerContext,
+    localizationService: LocalizationService,
+    lang: String?
+): String {
+    val banners = buildList {
+        if (context.languageJustChanged) {
+            context.languageJustChanged = false
+            add(localizationService.t("language.saved.confirmation", lang))
+        }
+        if (context.currencyJustChanged) {
+            context.currencyJustChanged = false
+            add(localizationService.t("currency.saved.confirmation", lang))
+        }
+    }
+    return if (banners.isEmpty()) "" else banners.joinToString("\n") + "\n\n"
 }

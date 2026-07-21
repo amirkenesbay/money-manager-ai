@@ -1,5 +1,6 @@
 package ai.moneymanager.service
 
+import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.report.AnalyticsReport
 import ai.moneymanager.domain.model.report.CategoryComparison
 import ai.moneymanager.domain.model.report.CategoryMonthData
@@ -28,7 +29,7 @@ class FinanceReportFormatter(
     private val localizationService: LocalizationService
 ) {
 
-    fun formatComparison(report: ComparisonReport, language: String?): String = buildString {
+    fun formatComparison(report: ComparisonReport, currency: Currency, language: String?): String = buildString {
         append(bold(localizationService.t(
             "finance.report.comparison.title",
             language,
@@ -49,16 +50,16 @@ class FinanceReportFormatter(
             localizationService.t("finance.report.comparison.section.expense", language),
             report.previousMonthName, report.previousExpenseTotal,
             report.currentMonthName, report.currentExpenseTotal,
-            maxValue
+            maxValue, currency
         )
         appendComparisonSection(
             localizationService.t("finance.report.comparison.section.income", language),
             report.previousMonthName, report.previousIncomeTotal,
             report.currentMonthName, report.currentIncomeTotal,
-            maxValue
+            maxValue, currency
         )
-        appendBalanceSection(report, language)
-        appendTopChanges(report.categoryComparisons, language)
+        appendBalanceSection(report, currency, language)
+        appendTopChanges(report.categoryComparisons, currency, language)
     }
 
     private fun StringBuilder.appendComparisonSection(
@@ -67,17 +68,18 @@ class FinanceReportFormatter(
         previousValue: BigDecimal,
         currentLabel: String,
         currentValue: BigDecimal,
-        maxValue: BigDecimal
+        maxValue: BigDecimal,
+        currency: Currency
     ) {
         val labelWidth = maxOf(previousLabel.length, currentLabel.length)
         val rows = listOf(previousLabel to previousValue, currentLabel to currentValue)
             .joinToString("\n") { (label, value) ->
-                "${label.padEnd(labelWidth)} ${progressBar(value, maxValue)} ${formatAmount(value)}"
+                "${label.padEnd(labelWidth)} ${progressBar(value, maxValue)} ${formatAmount(value, currency)}"
             }
         append("\n\n$title\n${pre(rows)}")
     }
 
-    private fun StringBuilder.appendBalanceSection(report: ComparisonReport, language: String?) {
+    private fun StringBuilder.appendBalanceSection(report: ComparisonReport, currency: Currency, language: String?) {
         val previousBalance = report.previousIncomeTotal.subtract(report.previousExpenseTotal)
         val currentBalance = report.currentIncomeTotal.subtract(report.currentExpenseTotal)
         val previousSign = if (previousBalance >= BigDecimal.ZERO) "+" else ""
@@ -87,12 +89,12 @@ class FinanceReportFormatter(
         append(blockquote(bold(localizationService.t(
             "finance.report.comparison.balance",
             language,
-            "$previousSign${formatAmount(previousBalance)}",
-            "$currentSign${formatAmount(currentBalance)}"
+            "$previousSign${formatAmount(previousBalance, currency)}",
+            "$currentSign${formatAmount(currentBalance, currency)}"
         ))))
     }
 
-    private fun StringBuilder.appendTopChanges(comparisons: List<CategoryComparison>, language: String?) {
+    private fun StringBuilder.appendTopChanges(comparisons: List<CategoryComparison>, currency: Currency, language: String?) {
         val top = comparisons
             .filter { it.currentAmount.compareTo(it.previousAmount) != 0 }
             .take(TOP_CHANGES_LIMIT)
@@ -103,11 +105,11 @@ class FinanceReportFormatter(
             val diff = currentAmount.subtract(previousAmount)
             val marker = if (diff > BigDecimal.ZERO) TREND_UP_MARKER else TREND_DOWN_MARKER
             val sign = if (diff > BigDecimal.ZERO) "+" else "−"
-            append("\n$marker $icon ${escapeHtml(name)}  $sign${formatAmount(diff.abs())}")
+            append("\n$marker $icon ${escapeHtml(name)}  $sign${formatAmount(diff.abs(), currency)}")
         }
     }
 
-    fun formatAnalytics(report: AnalyticsReport, language: String?): String = buildString {
+    fun formatAnalytics(report: AnalyticsReport, currency: Currency, language: String?): String = buildString {
         append(bold(localizationService.t("finance.report.analytics.title", language, report.monthName, report.year.toString())))
 
         if (report.isEmpty) {
@@ -115,40 +117,40 @@ class FinanceReportFormatter(
             return@buildString
         }
 
-        appendSummaryStats(report, language)
-        appendDailyAverages(report, language)
-        appendTopExpenses(report, language)
-        appendMaxExpense(report, language)
-        appendMostExpensiveDay(report, language)
+        appendSummaryStats(report, currency, language)
+        appendDailyAverages(report, currency, language)
+        appendTopExpenses(report, currency, language)
+        appendMaxExpense(report, currency, language)
+        appendMostExpensiveDay(report, currency, language)
     }
 
-    private fun StringBuilder.appendSummaryStats(report: AnalyticsReport, language: String?) {
+    private fun StringBuilder.appendSummaryStats(report: AnalyticsReport, currency: Currency, language: String?) {
         append("\n\n")
         append(localizationService.t("finance.report.analytics.summary.title", language))
         append("\n")
-        append(localizationService.t("finance.report.analytics.summary.expense", language, formatAmount(report.totalExpense)))
+        append(localizationService.t("finance.report.analytics.summary.expense", language, formatAmount(report.totalExpense, currency)))
         append("\n")
-        append(localizationService.t("finance.report.analytics.summary.income", language, formatAmount(report.totalIncome)))
+        append(localizationService.t("finance.report.analytics.summary.income", language, formatAmount(report.totalIncome, currency)))
         append("\n")
         append(localizationService.t("finance.report.analytics.summary.count", language, report.operationCount))
     }
 
-    private fun StringBuilder.appendDailyAverages(report: AnalyticsReport, language: String?) {
+    private fun StringBuilder.appendDailyAverages(report: AnalyticsReport, currency: Currency, language: String?) {
         val days = BigDecimal.valueOf(report.daysInMonth.toLong())
 
         if (report.totalExpense.isPositive()) {
             val avg = report.totalExpense.divide(days, 0, RoundingMode.HALF_UP)
             append("\n\n")
-            append(localizationService.t("finance.report.analytics.avg.expense", language, formatAmount(avg)))
+            append(localizationService.t("finance.report.analytics.avg.expense", language, formatAmount(avg, currency)))
         }
         if (report.totalIncome.isPositive()) {
             val avg = report.totalIncome.divide(days, 0, RoundingMode.HALF_UP)
             append("\n")
-            append(localizationService.t("finance.report.analytics.avg.income", language, formatAmount(avg)))
+            append(localizationService.t("finance.report.analytics.avg.income", language, formatAmount(avg, currency)))
         }
     }
 
-    private fun StringBuilder.appendTopExpenses(report: AnalyticsReport, language: String?) {
+    private fun StringBuilder.appendTopExpenses(report: AnalyticsReport, currency: Currency, language: String?) {
         if (report.topExpenses.isEmpty()) return
 
         append("\n\n")
@@ -156,31 +158,31 @@ class FinanceReportFormatter(
         val maxTotal = report.topExpenses.maxOf { it.total }
         report.topExpenses.forEach { (icon, name, total) ->
             val percent = percentOf(total, report.totalExpense)
-            append("\n$icon ${escapeHtml(name)} · ${italic("$percent%")}\n${code("${progressBar(total, maxTotal)} ${formatAmount(total)}")}")
+            append("\n$icon ${escapeHtml(name)} · ${italic("$percent%")}\n${code("${progressBar(total, maxTotal)} ${formatAmount(total, currency)}")}")
         }
     }
 
-    private fun StringBuilder.appendMaxExpense(report: AnalyticsReport, language: String?) {
+    private fun StringBuilder.appendMaxExpense(report: AnalyticsReport, currency: Currency, language: String?) {
         val max = report.maxExpense ?: return
         append("\n\n")
         append(blockquote(localizationService.t(
             "finance.report.analytics.max",
             language,
-            formatAmount(max.amount), max.icon, escapeHtml(max.categoryName), max.day, max.monthShort
+            formatAmount(max.amount, currency), max.icon, escapeHtml(max.categoryName), max.day, max.monthShort
         )))
     }
 
-    private fun StringBuilder.appendMostExpensiveDay(report: AnalyticsReport, language: String?) {
+    private fun StringBuilder.appendMostExpensiveDay(report: AnalyticsReport, currency: Currency, language: String?) {
         val day = report.mostExpensiveDay ?: return
         append("\n")
         append(blockquote(localizationService.t(
             "finance.report.analytics.most_expensive_day",
             language,
-            day.day, day.monthName, formatAmount(day.total)
+            day.day, day.monthName, formatAmount(day.total, currency)
         )))
     }
 
-    fun formatMembers(report: MembersReport, language: String?): String = buildString {
+    fun formatMembers(report: MembersReport, currency: Currency, language: String?): String = buildString {
         append(bold(localizationService.t("finance.report.members.title", language, report.monthName, report.year.toString())))
 
         if (report.isEmpty) {
@@ -191,38 +193,39 @@ class FinanceReportFormatter(
         if (report.expensesByMember.isNotEmpty()) {
             append("\n\n")
             append(localizationService.t("finance.report.members.expense_section", language))
-            appendMemberLines(report.expensesByMember, report.totalExpense)
+            appendMemberLines(report.expensesByMember, report.totalExpense, currency)
         }
 
         if (report.incomesByMember.isNotEmpty()) {
             append("\n\n")
             append(localizationService.t("finance.report.members.income_section", language))
-            appendMemberLines(report.incomesByMember, report.totalIncome)
+            appendMemberLines(report.incomesByMember, report.totalIncome, currency)
         }
 
-        appendBalanceLine(report.totalIncome, report.totalExpense, language)
+        appendBalanceLine(report.totalIncome, report.totalExpense, currency, language)
     }
 
-    private fun StringBuilder.appendMemberLines(members: List<MemberTotal>, total: BigDecimal) {
+    private fun StringBuilder.appendMemberLines(members: List<MemberTotal>, total: BigDecimal, currency: Currency) {
         val maxAmount = members.maxOfOrNull { it.total } ?: BigDecimal.ZERO
         members.forEach { (name, amount) ->
             val percent = percentOf(amount, total)
-            append("\n${escapeHtml(name)} · ${italic("$percent%")}\n${code("${progressBar(amount, maxAmount)} ${formatAmount(amount)}")}")
+            append("\n${escapeHtml(name)} · ${italic("$percent%")}\n${code("${progressBar(amount, maxAmount)} ${formatAmount(amount, currency)}")}")
         }
     }
 
     private fun StringBuilder.appendBalanceLine(
         totalIncome: BigDecimal,
         totalExpense: BigDecimal,
+        currency: Currency,
         language: String?
     ) {
         val balance = totalIncome.subtract(totalExpense)
         val sign = if (balance >= BigDecimal.ZERO) "+" else ""
         append("\n\n")
-        append(blockquote(bold(localizationService.t("finance.report.members.balance", language, "$sign${formatAmount(balance)}"))))
+        append(blockquote(bold(localizationService.t("finance.report.members.balance", language, "$sign${formatAmount(balance, currency)}"))))
     }
 
-    fun formatCategory(report: CategoryReport, language: String?): String = buildString {
+    fun formatCategory(report: CategoryReport, currency: Currency, language: String?): String = buildString {
         append(bold(localizationService.t(
             "finance.report.category.title_with_period",
             language,
@@ -230,13 +233,14 @@ class FinanceReportFormatter(
         )))
         append("\n")
 
-        appendBarChart(report.monthsData, report.maxAmount, language)
-        appendCategorySummary(report.monthsData, language)
+        appendBarChart(report.monthsData, report.maxAmount, currency, language)
+        appendCategorySummary(report.monthsData, currency, language)
     }
 
     private fun StringBuilder.appendBarChart(
         monthsData: List<CategoryMonthData>,
         maxAmount: BigDecimal,
+        currency: Currency,
         language: String?
     ) {
         val labelWidth = monthsData.maxOfOrNull { it.label.length } ?: 0
@@ -244,12 +248,12 @@ class FinanceReportFormatter(
             val maxMarker = if (total.compareTo(maxAmount) == 0 && total.isPositive()) {
                 localizationService.t("finance.report.category.max_marker", language)
             } else ""
-            "${label.padEnd(labelWidth)} ${progressBar(total, maxAmount)} ${formatAmount(total)}$maxMarker"
+            "${label.padEnd(labelWidth)} ${progressBar(total, maxAmount)} ${formatAmount(total, currency)}$maxMarker"
         }
         append("\n${pre(rows)}")
     }
 
-    private fun StringBuilder.appendCategorySummary(monthsData: List<CategoryMonthData>, language: String?) {
+    private fun StringBuilder.appendCategorySummary(monthsData: List<CategoryMonthData>, currency: Currency, language: String?) {
         val totalSum = monthsData.fold(BigDecimal.ZERO) { acc, d -> acc.add(d.total) }
         val average = if (monthsData.isNotEmpty()) {
             totalSum.divide(BigDecimal.valueOf(monthsData.size.toLong()), 0, RoundingMode.HALF_UP)
@@ -258,7 +262,7 @@ class FinanceReportFormatter(
         val totalOperations = monthsData.sumOf { it.count }
 
         append("\n\n")
-        append(localizationService.t("finance.report.category.average", language, formatAmount(average)))
+        append(localizationService.t("finance.report.category.average", language, formatAmount(average, currency)))
         append("\n")
         append(localizationService.t("finance.report.category.total_operations", language, totalOperations))
 

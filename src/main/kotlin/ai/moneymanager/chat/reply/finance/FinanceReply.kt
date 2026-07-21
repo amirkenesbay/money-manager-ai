@@ -5,13 +5,16 @@ import ai.moneymanager.chat.reply.common.bold
 import ai.moneymanager.chat.reply.common.code
 import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.chat.reply.common.formatSignedAmount
+import ai.moneymanager.chat.reply.common.resolveCurrency
 import ai.moneymanager.chat.reply.common.shortDateFormatter
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import ai.moneymanager.service.FinanceHistoryService
+import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
 import kz.rmr.chatmachinist.api.reply.ParseMode
 import kz.rmr.chatmachinist.api.reply.RepliesBuilder
@@ -20,6 +23,7 @@ private const val RECENT_OPERATIONS_LIMIT = 5
 
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeManagementReply(
     financeHistoryService: FinanceHistoryService,
+    groupService: GroupService,
     localizationService: LocalizationService
 ) {
     reply {
@@ -31,7 +35,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeManagementRepl
             val title = bold(localizationService.t("finance.management.title", lang))
             val body = localizationService.t("finance.management.body", lang)
             val details = context.buildFinanceDetails(localizationService, lang)
-            val recentSection = context.buildRecentOperationsSection(financeHistoryService, localizationService, lang)
+            val recentSection = context.buildRecentOperationsSection(financeHistoryService, groupService, localizationService, lang)
 
             text = """
                 |$title
@@ -92,6 +96,7 @@ private fun MoneyManagerContext.buildFinanceDetails(
 
 private fun MoneyManagerContext.buildRecentOperationsSection(
     financeHistoryService: FinanceHistoryService,
+    groupService: GroupService,
     localizationService: LocalizationService,
     lang: String?
 ): String {
@@ -99,6 +104,7 @@ private fun MoneyManagerContext.buildRecentOperationsSection(
     val operations = financeHistoryService.getRecentOperations(groupId, RECENT_OPERATIONS_LIMIT)
     if (operations.isEmpty()) return ""
 
+    val currency = resolveCurrency(groupService, groupId)
     val header = localizationService.t("finance.management.recent_header", lang)
     return buildString {
         append("\n\n$header")
@@ -106,14 +112,14 @@ private fun MoneyManagerContext.buildRecentOperationsSection(
             .groupBy { it.operationDate }
             .forEach { (date, dayOperations) ->
                 append("\n\n${bold(date.format(shortDateFormatter))}")
-                dayOperations.forEach { append("\n${formatRecentOperation(it)}") }
+                dayOperations.forEach { append("\n${formatRecentOperation(it, currency)}") }
             }
     }
 }
 
-private fun formatRecentOperation(operation: FinanceOperationEntity): String {
+private fun formatRecentOperation(operation: FinanceOperationEntity, currency: Currency): String {
     val icon = operation.categoryIcon ?: DEFAULT_CATEGORY_ICON
-    return "$icon ${escapeHtml(operation.categoryName)}  ${code(formatSignedAmount(operation.type, operation.amount))}"
+    return "$icon ${escapeHtml(operation.categoryName)}  ${code(formatSignedAmount(operation.type, operation.amount, currency))}"
 }
 
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.financeOperationSavedReply(

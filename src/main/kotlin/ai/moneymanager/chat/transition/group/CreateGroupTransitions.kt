@@ -1,12 +1,10 @@
 package ai.moneymanager.chat.transition.group
 
-import ai.moneymanager.chat.transition.common.handleGroupCreated
 import ai.moneymanager.chat.transition.common.simpleTransitionWithAction
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.domain.model.QuickTemplates
-import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType
@@ -14,7 +12,6 @@ import kz.rmr.chatmachinist.model.EventType
 private const val MAX_GROUP_NAME_LENGTH = 50
 
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createGroupTransitions(
-    groupService: GroupService,
     localizationService: LocalizationService
 ) {
     simpleTransitionWithAction("Start group creation",
@@ -41,50 +38,47 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createGroupTransitions
             }
             action {
                 val lang = context.userInfo?.language
-                val groupName = localizationService.t(template.nameKey, lang)
-                context.groupNameInput = groupName
+                context.groupNameInput = localizationService.t(template.nameKey, lang)
                 context.isQuickGroupCreation = true
-                context.handleGroupCreated(groupService.createGroup(user.id, groupName))
+                context.currencyForPendingGroupCreation = true
             }
             then {
-                to = MoneyManagerState.GROUP_CREATE_ENTER_NAME
-                noReply = true
-                trigger { sameDialog = true }
+                to = MoneyManagerState.CURRENCY_SELECT
             }
         }
     }
 
     transition {
-        name = "Create group with name"
+        name = "Enter group name, ask currency"
         condition {
             from = MoneyManagerState.GROUP_CREATE_ENTER_NAME
             eventType = EventType.TEXT
         }
         action {
             val lang = context.userInfo?.language
-            val groupName = update.message.text?.trim()
+            context.groupNameInput = update.message.text?.trim()
                 ?.takeIf { it.isNotBlank() }
                 ?.take(MAX_GROUP_NAME_LENGTH)
                 ?: localizationService.t("group.create.fallback_name", lang)
-            context.groupNameInput = groupName
             context.isQuickGroupCreation = false
             context.manualTextInputActive = false
             context.customNameInputMode = false
-            context.handleGroupCreated(groupService.createGroup(user.id, groupName))
+            context.currencyForPendingGroupCreation = true
         }
         then {
-            to = MoneyManagerState.GROUP_CREATE_ENTER_NAME
-            noReply = true
-            trigger { sameDialog = true }
+            to = MoneyManagerState.CURRENCY_SELECT
         }
     }
 
     transition {
         name = "Group created successfully"
         condition {
-            from = MoneyManagerState.GROUP_CREATE_ENTER_NAME
+            from = MoneyManagerState.CURRENCY_SELECT
             eventType = EventType.TRIGGERED
-            guard { !context.groupNameDuplicateError }
+            guard { context.currencyForPendingGroupCreation && !context.groupNameDuplicateError }
+        }
+        action {
+            context.currencyForPendingGroupCreation = false
         }
         then { to = MoneyManagerState.GROUP_INVITE_SHOW }
     }
@@ -92,9 +86,12 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createGroupTransitions
     transition {
         name = "Group name duplicate error"
         condition {
-            from = MoneyManagerState.GROUP_CREATE_ENTER_NAME
+            from = MoneyManagerState.CURRENCY_SELECT
             eventType = EventType.TRIGGERED
-            guard { context.groupNameDuplicateError }
+            guard { context.currencyForPendingGroupCreation && context.groupNameDuplicateError }
+        }
+        action {
+            context.currencyForPendingGroupCreation = false
         }
         then { to = MoneyManagerState.GROUP_CREATE_ENTER_NAME }
     }

@@ -46,11 +46,13 @@ import ai.moneymanager.chat.reply.notification.*
 import ai.moneymanager.chat.reply.nlp.nlpConfirmCreateGroupReply
 import ai.moneymanager.chat.reply.nlp.nlpConfirmDeleteGroupReply
 import ai.moneymanager.chat.reply.nlp.nlpResponseReply
+import ai.moneymanager.chat.reply.settings.currencySelectReply
 import ai.moneymanager.chat.reply.settings.languageSelectReply
 import ai.moneymanager.chat.reply.settings.settingsReply
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.service.FinanceHistoryService
+import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
 import kz.rmr.chatmachinist.api.reply.RepliesBuilder
 import kz.rmr.chatmachinist.api.reply.replies
@@ -62,7 +64,8 @@ class MoneyManagerReplyConfig {
     @Bean
     fun replyBuilder(
         financeHistoryService: FinanceHistoryService,
-        localizationService: LocalizationService
+        localizationService: LocalizationService,
+        groupService: GroupService
     ): RepliesBuilder<MoneyManagerState, MoneyManagerContext> {
         return replies {
             chatName = "Money Manager Chat"
@@ -73,6 +76,7 @@ class MoneyManagerReplyConfig {
             // Settings replies
             settingsReply(localizationService)
             languageSelectReply(localizationService)
+            currencySelectReply(localizationService)
 
             // Balance replies
             balanceOnboardingPromptReply(localizationService)
@@ -80,7 +84,7 @@ class MoneyManagerReplyConfig {
             balanceViewReply(localizationService)
 
             // Finance replies
-            financeManagementReply(financeHistoryService, localizationService)
+            financeManagementReply(financeHistoryService, groupService, localizationService)
             financeSelectCategoryReply(localizationService)
             financeNoCategoriesWarningReply(localizationService)
             financeEnterAmountReply(localizationService)
@@ -108,14 +112,14 @@ class MoneyManagerReplyConfig {
             financeHistorySelectMonthReply(localizationService)
 
             // Operation edit replies
-            operationListReply(localizationService)
-            operationActionsReply(localizationService)
+            operationListReply(localizationService, groupService)
+            operationActionsReply(localizationService, groupService)
             operationEditAmountReply(localizationService)
             operationEditSelectTypeReply(localizationService)
             operationEditSelectCategoryReply(localizationService)
             operationEditDateReply(localizationService)
             operationEditCommentReply(localizationService)
-            operationDeleteConfirmReply(localizationService)
+            operationDeleteConfirmReply(localizationService, groupService)
 
             // Group replies
             groupManagementReply(localizationService)
@@ -165,8 +169,8 @@ class MoneyManagerReplyConfig {
 
             // AI replies
             aiModeReply(localizationService)
-            aiConfirmReply(localizationService)
-            aiConfirmBatchReply(localizationService)
+            aiConfirmReply(localizationService, groupService)
+            aiConfirmBatchReply(localizationService, groupService)
             aiTransactionPickCategoryReply(localizationService)
             aiTransactionPickCategoryAllReply(localizationService)
             aiResultReply(localizationService)

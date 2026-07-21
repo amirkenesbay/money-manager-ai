@@ -1,5 +1,6 @@
 package ai.moneymanager.service
 
+import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.GroupType
 import ai.moneymanager.domain.model.MoneyGroup
 import ai.moneymanager.repository.MoneyGroupRepository
@@ -27,17 +28,17 @@ class GroupService(
         private const val MAX_TOKEN_RETRIES = 10
     }
 
-    fun createGroup(ownerId: Long, name: String): MoneyGroup? {
+    fun createGroup(ownerId: Long, name: String, currency: Currency = Currency.DEFAULT): MoneyGroup? {
         if (groupRepository.findByOwnerIdAndName(ownerId, name) != null) {
             return null
         }
-        return saveGroupAndUpdateUser(name, ownerId, GroupType.SHARED) { existing, newId ->
+        return saveGroupAndUpdateUser(name, ownerId, GroupType.SHARED, currency) { existing, newId ->
             existing + newId
         }
     }
 
-    fun createPersonalGroup(userId: Long, name: String, language: String): MoneyGroup {
-        val group = saveGroupAndUpdateUser(name, userId, GroupType.PERSONAL) { _, newId ->
+    fun createPersonalGroup(userId: Long, name: String, language: String, currency: Currency = Currency.DEFAULT): MoneyGroup {
+        val group = saveGroupAndUpdateUser(name, userId, GroupType.PERSONAL, currency) { _, newId ->
             setOf(newId)
         }
         categoryService.createDefaultCategories(group.id!!, language)
@@ -116,6 +117,18 @@ class GroupService(
         return mapToModel(savedGroup)
     }
 
+    fun updateCurrency(userId: Long, groupId: ObjectId, currency: Currency): MoneyGroup? {
+        val groupEntity = groupRepository.findById(groupId).orElse(null) ?: return null
+
+        if (groupEntity.ownerId != userId) {
+            return null
+        }
+
+        val savedGroup = groupRepository.save(groupEntity.copy(currency = currency))
+        log.info("Currency updated: groupId=$groupId, currency=$currency")
+        return mapToModel(savedGroup)
+    }
+
     fun deleteGroup(userId: Long, groupId: ObjectId): Boolean {
         val groupEntity = groupRepository.findById(groupId).orElse(null) ?: return false
 
@@ -149,6 +162,7 @@ class GroupService(
         name: String,
         ownerId: Long,
         type: GroupType,
+        currency: Currency,
         buildGroupIds: (Set<ObjectId>, ObjectId) -> Set<ObjectId>
     ): MoneyGroup {
         val groupEntity = MoneyGroupEntity(
@@ -156,7 +170,8 @@ class GroupService(
             inviteToken = generateInviteToken(),
             ownerId = ownerId,
             memberIds = setOf(ownerId),
-            type = type
+            type = type,
+            currency = currency
         )
         val savedGroup = groupRepository.save(groupEntity)
         log.info("Group created: id=${savedGroup.id}, name=$name, type=$type, ownerId=$ownerId")
@@ -202,7 +217,8 @@ class GroupService(
             ownerId = entity.ownerId,
             memberIds = entity.memberIds,
             type = entity.type,
-            initialBalance = entity.initialBalance
+            initialBalance = entity.initialBalance,
+            currency = entity.currency
         )
     }
 }

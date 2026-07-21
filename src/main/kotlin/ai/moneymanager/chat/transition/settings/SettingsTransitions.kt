@@ -8,8 +8,10 @@ import kz.rmr.chatmachinist.api.transition.DialogBuilder
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.settingsDialogTransitions() {
     openSettingsTransition()
     openLanguagePickerFromSettingsTransition()
+    openCurrencyPickerFromSettingsTransition()
     backToMenuFromSettingsTransition()
     backToSettingsFromLanguagePickerTransition()
+    backToSettingsFromCurrencyPickerTransition()
 }
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.openSettingsTransition() {
@@ -46,6 +48,25 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.openLanguagePi
     }
 }
 
+private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.openCurrencyPickerFromSettingsTransition() {
+    transition {
+        name = "Open currency picker from settings"
+
+        condition {
+            from = MoneyManagerState.SETTINGS
+            button = MoneyManagerButtonType.OPEN_CURRENCY_PICKER
+        }
+
+        action {
+            context.currencyReturnToSettings = true
+        }
+
+        then {
+            to = MoneyManagerState.CURRENCY_SELECT
+        }
+    }
+}
+
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.backToMenuFromSettingsTransition() {
     transition {
         name = "Back to menu from settings"
@@ -72,6 +93,25 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.backToSettings
 
         action {
             context.languageReturnToSettings = false
+        }
+
+        then {
+            to = MoneyManagerState.SETTINGS
+        }
+    }
+}
+
+private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.backToSettingsFromCurrencyPickerTransition() {
+    transition {
+        name = "Back to settings from currency picker"
+
+        condition {
+            from = MoneyManagerState.CURRENCY_SELECT
+            button = MoneyManagerButtonType.BACK_TO_SETTINGS
+        }
+
+        action {
+            context.currencyReturnToSettings = false
         }
 
         then {

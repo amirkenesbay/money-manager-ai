@@ -3,6 +3,7 @@ package ai.moneymanager.chat.transition.ai
 import ai.moneymanager.chat.transition.ai.handler.AiDomainHandler
 import ai.moneymanager.chat.transition.ai.handler.AiPreparationResult
 import ai.moneymanager.chat.reply.common.escapeHtml
+import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.nlp.AiPendingAction
 import ai.moneymanager.domain.model.nlp.BotCommand
@@ -166,7 +167,7 @@ class AiActionExecutor(
         when (result) {
             is AiPreparationResult.RequiresConfirmation -> {
                 context.pendingAiAction = result.action
-                log.info("AI prepared action: ${result.action.describe(localizationService, lang)}")
+                log.info("AI prepared action: ${result.action.describe(localizationService, Currency.DEFAULT, lang)}")
             }
 
             is AiPreparationResult.ImmediateResult -> {

@@ -15,6 +15,7 @@ import ai.moneymanager.chat.reply.common.progressBar
 import ai.moneymanager.chat.reply.common.shortDateFormatter
 import ai.moneymanager.chat.transition.ai.matchesEntityName
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.repository.FinanceOperationRepository
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import org.bson.types.ObjectId
@@ -42,6 +43,7 @@ class FinanceHistoryService(
         groupId: ObjectId,
         startDate: LocalDate,
         endDate: LocalDate,
+        currency: Currency,
         language: String?,
         typeFilter: CategoryType? = null,
         categoryFilter: String? = null
@@ -57,7 +59,7 @@ class FinanceHistoryService(
             return "$header\n\n${localizationService.t("finance.history.empty", language)}"
         }
         if (categoryFilter != null) {
-            return buildItemizedReport(header, operations, language)
+            return buildItemizedReport(header, operations, currency, language)
         }
 
         val incomes = operations.filter { it.type == CategoryType.INCOME }
@@ -67,9 +69,9 @@ class FinanceHistoryService(
 
         return buildString {
             append(header)
-            appendSection(localizationService.t("finance.history.section.income", language), incomes, totalIncome, language)
-            appendSection(localizationService.t("finance.history.section.expense", language), expenses, totalExpense, language)
-            appendBalanceLine(totalIncome, totalExpense, language)
+            appendSection(localizationService.t("finance.history.section.income", language), incomes, totalIncome, currency, language)
+            appendSection(localizationService.t("finance.history.section.expense", language), expenses, totalExpense, currency, language)
+            appendBalanceLine(totalIncome, totalExpense, currency, language)
         }
     }
 
@@ -77,6 +79,7 @@ class FinanceHistoryService(
     private fun buildItemizedReport(
         header: String,
         operations: List<FinanceOperationEntity>,
+        currency: Currency,
         language: String?
     ): String = buildString {
         append(header)
@@ -84,11 +87,11 @@ class FinanceHistoryService(
         operations.forEach { operation ->
             val icon = operation.categoryIcon ?: DEFAULT_CATEGORY_ICON
             append("\n${italic(operation.operationDate.format(shortDateFormatter))} $icon ${escapeHtml(operation.categoryName)}")
-            append(" ${code(formatSignedAmount(operation.type, operation.amount))}")
+            append(" ${code(formatSignedAmount(operation.type, operation.amount, currency))}")
             append(escapeHtml(formatDescriptionSuffix(operation.description)))
         }
         append("\n\n")
-        append(blockquote(bold(localizationService.t("finance.history.total", language, formatAmount(sumAmounts(operations))))))
+        append(blockquote(bold(localizationService.t("finance.history.total", language, formatAmount(sumAmounts(operations), currency)))))
     }
 
     private fun matchesCategoryFilter(operation: FinanceOperationEntity, filter: String): Boolean =
@@ -130,16 +133,17 @@ class FinanceHistoryService(
         title: String,
         operations: List<FinanceOperationEntity>,
         total: BigDecimal,
+        currency: Currency,
         language: String?
     ) {
         if (operations.isEmpty()) return
         append("\n\n$title")
-        appendCategoryLines(operations)
+        appendCategoryLines(operations, currency)
         append("\n\n")
-        append(blockquote(bold(localizationService.t("finance.history.total", language, formatAmount(total)))))
+        append(blockquote(bold(localizationService.t("finance.history.total", language, formatAmount(total, currency)))))
     }
 
-    private fun StringBuilder.appendCategoryLines(operations: List<FinanceOperationEntity>) {
+    private fun StringBuilder.appendCategoryLines(operations: List<FinanceOperationEntity>, currency: Currency) {
         val totals = operations
             .groupBy { (it.categoryIcon ?: DEFAULT_CATEGORY_ICON) to it.categoryName }
             .map { (key, ops) -> Triple(key.first, key.second, sumAmounts(ops)) }
@@ -148,7 +152,7 @@ class FinanceHistoryService(
         val labelWidth = totals.maxOfOrNull { (icon, name, _) -> "$icon $name".length } ?: 0
         val rows = totals.joinToString("\n") { (icon, name, total) ->
             val label = "$icon ${escapeHtml(name)}".padEnd(labelWidth)
-            "$label  ${progressBar(total, maxTotal)} ${formatAmount(total)}"
+            "$label  ${progressBar(total, maxTotal)} ${formatAmount(total, currency)}"
         }
         append("\n${pre(rows)}")
     }
@@ -156,12 +160,13 @@ class FinanceHistoryService(
     private fun StringBuilder.appendBalanceLine(
         totalIncome: BigDecimal,
         totalExpense: BigDecimal,
+        currency: Currency,
         language: String?
     ) {
         val balance = totalIncome.subtract(totalExpense)
         val sign = if (balance >= BigDecimal.ZERO) "+" else ""
         append("\n\n")
-        append(blockquote(bold(localizationService.t("finance.history.balance", language, "$sign${formatAmount(balance)}"))))
+        append(blockquote(bold(localizationService.t("finance.history.balance", language, "$sign${formatAmount(balance, currency)}"))))
     }
 
     private fun sumAmounts(operations: List<FinanceOperationEntity>): BigDecimal =

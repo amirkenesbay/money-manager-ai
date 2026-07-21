@@ -1,5 +1,6 @@
 package ai.moneymanager.repository.entity
 
+import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.GroupType
 import ai.moneymanager.repository.entity.common.AuditInfo
 import org.bson.types.ObjectId
@@ -17,5 +18,6 @@ data class MoneyGroupEntity(
     val memberIds: Set<Long>,
     val type: GroupType,
     val initialBalance: BigDecimal = BigDecimal.ZERO,
+    val currency: Currency = Currency.DEFAULT,
     val auditInfo: AuditInfo = AuditInfo()
 )

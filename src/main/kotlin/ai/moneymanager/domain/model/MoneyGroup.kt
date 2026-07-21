@@ -13,7 +13,8 @@ data class MoneyGroup(
     val ownerId: Long,
     val memberIds: Set<Long>,
     val type: GroupType,
-    val initialBalance: BigDecimal = BigDecimal.ZERO
+    val initialBalance: BigDecimal = BigDecimal.ZERO,
+    val currency: Currency = Currency.DEFAULT
 )
 
 /**

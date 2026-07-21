@@ -12,11 +12,14 @@ import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.chat.reply.common.formatDescriptionSuffix
 import ai.moneymanager.chat.reply.common.formatSignedAmount
 import ai.moneymanager.chat.reply.common.operationListButtonText
+import ai.moneymanager.chat.reply.common.resolveCurrency
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.repository.entity.FinanceOperationEntity
+import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
 import kz.rmr.chatmachinist.api.reply.ParseMode
 import kz.rmr.chatmachinist.api.reply.RepliesBuilder
@@ -24,7 +27,8 @@ import kz.rmr.chatmachinist.api.reply.RepliesBuilder
 private const val OPERATION_LIST_LIMIT = 10
 
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.operationListReply(
-    localizationService: LocalizationService
+    localizationService: LocalizationService,
+    groupService: GroupService
 ) {
     reply {
         state = MoneyManagerState.OPERATION_LIST
@@ -33,6 +37,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.operationListReply(
             parseMode = ParseMode.HTML
             val lang = context.userInfo?.language
             val operations = context.operationsList.take(OPERATION_LIST_LIMIT)
+            val currency = resolveCurrency(groupService, context.userInfo?.activeGroupId)
 
             text = if (operations.isEmpty()) {
                 localizationService.t("operation.list.empty", lang)
@@ -44,7 +49,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.operationListReply(
                 operations.forEachIndexed { index, operation ->
                     buttonRow {
                         button {
-                            text = operationListItemText(index, operation)
+                            text = operationListItemText(index, operation, currency)
                             type = MoneyManagerButtonType.OPERATION_LIST_ITEM
                         }
                     }
@@ -59,7 +64,8 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.operationListReply(
 }
 
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.operationActionsReply(
-    localizationService: LocalizationService
+    localizationService: LocalizationService,
+    groupService: GroupService
 ) {
     reply {
         state = MoneyManagerState.OPERATION_ACTIONS
@@ -72,7 +78,8 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.operationActionsReply
             text = if (operation == null) {
                 localizationService.t("operation.not_found", lang)
             } else {
-                buildOperationDetailsText(operation, localizationService, lang)
+                val currency = resolveCurrency(groupService, operation.groupId)
+                buildOperationDetailsText(operation, currency, localizationService, lang)
             }
 
             keyboard {
@@ -262,7 +269,8 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.operationEditCommentR
 }
 
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.operationDeleteConfirmReply(
-    localizationService: LocalizationService
+    localizationService: LocalizationService,
+    groupService: GroupService
 ) {
     reply {
         state = MoneyManagerState.OPERATION_DELETE_CONFIRM
@@ -280,7 +288,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.operationDeleteConfir
                     lang,
                     operation.categoryIcon ?: DEFAULT_CATEGORY_ICON,
                     escapeHtml(operation.categoryName),
-                    formatSignedAmount(operation.type, operation.amount)
+                    formatSignedAmount(operation.type, operation.amount, resolveCurrency(groupService, operation.groupId))
                 )
             }
 
@@ -295,21 +303,22 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.operationDeleteConfir
     }
 }
 
-private fun operationListItemText(index: Int, operation: FinanceOperationEntity): String = operationListButtonText(
+private fun operationListItemText(index: Int, operation: FinanceOperationEntity, currency: Currency): String = operationListButtonText(
     index = index,
     date = operation.operationDate.format(dateFormatter),
     icon = operation.categoryIcon,
     categoryName = operation.categoryName,
-    signedAmount = formatSignedAmount(operation.type, operation.amount)
+    signedAmount = formatSignedAmount(operation.type, operation.amount, currency)
 )
 
 private fun buildOperationDetailsText(
     operation: FinanceOperationEntity,
+    currency: Currency,
     localizationService: LocalizationService,
     lang: String?
 ): String {
     val icon = operation.categoryIcon ?: DEFAULT_CATEGORY_ICON
-    val amount = code(formatSignedAmount(operation.type, operation.amount))
+    val amount = code(formatSignedAmount(operation.type, operation.amount, currency))
     val date = operation.operationDate.format(dateFormatter)
     val description = formatDescriptionSuffix(operation.description).let { if (it.isNotEmpty()) escapeHtml(it) else it }
     return bold(

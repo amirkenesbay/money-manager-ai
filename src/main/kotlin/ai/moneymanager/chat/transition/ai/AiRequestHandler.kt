@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.transition.ai
 
+import ai.moneymanager.chat.reply.common.resolveCurrency
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
@@ -9,6 +10,7 @@ import ai.moneymanager.service.AiPromptService
 import ai.moneymanager.service.AiRateLimitResult
 import ai.moneymanager.service.AiRateLimitService
 import ai.moneymanager.service.CategoryService
+import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.TelegramFileService
 import ai.moneymanager.service.nlp.CommandParserService
@@ -35,6 +37,7 @@ class AiRequestHandler(
     private val commandParserService: CommandParserService,
     private val telegramFileService: TelegramFileService,
     private val categoryService: CategoryService,
+    private val groupService: GroupService,
     private val aiPromptService: AiPromptService,
     private val localizationService: LocalizationService,
     private val aiRateLimitService: AiRateLimitService,
@@ -136,7 +139,8 @@ class AiRequestHandler(
         }
         val categories: List<Category> = categoryService.getCategoriesByGroup(groupId)
         context.aiCategoriesCache = categories
-        return aiPromptService.categoryContextPreamble(categories)
+        val currency = resolveCurrency(groupService, groupId)
+        return aiPromptService.currencyPreamble(currency) + "\n" + aiPromptService.categoryContextPreamble(categories)
     }
 
     private fun showErrorStageIfNeeded(commands: List<BotCommand>, feedback: AiFeedback, language: String?) {

@@ -8,6 +8,7 @@ import ai.moneymanager.chat.reply.common.formatTime
 import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.MoneyGroup
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import ai.moneymanager.repository.entity.NotificationEntity
@@ -17,7 +18,7 @@ import java.math.BigDecimal
 import java.time.LocalDate
 
 sealed class AiPendingAction {
-    abstract fun describe(localizationService: LocalizationService, language: String?): String
+    abstract fun describe(localizationService: LocalizationService, currency: Currency, language: String?): String
 
     sealed class CategoryAction : AiPendingAction() {
         data class Create(
@@ -25,7 +26,7 @@ sealed class AiPendingAction {
             val type: CategoryType,
             val icon: String?
         ) : CategoryAction() {
-            override fun describe(localizationService: LocalizationService, language: String?): String {
+            override fun describe(localizationService: LocalizationService, currency: Currency, language: String?): String {
                 val iconPart = if (icon != null) "$icon " else ""
                 return localizationService.t(
                     "ai.confirm.category.create",
@@ -40,7 +41,7 @@ sealed class AiPendingAction {
         data class Delete(
             val category: Category
         ) : CategoryAction() {
-            override fun describe(localizationService: LocalizationService, language: String?): String {
+            override fun describe(localizationService: LocalizationService, currency: Currency, language: String?): String {
                 val iconPart = if (category.icon != null) "${category.icon} " else ""
                 return localizationService.t(
                     "ai.confirm.category.delete",
@@ -56,7 +57,7 @@ sealed class AiPendingAction {
             val category: Category,
             val newName: String
         ) : CategoryAction() {
-            override fun describe(localizationService: LocalizationService, language: String?): String =
+            override fun describe(localizationService: LocalizationService, currency: Currency, language: String?): String =
                 localizationService.t(
                     "ai.confirm.category.rename",
                     language,
@@ -70,7 +71,7 @@ sealed class AiPendingAction {
             val category: Category,
             val newIcon: String
         ) : CategoryAction() {
-            override fun describe(localizationService: LocalizationService, language: String?): String {
+            override fun describe(localizationService: LocalizationService, currency: Currency, language: String?): String {
                 val oldIcon = category.icon ?: "—"
                 return localizationService.t(
                     "ai.confirm.category.change_icon",
@@ -86,7 +87,7 @@ sealed class AiPendingAction {
             val groupId: ObjectId,
             val count: Int
         ) : CategoryAction() {
-            override fun describe(localizationService: LocalizationService, language: String?): String =
+            override fun describe(localizationService: LocalizationService, currency: Currency, language: String?): String =
                 localizationService.t("ai.confirm.category.delete_all", language, count)
         }
     }
@@ -95,14 +96,14 @@ sealed class AiPendingAction {
         data class Create(
             val name: String
         ) : GroupAction() {
-            override fun describe(localizationService: LocalizationService, language: String?): String =
+            override fun describe(localizationService: LocalizationService, currency: Currency, language: String?): String =
                 localizationService.t("ai.confirm.group.create", language, name)
         }
 
         data class Delete(
             val group: MoneyGroup
         ) : GroupAction() {
-            override fun describe(localizationService: LocalizationService, language: String?): String =
+            override fun describe(localizationService: LocalizationService, currency: Currency, language: String?): String =
                 localizationService.t("ai.confirm.group.delete", language, group.name, group.memberIds.size)
         }
     }
@@ -113,7 +114,7 @@ sealed class AiPendingAction {
             val hour: Int,
             val minute: Int
         ) : NotificationAction() {
-            override fun describe(localizationService: LocalizationService, language: String?): String =
+            override fun describe(localizationService: LocalizationService, currency: Currency, language: String?): String =
                 localizationService.t(
                     "ai.confirm.notification.create_daily",
                     language,
@@ -125,7 +126,7 @@ sealed class AiPendingAction {
         data class Delete(
             val notification: NotificationEntity
         ) : NotificationAction() {
-            override fun describe(localizationService: LocalizationService, language: String?): String =
+            override fun describe(localizationService: LocalizationService, currency: Currency, language: String?): String =
                 localizationService.t(
                     "ai.confirm.notification.delete",
                     language,
@@ -139,13 +140,13 @@ sealed class AiPendingAction {
         data class Delete(
             val operation: FinanceOperationEntity
         ) : RecentOperationAction() {
-            override fun describe(localizationService: LocalizationService, language: String?): String =
+            override fun describe(localizationService: LocalizationService, currency: Currency, language: String?): String =
                 localizationService.t(
                     "ai.confirm.operation.delete",
                     language,
                     formatIconPrefix(operation.categoryIcon),
                     operation.categoryName,
-                    formatSignedAmount(operation.type, operation.amount)
+                    formatSignedAmount(operation.type, operation.amount, currency)
                 )
         }
 
@@ -155,9 +156,9 @@ sealed class AiPendingAction {
             val newCategory: Category?,
             val newOperationDate: LocalDate?
         ) : RecentOperationAction() {
-            override fun describe(localizationService: LocalizationService, language: String?): String {
+            override fun describe(localizationService: LocalizationService, currency: Currency, language: String?): String {
                 val changes = listOfNotNull(
-                    newAmount?.let { localizationService.t("ai.confirm.operation.edit.amount", language, formatAmount(it)) },
+                    newAmount?.let { localizationService.t("ai.confirm.operation.edit.amount", language, formatAmount(it, currency)) },
                     newCategory?.let { localizationService.t("ai.confirm.operation.edit.category", language, formatIconPrefix(it.icon), it.name) },
                     newOperationDate?.let { localizationService.t("ai.confirm.operation.edit.date", language, it) }
                 ).joinToString(EDIT_CHANGES_SEPARATOR)
@@ -166,7 +167,7 @@ sealed class AiPendingAction {
                     language,
                     formatIconPrefix(operation.categoryIcon),
                     operation.categoryName,
-                    formatSignedAmount(operation.type, operation.amount),
+                    formatSignedAmount(operation.type, operation.amount, currency),
                     changes
                 )
             }
@@ -188,30 +189,30 @@ sealed class AiPendingAction {
         abstract val categoryDisplayIcon: String?
         abstract val isNewCategory: Boolean
 
-        override fun describe(localizationService: LocalizationService, language: String?): String {
+        override fun describe(localizationService: LocalizationService, currency: Currency, language: String?): String {
             val key = when {
                 isNewCategory && type == CategoryType.EXPENSE -> CONFIRM_ADD_WITH_NEW_CATEGORY_EXPENSE_KEY
                 isNewCategory -> CONFIRM_ADD_WITH_NEW_CATEGORY_INCOME_KEY
                 type == CategoryType.EXPENSE -> CONFIRM_ADD_EXPENSE_KEY
                 else -> CONFIRM_ADD_INCOME_KEY
             }
-            return render(localizationService, language, key)
+            return render(localizationService, currency, language, key)
         }
 
-        fun describeBatchItem(localizationService: LocalizationService, language: String?): String {
+        fun describeBatchItem(localizationService: LocalizationService, currency: Currency, language: String?): String {
             val key = if (type == CategoryType.EXPENSE) BATCH_ITEM_EXPENSE_KEY else BATCH_ITEM_INCOME_KEY
-            val base = escapeHtml(render(localizationService, language, key))
+            val base = escapeHtml(render(localizationService, currency, language, key))
             if (!isNewCategory) return base
             return base + localizationService.t(BATCH_ITEM_NEW_CATEGORY_KEY, language)
         }
 
-        private fun render(localizationService: LocalizationService, language: String?, key: String): String =
+        private fun render(localizationService: LocalizationService, currency: Currency, language: String?, key: String): String =
             localizationService.t(
                 key,
                 language,
                 formatIconPrefix(categoryDisplayIcon),
                 categoryDisplayName,
-                formatAmount(BigDecimal.valueOf(amount)),
+                formatAmount(BigDecimal.valueOf(amount), currency),
                 formatDescriptionSuffix(description)
             )
 

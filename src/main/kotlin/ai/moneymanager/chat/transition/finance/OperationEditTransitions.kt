@@ -4,6 +4,7 @@ import ai.moneymanager.chat.reply.common.categoryButtonText
 import ai.moneymanager.chat.reply.common.dateFormatter
 import ai.moneymanager.chat.reply.common.formatSignedAmount
 import ai.moneymanager.chat.reply.common.operationListButtonText
+import ai.moneymanager.chat.reply.common.resolveCurrency
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
@@ -11,6 +12,7 @@ import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.FinanceHistoryService
 import ai.moneymanager.service.FinanceOperationService
+import ai.moneymanager.service.GroupService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType
 import java.time.LocalDate
@@ -20,10 +22,11 @@ private const val OPERATION_LIST_LIMIT = 10
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.operationEditTransitions(
     financeHistoryService: FinanceHistoryService,
     financeOperationService: FinanceOperationService,
-    categoryService: CategoryService
+    categoryService: CategoryService,
+    groupService: GroupService
 ) {
     openOperationListTransitions(financeHistoryService)
-    operationSelectionTransitions(categoryService)
+    operationSelectionTransitions(categoryService, groupService)
     operationEditFieldTransitions(financeOperationService)
     operationDeleteTransitions(financeOperationService)
 }
@@ -59,7 +62,8 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.openOperationL
 }
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.operationSelectionTransitions(
-    categoryService: CategoryService
+    categoryService: CategoryService,
+    groupService: GroupService
 ) {
     transition {
         name = "Select operation from list"
@@ -69,13 +73,14 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.operationSelec
         }
         action {
             val text = buttonText
+            val currency = resolveCurrency(groupService, context.userInfo?.activeGroupId)
             val operation = context.operationsList.withIndex().firstOrNull { (index, operation) ->
                 operationListButtonText(
                     index = index,
                     date = operation.operationDate.format(dateFormatter),
                     icon = operation.categoryIcon,
                     categoryName = operation.categoryName,
-                    signedAmount = formatSignedAmount(operation.type, operation.amount)
+                    signedAmount = formatSignedAmount(operation.type, operation.amount, currency)
                 ) == text
             }?.value
             context.selectedOperation = operation
