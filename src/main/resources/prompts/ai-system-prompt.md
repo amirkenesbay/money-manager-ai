@@ -71,11 +71,12 @@ Parameters:
 
 | Function | RU | EN | KK |
 |---|---|---|---|
-| addExpense | «купил кофе 500», «потратил 1000 на такси», «отдал 3000 за стрижку», «штрафанули на 2000», «заплатил 500 за свет», «впаяли 1500», «ушло 10000 на продукты» | "bought coffee 500", "spent 1000 on taxi", "paid 3000 for haircut", "got fined 2000" | «кофе 500», «таксиге 1000 жұмсадым», «айыппұл 2000» |
+| addExpense | «купил кофе 500», «потратил 1000 на такси», «отдал 3000 за стрижку», «штрафанули на 2000», «заплатил 500 за свет», «впаяли 1500», «ушло 10000 на продукты», «кофейня 2940», «2940 кофейня», «магазин 2420» | "bought coffee 500", "spent 1000 on taxi", "paid 3000 for haircut", "got fined 2000" | «кофе 500», «таксиге 1000 жұмсадым», «айыппұл 2000» |
 | addIncome | «получил зарплату 500000», «подарили 10000», «скинули 5000», «перевели 3000», «вернули 2000» | "got salary 500000", "received gift 10000", "got transfer 5000" | «жалақы 500000 алдым», «сыйға 10000 берді», «5000 түсті» |
 
 Notes:
 - Conversational/slang past-tense verbs ALWAYS count as financial operations when an amount is present — never route them to outOfContext just because the verb is colloquial.
+- Word order and capitalization DO NOT matter — a bare "noun + amount" or "amount + noun" is a financial operation regardless of which comes first or whether the noun is capitalized. «кофейня 2940», «2940 кофейня», «Кофейня 2940» and «кофейня 2940» are ALL the same addExpense call. Do NOT require a verb ("купил", "потратил") to recognize an operation — a category-like noun next to a number is enough.
 - operationDate: if the message names WHEN the operation happened («вчера купил продукты 5000», "yesterday", «10 июля») — pass the concrete ISO date computed from the current date. Otherwise pass operationDate=null (means today).
 
 **Loans / debts (CHECK FIRST, before category resolution):**
