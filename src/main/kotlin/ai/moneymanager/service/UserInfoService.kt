@@ -1,5 +1,6 @@
 package ai.moneymanager.service
 
+import ai.moneymanager.domain.model.SubscriptionTier
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.repository.UserInfoRepository
 import ai.moneymanager.repository.entity.UserInfoEntity
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service
 import org.telegram.telegrambots.bots.DefaultAbsSender
 import org.telegram.telegrambots.bots.DefaultBotOptions
 import org.telegram.telegrambots.meta.api.objects.User
+import java.time.LocalDateTime
 
 @Service
 class UserInfoService(
@@ -56,6 +58,24 @@ class UserInfoService(
         return mapEntity(updated)
     }
 
+    /** Ищет юзера по @username (без "@") или по telegramUserId — как принимает админ-команда /activate. */
+    fun findUserByUsernameOrTelegramId(identifier: String): UserInfo? {
+        val entity = identifier.toLongOrNull()
+            ?.let { userRepository.findUserInfoEntityByTelegramUserId(it) }
+            ?: userRepository.findUserInfoEntityByUsername(identifier.removePrefix("@"))
+        return entity?.let { mapEntity(it) }
+    }
+
+    fun activateSubscription(telegramUserId: Long, days: Long): UserInfo? {
+        val entity = userRepository.findUserInfoEntityByTelegramUserId(telegramUserId) ?: return null
+        val currentExpiry = entity.subscriptionExpiresAt?.takeIf { it.isAfter(LocalDateTime.now()) }
+        val newExpiry = (currentExpiry ?: LocalDateTime.now()).plusDays(days)
+        val updated = userRepository.save(
+            entity.copy(subscriptionTier = SubscriptionTier.PAID, subscriptionExpiresAt = newExpiry)
+        )
+        return mapEntity(updated)
+    }
+
     private fun findUser(user: User): UserInfoEntity? {
         if (user.userName != null) {
             return userRepository.findUserInfoEntityByUsername(user.userName)
@@ -85,7 +105,9 @@ class UserInfoService(
             activeGroupId = it.activeGroupId,
             groupIds = it.groupIds,
             timezone = it.timezone,
-            onboardingCompleted = it.onboardingCompleted
+            onboardingCompleted = it.onboardingCompleted,
+            subscriptionTier = it.subscriptionTier,
+            subscriptionExpiresAt = it.subscriptionExpiresAt
         )
     }
 }

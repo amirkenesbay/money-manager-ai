@@ -48,9 +48,12 @@ import ai.moneymanager.chat.reply.nlp.nlpConfirmDeleteGroupReply
 import ai.moneymanager.chat.reply.nlp.nlpResponseReply
 import ai.moneymanager.chat.reply.settings.currencySelectReply
 import ai.moneymanager.chat.reply.settings.languageSelectReply
+import ai.moneymanager.chat.reply.settings.proInfoReply
 import ai.moneymanager.chat.reply.settings.settingsReply
+import ai.moneymanager.chat.reply.settings.subscriptionViewReply
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
+import ai.moneymanager.service.AiRateLimitService
 import ai.moneymanager.service.FinanceHistoryService
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
@@ -65,7 +68,8 @@ class MoneyManagerReplyConfig {
     fun replyBuilder(
         financeHistoryService: FinanceHistoryService,
         localizationService: LocalizationService,
-        groupService: GroupService
+        groupService: GroupService,
+        aiRateLimitService: AiRateLimitService
     ): RepliesBuilder<MoneyManagerState, MoneyManagerContext> {
         return replies {
             chatName = "Money Manager Chat"
@@ -77,6 +81,8 @@ class MoneyManagerReplyConfig {
             settingsReply(localizationService)
             languageSelectReply(localizationService)
             currencySelectReply(localizationService)
+            subscriptionViewReply(localizationService, aiRateLimitService)
+            proInfoReply(localizationService)
 
             // Balance replies
             balanceOnboardingPromptReply(localizationService)

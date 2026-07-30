@@ -16,9 +16,26 @@ gemini:
 ai:
   rate-limit:
     daily-requests-per-user: 10
+    daily-requests-per-user-paid: 100
+
+category:
+  max-per-type-free: 10
+  max-per-type-paid: 1000
+
+history:
+  max-days-back-free: 30
+
+group:
+  max-owned-shared-free: 3
+
+notification:
+  max-active-free: 3
 
 notifications:
   alert-chat-id: ${ALERT_CHAT_ID:#{null}}
+
+admin:
+  telegram-user-ids: ${ADMIN_TELEGRAM_USER_IDS:}
 
 telegram:
   file:

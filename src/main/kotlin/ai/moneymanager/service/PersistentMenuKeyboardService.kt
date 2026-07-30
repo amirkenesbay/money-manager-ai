@@ -16,6 +16,7 @@ const val AI_BUTTON_TEXT = "🤖 AI"
 const val REPORT_BUTTON_TEXT = "📊 Отчёт"
 const val ADD_INCOME_BUTTON_TEXT = "💰 Записать доход"
 const val ADD_EXPENSE_BUTTON_TEXT = "💸 Записать трату"
+const val PRO_MODE_BUTTON_TEXT = "💎 Premium"
 private const val ATTACH_MESSAGE_TEXT = "👇"
 
 /**
@@ -36,7 +37,8 @@ class PersistentMenuKeyboardService(
                 KeyboardRow(listOf(KeyboardButton(MENU_BUTTON_TEXT), KeyboardButton(SETTINGS_BUTTON_TEXT))),
                 KeyboardRow(listOf(KeyboardButton(AI_BUTTON_TEXT))),
                 KeyboardRow(listOf(KeyboardButton(REPORT_BUTTON_TEXT))),
-                KeyboardRow(listOf(KeyboardButton(ADD_INCOME_BUTTON_TEXT), KeyboardButton(ADD_EXPENSE_BUTTON_TEXT)))
+                KeyboardRow(listOf(KeyboardButton(ADD_INCOME_BUTTON_TEXT), KeyboardButton(ADD_EXPENSE_BUTTON_TEXT))),
+                KeyboardRow(listOf(KeyboardButton(PRO_MODE_BUTTON_TEXT)))
             )
             resizeKeyboard = true
             isPersistent = true

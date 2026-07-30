@@ -9,9 +9,11 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.settingsDialogTransiti
     openSettingsTransition()
     openLanguagePickerFromSettingsTransition()
     openCurrencyPickerFromSettingsTransition()
+    openSubscriptionViewFromSettingsTransition()
     backToMenuFromSettingsTransition()
     backToSettingsFromLanguagePickerTransition()
     backToSettingsFromCurrencyPickerTransition()
+    backToSettingsFromSubscriptionViewTransition()
 }
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.openSettingsTransition() {
@@ -67,6 +69,21 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.openCurrencyPi
     }
 }
 
+private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.openSubscriptionViewFromSettingsTransition() {
+    transition {
+        name = "Open subscription view from settings"
+
+        condition {
+            from = MoneyManagerState.SETTINGS
+            button = MoneyManagerButtonType.OPEN_SUBSCRIPTION_VIEW
+        }
+
+        then {
+            to = MoneyManagerState.SUBSCRIPTION_VIEW
+        }
+    }
+}
+
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.backToMenuFromSettingsTransition() {
     transition {
         name = "Back to menu from settings"
@@ -112,6 +129,21 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.backToSettings
 
         action {
             context.currencyReturnToSettings = false
+        }
+
+        then {
+            to = MoneyManagerState.SETTINGS
+        }
+    }
+}
+
+private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.backToSettingsFromSubscriptionViewTransition() {
+    transition {
+        name = "Back to settings from subscription view"
+
+        condition {
+            from = MoneyManagerState.SUBSCRIPTION_VIEW
+            button = MoneyManagerButtonType.BACK_TO_SETTINGS
         }
 
         then {

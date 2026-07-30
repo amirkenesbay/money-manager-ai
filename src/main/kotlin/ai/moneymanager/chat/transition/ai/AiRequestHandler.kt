@@ -85,7 +85,8 @@ class AiRequestHandler(
     /** Дневная квота AI-запросов на юзера. Проверяется до любого сетевого вызова к Gemini. */
     private fun checkRateLimit(context: MoneyManagerContext, lang: String?): Boolean {
         val userId = context.userInfo?.telegramUserId ?: return true
-        val result = aiRateLimitService.tryConsume(userId)
+        val hasPaidSubscription = context.userInfo?.hasActivePaidSubscription() == true
+        val result = aiRateLimitService.tryConsume(userId, hasPaidSubscription)
         if (result is AiRateLimitResult.Exceeded) {
             actionExecutor.clear(context)
             val resetInHours = (result.resetInSeconds / 3600).coerceAtLeast(1)

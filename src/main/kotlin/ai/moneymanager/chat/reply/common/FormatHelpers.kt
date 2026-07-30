@@ -31,6 +31,8 @@ private const val INVITE_LINK_TEMPLATE = "https://t.me/%s?start=join_%s"
 
 fun buildInviteLink(inviteToken: String): String = INVITE_LINK_TEMPLATE.format(BOT_USERNAME, inviteToken)
 
+const val TRIBUTE_SUBSCRIBE_LINK = "https://t.me/tribute/app?startapp=s11rb"
+
 private val amountFormat = DecimalFormat(
     AMOUNT_PATTERN,
     DecimalFormatSymbols().apply { groupingSeparator = THOUSANDS_SEPARATOR }

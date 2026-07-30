@@ -21,17 +21,20 @@ sealed class AiRateLimitResult {
 class AiRateLimitService(
     private val aiRateLimitRepository: AiRateLimitRepository,
     @Value("\${ai.rate-limit.daily-requests-per-user:10}")
-    private val dailyLimit: Int
+    val freeDailyLimit: Int,
+    @Value("\${ai.rate-limit.daily-requests-per-user-paid:100}")
+    val paidDailyLimit: Int
 ) {
     private val log = LoggerFactory.getLogger(this::class.java)
 
     /** Атомарно инкрементирует счётчик за сегодня и проверяет лимит. Вызывать ПЕРЕД запросом к Gemini. */
-    fun tryConsume(telegramUserId: Long): AiRateLimitResult {
+    fun tryConsume(telegramUserId: Long, hasPaidSubscription: Boolean): AiRateLimitResult {
+        val limit = if (hasPaidSubscription) paidDailyLimit else freeDailyLimit
         val updated = aiRateLimitRepository.incrementAndGet(telegramUserId, LocalDate.now())
 
-        if (updated.count > dailyLimit) {
-            log.info("AI rate limit exceeded: userId=$telegramUserId, count=${updated.count}, limit=$dailyLimit")
-            return AiRateLimitResult.Exceeded(dailyLimit, secondsUntilMidnight())
+        if (updated.count > limit) {
+            log.info("AI rate limit exceeded: userId=$telegramUserId, count=${updated.count}, limit=$limit")
+            return AiRateLimitResult.Exceeded(limit, secondsUntilMidnight())
         }
         return AiRateLimitResult.Allowed
     }

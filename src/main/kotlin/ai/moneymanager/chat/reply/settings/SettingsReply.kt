@@ -33,6 +33,12 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.settingsReply(
                 }
                 buttonRow {
                     button {
+                        text = localizationService.t("settings.button.subscription", lang)
+                        type = MoneyManagerButtonType.OPEN_SUBSCRIPTION_VIEW
+                    }
+                }
+                buttonRow {
+                    button {
                         text = localizationService.t("common.back", lang)
                         type = MoneyManagerButtonType.BACK_TO_MENU
                     }
