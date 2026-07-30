@@ -2,6 +2,7 @@ package ai.moneymanager.chat.transition.category
 
 import ai.moneymanager.chat.transition.common.simpleTransition
 import ai.moneymanager.chat.transition.common.simpleTransitionWithAction
+import ai.moneymanager.domain.model.CategoryCreationResult
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
@@ -9,8 +10,10 @@ import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.domain.model.QuickTemplates
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.LocalizationService
+import ai.moneymanager.service.SubscriptionLimitsService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("CreateCategoryTransitions")
@@ -18,7 +21,8 @@ private const val MAX_CATEGORY_NAME_LENGTH = 50
 
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createCategoryTransitions(
     categoryService: CategoryService,
-    localizationService: LocalizationService
+    localizationService: LocalizationService,
+    subscriptionLimitsService: SubscriptionLimitsService
 ) {
     transition {
         name = "Start category creation - check active group exists"
@@ -94,22 +98,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createCategoryTransiti
                 context.manualTextInputActive = false
                 context.customNameInputMode = false
 
-                val activeGroupId = context.userInfo?.activeGroupId
-                val categoryType = context.categoryTypeInput ?: CategoryType.EXPENSE
-                log.info("Quick creating category: name='$resolvedName', icon='${template.icon}', type=$categoryType, activeGroupId=$activeGroupId")
-
-                if (activeGroupId != null) {
-                    context.currentCategory = categoryService.createCategory(
-                        name = resolvedName,
-                        icon = template.icon,
-                        type = categoryType,
-                        groupId = activeGroupId
-                    )
-                } else {
-                    log.warn("Skipping quick category creation - activeGroupId is null! userInfo=${context.userInfo}")
-                }
-
-                context.categoryTypeInput = null
+                createCategoryFromInput(context, resolvedName, template.icon, categoryService, subscriptionLimitsService, log)
             }
             then { to = MoneyManagerState.CATEGORY_CREATE_RESULT }
         }
@@ -131,22 +120,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createCategoryTransiti
                 ?: localizationService.t("category.create.fallback_name", lang)
             context.categoryNameInput = categoryName
 
-            val activeGroupId = context.userInfo?.activeGroupId
-            val categoryType = context.categoryTypeInput ?: CategoryType.EXPENSE
-            log.info("Creating category: name='$categoryName', type=$categoryType, activeGroupId=$activeGroupId")
-
-            if (activeGroupId != null) {
-                context.currentCategory = categoryService.createCategory(
-                    name = categoryName,
-                    icon = null,
-                    type = categoryType,
-                    groupId = activeGroupId
-                )
-            } else {
-                log.warn("Skipping category creation - activeGroupId is null! userInfo=${context.userInfo}")
-            }
-
-            context.categoryTypeInput = null
+            createCategoryFromInput(context, categoryName, null, categoryService, subscriptionLimitsService, log)
         }
         then { to = MoneyManagerState.CATEGORY_CREATE_RESULT }
     }
@@ -157,4 +131,30 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createCategoryTransiti
 
     simpleTransition("Back to category management from create result",
         MoneyManagerState.CATEGORY_CREATE_RESULT, MoneyManagerButtonType.BACK_TO_MENU, MoneyManagerState.CATEGORY_MANAGEMENT)
+}
+
+/** Общий хвост создания категории (quick-шаблон и custom-имя) — резолвит группу/тип, вызывает лимит-проверку, чистит tempTypeInput. */
+private fun createCategoryFromInput(
+    context: MoneyManagerContext,
+    name: String,
+    icon: String?,
+    categoryService: CategoryService,
+    subscriptionLimitsService: SubscriptionLimitsService,
+    log: Logger
+) {
+    val activeGroupId = context.userInfo?.activeGroupId
+    val categoryType = context.categoryTypeInput ?: CategoryType.EXPENSE
+    log.info("Creating category: name='$name', icon='$icon', type=$categoryType, activeGroupId=$activeGroupId")
+
+    if (activeGroupId != null) {
+        val hasPaidSubscription = context.userInfo?.hasActivePaidSubscription() == true
+        val maxPerType = subscriptionLimitsService.maxCategoriesPerType(hasPaidSubscription)
+        context.categoryCreationResult = categoryService.createCategory(name, icon, categoryType, activeGroupId, maxPerType)
+        (context.categoryCreationResult as? CategoryCreationResult.Created)?.let { context.currentCategory = it.category }
+    } else {
+        log.warn("Skipping category creation - activeGroupId is null! userInfo=${context.userInfo}")
+        context.categoryCreationResult = null
+    }
+
+    context.categoryTypeInput = null
 }

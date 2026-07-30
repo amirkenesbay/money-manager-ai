@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.transition.nlp
 
+import ai.moneymanager.domain.model.GroupCreationResult
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
@@ -23,16 +24,18 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.nlpCreateGroupTransiti
         action {
             val groupName = context.nlpGroupName ?: return@action
 
-            val createdGroup = groupService.createGroup(user.id, groupName)
-            if (createdGroup != null) {
-                context.currentGroup = createdGroup
-                context.userInfo = userInfoService.getUserInfo(user)
-                context.groupNameDuplicateError = false
-                log.info("✅ Group created via NLP: ${createdGroup.name}")
-            } else {
-                context.groupNameDuplicateError = true
-                context.groupNameInput = groupName
-                log.info("❌ Duplicate group name via NLP: $groupName")
+            when (val result = groupService.createGroup(user.id, groupName)) {
+                is GroupCreationResult.Created -> {
+                    context.currentGroup = result.group
+                    context.userInfo = userInfoService.getUserInfo(user)
+                    context.groupNameDuplicateError = false
+                    log.info("✅ Group created via NLP: ${result.group.name}")
+                }
+                else -> {
+                    context.groupNameDuplicateError = true
+                    context.groupNameInput = groupName
+                    log.info("❌ Group creation failed via NLP: $groupName ($result)")
+                }
             }
             context.nlpGroupName = null
         }

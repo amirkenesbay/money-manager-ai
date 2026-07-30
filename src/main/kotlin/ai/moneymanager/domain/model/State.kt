@@ -28,6 +28,8 @@ enum class MoneyManagerState {
     SETTINGS,
     LANGUAGE_SELECT,
     CURRENCY_SELECT,
+    SUBSCRIPTION_VIEW,
+    PRO_INFO,
 
     // -------- BALANCE --------
     BALANCE_ONBOARDING_PROMPT,
@@ -252,6 +254,8 @@ enum class MoneyManagerButtonType {
     CURRENCY_RUB,
     CURRENCY_EUR,
     CURRENCY_KGS,
+    OPEN_SUBSCRIPTION_VIEW,
+    SUBSCRIBE_PRO_LINK,
 
     // NLP
     CONFIRM_NLP_ACTION,
@@ -325,6 +329,7 @@ enum class PersistentAction {
     OPEN_REPORT,
     ADD_INCOME,
     ADD_EXPENSE,
+    OPEN_PRO_INFO,
 }
 
 class MoneyManagerContext {
@@ -351,6 +356,7 @@ class MoneyManagerContext {
     var currentCategory: Category? = null
     var categories: List<Category> = emptyList()
     var isQuickCategoryCreation: Boolean = false
+    var categoryCreationResult: CategoryCreationResult? = null
 
     // -------- SETTINGS --------
     var languageReturnToSettings: Boolean = false
@@ -364,6 +370,7 @@ class MoneyManagerContext {
     var textInputResponse: Boolean = false
     var iconInputError: Boolean = false
     var groupNameDuplicateError: Boolean = false
+    var groupCreationLimitReached: Int? = null
 
     // -------- SESSION --------
     // Set to true on /start so that stale old dialog instances (which remain in MongoDB)
@@ -437,6 +444,7 @@ class MoneyManagerContext {
     var notifCustomInputError: Boolean = false
     var notifNameInputError: Boolean = false
     var notifEditMode: Boolean = false
+    var notifLimitReached: Int? = null
 
     fun clearNotificationInput() {
         notifIconInput = null

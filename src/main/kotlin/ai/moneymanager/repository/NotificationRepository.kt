@@ -12,4 +12,5 @@ interface NotificationRepository : MongoRepository<NotificationEntity, ObjectId>
     fun findByIsActiveTrueAndNextFireTimeLessThanEqual(now: LocalDateTime): List<NotificationEntity>
     fun deleteByTelegramUserId(telegramUserId: Long): Long
     fun countByTelegramUserId(telegramUserId: Long): Long
+    fun countByTelegramUserIdAndIsActiveTrue(telegramUserId: Long): Long
 }

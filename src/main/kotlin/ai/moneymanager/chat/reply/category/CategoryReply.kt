@@ -4,6 +4,7 @@ import ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.chat.reply.common.backButton
 import ai.moneymanager.chat.reply.common.cancelButton
 import ai.moneymanager.chat.reply.common.confirmAndCancelButtons
+import ai.moneymanager.domain.model.CategoryCreationResult
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
@@ -177,20 +178,26 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.categoryCreateResultR
             newMessage = !context.isQuickCategoryCreation
 
             val lang = context.userInfo?.language
-            val category = context.currentCategory
+            val result = context.categoryCreationResult
             val backText = localizationService.t("common.back", lang)
 
-            text = if (category != null) {
-                val icon = category.icon ?: DEFAULT_CATEGORY_ICON
-                val key = createSuccessKey(category.type)
-                localizationService.t(key, lang, icon, category.name)
-            } else {
-                val name = context.categoryNameInput ?: ""
-                localizationService.t("category.create.result.duplicate", lang, name)
+            text = when (result) {
+                is CategoryCreationResult.Created -> {
+                    val icon = result.category.icon ?: DEFAULT_CATEGORY_ICON
+                    val key = createSuccessKey(result.category.type)
+                    localizationService.t(key, lang, icon, result.category.name)
+                }
+                is CategoryCreationResult.LimitReached -> {
+                    localizationService.t("category.create.result.limit_reached", lang, result.limit)
+                }
+                is CategoryCreationResult.Duplicate, null -> {
+                    val name = context.categoryNameInput ?: ""
+                    localizationService.t("category.create.result.duplicate", lang, name)
+                }
             }
 
             keyboard {
-                if (category != null) {
+                if (result is CategoryCreationResult.Created) {
                     val createMoreText = localizationService.t("category.create.result.button.create_more", lang)
                     buttonRow {
                         button {

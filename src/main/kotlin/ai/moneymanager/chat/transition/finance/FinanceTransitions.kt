@@ -9,6 +9,8 @@ import ai.moneymanager.service.FinanceHistoryService
 import ai.moneymanager.service.FinanceOperationService
 import ai.moneymanager.service.FinanceReportService
 import ai.moneymanager.service.GroupService
+import ai.moneymanager.service.LocalizationService
+import ai.moneymanager.service.SubscriptionLimitsService
 import ai.moneymanager.service.UserInfoService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 
@@ -18,15 +20,17 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.financeDialogTransitio
     financeHistoryService: FinanceHistoryService,
     financeReportService: FinanceReportService,
     userInfoService: UserInfoService,
-    groupService: GroupService
+    groupService: GroupService,
+    subscriptionLimitsService: SubscriptionLimitsService,
+    localizationService: LocalizationService
 ) {
     openFinanceManagementTransition()
     financeCategoryTransitions(categoryService)
     financeAmountTransitions()
     financeDateTransitions(financeOperationService)
     financeOperationSavedTransitions(categoryService)
-    financeHistoryTransitions(financeHistoryService, groupService)
-    financeReportTransitions(financeReportService, userInfoService, categoryService, groupService)
+    financeHistoryTransitions(financeHistoryService, groupService, subscriptionLimitsService, localizationService)
+    financeReportTransitions(financeReportService, userInfoService, categoryService, groupService, subscriptionLimitsService, localizationService)
     operationEditTransitions(financeHistoryService, financeOperationService, categoryService, groupService)
     financeBackTransitions()
 }

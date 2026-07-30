@@ -7,11 +7,13 @@ import ai.moneymanager.chat.reply.notification.formatFrequencyShort
 import ai.moneymanager.chat.transition.ai.matchesEntityName
 import ai.moneymanager.domain.model.FrequencyType
 import ai.moneymanager.domain.model.MoneyManagerContext
+import ai.moneymanager.domain.model.NotificationCreationResult
 import ai.moneymanager.domain.model.nlp.AiPendingAction
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.repository.entity.NotificationEntity
 import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.NotificationService
+import ai.moneymanager.service.SubscriptionLimitsService
 import org.springframework.stereotype.Component
 
 private const val DEFAULT_TIMEZONE = "UTC"
@@ -24,6 +26,7 @@ private val VALID_MINUTE_RANGE = 0..59
 @Component
 class NotificationAiHandler(
     private val notificationService: NotificationService,
+    private val subscriptionLimitsService: SubscriptionLimitsService,
     private val localizationService: LocalizationService
 ) : AiDomainHandler {
 
@@ -116,8 +119,10 @@ class NotificationAiHandler(
         val userId = context.userInfo?.telegramUserId
             ?: return localizationService.t("ai.error.no_user", lang)
         val timezone = context.userInfo?.timezone
+        val hasPaidSubscription = context.userInfo?.hasActivePaidSubscription() == true
+        val maxActiveNotifications = subscriptionLimitsService.maxActiveNotifications(hasPaidSubscription)
 
-        notificationService.createNotification(
+        val result = notificationService.createNotification(
             telegramUserId = userId,
             name = action.name,
             icon = null,
@@ -128,8 +133,12 @@ class NotificationAiHandler(
             dayOfWeek = null,
             dayOfMonth = null,
             monthOfYear = null,
-            userTimezone = timezone ?: DEFAULT_TIMEZONE
+            userTimezone = timezone ?: DEFAULT_TIMEZONE,
+            maxActiveNotifications = maxActiveNotifications
         )
+        if (result is NotificationCreationResult.LimitReached) {
+            return localizationService.t("ai.notification.create.limit_reached", lang, result.limit)
+        }
 
         val message = localizationService.t(
             "ai.notification.created",

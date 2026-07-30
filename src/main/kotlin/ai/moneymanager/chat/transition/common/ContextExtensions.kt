@@ -1,20 +1,24 @@
 package ai.moneymanager.chat.transition.common
 
 import ai.moneymanager.domain.model.CategoryType
-import ai.moneymanager.domain.model.MoneyGroup
+import ai.moneymanager.domain.model.GroupCreationResult
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.service.CategoryService
 
-fun MoneyManagerContext.handleGroupCreated(createdGroup: MoneyGroup?) {
-    if (createdGroup != null) {
-        currentGroup = createdGroup
-        userInfo = userInfo?.copy(
-            activeGroupId = createdGroup.id,
-            groupIds = userInfo?.groupIds?.plus(createdGroup.id!!) ?: setOf(createdGroup.id!!)
-        )
-        groupNameDuplicateError = false
-    } else {
-        groupNameDuplicateError = true
+fun MoneyManagerContext.handleGroupCreated(result: GroupCreationResult) {
+    groupNameDuplicateError = false
+    groupCreationLimitReached = null
+
+    when (result) {
+        is GroupCreationResult.Created -> {
+            currentGroup = result.group
+            userInfo = userInfo?.copy(
+                activeGroupId = result.group.id,
+                groupIds = userInfo?.groupIds?.plus(result.group.id!!) ?: setOf(result.group.id!!)
+            )
+        }
+        is GroupCreationResult.Duplicate -> groupNameDuplicateError = true
+        is GroupCreationResult.LimitReached -> groupCreationLimitReached = result.limit
     }
 }
 

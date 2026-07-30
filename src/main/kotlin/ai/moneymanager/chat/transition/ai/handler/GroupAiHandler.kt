@@ -4,12 +4,14 @@ import ai.moneymanager.chat.reply.common.buildInviteLink
 import ai.moneymanager.chat.reply.common.link
 import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.chat.transition.ai.matchesEntityName
+import ai.moneymanager.domain.model.GroupCreationResult
 import ai.moneymanager.domain.model.MoneyGroup
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.nlp.AiPendingAction
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
+import ai.moneymanager.service.SubscriptionLimitsService
 import ai.moneymanager.service.UserInfoService
 import org.springframework.stereotype.Component
 
@@ -21,6 +23,7 @@ private const val LIST_LINE_SEPARATOR = "\n"
 class GroupAiHandler(
     private val groupService: GroupService,
     private val userInfoService: UserInfoService,
+    private val subscriptionLimitsService: SubscriptionLimitsService,
     private val localizationService: LocalizationService
 ) : AiDomainHandler {
 
@@ -132,14 +135,21 @@ class GroupAiHandler(
         context: MoneyManagerContext,
         lang: String?
     ): String {
-        val created = groupService.createGroup(userId, action.name)
-            ?: return localizationService.t("ai.group.create.duplicate", lang, escapeHtml(action.name))
-        refreshUserInfo(userId, context)
-        val inviteAnchor = link(
-            localizationService.t("ai.group.invite_link_label", lang),
-            buildInviteLink(created.inviteToken)
-        )
-        return localizationService.t("ai.group.created", lang, escapeHtml(created.name), inviteAnchor)
+        val hasPaidSubscription = context.userInfo?.hasActivePaidSubscription() == true
+        val maxOwnedSharedGroups = subscriptionLimitsService.maxOwnedSharedGroups(hasPaidSubscription)
+
+        return when (val result = groupService.createGroup(userId, action.name, maxOwnedSharedGroups = maxOwnedSharedGroups)) {
+            is GroupCreationResult.Duplicate -> localizationService.t("ai.group.create.duplicate", lang, escapeHtml(action.name))
+            is GroupCreationResult.LimitReached -> localizationService.t("ai.group.create.limit_reached", lang, result.limit)
+            is GroupCreationResult.Created -> {
+                refreshUserInfo(userId, context)
+                val inviteAnchor = link(
+                    localizationService.t("ai.group.invite_link_label", lang),
+                    buildInviteLink(result.group.inviteToken)
+                )
+                localizationService.t("ai.group.created", lang, escapeHtml(result.group.name), inviteAnchor)
+            }
+        }
     }
 
     private fun executeDelete(

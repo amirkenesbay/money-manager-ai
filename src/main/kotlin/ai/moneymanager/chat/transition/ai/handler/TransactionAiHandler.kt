@@ -11,6 +11,7 @@ import ai.moneymanager.chat.transition.ai.resolveOperationDate
 import ai.moneymanager.chat.transition.ai.stripLeadingNonLetters
 import ai.moneymanager.chat.reply.common.resolveCurrency
 import ai.moneymanager.domain.model.Category
+import ai.moneymanager.domain.model.CategoryCreationResult
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.MoneyManagerContext
@@ -20,6 +21,7 @@ import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.FinanceOperationService
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
+import ai.moneymanager.service.SubscriptionLimitsService
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
@@ -35,6 +37,7 @@ class TransactionAiHandler(
     private val categoryService: CategoryService,
     private val financeOperationService: FinanceOperationService,
     private val groupService: GroupService,
+    private val subscriptionLimitsService: SubscriptionLimitsService,
     private val localizationService: LocalizationService
 ) : AiDomainHandler {
 
@@ -77,7 +80,7 @@ class TransactionAiHandler(
         if (action !is AiPendingAction.TransactionAction) return localizationService.t("ai.error.unknown_command", lang)
         return when (action) {
             is AiPendingAction.TransactionAction.Add -> executeAdd(action, lang)
-            is AiPendingAction.TransactionAction.AddWithNewCategory -> executeAddWithNewCategory(action, lang)
+            is AiPendingAction.TransactionAction.AddWithNewCategory -> executeAddWithNewCategory(action, context, lang)
         }
     }
 
@@ -157,20 +160,27 @@ class TransactionAiHandler(
 
     private fun executeAddWithNewCategory(
         action: AiPendingAction.TransactionAction.AddWithNewCategory,
+        context: MoneyManagerContext,
         lang: String?
     ): String {
-        val (category, isNew) = ensureCategory(action) ?: return localizationService.t(NO_CATEGORY_ID_KEY, lang)
-        return saveAndReport(
-            groupId = action.groupId,
-            creatorId = action.creatorId,
-            type = action.type,
-            amount = action.amount,
-            category = category,
-            operationDate = action.operationDate,
-            description = action.description,
-            isNewCategory = isNew,
-            lang = lang
-        )
+        val hasPaidSubscription = context.userInfo?.hasActivePaidSubscription() == true
+        val maxPerType = subscriptionLimitsService.maxCategoriesPerType(hasPaidSubscription)
+
+        return when (val ensured = ensureCategory(action, maxPerType)) {
+            is EnsureCategoryResult.LimitReached -> localizationService.t("ai.category.create.limit_reached", lang, ensured.limit)
+            is EnsureCategoryResult.NoId -> localizationService.t(NO_CATEGORY_ID_KEY, lang)
+            is EnsureCategoryResult.Resolved -> saveAndReport(
+                groupId = action.groupId,
+                creatorId = action.creatorId,
+                type = action.type,
+                amount = action.amount,
+                category = ensured.category,
+                operationDate = action.operationDate,
+                description = action.description,
+                isNewCategory = ensured.isNew,
+                lang = lang
+            )
+        }
     }
 
     private fun saveAndReport(
@@ -200,20 +210,34 @@ class TransactionAiHandler(
         return successMessage(type, category, amount, description, currency, lang, isNewCategory)
     }
 
+    private sealed class EnsureCategoryResult {
+        data class Resolved(val category: Category, val isNew: Boolean) : EnsureCategoryResult()
+        data class LimitReached(val limit: Int) : EnsureCategoryResult()
+        object NoId : EnsureCategoryResult()
+    }
+
     private fun ensureCategory(
-        action: AiPendingAction.TransactionAction.AddWithNewCategory
-    ): Pair<Category, Boolean>? {
-        val created = categoryService.createCategory(
+        action: AiPendingAction.TransactionAction.AddWithNewCategory,
+        maxCategoriesPerType: Int
+    ): EnsureCategoryResult {
+        val result = categoryService.createCategory(
             name = action.suggestedCategoryName,
             icon = action.suggestedCategoryIcon,
             type = action.type,
-            groupId = action.groupId
+            groupId = action.groupId,
+            maxCategoriesPerType = maxCategoriesPerType
         )
-        if (created != null) return created to true
+        if (result is CategoryCreationResult.Created) return EnsureCategoryResult.Resolved(result.category, isNew = true)
+
         val existing = categoryService.getCategoriesByGroupAndType(action.groupId, action.type)
             .firstOrNull { matchesEntityName(it.name, action.suggestedCategoryName) }
-            ?: return null
-        return existing to false
+        if (existing != null) return EnsureCategoryResult.Resolved(existing, isNew = false)
+
+        return if (result is CategoryCreationResult.LimitReached) {
+            EnsureCategoryResult.LimitReached(result.limit)
+        } else {
+            EnsureCategoryResult.NoId
+        }
     }
 
     private fun successMessage(

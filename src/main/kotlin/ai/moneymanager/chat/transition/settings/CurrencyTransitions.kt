@@ -6,6 +6,7 @@ import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.service.GroupService
+import ai.moneymanager.service.SubscriptionLimitsService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType
 
@@ -21,10 +22,11 @@ private enum class CurrencyChoice(
 }
 
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.currencyDialogTransitions(
-    groupService: GroupService
+    groupService: GroupService,
+    subscriptionLimitsService: SubscriptionLimitsService
 ) {
     CurrencyChoice.entries.forEach { choice ->
-        selectCurrencyTransition(choice, groupService)
+        selectCurrencyTransition(choice, groupService, subscriptionLimitsService)
     }
     routeToSettingsAfterCurrencyTransition()
     routeToOnboardingAfterCurrencyTransition()
@@ -32,7 +34,8 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.currencyDialogTransiti
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.selectCurrencyTransition(
     choice: CurrencyChoice,
-    groupService: GroupService
+    groupService: GroupService,
+    subscriptionLimitsService: SubscriptionLimitsService
 ) {
     transition {
         name = "Select currency: ${choice.currency}"
@@ -45,7 +48,9 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.selectCurrency
         action {
             if (context.currencyForPendingGroupCreation) {
                 val name = context.groupNameInput.orEmpty()
-                context.handleGroupCreated(groupService.createGroup(user.id, name, choice.currency))
+                val hasPaidSubscription = context.userInfo?.hasActivePaidSubscription() == true
+                val maxOwnedSharedGroups = subscriptionLimitsService.maxOwnedSharedGroups(hasPaidSubscription)
+                context.handleGroupCreated(groupService.createGroup(user.id, name, choice.currency, maxOwnedSharedGroups))
             } else {
                 val activeGroup = groupService.getActiveGroup(user.id)
                 if (activeGroup?.id != null) {

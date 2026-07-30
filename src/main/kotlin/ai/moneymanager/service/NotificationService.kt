@@ -1,6 +1,7 @@
 package ai.moneymanager.service
 
 import ai.moneymanager.domain.model.FrequencyType
+import ai.moneymanager.domain.model.NotificationCreationResult
 import ai.moneymanager.repository.NotificationRepository
 import ai.moneymanager.repository.entity.NotificationEntity
 import org.bson.types.ObjectId
@@ -31,8 +32,16 @@ class NotificationService(
         dayOfWeek: DayOfWeek?,
         dayOfMonth: Int?,
         monthOfYear: Int?,
-        userTimezone: String
-    ): NotificationEntity {
+        userTimezone: String,
+        maxActiveNotifications: Int? = null
+    ): NotificationCreationResult {
+        if (maxActiveNotifications != null) {
+            val activeCount = notificationRepository.countByTelegramUserIdAndIsActiveTrue(telegramUserId)
+            if (activeCount >= maxActiveNotifications) {
+                return NotificationCreationResult.LimitReached(maxActiveNotifications)
+            }
+        }
+
         val nextFireTime = computeNextFireTime(
             frequencyType, customInterval, hour, minute,
             dayOfWeek, dayOfMonth, monthOfYear, userTimezone
@@ -54,7 +63,7 @@ class NotificationService(
 
         val saved = notificationRepository.save(entity)
         log.info("Created notification '{}' for user {}, nextFireTime={}", name, telegramUserId, nextFireTime)
-        return saved
+        return NotificationCreationResult.Created(saved)
     }
 
     fun getNotifications(telegramUserId: Long): List<NotificationEntity> =

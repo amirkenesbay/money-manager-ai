@@ -14,5 +14,6 @@ interface CategoryRepository : MongoRepository<CategoryEntity, ObjectId> {
     fun findByGroupIdAndTypeOrderByAuditInfoCreatedAtAsc(groupId: ObjectId, type: CategoryType): List<CategoryEntity>
     fun findByGroupIdAndName(groupId: ObjectId, name: String): CategoryEntity?
     fun findByGroupIdAndNameAndType(groupId: ObjectId, name: String, type: CategoryType): CategoryEntity?
+    fun countByGroupIdAndType(groupId: ObjectId, type: CategoryType): Long
     fun deleteByGroupId(groupId: ObjectId): Long
 }

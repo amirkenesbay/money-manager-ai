@@ -1,6 +1,7 @@
 package ai.moneymanager.service
 
 import ai.moneymanager.domain.model.Currency
+import ai.moneymanager.domain.model.GroupCreationResult
 import ai.moneymanager.domain.model.GroupType
 import ai.moneymanager.domain.model.MoneyGroup
 import ai.moneymanager.repository.MoneyGroupRepository
@@ -28,13 +29,22 @@ class GroupService(
         private const val MAX_TOKEN_RETRIES = 10
     }
 
-    fun createGroup(ownerId: Long, name: String, currency: Currency = Currency.DEFAULT): MoneyGroup? {
+    fun createGroup(ownerId: Long, name: String, currency: Currency = Currency.DEFAULT, maxOwnedSharedGroups: Int? = null): GroupCreationResult {
         if (groupRepository.findByOwnerIdAndName(ownerId, name) != null) {
-            return null
+            return GroupCreationResult.Duplicate
         }
-        return saveGroupAndUpdateUser(name, ownerId, GroupType.SHARED, currency) { existing, newId ->
+
+        if (maxOwnedSharedGroups != null) {
+            val ownedCount = groupRepository.countByOwnerIdAndType(ownerId, GroupType.SHARED)
+            if (ownedCount >= maxOwnedSharedGroups) {
+                return GroupCreationResult.LimitReached(maxOwnedSharedGroups)
+            }
+        }
+
+        val group = saveGroupAndUpdateUser(name, ownerId, GroupType.SHARED, currency) { existing, newId ->
             existing + newId
         }
+        return GroupCreationResult.Created(group)
     }
 
     fun createPersonalGroup(userId: Long, name: String, language: String, currency: Currency = Currency.DEFAULT): MoneyGroup {

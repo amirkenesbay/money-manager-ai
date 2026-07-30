@@ -75,7 +75,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createGroupTransitions
         condition {
             from = MoneyManagerState.CURRENCY_SELECT
             eventType = EventType.TRIGGERED
-            guard { context.currencyForPendingGroupCreation && !context.groupNameDuplicateError }
+            guard { context.currencyForPendingGroupCreation && !context.groupNameDuplicateError && context.groupCreationLimitReached == null }
         }
         action {
             context.currencyForPendingGroupCreation = false
@@ -89,6 +89,19 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createGroupTransitions
             from = MoneyManagerState.CURRENCY_SELECT
             eventType = EventType.TRIGGERED
             guard { context.currencyForPendingGroupCreation && context.groupNameDuplicateError }
+        }
+        action {
+            context.currencyForPendingGroupCreation = false
+        }
+        then { to = MoneyManagerState.GROUP_CREATE_ENTER_NAME }
+    }
+
+    transition {
+        name = "Group creation limit reached"
+        condition {
+            from = MoneyManagerState.CURRENCY_SELECT
+            eventType = EventType.TRIGGERED
+            guard { context.currencyForPendingGroupCreation && context.groupCreationLimitReached != null }
         }
         action {
             context.currencyForPendingGroupCreation = false

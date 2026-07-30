@@ -8,13 +8,16 @@ import ai.moneymanager.domain.model.FrequencyType
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
+import ai.moneymanager.domain.model.NotificationCreationResult
 import ai.moneymanager.domain.model.QuickTemplates
 import ai.moneymanager.service.NotificationService
+import ai.moneymanager.service.SubscriptionLimitsService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType
 
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTransitions(
-    notificationService: NotificationService
+    notificationService: NotificationService,
+    subscriptionLimitsService: SubscriptionLimitsService
 ) {
     // ========================
     // STEP 0: Icon input (optional)
@@ -448,7 +451,10 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
         }
         action {
             val timezone = context.userInfo?.timezone ?: "UTC"
-            notificationService.createNotification(
+            val hasPaidSubscription = context.userInfo?.hasActivePaidSubscription() == true
+            val maxActiveNotifications = subscriptionLimitsService.maxActiveNotifications(hasPaidSubscription)
+
+            val result = notificationService.createNotification(
                 telegramUserId = user.id,
                 name = context.notifNameInput!!,
                 icon = context.notifIconInput,
@@ -459,8 +465,12 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
                 dayOfWeek = context.notifDayOfWeek,
                 dayOfMonth = context.notifDayOfMonth,
                 monthOfYear = context.notifMonthOfYear,
-                userTimezone = timezone
+                userTimezone = timezone,
+                maxActiveNotifications = maxActiveNotifications
             )
+            if (result is NotificationCreationResult.LimitReached) {
+                context.notifLimitReached = result.limit
+            }
             context.clearNotificationInput()
             context.notifications = notificationService.getNotifications(user.id)
         }

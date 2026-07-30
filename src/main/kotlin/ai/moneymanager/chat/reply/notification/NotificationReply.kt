@@ -105,9 +105,15 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.notificationListReply
             val notifications = context.notifications
             val title = localizationService.t("notification.list.title", lang)
 
+            val limitReached = context.notifLimitReached
+            val limitBanner = if (limitReached != null) {
+                context.notifLimitReached = null
+                localizationService.t("notification.create.error.limit_reached", lang, limitReached) + "\n\n"
+            } else ""
+
             text = if (notifications.isEmpty()) {
                 """
-                    |$title
+                    |$limitBanner$title
                     |
                     |${localizationService.t("notification.list.empty", lang)}
                 """.trimMargin()
@@ -120,7 +126,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.notificationListReply
                 }.joinToString("\n\n")
 
                 """
-                    |$title
+                    |$limitBanner$title
                     |
                     |$list
                 """.trimMargin()

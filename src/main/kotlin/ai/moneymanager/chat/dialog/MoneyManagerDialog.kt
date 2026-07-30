@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.dialog
 
+import ai.moneymanager.chat.transition.admin.adminDialogTransitions
 import ai.moneymanager.chat.transition.ai.AiActionExecutor
 import ai.moneymanager.chat.transition.ai.AiRequestHandler
 import ai.moneymanager.chat.transition.ai.aiDialogTransitions
@@ -20,7 +21,9 @@ import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.domain.model.PersistentAction
 import ai.moneymanager.domain.model.StartParameters
+import ai.moneymanager.service.AdminService
 import ai.moneymanager.service.CategoryService
+import ai.moneymanager.service.SubscriptionLimitsService
 import ai.moneymanager.service.FinanceHistoryService
 import ai.moneymanager.service.FinanceOperationService
 import ai.moneymanager.service.FinanceReportService
@@ -32,6 +35,7 @@ import ai.moneymanager.service.ADD_INCOME_BUTTON_TEXT
 import ai.moneymanager.service.AI_BUTTON_TEXT
 import ai.moneymanager.service.MENU_BUTTON_TEXT
 import ai.moneymanager.service.NotificationService
+import ai.moneymanager.service.PRO_MODE_BUTTON_TEXT
 import ai.moneymanager.service.PersistentMenuKeyboardService
 import ai.moneymanager.service.REPORT_BUTTON_TEXT
 import ai.moneymanager.service.SETTINGS_BUTTON_TEXT
@@ -55,7 +59,9 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
     localizationService: LocalizationService,
     aiActionExecutor: AiActionExecutor,
     aiRequestHandler: AiRequestHandler,
-    persistentMenuKeyboardService: PersistentMenuKeyboardService
+    persistentMenuKeyboardService: PersistentMenuKeyboardService,
+    adminService: AdminService,
+    subscriptionLimitsService: SubscriptionLimitsService
 ) {
     dialog {
         name = "Money Manager Dialog"
@@ -64,13 +70,14 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
         joinGroupDialogTransitions(groupService, userInfoService, financeOperationService, localizationService)
         settingsDialogTransitions()
         languageDialogTransitions(userInfoService, groupService, localizationService)
-        currencyDialogTransitions(groupService)
+        currencyDialogTransitions(groupService, subscriptionLimitsService)
         balanceDialogTransitions(groupService, userInfoService, financeOperationService)
         groupDialogTransitions(groupService, categoryService, userInfoService, localizationService)
-        categoryDialogTransitions(categoryService, groupService, localizationService)
-        financeDialogTransitions(categoryService, financeOperationService, financeHistoryService, financeReportService, userInfoService, groupService)
-        notificationDialogTransitions(notificationService, userInfoService)
+        categoryDialogTransitions(categoryService, groupService, localizationService, subscriptionLimitsService)
+        financeDialogTransitions(categoryService, financeOperationService, financeHistoryService, financeReportService, userInfoService, groupService, subscriptionLimitsService, localizationService)
+        notificationDialogTransitions(notificationService, userInfoService, subscriptionLimitsService)
         aiDialogTransitions(aiActionExecutor, aiRequestHandler, localizationService)
+        adminDialogTransitions(adminService, userInfoService)
         // Legacy NLP disabled for now
         // nlpDialogTransitions(commandParserService, groupService, userInfoService, telegramFileService, geminiService)
     }
@@ -83,6 +90,7 @@ private val PERSISTENT_BUTTON_ACTIONS: Map<String, PersistentAction> = mapOf(
     REPORT_BUTTON_TEXT to PersistentAction.OPEN_REPORT,
     ADD_INCOME_BUTTON_TEXT to PersistentAction.ADD_INCOME,
     ADD_EXPENSE_BUTTON_TEXT to PersistentAction.ADD_EXPENSE,
+    PRO_MODE_BUTTON_TEXT to PersistentAction.OPEN_PRO_INFO,
 )
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyManagerDialogTransition(
@@ -282,6 +290,30 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
 
         then {
             to = MoneyManagerState.FINANCE_REPORT_MENU
+        }
+    }
+
+    transition {
+        name = "Open PRO info from persistent button"
+
+        condition {
+            from = MoneyManagerState.STARTED
+            eventType = EventType.TRIGGERED
+
+            guard {
+                context.pendingGroup == null &&
+                    context.userInfo?.language != null &&
+                    context.userInfo?.onboardingCompleted == true &&
+                    context.pendingPersistentAction == PersistentAction.OPEN_PRO_INFO
+            }
+        }
+
+        action {
+            context.pendingPersistentAction = null
+        }
+
+        then {
+            to = MoneyManagerState.PRO_INFO
         }
     }
 

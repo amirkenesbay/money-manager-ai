@@ -1,6 +1,7 @@
 package ai.moneymanager.service
 
 import ai.moneymanager.domain.model.Category
+import ai.moneymanager.domain.model.CategoryCreationResult
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.repository.CategoryRepository
 import ai.moneymanager.repository.entity.CategoryEntity
@@ -31,10 +32,15 @@ class CategoryService(
 
     private val log = LoggerFactory.getLogger(CategoryService::class.java)
 
-    fun createCategory(name: String, icon: String?, type: CategoryType, groupId: ObjectId): Category? {
+    fun createCategory(name: String, icon: String?, type: CategoryType, groupId: ObjectId, maxCategoriesPerType: Int): CategoryCreationResult {
         val existingCategory = categoryRepository.findByGroupIdAndNameAndType(groupId, name, type)
         if (existingCategory != null) {
-            return null
+            return CategoryCreationResult.Duplicate
+        }
+
+        val currentCount = categoryRepository.countByGroupIdAndType(groupId, type)
+        if (currentCount >= maxCategoriesPerType.toLong()) {
+            return CategoryCreationResult.LimitReached(maxCategoriesPerType)
         }
 
         val categoryEntity = CategoryEntity(
@@ -45,7 +51,7 @@ class CategoryService(
         )
 
         val savedCategory = categoryRepository.save(categoryEntity)
-        return mapToModel(savedCategory)
+        return CategoryCreationResult.Created(mapToModel(savedCategory))
     }
 
     fun getCategoriesByGroup(groupId: ObjectId): List<Category> {

@@ -3,6 +3,7 @@ package ai.moneymanager.chat.transition.ai.handler
 import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.chat.transition.ai.matchesEntityName
 import ai.moneymanager.domain.model.Category
+import ai.moneymanager.domain.model.CategoryCreationResult
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
@@ -10,12 +11,14 @@ import ai.moneymanager.domain.model.nlp.AiPendingAction
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.LocalizationService
+import ai.moneymanager.service.SubscriptionLimitsService
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Component
 
 @Component
 class CategoryAiHandler(
     private val categoryService: CategoryService,
+    private val subscriptionLimitsService: SubscriptionLimitsService,
     private val localizationService: LocalizationService
 ) : AiDomainHandler {
 
@@ -150,21 +153,24 @@ class CategoryAiHandler(
     ): String {
         val groupId = context.userInfo?.activeGroupId
             ?: return localizationService.t("ai.error.no_active_group", lang)
-        val created = categoryService.createCategory(action.name, action.icon, action.type, groupId)
-            ?: return localizationService.t(
-                "ai.category.create.duplicate",
-                lang,
-                escapeHtml(action.name),
-                typeLabel(action.type, lang)
+        val hasPaidSubscription = context.userInfo?.hasActivePaidSubscription() == true
+        val maxPerType = subscriptionLimitsService.maxCategoriesPerType(hasPaidSubscription)
+
+        return when (val result = categoryService.createCategory(action.name, action.icon, action.type, groupId, maxPerType)) {
+            is CategoryCreationResult.Duplicate -> localizationService.t(
+                "ai.category.create.duplicate", lang, escapeHtml(action.name), typeLabel(action.type, lang)
             )
-        val iconPart = created.icon?.let { "$it " } ?: ""
-        return localizationService.t(
-            "ai.category.create.success",
-            lang,
-            escapeHtml(iconPart),
-            escapeHtml(created.name),
-            typeLabel(created.type, lang)
-        )
+            is CategoryCreationResult.LimitReached -> localizationService.t(
+                "ai.category.create.limit_reached", lang, result.limit
+            )
+            is CategoryCreationResult.Created -> {
+                val iconPart = result.category.icon?.let { "$it " } ?: ""
+                localizationService.t(
+                    "ai.category.create.success", lang,
+                    escapeHtml(iconPart), escapeHtml(result.category.name), typeLabel(result.category.type, lang)
+                )
+            }
+        }
     }
 
     private fun executeDelete(action: AiPendingAction.CategoryAction.Delete, lang: String?): String {

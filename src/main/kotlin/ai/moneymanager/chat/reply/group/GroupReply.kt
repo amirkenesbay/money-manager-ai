@@ -53,10 +53,14 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupCreateEnterNameR
 
         message {
             val lang = context.userInfo?.language
-            val errorText = if (context.groupNameDuplicateError) {
-                localizationService.t("group.create.error.duplicate", lang, context.groupNameInput ?: "")
-            } else ""
+            val limitReached = context.groupCreationLimitReached
+            val errorText = when {
+                context.groupNameDuplicateError -> localizationService.t("group.create.error.duplicate", lang, context.groupNameInput ?: "")
+                limitReached != null -> localizationService.t("group.create.error.limit_reached", lang, limitReached)
+                else -> ""
+            }
             context.groupNameDuplicateError = false
+            context.groupCreationLimitReached = null
 
             val title = localizationService.t("group.create.title", lang)
             val cancelText = localizationService.t("common.cancel", lang)
