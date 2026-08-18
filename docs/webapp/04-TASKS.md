@@ -8,15 +8,18 @@
 
 ## Фаза 0 — Подготовка
 
-### W-001 · Смёржить master в ветку · TODO
-Ветка `feature/TELEGRAM-WEBAPP` отстаёт на 29 коммитов (валюты, подписка, лимиты, persistent-кнопки).
+### W-001 · Смёржить master в ветку · DONE
+Ветка `feature/TELEGRAM-WEBAPP` отставала на 29 коммитов (валюты, подписка, лимиты, persistent-кнопки).
 
 **Критерии приёмки**
-- [ ] `master` влит в `feature/TELEGRAM-WEBAPP`, конфликты разрешены
-- [ ] `./gradlew build` проходит
-- [ ] Существующий `TelegramInitDataValidatorTest` зелёный
+- [x] `master` влит в `feature/TELEGRAM-WEBAPP`, конфликты разрешены
+- [x] `./gradlew build` проходит
+- [x] Существующий `TelegramInitDataValidatorTest` зелёный
 
 **Зависимости:** нет
+
+**Результат:** мёрж-коммит `6f460ec`, конфликтов не было (автомёрж recursive).
+Сборка зелёная, 5 тестов валидатора прошли. Ветка синхронизирована с master.
 
 ---
 
