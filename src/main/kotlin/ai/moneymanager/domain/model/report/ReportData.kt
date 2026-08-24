@@ -1,6 +1,8 @@
 package ai.moneymanager.domain.model.report
 
+import ai.moneymanager.domain.model.CategoryType
 import java.math.BigDecimal
+import java.time.LocalDate
 
 data class ComparisonReport(
     val previousMonthName: String,
@@ -81,4 +83,32 @@ data class CategoryMonthData(
     val label: String,
     val total: BigDecimal,
     val count: Int
+)
+
+/**
+ * История операций за период: сами операции плюс посчитанные по ним итоги.
+ * Telegram-рендер и REST API строятся поверх одних и тех же чисел.
+ */
+data class HistoryReport(
+    val startDate: LocalDate,
+    val endDate: LocalDate,
+    val operations: List<HistoryOperation>,
+    val incomeByCategory: List<CategoryTotal>,
+    val expenseByCategory: List<CategoryTotal>,
+    val totalIncome: BigDecimal,
+    val totalExpense: BigDecimal,
+    val isEmpty: Boolean
+) {
+    val balance: BigDecimal get() = totalIncome.subtract(totalExpense)
+}
+
+data class HistoryOperation(
+    val id: String?,
+    val type: CategoryType,
+    val amount: BigDecimal,
+    val categoryName: String,
+    val categoryIcon: String,
+    val operationDate: LocalDate,
+    val description: String?,
+    val creatorId: Long
 )

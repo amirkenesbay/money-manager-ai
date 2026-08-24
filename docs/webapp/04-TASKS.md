@@ -23,16 +23,25 @@
 
 ---
 
-### W-002 · Разделить расчёт и форматирование в отчётах · TODO
-Сейчас `FinanceReportService.generate*Report()` возвращают Telegram-HTML. Данные для API взять неоткуда.
+### W-002 · Разделить расчёт и форматирование в отчётах · DONE
+`FinanceReportService.generate*Report()` возвращали Telegram-HTML. Данные для API взять было неоткуда.
 
 **Критерии приёмки**
-- [ ] Методы `buildComparisonReport`, `buildAnalyticsReport`, `buildMembersReport`, `buildCategoryReport` стали публичными
-- [ ] `FinanceHistoryService`: расчёт истории (итоги, суммы по категориям) выделен в публичный метод, возвращающий data-класс
-- [ ] Существующие `generate*` методы работают через те же build-методы — расчёт не продублирован
-- [ ] Бот отображает отчёты и историю ровно как раньше (проверено вручную)
+- [x] Методы `buildComparisonReport`, `buildAnalyticsReport`, `buildMembersReport`, `buildCategoryReport` стали публичными
+- [x] `FinanceHistoryService`: расчёт истории (итоги, суммы по категориям) выделен в публичный метод, возвращающий data-класс
+- [x] Существующие `generate*` методы работают через те же build-методы — расчёт не продублирован
+- [x] Бот отображает отчёты и историю ровно как раньше
 
 **Зависимости:** W-001
+
+**Результат:**
+- Новые модели `HistoryReport` и `HistoryOperation` в `ReportData.kt`; `balance` — вычисляемое свойство.
+- `FinanceHistoryService.buildHistoryReport()` считает данные, `generateReport()` рендерит поверх него.
+  `sumAmounts` вызывается только в build-пути — дублирования расчёта нет.
+- 6 тестов на расчётную часть (`FinanceHistoryServiceTest`): разделение доход/расход, сортировка
+  категорий, пустой период, фильтр по типу, фильтр по категории и описанию, иконка по умолчанию.
+- Сохранность рендера подтверждена: шаблоны строк, разделители, `padEnd`, `progressBar`
+  и условия пропуска пустых секций в diff не изменились.
 
 ---
 
