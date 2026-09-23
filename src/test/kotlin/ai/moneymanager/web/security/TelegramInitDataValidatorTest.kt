@@ -1,11 +1,11 @@
 package ai.moneymanager.web.security
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import ai.moneymanager.web.testJsonMapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class TelegramInitDataValidatorTest {
-    private val validator = TelegramInitDataValidator(TEST_BOT_TOKEN, ObjectMapper())
+    private val validator = TelegramInitDataValidator(TEST_BOT_TOKEN, testJsonMapper())
 
     @Test
     fun `returns principal for correctly signed initData`() {

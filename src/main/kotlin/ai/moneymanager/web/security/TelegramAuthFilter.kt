@@ -1,23 +1,22 @@
 package ai.moneymanager.web.security
 
-import ai.moneymanager.web.error.ApiError
 import ai.moneymanager.web.error.ApiErrorCode
-import com.fasterxml.jackson.databind.ObjectMapper
+import ai.moneymanager.web.error.ApiErrorFactory
+import ai.moneymanager.web.error.ApiException
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.web.filter.OncePerRequestFilter
+import tools.jackson.databind.json.JsonMapper
 
 private const val AUTH_SCHEME_PREFIX = "tma "
 
-private const val UNAUTHORIZED_MESSAGE = "Valid Telegram initData is required"
-
 class TelegramAuthFilter(
     private val validator: TelegramInitDataValidator,
-    private val objectMapper: ObjectMapper,
+    private val errorFactory: ApiErrorFactory,
+    private val jsonMapper: JsonMapper,
 ) : OncePerRequestFilter() {
     override fun doFilterInternal(
         request: HttpServletRequest,
@@ -40,10 +39,11 @@ class TelegramAuthFilter(
     }
 
     private fun writeUnauthorized(response: HttpServletResponse) {
-        val error = ApiError(code = ApiErrorCode.UNAUTHORIZED, message = UNAUTHORIZED_MESSAGE)
-        response.status = HttpStatus.UNAUTHORIZED.value()
+        val exception = ApiException(ApiErrorCode.UNAUTHORIZED)
+        val error = errorFactory.create(exception, language = null)
+        response.status = exception.code.status.value()
         response.contentType = MediaType.APPLICATION_JSON_VALUE
         response.characterEncoding = Charsets.UTF_8.name()
-        objectMapper.writeValue(response.outputStream, error)
+        jsonMapper.writeValue(response.outputStream, error)
     }
 }

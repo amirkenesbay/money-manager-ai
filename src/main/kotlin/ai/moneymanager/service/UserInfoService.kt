@@ -1,6 +1,7 @@
 package ai.moneymanager.service
 
 import ai.moneymanager.domain.model.SubscriptionTier
+import ai.moneymanager.domain.model.TelegramProfile
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.repository.UserInfoRepository
 import ai.moneymanager.repository.entity.UserInfoEntity
@@ -8,7 +9,6 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.telegram.telegrambots.bots.DefaultAbsSender
 import org.telegram.telegrambots.bots.DefaultBotOptions
-import org.telegram.telegrambots.meta.api.objects.User
 import java.time.LocalDateTime
 
 @Service
@@ -20,17 +20,13 @@ class UserInfoService(
 ) : DefaultAbsSender(
     DefaultBotOptions(), botToken
 ) {
-    fun getUserInfo(telegramUserInfo: User): UserInfo {
-        val userInfo = findUser(telegramUserInfo)
+    fun getOrCreate(profile: TelegramProfile): UserInfo {
+        val existing = userRepository.findUserInfoEntityByTelegramUserId(profile.telegramUserId)
+        if (existing != null) return mapEntity(existing)
 
-        if (userInfo == null) {
-            val entity = userRepository.save(mapUserModel(telegramUserInfo))
-            val newUser = mapEntity(entity)
-            adminNotificationService.notifyNewUser(newUser)
-            return newUser
-        }
-
-        return mapEntity(userInfo)
+        val newUser = mapEntity(userRepository.save(mapUserModel(profile)))
+        adminNotificationService.notifyNewUser(newUser)
+        return newUser
     }
 
     fun getUserInfoByTelegramId(telegramUserId: Long): UserInfo? {
@@ -74,20 +70,13 @@ class UserInfoService(
         return mapEntity(updated)
     }
 
-    private fun findUser(user: User): UserInfoEntity? {
-        if (user.userName != null) {
-            return userRepository.findUserInfoEntityByUsername(user.userName)
-        }
-        return userRepository.findUserInfoEntityByTelegramUserId(user.id)
-    }
-
-    private fun mapUserModel(telegramUserInfo: User): UserInfoEntity {
+    private fun mapUserModel(profile: TelegramProfile): UserInfoEntity {
         return UserInfoEntity(
-            username = telegramUserInfo.userName,
-            firstName = telegramUserInfo.firstName,
-            lastName = telegramUserInfo.lastName,
-            telegramUserId = telegramUserInfo.id,
-            languageCode = telegramUserInfo.languageCode
+            username = profile.username,
+            firstName = profile.firstName,
+            lastName = profile.lastName,
+            telegramUserId = profile.telegramUserId,
+            languageCode = profile.languageCode
         )
     }
 

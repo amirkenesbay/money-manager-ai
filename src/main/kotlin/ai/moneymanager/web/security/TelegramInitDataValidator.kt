@@ -1,9 +1,9 @@
 package ai.moneymanager.web.security
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.json.JsonMapper
 import java.net.URLDecoder
 import java.security.MessageDigest
 import java.time.Instant
@@ -43,7 +43,7 @@ private const val KEY_VALUE_DELIMITER = '='
 @Component
 class TelegramInitDataValidator(
     @param:Value("\${chat-machinist.bot.token}") private val botToken: String,
-    private val objectMapper: ObjectMapper,
+    private val jsonMapper: JsonMapper,
 ) {
     fun validate(initData: String): TelegramPrincipal? {
         val params = parseQuery(initData)
@@ -76,7 +76,7 @@ class TelegramInitDataValidator(
         Instant.now().epochSecond - authDate > INIT_DATA_TTL_SECONDS
 
     private fun parseUser(userJson: String): TelegramPrincipal? {
-        val user = objectMapper.readTree(userJson)
+        val user = jsonMapper.readTree(userJson)
         val userId = user.text(UserField.ID)?.toLongOrNull() ?: return null
         return TelegramPrincipal(
             userId = userId,
@@ -88,7 +88,7 @@ class TelegramInitDataValidator(
     }
 
     private fun JsonNode.text(field: String): String? =
-        get(field)?.takeUnless { it.isNull }?.asText()
+        get(field)?.takeUnless { it.isNull }?.asString()
 
     private fun parseQuery(query: String): Map<String, String> =
         query.split(PARAM_SEPARATOR)

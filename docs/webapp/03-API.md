@@ -32,7 +32,10 @@
 | 409 | Конфликт (дубликат имени категории/группы) |
 | 422 | Упор в лимит тарифа |
 
-Коды ошибок соответствуют существующим sealed-результатам:
+Общие коды: `BAD_REQUEST`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `INTERNAL_ERROR`.
+`message` локализован по языку пользователя; `500` не раскрывает внутренних деталей.
+
+Доменные коды соответствуют существующим sealed-результатам:
 `CATEGORY_DUPLICATE`, `CATEGORY_LIMIT_REACHED`, `GROUP_DUPLICATE`, `GROUP_LIMIT_REACHED`,
 `NOTIFICATION_LIMIT_REACHED`, `PREMIUM_REQUIRED`.
 

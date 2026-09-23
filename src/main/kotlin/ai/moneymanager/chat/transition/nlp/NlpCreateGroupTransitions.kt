@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.transition.nlp
 
+import ai.moneymanager.mapper.toTelegramProfile
 import ai.moneymanager.domain.model.GroupCreationResult
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
@@ -27,7 +28,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.nlpCreateGroupTransiti
             when (val result = groupService.createGroup(user.id, groupName)) {
                 is GroupCreationResult.Created -> {
                     context.currentGroup = result.group
-                    context.userInfo = userInfoService.getUserInfo(user)
+                    context.userInfo = userInfoService.getOrCreate(user.toTelegramProfile())
                     context.groupNameDuplicateError = false
                     log.info("✅ Group created via NLP: ${result.group.name}")
                 }

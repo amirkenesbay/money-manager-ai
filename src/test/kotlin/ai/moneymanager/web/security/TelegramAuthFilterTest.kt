@@ -2,7 +2,9 @@ package ai.moneymanager.web.security
 
 import ai.moneymanager.web.error.ApiError
 import ai.moneymanager.web.error.ApiErrorCode
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import ai.moneymanager.web.error.ApiErrorFactory
+import ai.moneymanager.web.testJsonMapper
+import ai.moneymanager.web.testLocalizationService
 import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletRequest
 import jakarta.servlet.ServletResponse
@@ -15,10 +17,11 @@ import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
 
 class TelegramAuthFilterTest {
-    private val objectMapper = jacksonObjectMapper()
+    private val jsonMapper = testJsonMapper()
     private val filter = TelegramAuthFilter(
-        TelegramInitDataValidator(TEST_BOT_TOKEN, objectMapper),
-        objectMapper,
+        TelegramInitDataValidator(TEST_BOT_TOKEN, testJsonMapper()),
+        ApiErrorFactory(testLocalizationService()),
+        jsonMapper,
     )
 
     private val request = MockHttpServletRequest("GET", "/api/v1/me")
@@ -85,9 +88,9 @@ class TelegramAuthFilterTest {
         filter.doFilter(request, response, chain)
 
         assertThat(response.contentType).startsWith(MediaType.APPLICATION_JSON_VALUE)
-        val error = objectMapper.readValue(response.contentAsByteArray, ApiError::class.java)
+        val error = jsonMapper.readValue(response.contentAsByteArray, ApiError::class.java)
         assertThat(error.code).isEqualTo(ApiErrorCode.UNAUTHORIZED)
-        assertThat(error.message).isNotBlank()
+        assertThat(error.message).isEqualTo(testLocalizationService().t(ApiErrorCode.UNAUTHORIZED.messageKey, null))
     }
 
     private fun withTmaAuthorization(initData: String) {

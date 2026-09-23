@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.dialog
 
+import ai.moneymanager.mapper.toTelegramProfile
 import ai.moneymanager.chat.transition.admin.adminDialogTransitions
 import ai.moneymanager.chat.transition.ai.AiActionExecutor
 import ai.moneymanager.chat.transition.ai.AiRequestHandler
@@ -129,7 +130,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
 
         action {
             context.isActive = true
-            context.userInfo = userInfoService.getUserInfo(user)
+            context.userInfo = userInfoService.getOrCreate(user.toTelegramProfile())
             context.pendingPersistentAction = PERSISTENT_BUTTON_ACTIONS[update.message?.text]
             context.financeOperationType = null
             update.message?.chatId?.let { persistentMenuKeyboardService.attach(it) }
@@ -451,7 +452,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.joinGroupDialo
                 context.currentGroup = joinedGroup
 
                 userInfoService.markOnboardingCompleted(userId)
-                val updatedUserInfo = userInfoService.getUserInfo(user)
+                val updatedUserInfo = userInfoService.getOrCreate(user.toTelegramProfile())
                 context.userInfo = updatedUserInfo
 
                 log.info("User joined group: groupId=${joinedGroup?.id}, activeGroupId=${updatedUserInfo.activeGroupId}")

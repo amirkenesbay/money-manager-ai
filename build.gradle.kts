@@ -6,6 +6,7 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"
     kotlin("jvm") version "2.2.21"
     kotlin("plugin.spring") version "2.2.21"
+    kotlin("kapt") version "2.2.21"
 }
 
 group = "ai.moneymanager"
@@ -68,12 +69,15 @@ dependencies {
 
     // Jackson Kotlin module for data class deserialization
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("tools.jackson.module:jackson-module-kotlin")
 
     // Transliteration library
     implementation("com.github.sps.junidecode:junidecode:0.3")
 
-    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+    kapt("org.springframework.boot:spring-boot-configuration-processor")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+    testImplementation(kotlin("test"))
 }
 
 tasks.withType<KotlinCompile> {
