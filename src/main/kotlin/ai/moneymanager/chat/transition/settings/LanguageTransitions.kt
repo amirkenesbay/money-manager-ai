@@ -3,13 +3,9 @@ package ai.moneymanager.chat.transition.settings
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
-import ai.moneymanager.service.GroupService
-import ai.moneymanager.service.LocalizationService
-import ai.moneymanager.service.UserInfoService
+import ai.moneymanager.service.OnboardingService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType
-
-private const val PERSONAL_GROUP_NAME_KEY = "group.default.personal_name"
 
 private enum class LanguageChoice(
     val buttonType: MoneyManagerButtonType,
@@ -21,12 +17,10 @@ private enum class LanguageChoice(
 }
 
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.languageDialogTransitions(
-    userInfoService: UserInfoService,
-    groupService: GroupService,
-    localizationService: LocalizationService
+    onboardingService: OnboardingService
 ) {
     LanguageChoice.entries.forEach { choice ->
-        selectLanguageTransition(choice, userInfoService, groupService, localizationService)
+        selectLanguageTransition(choice, onboardingService)
     }
     routeToSettingsAfterLanguageTransition()
     routeToMenuAfterLanguageTransition()
@@ -35,9 +29,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.languageDialogTransiti
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.selectLanguageTransition(
     choice: LanguageChoice,
-    userInfoService: UserInfoService,
-    groupService: GroupService,
-    localizationService: LocalizationService
+    onboardingService: OnboardingService
 ) {
     transition {
         name = "Select language: ${choice.code}"
@@ -48,19 +40,10 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.selectLanguage
         }
 
         action {
-            val updated = userInfoService.updateLanguage(user.id, choice.code)
+            val updated = onboardingService.selectLanguage(user.id, choice.code)
             if (updated != null) {
                 context.userInfo = updated
                 context.languageJustChanged = true
-
-                if (groupService.getUserGroups(user.id).isEmpty()) {
-                    val personalName = localizationService.t(PERSONAL_GROUP_NAME_KEY, choice.code)
-                    groupService.createPersonalGroup(user.id, personalName, choice.code)
-                    val refreshed = userInfoService.getUserInfoByTelegramId(user.id)
-                    if (refreshed != null) {
-                        context.userInfo = refreshed
-                    }
-                }
             }
         }
 

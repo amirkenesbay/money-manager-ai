@@ -6,14 +6,14 @@ import ai.moneymanager.chat.reply.common.dateFormatter
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
-import ai.moneymanager.service.AiRateLimitService
 import ai.moneymanager.service.LocalizationService
+import ai.moneymanager.service.SubscriptionLimitsService
 import kz.rmr.chatmachinist.api.reply.ParseMode
 import kz.rmr.chatmachinist.api.reply.RepliesBuilder
 
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.subscriptionViewReply(
     localizationService: LocalizationService,
-    aiRateLimitService: AiRateLimitService
+    subscriptionLimitsService: SubscriptionLimitsService
 ) {
     reply {
         state = MoneyManagerState.SUBSCRIPTION_VIEW
@@ -27,11 +27,11 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.subscriptionViewReply
             val title = localizationService.t("subscription.view.title", lang)
             val body = if (hasPaidSubscription) {
                 val expiresAt = userInfo?.subscriptionExpiresAt?.toLocalDate()?.format(dateFormatter).orEmpty()
-                localizationService.t("subscription.view.paid", lang, expiresAt, aiRateLimitService.paidDailyLimit)
+                localizationService.t("subscription.view.paid", lang, expiresAt, subscriptionLimitsService.maxAiRequestsPerDay(hasPaidSubscription = true))
             } else {
                 val freeBody = localizationService.t(
                     "subscription.view.free", lang,
-                    aiRateLimitService.freeDailyLimit, aiRateLimitService.paidDailyLimit
+                    subscriptionLimitsService.maxAiRequestsPerDay(hasPaidSubscription = false), subscriptionLimitsService.maxAiRequestsPerDay(hasPaidSubscription = true)
                 )
                 freeBody + localizationService.t("subscription.view.upgrade_hint", lang, TRIBUTE_SUBSCRIBE_LINK)
             }

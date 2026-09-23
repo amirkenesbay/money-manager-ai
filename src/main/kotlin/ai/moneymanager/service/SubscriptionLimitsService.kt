@@ -6,6 +6,10 @@ import java.time.LocalDate
 
 @Service
 class SubscriptionLimitsService(
+    @Value("\${ai.rate-limit.daily-requests-per-user:10}")
+    private val freeMaxAiRequestsPerDay: Int,
+    @Value("\${ai.rate-limit.daily-requests-per-user-paid:100}")
+    private val paidMaxAiRequestsPerDay: Int,
     @Value("\${category.max-per-type-free:10}")
     private val freeMaxCategoriesPerType: Int,
     @Value("\${category.max-per-type-paid:1000}")
@@ -17,6 +21,9 @@ class SubscriptionLimitsService(
     @Value("\${notification.max-active-free:3}")
     private val freeMaxActiveNotifications: Int
 ) {
+    fun maxAiRequestsPerDay(hasPaidSubscription: Boolean): Int =
+        if (hasPaidSubscription) paidMaxAiRequestsPerDay else freeMaxAiRequestsPerDay
+
     fun maxCategoriesPerType(hasPaidSubscription: Boolean): Int =
         if (hasPaidSubscription) paidMaxCategoriesPerType else freeMaxCategoriesPerType
 

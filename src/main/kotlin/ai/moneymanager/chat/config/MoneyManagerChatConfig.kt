@@ -13,6 +13,7 @@ import ai.moneymanager.service.FinanceReportService
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.NotificationService
+import ai.moneymanager.service.OnboardingService
 import ai.moneymanager.service.PersistentMenuKeyboardService
 import ai.moneymanager.service.SubscriptionLimitsService
 import ai.moneymanager.service.TelegramFileService
@@ -41,7 +42,8 @@ class MoneyManagerChatConfig(
     private val aiRequestHandler: AiRequestHandler,
     private val persistentMenuKeyboardService: PersistentMenuKeyboardService,
     private val adminService: AdminService,
-    private val subscriptionLimitsService: SubscriptionLimitsService
+    private val subscriptionLimitsService: SubscriptionLimitsService,
+    private val onboardingService: OnboardingService
 ) {
     @Bean
     fun moneyManagerChat(): ChatBuilder<MoneyManagerState, MoneyManagerContext> =
@@ -63,7 +65,7 @@ class MoneyManagerChatConfig(
                 userInfoService, groupService, categoryService, telegramFileService,
                 financeOperationService, financeHistoryService, financeReportService,
                 notificationService, localizationService, aiActionExecutor, aiRequestHandler,
-                persistentMenuKeyboardService, adminService, subscriptionLimitsService
+                persistentMenuKeyboardService, adminService, subscriptionLimitsService, onboardingService
             )
         }
 }

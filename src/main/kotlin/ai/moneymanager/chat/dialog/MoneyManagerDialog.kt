@@ -36,6 +36,7 @@ import ai.moneymanager.service.ADD_INCOME_BUTTON_TEXT
 import ai.moneymanager.service.AI_BUTTON_TEXT
 import ai.moneymanager.service.MENU_BUTTON_TEXT
 import ai.moneymanager.service.NotificationService
+import ai.moneymanager.service.OnboardingService
 import ai.moneymanager.service.PRO_MODE_BUTTON_TEXT
 import ai.moneymanager.service.PersistentMenuKeyboardService
 import ai.moneymanager.service.REPORT_BUTTON_TEXT
@@ -62,15 +63,16 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
     aiRequestHandler: AiRequestHandler,
     persistentMenuKeyboardService: PersistentMenuKeyboardService,
     adminService: AdminService,
-    subscriptionLimitsService: SubscriptionLimitsService
+    subscriptionLimitsService: SubscriptionLimitsService,
+    onboardingService: OnboardingService
 ) {
     dialog {
         name = "Money Manager Dialog"
 
         startMoneyManagerDialogTransition(userInfoService, groupService, categoryService, financeOperationService, telegramFileService, persistentMenuKeyboardService, aiActionExecutor)
-        joinGroupDialogTransitions(groupService, userInfoService, financeOperationService, localizationService)
+        joinGroupDialogTransitions(groupService, userInfoService, financeOperationService, localizationService, onboardingService)
         settingsDialogTransitions()
-        languageDialogTransitions(userInfoService, groupService, localizationService)
+        languageDialogTransitions(onboardingService)
         currencyDialogTransitions(groupService, subscriptionLimitsService)
         balanceDialogTransitions(groupService, userInfoService, financeOperationService)
         groupDialogTransitions(groupService, categoryService, userInfoService, localizationService)
@@ -432,7 +434,8 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.joinGroupDialo
     groupService: GroupService,
     userInfoService: UserInfoService,
     financeOperationService: FinanceOperationService,
-    localizationService: LocalizationService
+    localizationService: LocalizationService,
+    onboardingService: OnboardingService
 ) {
     transition {
         name = "Confirm join group"
@@ -446,7 +449,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.joinGroupDialo
             val userId = user.id
             val token = context.pendingInviteToken
             if (token != null) {
-                ensurePersonalGroupOnJoin(userId, userInfoService, groupService, localizationService)
+                ensurePersonalGroupOnJoin(userId, userInfoService, onboardingService, localizationService)
 
                 val joinedGroup = groupService.joinGroup(userId, token)
                 context.currentGroup = joinedGroup
@@ -486,17 +489,13 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.joinGroupDialo
     }
 }
 
-private const val PERSONAL_GROUP_NAME_KEY = "group.default.personal_name"
-
 private fun ensurePersonalGroupOnJoin(
     userId: Long,
     userInfoService: UserInfoService,
-    groupService: GroupService,
+    onboardingService: OnboardingService,
     localizationService: LocalizationService
 ) {
-    if (groupService.getUserGroups(userId).isNotEmpty()) return
     val telegramLanguageCode = userInfoService.getUserInfoByTelegramId(userId)?.languageCode
-    val resolvedLanguage = localizationService.resolveLanguage(selected = null, telegramLanguageCode = telegramLanguageCode)
-    val personalName = localizationService.t(PERSONAL_GROUP_NAME_KEY, resolvedLanguage)
-    groupService.createPersonalGroup(userId, personalName, resolvedLanguage)
+    val language = localizationService.resolveLanguage(selected = null, telegramLanguageCode = telegramLanguageCode)
+    onboardingService.ensurePersonalGroup(userId, language)
 }

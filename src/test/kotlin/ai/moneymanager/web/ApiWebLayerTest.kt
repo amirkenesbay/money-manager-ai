@@ -1,18 +1,10 @@
 package ai.moneymanager.web
 
-import ai.moneymanager.domain.model.GroupType
-import ai.moneymanager.domain.model.MoneyGroup
-import ai.moneymanager.domain.model.TelegramProfile
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.service.GroupService
-import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.UserInfoService
 import ai.moneymanager.web.access.GroupAccessGuard
-import ai.moneymanager.web.config.WebSecurityConfig
-import ai.moneymanager.web.error.ApiErrorFactory
-import ai.moneymanager.web.json.ApiJsonConfig
-import ai.moneymanager.web.security.TEST_BOT_TOKEN
-import ai.moneymanager.web.security.TelegramInitDataValidator
+import ai.moneymanager.web.security.TEST_USER_ID
 import ai.moneymanager.web.security.TestInitData
 import org.bson.types.ObjectId
 import org.hamcrest.Matchers.containsString
@@ -23,11 +15,9 @@ import org.mockito.Mockito.`when`
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
 import org.springframework.context.annotation.Import
-import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -41,19 +31,11 @@ import org.springframework.web.bind.annotation.RestController
 import java.math.BigDecimal
 import java.time.LocalDate
 
-private const val MEMBER_ID = 42L
 private const val INTERNAL_DETAIL = "mongo connection string leaked"
-private const val ENGLISH = "en"
 
-@WebMvcTest(controllers = [ProbeController::class], properties = ["chat-machinist.bot.token=$TEST_BOT_TOKEN"])
-@Import(
-    WebSecurityConfig::class,
-    ApiJsonConfig::class,
-    ApiErrorFactory::class,
-    TelegramInitDataValidator::class,
-    GroupAccessGuard::class,
-    LocalizationService::class,
-)
+@WebMvcTest(controllers = [ProbeController::class])
+@ApiWebLayerSetup
+@Import(GroupAccessGuard::class)
 class ApiWebLayerTest {
     @Autowired
     private lateinit var mockMvc: MockMvc
@@ -70,8 +52,8 @@ class ApiWebLayerTest {
 
     @BeforeEach
     fun givenData() {
-        `when`(groupService.getGroup(ownGroupId)).thenReturn(group(ownGroupId, members = setOf(MEMBER_ID)))
-        `when`(groupService.getGroup(foreignGroupId)).thenReturn(group(foreignGroupId, members = setOf(MEMBER_ID + 1)))
+        `when`(groupService.getGroup(ownGroupId)).thenReturn(testGroup(ownGroupId, members = setOf(TEST_USER_ID)))
+        `when`(groupService.getGroup(foreignGroupId)).thenReturn(testGroup(foreignGroupId, members = setOf(TEST_USER_ID + 1)))
         `when`(groupService.getGroup(missingGroupId)).thenReturn(null)
         givenUserLanguage(null)
     }
@@ -92,7 +74,7 @@ class ApiWebLayerTest {
 
     @Test
     fun `serialises amounts, ids and dates as strings`() {
-        mockMvc.perform(authorized(get("/api/probe/groups/$ownGroupId")))
+        mockMvc.perform(get("/api/probe/groups/$ownGroupId").withTelegramAuth())
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.groupId").value(ownGroupId.toHexString()))
             .andExpect(jsonPath("$.amount").value("12500.00"))
@@ -105,7 +87,7 @@ class ApiWebLayerTest {
         val categoryId = ObjectId()
 
         mockMvc.perform(
-            authorized(post("/api/probe/echo"))
+            post("/api/probe/echo").withTelegramAuth()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"categoryId":"${categoryId.toHexString()}","amount":"99.90"}""")
         )
@@ -117,7 +99,7 @@ class ApiWebLayerTest {
     @Test
     fun `answers malformed id in body with bad request`() {
         mockMvc.perform(
-            authorized(post("/api/probe/echo"))
+            post("/api/probe/echo").withTelegramAuth()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"categoryId":"not-an-id","amount":"1"}""")
         )
@@ -127,7 +109,7 @@ class ApiWebLayerTest {
 
     @Test
     fun `answers malformed id in path with bad request`() {
-        mockMvc.perform(authorized(get("/api/probe/groups/not-an-id")))
+        mockMvc.perform(get("/api/probe/groups/not-an-id").withTelegramAuth())
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
     }
@@ -136,7 +118,7 @@ class ApiWebLayerTest {
     fun `forbids a group the user is not a member of, in the user language`() {
         givenUserLanguage(ENGLISH)
 
-        mockMvc.perform(authorized(get("/api/probe/groups/$foreignGroupId")))
+        mockMvc.perform(get("/api/probe/groups/$foreignGroupId").withTelegramAuth())
             .andExpect(status().isForbidden)
             .andExpect(jsonPath("$.code").value("FORBIDDEN"))
             .andExpect(jsonPath("$.message").value("You are not a member of this group."))
@@ -144,51 +126,23 @@ class ApiWebLayerTest {
 
     @Test
     fun `reports missing group as not found`() {
-        mockMvc.perform(authorized(get("/api/probe/groups/$missingGroupId")))
+        mockMvc.perform(get("/api/probe/groups/$missingGroupId").withTelegramAuth())
             .andExpect(status().isNotFound)
             .andExpect(jsonPath("$.code").value("NOT_FOUND"))
     }
 
     @Test
     fun `hides internal failure details behind a generic error`() {
-        mockMvc.perform(authorized(get("/api/probe/failure")))
+        mockMvc.perform(get("/api/probe/failure").withTelegramAuth())
             .andExpect(status().isInternalServerError)
             .andExpect(jsonPath("$.code").value("INTERNAL_ERROR"))
             .andExpect(content().string(not(containsString(INTERNAL_DETAIL))))
     }
 
-    private fun authorized(request: MockHttpServletRequestBuilder): MockHttpServletRequestBuilder =
-        request.header(HttpHeaders.AUTHORIZATION, "tma ${TestInitData.valid(userId = MEMBER_ID)}")
-
     private fun givenUserLanguage(language: String?) {
-        val profile = TelegramProfile(
-            telegramUserId = MEMBER_ID,
-            username = null,
-            firstName = "Amir",
-            lastName = null,
-            languageCode = "ru",
-        )
-        `when`(userInfoService.getOrCreate(profile)).thenReturn(
-            UserInfo(
-                id = ObjectId(),
-                username = null,
-                firstName = "Amir",
-                lastName = null,
-                telegramUserId = MEMBER_ID,
-                languageCode = "ru",
-                language = language,
-            )
-        )
+        `when`(userInfoService.getOrCreate(TestInitData.profile(TEST_USER_ID))).thenReturn(testUser(language = language))
     }
 
-    private fun group(id: ObjectId, members: Set<Long>) = MoneyGroup(
-        id = id,
-        name = "Семья",
-        inviteToken = "abc123xyz",
-        ownerId = members.first(),
-        memberIds = members,
-        type = GroupType.SHARED,
-    )
 }
 
 data class ProbeGroupView(

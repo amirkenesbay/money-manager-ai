@@ -1,5 +1,6 @@
 package ai.moneymanager.web.security
 
+import ai.moneymanager.domain.model.TelegramProfile
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.time.Instant
@@ -9,6 +10,9 @@ import javax.crypto.spec.SecretKeySpec
 const val TEST_BOT_TOKEN = "123456:TEST-BOT-TOKEN"
 
 private const val HMAC_ALGORITHM = "HmacSHA256"
+const val TEST_USER_ID = 42L
+const val TEST_FIRST_NAME = "Amir"
+const val TEST_LANGUAGE_CODE = "ru"
 private const val SECRET_KEY_SEED = "WebAppData"
 
 object TestInitData {
@@ -17,15 +21,23 @@ object TestInitData {
     fun secondsAgo(seconds: Long): String = (Instant.now().epochSecond - seconds).toString()
 
     fun valid(
-        userId: Long = 42L,
+        userId: Long = TEST_USER_ID,
         authDate: String = currentTimestamp(),
         botToken: String = TEST_BOT_TOKEN,
     ): String = signed(
         params = mapOf(
             "auth_date" to authDate,
-            "user" to """{"id":$userId,"first_name":"Amir","language_code":"ru"}""",
+            "user" to """{"id":$userId,"first_name":"$TEST_FIRST_NAME","language_code":"$TEST_LANGUAGE_CODE"}""",
         ),
         botToken = botToken,
+    )
+
+    fun profile(userId: Long = TEST_USER_ID): TelegramProfile = TelegramProfile(
+        telegramUserId = userId,
+        username = null,
+        firstName = TEST_FIRST_NAME,
+        lastName = null,
+        languageCode = TEST_LANGUAGE_CODE,
     )
 
     fun signed(

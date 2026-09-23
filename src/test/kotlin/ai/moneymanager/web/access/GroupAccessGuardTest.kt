@@ -1,11 +1,11 @@
 package ai.moneymanager.web.access
 
-import ai.moneymanager.domain.model.GroupType
-import ai.moneymanager.domain.model.MoneyGroup
-import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.web.error.ApiErrorCode
 import ai.moneymanager.web.error.ApiException
+import ai.moneymanager.web.security.TEST_USER_ID
+import ai.moneymanager.web.testGroup
+import ai.moneymanager.web.testUser
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.catchThrowableOfType
 import org.bson.types.ObjectId
@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 
-private const val MEMBER_ID = 42L
 private const val STRANGER_ID = 7L
 
 class GroupAccessGuardTest {
@@ -21,20 +20,13 @@ class GroupAccessGuardTest {
     private val guard = GroupAccessGuard(groupService)
 
     private val groupId = ObjectId()
-    private val group = MoneyGroup(
-        id = groupId,
-        name = "Семья",
-        inviteToken = "abc123xyz",
-        ownerId = MEMBER_ID,
-        memberIds = setOf(MEMBER_ID),
-        type = GroupType.SHARED,
-    )
+    private val group = testGroup(groupId, members = setOf(TEST_USER_ID))
 
     @Test
     fun `returns group to its member`() {
         `when`(groupService.getGroup(groupId)).thenReturn(group)
 
-        assertThat(guard.requireMember(user(MEMBER_ID), groupId)).isEqualTo(group)
+        assertThat(guard.requireMember(user(TEST_USER_ID), groupId)).isEqualTo(group)
     }
 
     @Test
@@ -59,17 +51,10 @@ class GroupAccessGuardTest {
     fun `reports missing group as not found`() {
         `when`(groupService.getGroup(groupId)).thenReturn(null)
 
-        val error = catchThrowableOfType(ApiException::class.java) { guard.requireMember(user(MEMBER_ID), groupId) }
+        val error = catchThrowableOfType(ApiException::class.java) { guard.requireMember(user(TEST_USER_ID), groupId) }
 
         assertThat(error.code).isEqualTo(ApiErrorCode.NOT_FOUND)
     }
 
-    private fun user(telegramUserId: Long?) = UserInfo(
-        id = ObjectId(),
-        username = null,
-        firstName = "Amir",
-        lastName = null,
-        telegramUserId = telegramUserId,
-        languageCode = "ru",
-    )
+    private fun user(telegramUserId: Long?) = testUser().copy(telegramUserId = telegramUserId)
 }

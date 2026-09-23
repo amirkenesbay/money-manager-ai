@@ -2,7 +2,6 @@ package ai.moneymanager.service
 
 import ai.moneymanager.repository.AiRateLimitRepository
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.time.Duration
 import java.time.LocalDate
@@ -16,15 +15,12 @@ sealed class AiRateLimitResult {
 @Service
 class AiRateLimitService(
     private val aiRateLimitRepository: AiRateLimitRepository,
-    @Value("\${ai.rate-limit.daily-requests-per-user:10}")
-    val freeDailyLimit: Int,
-    @Value("\${ai.rate-limit.daily-requests-per-user-paid:100}")
-    val paidDailyLimit: Int
+    private val subscriptionLimitsService: SubscriptionLimitsService
 ) {
     private val log = LoggerFactory.getLogger(this::class.java)
 
     fun tryConsume(telegramUserId: Long, hasPaidSubscription: Boolean): AiRateLimitResult {
-        val limit = if (hasPaidSubscription) paidDailyLimit else freeDailyLimit
+        val limit = subscriptionLimitsService.maxAiRequestsPerDay(hasPaidSubscription)
         val updated = aiRateLimitRepository.incrementAndGet(telegramUserId, LocalDate.now())
 
         if (updated.count > limit) {

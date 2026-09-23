@@ -53,10 +53,10 @@ import ai.moneymanager.chat.reply.settings.settingsReply
 import ai.moneymanager.chat.reply.settings.subscriptionViewReply
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
-import ai.moneymanager.service.AiRateLimitService
 import ai.moneymanager.service.FinanceHistoryService
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
+import ai.moneymanager.service.SubscriptionLimitsService
 import kz.rmr.chatmachinist.api.reply.RepliesBuilder
 import kz.rmr.chatmachinist.api.reply.replies
 import org.springframework.context.annotation.Bean
@@ -69,7 +69,7 @@ class MoneyManagerReplyConfig {
         financeHistoryService: FinanceHistoryService,
         localizationService: LocalizationService,
         groupService: GroupService,
-        aiRateLimitService: AiRateLimitService
+        subscriptionLimitsService: SubscriptionLimitsService
     ): RepliesBuilder<MoneyManagerState, MoneyManagerContext> {
         return replies {
             chatName = "Money Manager Chat"
@@ -79,7 +79,7 @@ class MoneyManagerReplyConfig {
             settingsReply(localizationService)
             languageSelectReply(localizationService)
             currencySelectReply(localizationService)
-            subscriptionViewReply(localizationService, aiRateLimitService)
+            subscriptionViewReply(localizationService, subscriptionLimitsService)
             proInfoReply(localizationService)
 
             balanceOnboardingPromptReply(localizationService)
