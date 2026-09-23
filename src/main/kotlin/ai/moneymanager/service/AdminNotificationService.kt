@@ -12,7 +12,6 @@ private const val NEW_USER_MESSAGE_TEMPLATE = "🆕 Новый пользова�
 private const val NO_USERNAME_PLACEHOLDER = "без username"
 private const val NO_NAME_PLACEHOLDER = "без имени"
 
-/** Служебные уведомления админу в alert-чат — не путать с юзер-фейсинг сообщениями бота. */
 @Service
 class AdminNotificationService(
     @Value("\${chat-machinist.bot.token}")
@@ -20,7 +19,6 @@ class AdminNotificationService(
     @Value("\${notifications.alert-chat-id:#{null}}")
     private val alertChatId: String?
 ) : DefaultAbsSender(DefaultBotOptions(), botToken) {
-
     private val log = LoggerFactory.getLogger(this::class.java)
 
     fun notifyNewUser(user: UserInfo) {

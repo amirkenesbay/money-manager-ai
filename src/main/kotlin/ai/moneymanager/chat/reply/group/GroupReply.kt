@@ -153,7 +153,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupInviteShowReply(
     }
 }
 
-
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupJoinConfirmReply(
     localizationService: LocalizationService
 ) {
@@ -254,7 +253,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupListReply(
         }
     }
 }
-
 
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupActionsReply(
     localizationService: LocalizationService
@@ -417,7 +415,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupDeleteConfirmRep
         }
     }
 }
-
 
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupEditEnterNameReply(
     localizationService: LocalizationService

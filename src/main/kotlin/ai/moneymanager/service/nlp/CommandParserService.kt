@@ -57,14 +57,12 @@ class CommandParserService(
             .apiKey(geminiProperties.apiKey)
             .build()
 
-        // Получаем методы из BotFunctions для function calling
         val createGroupMethod = botFunctionMethod(GeminiFunction.CREATE_GROUP, String::class.java)
         val deleteGroupMethod = botFunctionMethod(GeminiFunction.DELETE_GROUP, String::class.java)
         val addExpenseMethod = botFunctionMethod(GeminiFunction.ADD_EXPENSE, Double::class.java, String::class.java, String::class.java, String::class.java, String::class.java)
         val addIncomeMethod = botFunctionMethod(GeminiFunction.ADD_INCOME, Double::class.java, String::class.java, String::class.java, String::class.java, String::class.java)
         val outOfContextMethod = botFunctionMethod(GeminiFunction.OUT_OF_CONTEXT, String::class.java)
 
-        // Category functions
         val createCategoryMethod = botFunctionMethod(GeminiFunction.CREATE_CATEGORY, String::class.java, String::class.java, String::class.java)
         val deleteCategoryMethod = botFunctionMethod(GeminiFunction.DELETE_CATEGORY, String::class.java, String::class.java)
         val renameCategoryMethod = botFunctionMethod(GeminiFunction.RENAME_CATEGORY, String::class.java, String::class.java, String::class.java)
@@ -72,7 +70,6 @@ class CommandParserService(
         val deleteAllCategoriesMethod = botFunctionMethod(GeminiFunction.DELETE_ALL_CATEGORIES)
         val listCategoriesMethod = botFunctionMethod(GeminiFunction.LIST_CATEGORIES, String::class.java)
 
-        // Group / balance / report / history / notification functions
         val listGroupsMethod = botFunctionMethod(GeminiFunction.LIST_GROUPS)
         val switchGroupMethod = botFunctionMethod(GeminiFunction.SWITCH_GROUP, String::class.java)
         val showBalanceMethod = botFunctionMethod(GeminiFunction.SHOW_BALANCE)
@@ -82,7 +79,6 @@ class CommandParserService(
         val createNotificationMethod = botFunctionMethod(GeminiFunction.CREATE_NOTIFICATION, String::class.java, Double::class.java, Double::class.javaObjectType)
         val deleteNotificationMethod = botFunctionMethod(GeminiFunction.DELETE_NOTIFICATION, String::class.java)
 
-        // Recent operation edit functions
         val deleteLastOperationMethod = botFunctionMethod(GeminiFunction.DELETE_LAST_OPERATION, String::class.java)
         val editLastOperationMethod = botFunctionMethod(
             GeminiFunction.EDIT_LAST_OPERATION,
@@ -110,16 +106,12 @@ class CommandParserService(
                     .disable(true)
                     .build()
             )
-            // Thinking отключён: для function-calling на коротких командах он добавляет
-            // 5-15 сек латентности без пользы. Включить при сложном reasoning — убрать
-            // thinkingBudget или поставить >0 (например, 1024).
             .thinkingConfig(
                 ThinkingConfig.builder()
                     .thinkingBudget(0)
                     .build()
             )
             .build()
-
     }
 
     private fun botFunctionMethod(function: GeminiFunction, vararg parameterTypes: Class<*>) =
@@ -128,7 +120,6 @@ class CommandParserService(
     fun parseCommand(userMessage: String, categoryContext: String? = null): BotCommand =
         parseCommands(userMessage, categoryContext).first()
 
-    /** @param audioBytes байты аудио файла (OGG/OPUS от Telegram) */
     fun parseVoiceCommand(audioBytes: ByteArray, categoryContext: String? = null): BotCommand =
         parseVoiceCommands(audioBytes, categoryContext).first()
 
@@ -143,12 +134,10 @@ class CommandParserService(
         }
     }
 
-    /** @param audioBytes байты аудио файла (OGG/OPUS от Telegram) */
     fun parseVoiceCommands(audioBytes: ByteArray, categoryContext: String? = null): List<BotCommand> {
         return try {
             log.info("Processing voice message: ${audioBytes.size} bytes")
 
-            // Создаём Part с аудио данными
             val audioPart = Part.builder()
                 .inlineData(
                     Blob.builder()
@@ -158,7 +147,6 @@ class CommandParserService(
                 )
                 .build()
 
-            // Добавляем инструкцию для транскрибации
             val textPart = Part.fromText(aiPromptService.voiceTranscriptionPrompt)
 
             val content = contentWithCategoryContext(categoryContext, audioPart, textPart)
@@ -334,7 +322,6 @@ class CommandParserService(
                 }
             }
         } catch (e: Exception) {
-            // Любая проблема маппинга/валидации → ParseError
             BotCommand.ParseError("Invalid function args for ${functionCall.name().orElse(UNKNOWN_FUNCTION_NAME)}: ${e.message}")
         }
     }

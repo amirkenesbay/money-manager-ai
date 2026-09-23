@@ -28,7 +28,6 @@ class FinanceInfoAiHandler(
     private val financeHistoryService: FinanceHistoryService,
     private val localizationService: LocalizationService
 ) : AiDomainHandler {
-
     override fun canHandle(command: BotCommand): Boolean = when (command) {
         is BotCommand.ShowBalance,
         is BotCommand.ShowReport,

@@ -28,7 +28,6 @@ class FinanceReportService(
     private val financeOperationRepository: FinanceOperationRepository,
     private val formatter: FinanceReportFormatter
 ) {
-
     fun generateComparisonReport(groupId: ObjectId, previousMonthStart: LocalDate, currency: Currency, language: String?): String {
         val report = buildComparisonReport(groupId, previousMonthStart, language)
         return formatter.formatComparison(report, currency, language)
@@ -63,8 +62,6 @@ class FinanceReportService(
         return formatter.formatCategory(report, currency, language)
     }
 
-
-    /** Данные отчёта без форматирования — используются и Telegram-рендером, и REST API. */
     fun buildComparisonReport(
         groupId: ObjectId,
         previousMonthStart: LocalDate,
@@ -111,7 +108,6 @@ class FinanceReportService(
             .sortedByDescending { it.currentAmount.subtract(it.previousAmount).abs() }
     }
 
-    /** Данные отчёта без форматирования — используются и Telegram-рендером, и REST API. */
     fun buildAnalyticsReport(groupId: ObjectId, monthStart: LocalDate, language: String?): AnalyticsReport {
         val operations = findMonthOperations(groupId, monthStart)
         val expenses = operations.filterByType(CategoryType.EXPENSE)
@@ -161,7 +157,6 @@ class FinanceReportService(
         )
     }
 
-    /** Данные отчёта без форматирования — используются и Telegram-рендером, и REST API. */
     fun buildMembersReport(
         groupId: ObjectId,
         monthStart: LocalDate,
@@ -196,7 +191,6 @@ class FinanceReportService(
             }
             .sortedByDescending { it.total }
 
-    /** Данные отчёта без форматирования — используются и Telegram-рендером, и REST API. */
     fun buildCategoryReport(
         groupId: ObjectId,
         categoryId: ObjectId,

@@ -18,7 +18,6 @@ data class UserInfo(
     val subscriptionTier: SubscriptionTier = SubscriptionTier.FREE,
     val subscriptionExpiresAt: LocalDateTime? = null
 ) {
-    /** Активна ли платная подписка прямо сейчас — учитывает истечение срока, не только сам факт тарифа. */
     fun hasActivePaidSubscription(now: LocalDateTime = LocalDateTime.now()): Boolean =
         subscriptionTier == SubscriptionTier.PAID && subscriptionExpiresAt?.isAfter(now) == true
 }

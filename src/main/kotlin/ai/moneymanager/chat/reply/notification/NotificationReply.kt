@@ -23,10 +23,6 @@ private const val DEFAULT_NOTIFICATION_ICON = "🔔"
 private const val ACTIVE_STATUS_ICON = "🟢"
 private const val PAUSED_STATUS_ICON = "⏸️"
 
-// ================================
-// TIMEZONE REPLIES
-// ================================
-
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.notificationTimezoneSelectReply(
     localizationService: LocalizationService
 ) {
@@ -90,10 +86,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.notificationTimezoneE
         }
     }
 }
-
-// ================================
-// NOTIFICATION LIST
-// ================================
 
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.notificationListReply(
     localizationService: LocalizationService
@@ -163,10 +155,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.notificationListReply
     }
 }
 
-// ================================
-// NOTIFICATION ACTIONS
-// ================================
-
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.notificationActionsReply(
     localizationService: LocalizationService
 ) {
@@ -216,10 +204,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.notificationActionsRe
         }
     }
 }
-
-// ================================
-// CREATE FLOW
-// ================================
 
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateIconReply(
     localizationService: LocalizationService
@@ -582,10 +566,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateCon
     }
 }
 
-// ================================
-// EDIT FLOW
-// ================================
-
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.notificationEditMenuReply(
     localizationService: LocalizationService
 ) {
@@ -642,10 +622,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.notificationEditNameR
     }
 }
 
-// ================================
-// DELETE FLOW
-// ================================
-
 fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.notificationDeleteConfirmReply(
     localizationService: LocalizationService
 ) {
@@ -691,10 +667,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.notificationDeleteAll
         }
     }
 }
-
-// ================================
-// FORMAT HELPERS
-// ================================
 
 fun parseDayOfWeek(text: String, language: String?): DayOfWeek? {
     val candidates = listOfNotNull(language, LocalizationService.FALLBACK_LANGUAGE) + LocalizationService.SUPPORTED_LANGUAGES

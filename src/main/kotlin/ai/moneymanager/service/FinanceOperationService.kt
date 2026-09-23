@@ -14,7 +14,6 @@ import java.time.LocalDate
 class FinanceOperationService(
     private val financeOperationRepository: FinanceOperationRepository
 ) {
-
     private val log = LoggerFactory.getLogger(FinanceOperationService::class.java)
 
     fun calculateBalance(groupId: ObjectId, initialBalance: BigDecimal): BalanceBreakdown {

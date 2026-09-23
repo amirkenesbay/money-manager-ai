@@ -29,7 +29,6 @@ class TelegramFileService(
     private val chatMachinistProperties: ChatMachinistProperties,
     private val fileProperties: TelegramFileProperties
 ) : DefaultAbsSender(DefaultBotOptions(), chatMachinistProperties.bot.token) {
-
     private val log = LoggerFactory.getLogger(this::class.java)
 
     private val feedbackScheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor { runnable ->

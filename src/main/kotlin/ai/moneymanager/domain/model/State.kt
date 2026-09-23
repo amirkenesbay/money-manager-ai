@@ -9,11 +9,9 @@ import java.time.DayOfWeek
 
 @JsonFormat(shape = JsonFormat.Shape.BINARY)
 enum class MoneyManagerState {
-    // -------- MENU --------
     STARTED,
     MENU,
 
-    // -------- GROUPS --------
     GROUP_MANAGEMENT,
     GROUP_CREATE_ENTER_NAME,
     GROUP_INVITE_SHOW,
@@ -24,19 +22,16 @@ enum class MoneyManagerState {
     GROUP_EDIT_ENTER_NAME,
     GROUP_DELETE_CONFIRM,
 
-    // -------- SETTINGS --------
     SETTINGS,
     LANGUAGE_SELECT,
     CURRENCY_SELECT,
     SUBSCRIPTION_VIEW,
     PRO_INFO,
 
-    // -------- BALANCE --------
     BALANCE_ONBOARDING_PROMPT,
     BALANCE_ONBOARDING_ENTER_AMOUNT,
     BALANCE_VIEW,
 
-    // -------- FINANCE --------
     FINANCE_MANAGEMENT,
     FINANCE_SELECT_CATEGORY,
     FINANCE_NO_CATEGORIES_WARNING,
@@ -48,7 +43,6 @@ enum class MoneyManagerState {
     FINANCE_SELECT_MONTH,
     FINANCE_OPERATION_SAVED,
 
-    // -------- FINANCE REPORT --------
     FINANCE_REPORT_MENU,
     FINANCE_REPORT_COMPARISON,
     FINANCE_REPORT_ANALYTICS,
@@ -56,7 +50,6 @@ enum class MoneyManagerState {
     FINANCE_REPORT_CATEGORY_SELECT,
     FINANCE_REPORT_CATEGORY_VIEW,
 
-    // -------- FINANCE HISTORY --------
     FINANCE_HISTORY_VIEW,
     FINANCE_HISTORY_SELECT_START_DATE,
     FINANCE_HISTORY_SELECT_END_DATE,
@@ -64,7 +57,6 @@ enum class MoneyManagerState {
     FINANCE_HISTORY_SELECT_YEAR,
     FINANCE_HISTORY_SELECT_MONTH,
 
-    // -------- OPERATION EDIT --------
     OPERATION_LIST,
     OPERATION_ACTIONS,
     OPERATION_EDIT_SELECT_TYPE,
@@ -74,12 +66,10 @@ enum class MoneyManagerState {
     OPERATION_EDIT_SELECT_CATEGORY,
     OPERATION_DELETE_CONFIRM,
 
-    // -------- NLP --------
     NLP_CONFIRM_CREATE_GROUP,
     NLP_CONFIRM_DELETE_GROUP,
     NLP_RESPONSE,
 
-    // -------- AI --------
     AI_MODE,
     AI_CONFIRM,
     AI_CONFIRM_BATCH,
@@ -87,7 +77,6 @@ enum class MoneyManagerState {
     AI_TRANSACTION_PICK_CATEGORY_ALL,
     AI_RESULT,
 
-    // -------- CATEGORIES --------
     CATEGORY_MANAGEMENT,
     CATEGORY_NO_GROUP_WARNING,
     CATEGORY_CREATE_SELECT_TYPE,
@@ -101,7 +90,6 @@ enum class MoneyManagerState {
     CATEGORY_DELETE_CONFIRM,
     CATEGORY_DELETE_ALL_CONFIRM,
 
-    // -------- NOTIFICATIONS --------
     NOTIFICATION_LIST,
     NOTIFICATION_ACTIONS,
     NOTIFICATION_CREATE_ICON,
@@ -124,19 +112,17 @@ enum class MoneyManagerState {
 }
 
 enum class MoneyManagerButtonType {
-    // Menu
     PERSONAL_ACCOUNTING,
     SHARED_ACCOUNTING,
     BALANCE,
     BALANCE_SET_AMOUNT,
     BALANCE_START_FROM_ZERO,
-    NOTIFICATIONS,  // TODO: настройки уведомлений
+    NOTIFICATIONS,
     AI_ASSISTANT,
-    FINANCE,        // экран "Финансы"
+    FINANCE,
     ADD_EXPENSE,
     ADD_INCOME,
 
-    // Groups
     CREATE_GROUP,
     MY_GROUPS,
     GROUP_ITEM,
@@ -146,13 +132,11 @@ enum class MoneyManagerButtonType {
     DELETE_GROUP,
     INVITE_TO_GROUP,
 
-    // Quick group names
     QUICK_GROUP_FAMILY,
     QUICK_GROUP_WITH_FRIEND,
     QUICK_GROUP_WORK,
     QUICK_GROUP_TRIP,
 
-    // Categories
     CATEGORIES,
     CREATE_CATEGORY,
     MY_CATEGORIES,
@@ -164,7 +148,6 @@ enum class MoneyManagerButtonType {
     DELETE_CATEGORY_BUTTON,
     DELETE_ALL_CATEGORIES,
 
-    // Quick category names - Expense
     QUICK_CATEGORY_FOOD_OUT,
     QUICK_CATEGORY_UTILITIES,
     QUICK_CATEGORY_MEDICINE,
@@ -172,7 +155,6 @@ enum class MoneyManagerButtonType {
     QUICK_CATEGORY_CLOTHES,
     QUICK_CATEGORY_TAXI,
 
-    // Quick category names - Income
     QUICK_CATEGORY_SALARY,
     QUICK_CATEGORY_BONUS,
     QUICK_CATEGORY_GIFT,
@@ -180,7 +162,6 @@ enum class MoneyManagerButtonType {
     QUICK_CATEGORY_INVESTMENTS,
     QUICK_CATEGORY_DEBT_RETURN,
 
-    // Finance
     FINANCE_ADD_EXPENSE,
     FINANCE_ADD_INCOME,
     FINANCE_CATEGORY_ITEM,
@@ -189,7 +170,6 @@ enum class MoneyManagerButtonType {
     FINANCE_REPORT,
     FINANCE_EDIT_OPERATIONS,
 
-    // Operation edit
     OPERATION_LIST_ITEM,
     OPERATION_EDIT_AMOUNT_BTN,
     OPERATION_EDIT_TYPE_BTN,
@@ -203,7 +183,6 @@ enum class MoneyManagerButtonType {
     BACK_TO_OPERATION_LIST,
     BACK_TO_OPERATION_ACTIONS,
 
-    // Report
     REPORT_COMPARISON,
     REPORT_ANALYTICS,
     REPORT_BY_MEMBERS,
@@ -213,7 +192,6 @@ enum class MoneyManagerButtonType {
     REPORT_CATEGORY_ITEM,
     BACK_TO_REPORT_MENU,
 
-    // History period
     CHANGE_PERIOD,
     QUICK_PERIOD_THIS_MONTH,
     QUICK_PERIOD_LAST_MONTH,
@@ -223,7 +201,6 @@ enum class MoneyManagerButtonType {
     HISTORY_DAY_BEFORE_YESTERDAY,
     BACK_TO_HISTORY,
 
-    // Quick dates
     QUICK_DATE_TODAY,
     QUICK_DATE_YESTERDAY,
     QUICK_DATE_BEFORE_YESTERDAY,
@@ -231,7 +208,6 @@ enum class MoneyManagerButtonType {
     SKIP_COMMENT,
     BACK_TO_AMOUNT,
 
-    // Actions
     ENTER_CUSTOM_NAME,
     CONFIRM_JOIN,
     CONFIRM_DELETE,
@@ -242,7 +218,6 @@ enum class MoneyManagerButtonType {
     BACK_TO_CALENDAR,
     BACK_TO_SETTINGS,
 
-    // Settings
     SETTINGS,
     OPEN_LANGUAGE_PICKER,
     LANGUAGE_RU,
@@ -257,20 +232,16 @@ enum class MoneyManagerButtonType {
     OPEN_SUBSCRIPTION_VIEW,
     SUBSCRIBE_PRO_LINK,
 
-    // NLP
     CONFIRM_NLP_ACTION,
 
-    // AI hints
     WHAT_TO_ASK,
 
-    // AI
     CONFIRM_AI_ACTION,
     AI_PICK_DIFFERENT_CATEGORY,
     AI_PICK_SHOW_ALL,
     AI_PICK_BACK_TO_CONFIRM,
     AI_PICK_CATEGORY_ITEM,
 
-    // Notification navigation
     CREATE_NOTIFICATION,
     NOTIFICATION_ITEM,
     EDIT_NOTIFICATION,
@@ -279,7 +250,6 @@ enum class MoneyManagerButtonType {
     TOGGLE_NOTIFICATION,
     BACK_TO_NOTIFICATIONS,
 
-    // Notification creation - frequency
     NOTIFICATION_FREQ_DAILY,
     NOTIFICATION_FREQ_WEEKLY,
     NOTIFICATION_FREQ_BIWEEKLY,
@@ -288,40 +258,33 @@ enum class MoneyManagerButtonType {
     NOTIFICATION_FREQ_YEARLY,
     NOTIFICATION_FREQ_CUSTOM,
 
-    // Custom frequency unit
     NOTIFICATION_CUSTOM_DAYS,
     NOTIFICATION_CUSTOM_WEEKS,
     NOTIFICATION_CUSTOM_MONTHS,
     NOTIFICATION_CUSTOM_YEARS,
 
-    // Day of week / time / day of month / month
     NOTIFICATION_DAY_OF_WEEK,
     NOTIFICATION_HOUR,
     NOTIFICATION_MINUTE,
     NOTIFICATION_DAY_OF_MONTH,
     NOTIFICATION_MONTH_ITEM,
 
-    // Edit actions
     NOTIFICATION_EDIT_NAME_BTN,
     NOTIFICATION_EDIT_ICON_BTN,
     NOTIFICATION_EDIT_FREQUENCY_BTN,
     NOTIFICATION_SKIP_ICON,
 
-    // Timezone
     TIMEZONE_ITEM,
     TIMEZONE_OTHER,
 
-    // Quick notification names
     QUICK_NOTIF_DAILY_EXPENSES,
     QUICK_NOTIF_WEEKLY_REPORT,
     QUICK_NOTIF_MONTHLY_BUDGET,
     QUICK_NOTIF_SALARY_DAY,
 
-    // Confirm create/edit
     NOTIFICATION_CONFIRM_CREATE,
 }
 
-/** Действие, которое нужно выполнить сразу после /start — определяется тем, какая persistent reply-кнопка была нажата. */
 enum class PersistentAction {
     OPEN_FINANCE,
     OPEN_SETTINGS,
@@ -333,10 +296,8 @@ enum class PersistentAction {
 }
 
 class MoneyManagerContext {
-    // -------- USER --------
     var userInfo: UserInfo? = null
 
-    // -------- GROUPS --------
     var pendingInviteToken: String? = null
     var pendingGroup: MoneyGroup? = null
     var pendingGroupOwnerInfo: UserInfo? = null
@@ -348,7 +309,6 @@ class MoneyManagerContext {
     var inviteFromActions: Boolean = false
     var categoriesCountToDelete: Int = 0
 
-    // -------- CATEGORIES --------
     var activeGroupName: String? = null
     var categoryNameInput: String? = null
     var categoryIconInput: String? = null
@@ -358,42 +318,33 @@ class MoneyManagerContext {
     var isQuickCategoryCreation: Boolean = false
     var categoryCreationResult: CategoryCreationResult? = null
 
-    // -------- SETTINGS --------
     var languageReturnToSettings: Boolean = false
     var languageJustChanged: Boolean = false
     var currencyReturnToSettings: Boolean = false
     var currencyJustChanged: Boolean = false
     var currencyForPendingGroupCreation: Boolean = false
 
-    // -------- UI FEEDBACK --------
     var renameConfirmation: String? = null
     var textInputResponse: Boolean = false
     var iconInputError: Boolean = false
     var groupNameDuplicateError: Boolean = false
     var groupCreationLimitReached: Int? = null
 
-    // -------- SESSION --------
-    // Set to true on /start so that stale old dialog instances (which remain in MongoDB)
-    // cannot accidentally match NLP text transitions.
     var isActive: Boolean = false
     var pendingPersistentAction: PersistentAction? = null
 
-    // -------- INPUT MODE --------
     var manualTextInputActive: Boolean = false
     var customNameInputMode: Boolean = false
 
-    // -------- BALANCE --------
     var currentBalance: BalanceBreakdown? = null
     var balanceAmountInputError: Boolean = false
 
-    // -------- FINANCE --------
     var financeOperationType: CategoryType? = null
     var selectedCategory: Category? = null
     var financeAmount: Double? = null
     var financeComment: String? = null
     var amountInputError: Boolean = false
 
-    // -------- CALENDAR --------
     var calendarYear: Int = java.time.LocalDate.now().year
     var calendarMonth: Int = java.time.LocalDate.now().monthValue
     var selectedDate: java.time.LocalDate? = null
@@ -406,7 +357,6 @@ class MoneyManagerContext {
         selectedDate = null
     }
 
-    // -------- OPERATION EDIT --------
     var operationsList: List<FinanceOperationEntity> = emptyList()
     var selectedOperation: FinanceOperationEntity? = null
     var operationEditField: String? = null
@@ -418,18 +368,15 @@ class MoneyManagerContext {
         operationEditError = false
     }
 
-    // -------- REPORT --------
     var reportMonth: java.time.LocalDate? = null
     var reportText: String? = null
     var reportCategory: Category? = null
 
-    // -------- HISTORY --------
     var historyStartDate: java.time.LocalDate? = null
     var historyEndDate: java.time.LocalDate? = null
     var historyReport: String? = null
     var historySelectingStart: Boolean = true
 
-    // -------- NOTIFICATIONS --------
     var notifications: List<NotificationEntity> = emptyList()
     var currentNotification: NotificationEntity? = null
     var notifIconInput: String? = null
@@ -462,7 +409,6 @@ class MoneyManagerContext {
         customNameInputMode = false
     }
 
-    // -------- NLP --------
     var nlpGroupName: String? = null
     var nlpGroupToDelete: MoneyGroup? = null
     var nlpResponse: String? = null
@@ -470,7 +416,6 @@ class MoneyManagerContext {
     var nlpTargetState: MoneyManagerState? = null
     var parsedCommand: BotCommand? = null
 
-    // -------- AI --------
     var pendingAiAction: AiPendingAction? = null
     var pendingAiActions: List<AiPendingAction> = emptyList()
     var aiBatchNotes: List<String> = emptyList()

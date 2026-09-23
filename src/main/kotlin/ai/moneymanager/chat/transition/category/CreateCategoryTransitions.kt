@@ -133,7 +133,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createCategoryTransiti
         MoneyManagerState.CATEGORY_CREATE_RESULT, MoneyManagerButtonType.BACK_TO_MENU, MoneyManagerState.CATEGORY_MANAGEMENT)
 }
 
-/** Общий хвост создания категории (quick-шаблон и custom-имя) — резолвит группу/тип, вызывает лимит-проверку, чистит tempTypeInput. */
 private fun createCategoryFromInput(
     context: MoneyManagerContext,
     name: String,

@@ -20,7 +20,6 @@ class GroupService(
     private val userRepository: UserInfoRepository,
     private val categoryService: CategoryService
 ) {
-
     private val log = LoggerFactory.getLogger(GroupService::class.java)
 
     companion object {

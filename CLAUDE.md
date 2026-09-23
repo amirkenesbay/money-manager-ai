@@ -660,7 +660,7 @@ All code must strictly follow these principles:
 - **Pure functions**: Where possible, write functions without side effects — they take data in, return a result.
 - **Meaningful names**: Variable, function, and class names must clearly reflect their purpose. Avoid abbreviations unless absolutely necessary.
 - **Small functions**: Functions should be short (~20 lines max) and do one thing. If a function is long — break it up.
-- **Minimal comments**: Code should be self-documenting. Comments are only for explaining "why", not "what".
+- **No comments**: The codebase carries no comments at all — no `//`, no `/* */`, no KDoc. Code must be self-documenting through naming and structure. If a fragment seems to need an explanation, rename it or extract it instead of describing it. This applies to new code as well: never add a comment, including a KDoc header on a new class or function.
 - **Fail fast**: Validate inputs at the start of a function and throw errors early — do not let invalid data propagate deeper.
 - **Composition over Inheritance**: Prefer composition over inheritance for behavior reuse.
 - **No magic strings/numbers — strictly forbidden**: Any string or number literal that carries meaning beyond a single, trivial, throwaway usage MUST be extracted into a named constant. This is non-negotiable.

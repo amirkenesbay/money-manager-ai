@@ -30,7 +30,6 @@ class RecentOperationAiHandler(
     private val groupService: GroupService,
     private val localizationService: LocalizationService
 ) : AiDomainHandler {
-
     override fun canHandle(command: BotCommand): Boolean = when (command) {
         is BotCommand.DeleteLastOperation,
         is BotCommand.EditLastOperation -> true

@@ -18,7 +18,6 @@ import java.time.ZonedDateTime
 class NotificationService(
     private val notificationRepository: NotificationRepository
 ) {
-
     private val log = LoggerFactory.getLogger(NotificationService::class.java)
 
     fun createNotification(

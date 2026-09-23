@@ -20,7 +20,6 @@ class UserInfoService(
 ) : DefaultAbsSender(
     DefaultBotOptions(), botToken
 ) {
-
     fun getUserInfo(telegramUserInfo: User): UserInfo {
         val userInfo = findUser(telegramUserInfo)
 
@@ -58,7 +57,6 @@ class UserInfoService(
         return mapEntity(updated)
     }
 
-    /** Ищет юзера по @username (без "@") или по telegramUserId — как принимает админ-команда /activate. */
     fun findUserByUsernameOrTelegramId(identifier: String): UserInfo? {
         val entity = identifier.toLongOrNull()
             ?.let { userRepository.findUserInfoEntityByTelegramUserId(it) }

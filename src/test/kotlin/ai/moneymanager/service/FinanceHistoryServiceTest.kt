@@ -10,12 +10,7 @@ import org.mockito.Mockito.mock
 import java.math.BigDecimal
 import java.time.LocalDate
 
-/**
- * Расчётная часть истории операций. Она публична, потому что её результат уходит
- * и в Telegram-рендер, и в REST API — числа должны совпадать в обоих каналах.
- */
 class FinanceHistoryServiceTest {
-
     private val groupId = ObjectId()
     private val startDate = LocalDate.of(2026, 7, 1)
     private val endDate = LocalDate.of(2026, 7, 31)
@@ -151,14 +146,9 @@ class FinanceHistoryServiceTest {
     )
 }
 
-/**
- * Отдаёт заранее заданный список операций. Остальные методы репозитория тесту не нужны —
- * они делегируются на мок, чтобы не писать десятки пустых заглушек Spring Data.
- */
 private class FakeFinanceOperationRepository(
     private val delegate: FinanceOperationRepository = mock(FinanceOperationRepository::class.java)
 ) : FinanceOperationRepository by delegate {
-
     var operations: List<FinanceOperationEntity> = emptyList()
 
     override fun findByGroupIdAndOperationDateBetweenOrderByOperationDateDesc(

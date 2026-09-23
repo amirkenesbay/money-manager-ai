@@ -38,8 +38,6 @@ class AiActionExecutor(
 ) {
     private val log = LoggerFactory.getLogger(AiActionExecutor::class.java)
 
-    // ========== EXECUTE (confirmed actions) ==========
-
     fun execute(context: MoneyManagerContext) {
         val lang = context.userInfo?.language
         val action = context.pendingAiAction
@@ -116,7 +114,6 @@ class AiActionExecutor(
         context.aiBatchNotes = emptyList()
         context.aiResultMessage = null
         context.aiRedirectState = null
-        // aiCategoriesCache is rewritten per request in AiRequestHandler; keep it for picker rendering.
     }
 
     private fun serviceIssueMessage(command: BotCommand, lang: String?): String? = when (command) {

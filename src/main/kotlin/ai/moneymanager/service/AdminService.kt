@@ -7,7 +7,6 @@ import org.telegram.telegrambots.bots.DefaultAbsSender
 import org.telegram.telegrambots.bots.DefaultBotOptions
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 
-/** Проверка прав и обратная связь для служебных админ-команд бота (например /activate). */
 @Service
 class AdminService(
     @Value("\${admin.telegram-user-ids:}")
@@ -15,7 +14,6 @@ class AdminService(
     @Value("\${chat-machinist.bot.token}")
     botToken: String
 ) : DefaultAbsSender(DefaultBotOptions(), botToken) {
-
     private val log = LoggerFactory.getLogger(this::class.java)
 
     private val adminIds: Set<Long> = adminIdsRaw

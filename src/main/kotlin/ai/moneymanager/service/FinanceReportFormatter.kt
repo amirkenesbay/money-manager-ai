@@ -28,7 +28,6 @@ private const val TREND_DOWN_MARKER = "🔻"
 class FinanceReportFormatter(
     private val localizationService: LocalizationService
 ) {
-
     fun formatComparison(report: ComparisonReport, currency: Currency, language: String?): String = buildString {
         append(bold(localizationService.t(
             "finance.report.comparison.title",

@@ -82,7 +82,6 @@ class AiRequestHandler(
         }
     }
 
-    /** Дневная квота AI-запросов на юзера. Проверяется до любого сетевого вызова к Gemini. */
     private fun checkRateLimit(context: MoneyManagerContext, lang: String?): Boolean {
         val userId = context.userInfo?.telegramUserId ?: return true
         val hasPaidSubscription = context.userInfo?.hasActivePaidSubscription() == true
@@ -96,7 +95,6 @@ class AiRequestHandler(
         return true
     }
 
-    /** Общий хвост text/voice: контекст категорий → парсинг → стадия ошибки → выполнение. */
     private fun parseAndExecute(
         context: MoneyManagerContext,
         feedback: AiFeedback,
@@ -108,7 +106,6 @@ class AiRequestHandler(
         actionExecutor.processCommands(commands, context)
     }
 
-    /** Валидация длительности и скачивание голосового; null — ошибка уже записана в контекст. */
     private fun downloadVoiceOrReportError(
         voice: Voice,
         context: MoneyManagerContext,

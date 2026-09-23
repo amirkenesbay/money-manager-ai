@@ -19,16 +19,11 @@ const val ADD_EXPENSE_BUTTON_TEXT = "💸 Записать трату"
 const val PRO_MODE_BUTTON_TEXT = "💎 Premium"
 private const val ATTACH_MESSAGE_TEXT = "👇"
 
-/**
- * Постоянные reply-кнопки рядом с системной клавиатурой — отдельный UI-слой от основного
- * inline-интерфейса бота. Крепятся один раз при /start, дальше просто всегда видны.
- */
 @Service
 class PersistentMenuKeyboardService(
     @Value("\${chat-machinist.bot.token}")
     botToken: String
 ) : DefaultAbsSender(DefaultBotOptions(), botToken) {
-
     private val log = LoggerFactory.getLogger(this::class.java)
 
     fun attach(chatId: Long) {

@@ -34,7 +34,6 @@ class FinanceHistoryService(
     private val financeOperationRepository: FinanceOperationRepository,
     private val localizationService: LocalizationService
 ) {
-
     fun getRecentOperations(groupId: ObjectId, limit: Int): List<FinanceOperationEntity> =
         financeOperationRepository
             .findByGroupIdOrderByOperationDateDescAuditInfoCreatedAtDesc(
@@ -42,9 +41,6 @@ class FinanceHistoryService(
                 PageRequest.of(0, limit)
             )
 
-    /**
-     * Данные истории без форматирования — используются и Telegram-рендером, и REST API.
-     */
     fun buildHistoryReport(
         groupId: ObjectId,
         startDate: LocalDate,
@@ -107,7 +103,6 @@ class FinanceHistoryService(
             .filter { typeFilter == null || it.type == typeFilter }
             .filter { categoryFilter == null || matchesCategoryFilter(it, categoryFilter) }
 
-    /** Суммы по категориям, от большей к меньшей. */
     private fun groupByCategory(operations: List<FinanceOperationEntity>): List<CategoryTotal> =
         operations
             .groupBy { (it.categoryIcon ?: DEFAULT_CATEGORY_ICON) to it.categoryName }
@@ -125,7 +120,6 @@ class FinanceHistoryService(
         creatorId = creatorId
     )
 
-    /** Поимённый список операций (с датами) — для запросов с фильтром по категории/ключевому слову. */
     private fun buildItemizedReport(
         header: String,
         report: HistoryReport,
@@ -149,7 +143,6 @@ class FinanceHistoryService(
             operation.description?.contains(filter, ignoreCase = true) == true
 
     private fun buildReportHeader(startDate: LocalDate, endDate: LocalDate, language: String?): String {
-        // Диапазонный заголовок уже содержит обе даты — отдельная строка с периодом нужна только месячному.
         if (!isFullMonth(startDate, endDate)) {
             return bold(
                 localizationService.t(

@@ -43,7 +43,6 @@ class MoneyManagerChatConfig(
     private val adminService: AdminService,
     private val subscriptionLimitsService: SubscriptionLimitsService
 ) {
-
     @Bean
     fun moneyManagerChat(): ChatBuilder<MoneyManagerState, MoneyManagerContext> =
         chat {

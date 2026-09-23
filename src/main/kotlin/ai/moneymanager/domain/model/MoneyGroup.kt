@@ -3,9 +3,6 @@ package ai.moneymanager.domain.model
 import org.bson.types.ObjectId
 import java.math.BigDecimal
 
-/**
- * Группа для совместного учета финансов
- */
 data class MoneyGroup(
     val id: ObjectId? = null,
     val name: String,
@@ -17,17 +14,8 @@ data class MoneyGroup(
     val currency: Currency = Currency.DEFAULT
 )
 
-/**
- * Тип группы
- */
 enum class GroupType {
-    /**
-     * Личный учет (создается автоматически при регистрации)
-     */
     PERSONAL,
 
-    /**
-     * Совместный учет (2+ человек)
-     */
     SHARED
 }

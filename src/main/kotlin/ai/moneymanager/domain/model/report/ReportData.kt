@@ -85,10 +85,6 @@ data class CategoryMonthData(
     val count: Int
 )
 
-/**
- * История операций за период: сами операции плюс посчитанные по ним итоги.
- * Telegram-рендер и REST API строятся поверх одних и тех же чисел.
- */
 data class HistoryReport(
     val startDate: LocalDate,
     val endDate: LocalDate,

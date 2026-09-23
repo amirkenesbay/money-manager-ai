@@ -78,12 +78,9 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
         notificationDialogTransitions(notificationService, userInfoService, subscriptionLimitsService)
         aiDialogTransitions(aiActionExecutor, aiRequestHandler, localizationService)
         adminDialogTransitions(adminService, userInfoService)
-        // Legacy NLP disabled for now
-        // nlpDialogTransitions(commandParserService, groupService, userInfoService, telegramFileService, geminiService)
     }
 }
 
-/** Reply-кнопка → действие, которое нужно выполнить сразу после /start. */
 private val PERSISTENT_BUTTON_ACTIONS: Map<String, PersistentAction> = mapOf(
     SETTINGS_BUTTON_TEXT to PersistentAction.OPEN_SETTINGS,
     AI_BUTTON_TEXT to PersistentAction.OPEN_AI,

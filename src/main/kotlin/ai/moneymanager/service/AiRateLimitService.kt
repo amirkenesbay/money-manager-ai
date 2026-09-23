@@ -13,10 +13,6 @@ sealed class AiRateLimitResult {
     data class Exceeded(val limit: Int, val resetInSeconds: Long) : AiRateLimitResult()
 }
 
-/**
- * Дневная квота AI-запросов на юзера. Хранится в Mongo (не in-memory), чтобы переживать
- * рестарт бота и работать одинаково при масштабировании на несколько инстансов.
- */
 @Service
 class AiRateLimitService(
     private val aiRateLimitRepository: AiRateLimitRepository,
@@ -27,7 +23,6 @@ class AiRateLimitService(
 ) {
     private val log = LoggerFactory.getLogger(this::class.java)
 
-    /** Атомарно инкрементирует счётчик за сегодня и проверяет лимит. Вызывать ПЕРЕД запросом к Gemini. */
     fun tryConsume(telegramUserId: Long, hasPaidSubscription: Boolean): AiRateLimitResult {
         val limit = if (hasPaidSubscription) paidDailyLimit else freeDailyLimit
         val updated = aiRateLimitRepository.incrementAndGet(telegramUserId, LocalDate.now())

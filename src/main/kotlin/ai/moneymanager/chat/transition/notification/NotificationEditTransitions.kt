@@ -11,7 +11,6 @@ import kz.rmr.chatmachinist.model.EventType
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationEditTransitions(
     notificationService: NotificationService
 ) {
-    // Actions -> Edit menu
     simpleTransition(
         "Open edit menu",
         MoneyManagerState.NOTIFICATION_ACTIONS,
@@ -19,7 +18,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationEditTransi
         MoneyManagerState.NOTIFICATION_EDIT_MENU
     )
 
-    // Edit name
     transition {
         name = "Start edit notification name"
         condition {
@@ -68,7 +66,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationEditTransi
         }
     }
 
-    // Edit icon -> reuses create icon state
     transition {
         name = "Start edit notification icon"
         condition {
@@ -85,7 +82,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationEditTransi
         }
     }
 
-    // Edit frequency -> reuses create flow
     transition {
         name = "Start edit frequency"
         condition {
@@ -101,7 +97,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationEditTransi
         }
     }
 
-    // Back from edit menu to actions
     simpleTransition(
         "Back from edit menu",
         MoneyManagerState.NOTIFICATION_EDIT_MENU,
@@ -109,7 +104,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationEditTransi
         MoneyManagerState.NOTIFICATION_ACTIONS
     )
 
-    // Toggle active/pause
     transition {
         name = "Toggle notification"
         condition {

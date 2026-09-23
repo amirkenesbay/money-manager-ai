@@ -10,7 +10,6 @@ import kz.rmr.chatmachinist.api.transition.DialogBuilder
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationDeleteTransitions(
     notificationService: NotificationService
 ) {
-    // Delete single notification
     confirmFlow(
         flowName = "delete notification",
         sourceState = MoneyManagerState.NOTIFICATION_ACTIONS,
@@ -26,7 +25,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationDeleteTran
         }
     )
 
-    // Delete all notifications
     confirmFlow(
         flowName = "delete all notifications",
         sourceState = MoneyManagerState.NOTIFICATION_LIST,

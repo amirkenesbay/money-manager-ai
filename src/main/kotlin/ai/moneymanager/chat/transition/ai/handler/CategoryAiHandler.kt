@@ -21,7 +21,6 @@ class CategoryAiHandler(
     private val subscriptionLimitsService: SubscriptionLimitsService,
     private val localizationService: LocalizationService
 ) : AiDomainHandler {
-
     override fun canHandle(command: BotCommand): Boolean = when (command) {
         is BotCommand.CreateCategory,
         is BotCommand.DeleteCategory,
@@ -65,8 +64,6 @@ class CategoryAiHandler(
             is AiPendingAction.CategoryAction.DeleteAll -> executeDeleteAll(action, lang)
         }
     }
-
-    // ========== PREPARE ==========
 
     private fun prepareCreate(cmd: BotCommand.CreateCategory, lang: String?): AiPreparationResult {
         val type = parseCategoryType(cmd.type)
@@ -144,8 +141,6 @@ class CategoryAiHandler(
         return AiPreparationResult.StateRedirect(MoneyManagerState.CATEGORY_LIST)
     }
 
-    // ========== EXECUTE ==========
-
     private fun executeCreate(
         action: AiPendingAction.CategoryAction.Create,
         context: MoneyManagerContext,
@@ -214,8 +209,6 @@ class CategoryAiHandler(
             localizationService.t("ai.category.delete_all.failed", lang)
         }
     }
-
-    // ========== HELPERS ==========
 
     private fun findCategories(groupId: ObjectId, name: String, type: CategoryType?): List<Category> {
         val all = if (type != null) {

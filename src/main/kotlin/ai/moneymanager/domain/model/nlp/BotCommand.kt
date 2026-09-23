@@ -1,27 +1,14 @@
 package ai.moneymanager.domain.model.nlp
 
-/**
- * Результат парсинга пользовательского сообщения через Gemini
- */
 sealed class BotCommand {
-
-    /**
-     * Команда создания группы
-     */
     data class CreateGroup(
         val groupName: String
     ) : BotCommand()
 
-    /**
-     * Команда удаления группы
-     */
     data class DeleteGroup(
         val groupName: String
     ) : BotCommand()
 
-    /**
-     * Команда добавления расхода
-     */
     data class AddExpense(
         val amount: Double,
         val category: String?,
@@ -30,9 +17,6 @@ sealed class BotCommand {
         val operationDate: String?
     ) : BotCommand()
 
-    /**
-     * Команда добавления дохода
-     */
     data class AddIncome(
         val amount: Double,
         val category: String?,
@@ -41,34 +25,19 @@ sealed class BotCommand {
         val operationDate: String?
     ) : BotCommand()
 
-    /**
-     * Сообщение вне контекста бота
-     */
     data class OutOfContext(
         val originalMessage: String
     ) : BotCommand()
 
-    /**
-     * Ошибка парсинга
-     */
     data class ParseError(
         val error: String
     ) : BotCommand()
 
-    /**
-     * Превышен лимит запросов к Gemini (HTTP 429).
-     * retryAfterSeconds — рекомендуемая пауза из тела ответа, если смогли распарсить.
-     */
     data class RateLimitError(
         val retryAfterSeconds: Long?
     ) : BotCommand()
 
-    /**
-     * Gemini временно недоступен: 5xx, сетевые ошибки или прочие 4xx кроме 429.
-     */
     object ServiceError : BotCommand()
-
-    // ===== CATEGORY =====
 
     data class CreateCategory(
         val name: String,
@@ -99,15 +68,11 @@ sealed class BotCommand {
         val type: String?
     ) : BotCommand()
 
-    // ===== GROUPS =====
-
     object ListGroups : BotCommand()
 
     data class SwitchGroup(
         val groupName: String
     ) : BotCommand()
-
-    // ===== BALANCE / REPORTS / HISTORY =====
 
     object ShowBalance : BotCommand()
 
@@ -123,8 +88,6 @@ sealed class BotCommand {
         val categoryFilter: String?
     ) : BotCommand()
 
-    // ===== NOTIFICATIONS =====
-
     object ListNotifications : BotCommand()
 
     data class CreateNotification(
@@ -136,8 +99,6 @@ sealed class BotCommand {
     data class DeleteNotification(
         val name: String
     ) : BotCommand()
-
-    // ===== RECENT OPERATION EDIT =====
 
     data class DeleteLastOperation(
         val type: String?

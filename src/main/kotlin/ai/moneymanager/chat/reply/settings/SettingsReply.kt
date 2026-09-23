@@ -48,7 +48,6 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.settingsReply(
     }
 }
 
-/** Баннер подтверждения после смены языка/валюты — обе настройки возвращают сюда, банер общий. */
 private fun settingsConfirmationBanner(
     context: MoneyManagerContext,
     localizationService: LocalizationService,

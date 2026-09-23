@@ -14,12 +14,7 @@ import org.springframework.http.MediaType
 import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
 
-/**
- * Единственный барьер между интернетом и данными пользователей: до W-004 контроллеры
- * полагаются на то, что до них доходят только запросы с подлинной initData.
- */
 class TelegramAuthFilterTest {
-
     private val objectMapper = jacksonObjectMapper()
     private val filter = TelegramAuthFilter(
         TelegramInitDataValidator(TEST_BOT_TOKEN, objectMapper),
@@ -103,7 +98,6 @@ class TelegramAuthFilterTest {
         request.addHeader(HttpHeaders.AUTHORIZATION, value)
     }
 
-    /** Ни один запрос без подлинной initData не должен дойти до контроллера. */
     private fun assertUnauthorized() {
         assertThat(chain.invoked).isFalse()
         assertThat(response.status).isEqualTo(HttpStatus.UNAUTHORIZED.value())
@@ -111,7 +105,6 @@ class TelegramAuthFilterTest {
     }
 }
 
-/** Записывает сам факт вызова: дошёл запрос до контроллера или был отсечён фильтром. */
 private class RecordingFilterChain : FilterChain {
     var invoked = false
         private set

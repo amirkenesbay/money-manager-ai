@@ -26,7 +26,6 @@ class GroupAiHandler(
     private val subscriptionLimitsService: SubscriptionLimitsService,
     private val localizationService: LocalizationService
 ) : AiDomainHandler {
-
     override fun canHandle(command: BotCommand): Boolean = when (command) {
         is BotCommand.CreateGroup,
         is BotCommand.DeleteGroup,

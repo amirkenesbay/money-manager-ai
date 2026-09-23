@@ -5,7 +5,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class TelegramInitDataValidatorTest {
-
     private val validator = TelegramInitDataValidator(TEST_BOT_TOKEN, ObjectMapper())
 
     @Test

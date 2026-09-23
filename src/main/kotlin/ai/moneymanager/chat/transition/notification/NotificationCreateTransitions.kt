@@ -19,11 +19,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
     notificationService: NotificationService,
     subscriptionLimitsService: SubscriptionLimitsService
 ) {
-    // ========================
-    // STEP 0: Icon input (optional)
-    // ========================
-
-    // Valid emoji input (no letters/digits)
     transition {
         name = "Save notification icon"
         condition {
@@ -46,7 +41,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
         }
     }
 
-    // Invalid input (contains letters/digits)
     transition {
         name = "Reject non-emoji icon input"
         condition {
@@ -61,7 +55,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
         }
     }
 
-    // After valid icon → go to custom name text input (create mode)
     transition {
         name = "Icon saved -> custom name input (create)"
         condition {
@@ -78,7 +71,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
         }
     }
 
-    // After valid icon → go to actions (edit mode)
     transition {
         name = "Icon saved -> actions (edit)"
         condition {
@@ -97,7 +89,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
         }
     }
 
-    // Skip icon → go to custom name text input
     transition {
         name = "Skip notification icon"
         condition {
@@ -114,14 +105,8 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
         }
     }
 
-    // Cancel from icon
     cancelToList(MoneyManagerState.NOTIFICATION_CREATE_ICON, notificationService)
 
-    // ========================
-    // STEP 1: Name input (quick templates + custom)
-    // ========================
-
-    // Quick notification name buttons (icon from template)
     QuickTemplates.NOTIFICATIONS.forEach { template ->
         transition {
             name = "Quick notification name: ${template.name}"
@@ -141,7 +126,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
         }
     }
 
-    // Enter custom name → go to icon selection first
     simpleTransitionWithAction(
         "Enter custom notification name -> icon",
         MoneyManagerState.NOTIFICATION_CREATE_NAME,
@@ -152,7 +136,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
         context.iconInputError = false
     }
 
-    // Custom text input
     transition {
         name = "Save notification name"
         condition {
@@ -200,7 +183,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
         }
     }
 
-    // Cancel from name input
     transition {
         name = "Cancel notification creation from name"
         condition {
@@ -217,9 +199,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
         }
     }
 
-    // ========================
-    // STEP 2: Frequency selection
-    // ========================
     frequencyTransition("Daily", MoneyManagerButtonType.NOTIFICATION_FREQ_DAILY, FrequencyType.DAILY, MoneyManagerState.NOTIFICATION_CREATE_SELECT_HOUR)
     frequencyTransition("Weekly", MoneyManagerButtonType.NOTIFICATION_FREQ_WEEKLY, FrequencyType.WEEKLY, MoneyManagerState.NOTIFICATION_CREATE_DAY_OF_WEEK)
     frequencyTransition("Biweekly", MoneyManagerButtonType.NOTIFICATION_FREQ_BIWEEKLY, FrequencyType.BIWEEKLY, MoneyManagerState.NOTIFICATION_CREATE_DAY_OF_WEEK)
@@ -234,12 +213,8 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
         MoneyManagerState.NOTIFICATION_CREATE_CUSTOM_UNIT
     )
 
-    // Cancel from frequency
     cancelToList(MoneyManagerState.NOTIFICATION_CREATE_FREQUENCY, notificationService)
 
-    // ========================
-    // STEP 3: Custom unit selection
-    // ========================
     customUnitTransition("Custom days", MoneyManagerButtonType.NOTIFICATION_CUSTOM_DAYS, FrequencyType.CUSTOM_DAYS)
     customUnitTransition("Custom weeks", MoneyManagerButtonType.NOTIFICATION_CUSTOM_WEEKS, FrequencyType.CUSTOM_WEEKS)
     customUnitTransition("Custom months", MoneyManagerButtonType.NOTIFICATION_CUSTOM_MONTHS, FrequencyType.CUSTOM_MONTHS)
@@ -247,9 +222,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
 
     cancelToList(MoneyManagerState.NOTIFICATION_CREATE_CUSTOM_UNIT, notificationService)
 
-    // ========================
-    // STEP 4: Custom N input
-    // ========================
     transition {
         name = "Save custom N"
         condition {
@@ -281,7 +253,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
         }
     }
 
-    // Route based on frequency type after custom N
     transition {
         name = "Custom days -> hour"
         condition {
@@ -344,9 +315,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
 
     cancelToList(MoneyManagerState.NOTIFICATION_CREATE_CUSTOM_N, notificationService)
 
-    // ========================
-    // STEP 5: Day of week
-    // ========================
     transition {
         name = "Select day of week"
         condition {
@@ -363,9 +331,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
 
     cancelToList(MoneyManagerState.NOTIFICATION_CREATE_DAY_OF_WEEK, notificationService)
 
-    // ========================
-    // STEP 6: Day of month
-    // ========================
     transition {
         name = "Select day of month"
         condition {
@@ -382,9 +347,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
 
     cancelToList(MoneyManagerState.NOTIFICATION_CREATE_DAY_OF_MONTH, notificationService)
 
-    // ========================
-    // STEP 7: Month (for yearly)
-    // ========================
     transition {
         name = "Select month"
         condition {
@@ -401,9 +363,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
 
     cancelToList(MoneyManagerState.NOTIFICATION_CREATE_MONTH, notificationService)
 
-    // ========================
-    // STEP 8: Hour selection
-    // ========================
     transition {
         name = "Select hour"
         condition {
@@ -420,9 +379,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
 
     cancelToList(MoneyManagerState.NOTIFICATION_CREATE_SELECT_HOUR, notificationService)
 
-    // ========================
-    // STEP 9: Minute selection
-    // ========================
     transition {
         name = "Select minute"
         condition {
@@ -439,9 +395,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
 
     cancelToList(MoneyManagerState.NOTIFICATION_CREATE_SELECT_MINUTE, notificationService)
 
-    // ========================
-    // STEP 10: Confirm
-    // ========================
     transition {
         name = "Confirm create notification"
         condition {
@@ -509,13 +462,8 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
         }
     }
 
-    // Cancel from confirm
     cancelToList(MoneyManagerState.NOTIFICATION_CREATE_CONFIRM, notificationService)
 }
-
-// ========================
-// HELPER FUNCTIONS
-// ========================
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.frequencyTransition(
     name: String,

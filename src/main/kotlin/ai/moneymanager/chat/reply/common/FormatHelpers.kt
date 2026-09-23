@@ -43,25 +43,19 @@ val shortDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern(SHORT_DA
 
 fun formatAmount(amount: BigDecimal, currency: Currency): String = "${amountFormat.format(amount)}${currency.symbol}"
 
-/** Единая точка получения валюты группы — используется вместо повторного `getGroup(id)?.currency ?: DEFAULT` по всему коду. */
 fun resolveCurrency(groupService: GroupService, groupId: ObjectId?): Currency =
     groupId?.let { groupService.getGroup(it)?.currency } ?: Currency.DEFAULT
 
-/** Telegram HTML parse mode: жирный текст. Использовать только на экранах с parseMode = HTML. */
 fun bold(text: String): String = "<b>$text</b>"
 
 fun italic(text: String): String = "<i>$text</i>"
 
-/** Моноширинная строка — колонки цифр и баров не пляшут. */
 fun code(text: String): String = "<code>$text</code>"
 
-/** Моноширинный блок: настоящее табличное выравнивание для бар-чартов. */
 fun pre(text: String): String = "<pre>$text</pre>"
 
-/** Блок с вертикальной чертой — визуально выделенные итоги. */
 fun blockquote(text: String): String = "<blockquote>$text</blockquote>"
 
-/** Сворачиваемый блок — длинные списки не заваливают экран. */
 fun expandableBlockquote(text: String): String = "<blockquote expandable>$text</blockquote>"
 
 fun link(label: String, url: String): String = "<a href=\"$url\">$label</a>"
@@ -70,7 +64,6 @@ private const val BAR_WIDTH = 12
 private const val BAR_FILLED = "█"
 private const val BAR_EMPTY = "░"
 
-/** Горизонтальный бар: доля value от max, ширина фиксированная — не переносится. */
 fun progressBar(value: BigDecimal, max: BigDecimal, width: Int = BAR_WIDTH): String {
     val filled = if (max > BigDecimal.ZERO) {
         value.multiply(BigDecimal.valueOf(width.toLong()))
@@ -81,7 +74,6 @@ fun progressBar(value: BigDecimal, max: BigDecimal, width: Int = BAR_WIDTH): Str
     return BAR_FILLED.repeat(filled) + BAR_EMPTY.repeat(width - filled)
 }
 
-/** Экранирование пользовательского текста для экранов с parseMode = HTML. */
 fun escapeHtml(text: String): String = text
     .replace("&", "&amp;")
     .replace("<", "&lt;")
@@ -95,15 +87,9 @@ fun formatIconPrefix(icon: String?): String =
 fun formatDescriptionSuffix(description: String?): String =
     description?.takeIf { it.isNotBlank() }?.let { "$DESCRIPTION_PREFIX$it$DESCRIPTION_SUFFIX" } ?: ""
 
-/**
- * Текст кнопки операции в списке для редактирования — общий для reply-экрана и transition-матчинга по buttonText.
- * Номер обязателен: операции часто повторяются (та же дата/категория/сумма), без него кнопки визуально
- * дублируются и матчинг по тексту всегда выбирал бы первую совпавшую — вторая становилась недостижимой.
- */
 fun operationListButtonText(index: Int, date: String, icon: String?, categoryName: String, signedAmount: String): String =
     "${index + 1}. $date ${icon ?: DEFAULT_CATEGORY_ICON} $categoryName $signedAmount"
 
-/** Текст кнопки категории («иконка имя») — общий для reply-экранов и transition-матчинга по buttonText. */
 fun categoryButtonText(category: Category): String =
     "${category.icon ?: DEFAULT_CATEGORY_ICON} ${category.name}"
 

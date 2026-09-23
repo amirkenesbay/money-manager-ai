@@ -143,7 +143,6 @@ internal fun processNlpCommand(
         is BotCommand.DeleteNotification,
         is BotCommand.DeleteLastOperation,
         is BotCommand.EditLastOperation -> {
-            // Эти команды обрабатываются в новом AI-флоу (AI_MODE).
             context.nlpResponse = PARSE_ERROR_MESSAGE
             context.nlpTargetState = MoneyManagerState.NLP_RESPONSE
         }

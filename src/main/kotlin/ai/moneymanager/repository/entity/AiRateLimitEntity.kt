@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.core.mapping.Document
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-private const val ENTRY_TTL_SECONDS = 172_800 // 2 дня — хватает на день использования + запас от смещения таймзон
+private const val ENTRY_TTL_SECONDS = 172_800
 
 @Document(collection = "ai_rate_limit")
 @CompoundIndex(def = "{'telegramUserId': 1, 'date': 1}", unique = true)

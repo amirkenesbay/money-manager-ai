@@ -27,7 +27,6 @@ class NotificationSchedulerService(
 ) : DefaultAbsSender(
     DefaultBotOptions(), botToken
 ) {
-
     private val log = LoggerFactory.getLogger(NotificationSchedulerService::class.java)
 
     @Scheduled(fixedRate = 60000)

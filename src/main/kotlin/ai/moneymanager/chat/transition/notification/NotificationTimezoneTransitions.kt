@@ -15,7 +15,6 @@ val TIMEZONE_MAP = mapOf(
     "UTC+4 Дубай" to "Asia/Dubai",
     "UTC+2 Киев" to "Europe/Kiev",
     "UTC+1 Берлин" to "Europe/Berlin",
-    // Extended
     "UTC+0 Лондон" to "Europe/London",
     "UTC-5 Нью-Йорк" to "America/New_York",
     "UTC+7 Бангкок" to "Asia/Bangkok",
@@ -40,7 +39,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationTimezoneTr
     userInfoService: UserInfoService,
     notificationService: NotificationService
 ) {
-    // MENU -> check timezone -> NOTIFICATION_TIMEZONE_SELECT or NOTIFICATION_LIST
     transition {
         name = "Open notifications (need timezone)"
         condition {
@@ -68,7 +66,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationTimezoneTr
         }
     }
 
-    // Select popular timezone
     transition {
         name = "Select popular timezone"
         condition {
@@ -88,7 +85,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationTimezoneTr
         }
     }
 
-    // Show extended timezones
     simpleTransition(
         "Show extended timezones",
         MoneyManagerState.NOTIFICATION_TIMEZONE_SELECT,
@@ -96,7 +92,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationTimezoneTr
         MoneyManagerState.NOTIFICATION_TIMEZONE_EXTENDED
     )
 
-    // Select extended timezone
     transition {
         name = "Select extended timezone"
         condition {
@@ -116,7 +111,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationTimezoneTr
         }
     }
 
-    // Back from timezone screens
     simpleTransition(
         "Back from timezone select",
         MoneyManagerState.NOTIFICATION_TIMEZONE_SELECT,

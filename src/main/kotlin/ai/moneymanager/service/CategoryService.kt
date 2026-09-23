@@ -29,7 +29,6 @@ class CategoryService(
     private val categoryRepository: CategoryRepository,
     private val localizationService: LocalizationService
 ) {
-
     private val log = LoggerFactory.getLogger(CategoryService::class.java)
 
     fun createCategory(name: String, icon: String?, type: CategoryType, groupId: ObjectId, maxCategoriesPerType: Int): CategoryCreationResult {
@@ -93,10 +92,6 @@ class CategoryService(
         }
     }
 
-    /**
-     * @param groupId ID группы
-     * @return количество удаленных категорий
-     */
     fun deleteAllCategoriesForGroup(groupId: ObjectId): Long {
         return try {
             categoryRepository.deleteByGroupId(groupId)
@@ -106,11 +101,6 @@ class CategoryService(
         }
     }
 
-    /**
-     * @param sourceGroupId ID группы-источника
-     * @param targetGroupId ID группы-приемника
-     * @return количество скопированных категорий
-     */
     fun copyCategoriesFromGroup(sourceGroupId: ObjectId, targetGroupId: ObjectId): Int {
         val sourceCategories = categoryRepository.findByGroupId(sourceGroupId)
 

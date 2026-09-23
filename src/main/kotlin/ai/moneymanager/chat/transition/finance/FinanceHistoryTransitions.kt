@@ -110,7 +110,6 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.changePeriodTr
         }
     }
 
-    // Quick periods
     transition {
         name = "Quick period: this month"
 
@@ -171,7 +170,6 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.changePeriodTr
         }
     }
 
-    // Calendar flow: start date
     transition {
         name = "Open calendar for start date"
 
@@ -217,7 +215,6 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.changePeriodTr
         }
     }
 
-    // End date selection
     transition {
         name = "Quick end date: today"
 

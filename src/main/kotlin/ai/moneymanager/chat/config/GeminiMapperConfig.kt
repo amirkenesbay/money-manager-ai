@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class GeminiMapperConfig {
-
     @Bean
     fun geminiArgsMapper(): GeminiArgsMapper {
         return GeminiArgsMapper(jacksonObjectMapper())

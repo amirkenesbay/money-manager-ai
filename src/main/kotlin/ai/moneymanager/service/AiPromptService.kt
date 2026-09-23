@@ -33,7 +33,6 @@ private const val MAX_CATEGORIES_IN_PROMPT = 50
 
 @Service
 class AiPromptService {
-
     val systemPrompt: String by lazy { loadPrompt(SYSTEM_PROMPT_PATH) }
 
     val voiceTranscriptionPrompt: String by lazy { loadPrompt(VOICE_TRANSCRIPTION_PROMPT_PATH) }

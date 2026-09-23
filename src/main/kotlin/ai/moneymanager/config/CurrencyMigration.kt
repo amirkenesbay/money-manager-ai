@@ -13,12 +13,10 @@ import org.springframework.stereotype.Component
 private const val MONEY_GROUP_COLLECTION = "money_group"
 private const val CURRENCY_FIELD = "currency"
 
-/** Разовая идемпотентная миграция: у групп без поля currency (созданных до унификации валют) проставляем KZT. */
 @Component
 class CurrencyMigration(
     private val mongoTemplate: MongoTemplate
 ) : ApplicationRunner {
-
     private val log = LoggerFactory.getLogger(javaClass)
 
     override fun run(args: ApplicationArguments) {

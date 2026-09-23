@@ -47,7 +47,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.nlpCreateGroupTransiti
         }
     }
 
-    // Triggered: NLP group created successfully
     transition {
         name = "NLP group created successfully"
 
@@ -62,7 +61,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.nlpCreateGroupTransiti
         }
     }
 
-    // Triggered: NLP duplicate group name
     transition {
         name = "NLP group name duplicate error"
 

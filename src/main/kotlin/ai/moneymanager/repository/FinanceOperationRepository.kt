@@ -10,7 +10,6 @@ import java.time.LocalDate
 
 @Repository
 interface FinanceOperationRepository : MongoRepository<FinanceOperationEntity, ObjectId> {
-    // Spring Data `Between` генерирует строгие $gt/$lt — граничные даты (сегодня, 1-е число) выпадали.
     @Query(
         value = "{ 'groupId': ?0, 'operationDate': { '\$gte': ?1, '\$lte': ?2 } }",
         sort = "{ 'operationDate': -1 }"

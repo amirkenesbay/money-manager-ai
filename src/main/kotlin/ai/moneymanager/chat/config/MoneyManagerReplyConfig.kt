@@ -74,22 +74,18 @@ class MoneyManagerReplyConfig {
         return replies {
             chatName = "Money Manager Chat"
 
-            // Money replies
             menuReply(localizationService)
 
-            // Settings replies
             settingsReply(localizationService)
             languageSelectReply(localizationService)
             currencySelectReply(localizationService)
             subscriptionViewReply(localizationService, aiRateLimitService)
             proInfoReply(localizationService)
 
-            // Balance replies
             balanceOnboardingPromptReply(localizationService)
             balanceOnboardingEnterAmountReply(localizationService)
             balanceViewReply(localizationService)
 
-            // Finance replies
             financeManagementReply(financeHistoryService, groupService, localizationService)
             financeSelectCategoryReply(localizationService)
             financeNoCategoriesWarningReply(localizationService)
@@ -101,7 +97,6 @@ class MoneyManagerReplyConfig {
             financeSelectMonthReply(localizationService)
             financeOperationSavedReply(localizationService)
 
-            // Finance report replies
             financeReportMenuReply(localizationService)
             financeReportComparisonReply(localizationService)
             financeReportAnalyticsReply(localizationService)
@@ -109,7 +104,6 @@ class MoneyManagerReplyConfig {
             financeReportCategorySelectReply(localizationService)
             financeReportCategoryViewReply(localizationService)
 
-            // Finance history replies
             financeHistoryReply(localizationService)
             financeHistorySelectStartDateReply(localizationService)
             financeHistorySelectEndDateReply(localizationService)
@@ -117,7 +111,6 @@ class MoneyManagerReplyConfig {
             financeHistorySelectYearReply(localizationService)
             financeHistorySelectMonthReply(localizationService)
 
-            // Operation edit replies
             operationListReply(localizationService, groupService)
             operationActionsReply(localizationService, groupService)
             operationEditAmountReply(localizationService)
@@ -127,7 +120,6 @@ class MoneyManagerReplyConfig {
             operationEditCommentReply(localizationService)
             operationDeleteConfirmReply(localizationService, groupService)
 
-            // Group replies
             groupManagementReply(localizationService)
             groupCreateEnterNameReply(localizationService)
             groupInviteShowReply(localizationService)
@@ -138,7 +130,6 @@ class MoneyManagerReplyConfig {
             groupEditEnterNameReply(localizationService)
             groupDeleteConfirmReply(localizationService)
 
-            // Category replies
             categoryManagementReply(localizationService)
             categoryNoGroupWarningReply(localizationService)
             categoryCreateSelectTypeReply(localizationService)
@@ -152,7 +143,6 @@ class MoneyManagerReplyConfig {
             categoryDeleteConfirmReply(localizationService)
             categoryDeleteAllConfirmReply(localizationService)
 
-            // Notification replies
             notificationTimezoneSelectReply(localizationService)
             notificationTimezoneExtendedReply(localizationService)
             notificationCreateIconReply(localizationService)
@@ -173,18 +163,12 @@ class MoneyManagerReplyConfig {
             notificationDeleteConfirmReply(localizationService)
             notificationDeleteAllConfirmReply(localizationService)
 
-            // AI replies
             aiModeReply(localizationService)
             aiConfirmReply(localizationService, groupService)
             aiConfirmBatchReply(localizationService, groupService)
             aiTransactionPickCategoryReply(localizationService)
             aiTransactionPickCategoryAllReply(localizationService)
             aiResultReply(localizationService)
-
-            // Legacy NLP replies (disabled for now)
-            // nlpConfirmCreateGroupReply()
-            // nlpConfirmDeleteGroupReply()
-            // nlpResponseReply()
         }
     }
 }

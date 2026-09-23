@@ -10,7 +10,6 @@ import kz.rmr.chatmachinist.api.transition.DialogBuilder
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationListTransitions(
     notificationService: NotificationService
 ) {
-    // Select notification from list
     transition {
         name = "Select notification from list"
         condition {
@@ -19,8 +18,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationListTransi
         }
         action {
             val text = buttonText ?: return@action
-            // Button text format: "🟢 🔔 Name" or "⏸️ 📝 Name"
-            // Match by finding which notification's name is contained in the button text
             context.currentNotification = context.notifications.find { n ->
                 text.endsWith(n.name)
             }
@@ -30,7 +27,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationListTransi
         }
     }
 
-    // Start create flow
     transition {
         name = "Start create notification"
         condition {
@@ -46,7 +42,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationListTransi
         }
     }
 
-    // Back from actions to list
     transition {
         name = "Back to notification list from actions"
         condition {
@@ -62,7 +57,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationListTransi
         }
     }
 
-    // Back to menu
     simpleTransition(
         "Back to menu from notifications",
         MoneyManagerState.NOTIFICATION_LIST,
