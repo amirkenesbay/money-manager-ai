@@ -1,8 +1,8 @@
 import { rawInitData } from '../telegram/telegramEnv'
+import { authorizationHeader } from './auth'
 import type { ApiErrorBody } from './types'
 
 const API_BASE = '/api/v1'
-const AUTH_SCHEME = 'tma'
 const JSON_CONTENT_TYPE = 'application/json'
 
 export class ApiRequestError extends Error {
@@ -27,7 +27,7 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}, signal
 
 async function send(path: string, init: RequestInit, signal?: AbortSignal): Promise<Response> {
   const headers = new Headers(init.headers)
-  headers.set('Authorization', `${AUTH_SCHEME} ${rawInitData() ?? ''}`)
+  headers.set('Authorization', authorizationHeader(rawInitData() ?? ''))
   if (init.body !== undefined) headers.set('Content-Type', JSON_CONTENT_TYPE)
   try {
     return await fetch(`${API_BASE}${path}`, { ...init, headers, signal })

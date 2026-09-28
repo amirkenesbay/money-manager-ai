@@ -47,3 +47,4 @@ bin/
 
 ### Environment ###
 .env
+.env.dev

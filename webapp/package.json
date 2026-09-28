@@ -9,7 +9,9 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "typecheck": "tsc -b",
-    "test": "vitest run"
+    "test": "vitest run",
+    "dev:mock": "vite --mode mock",
+    "dev:launch-url": "node dev/launchUrl.ts"
   },
   "dependencies": {
     "@tma.js/sdk-react": "^3.0.23",

@@ -22,3 +22,4 @@ Spec-driven development: сначала спецификация → архит�
 
 `feature/TELEGRAM-WEBAPP` — отстаёт от `master` на 29 коммитов, содержит 1 коммит (`5b6642d` — валидация Telegram initData).
 Перед продолжением работы ветку нужно смёржить с `master`.
+- [DEV.md](DEV.md) — локальная разработка: мок, локальный бэкенд, туннель в Telegram
