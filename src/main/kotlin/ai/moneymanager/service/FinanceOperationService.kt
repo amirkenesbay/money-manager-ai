@@ -2,10 +2,13 @@ package ai.moneymanager.service
 
 import ai.moneymanager.domain.model.BalanceBreakdown
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.OperationFilter
 import ai.moneymanager.repository.FinanceOperationRepository
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -29,6 +32,9 @@ class FinanceOperationService(
             total = initialBalance + income - expense
         )
     }
+
+    fun findOperations(filter: OperationFilter, page: Int, size: Int): Page<FinanceOperationEntity> =
+        financeOperationRepository.findPage(filter, PageRequest.of(page, size))
 
     fun save(
         groupId: ObjectId,

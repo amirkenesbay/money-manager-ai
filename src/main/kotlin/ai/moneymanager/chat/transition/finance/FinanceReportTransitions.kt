@@ -1,6 +1,5 @@
 package ai.moneymanager.chat.transition.finance
 
-import ai.moneymanager.chat.reply.common.formatUserDisplayName
 import ai.moneymanager.chat.reply.common.resolveCurrency
 import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.MoneyManagerButtonType
@@ -289,10 +288,7 @@ private fun ActionContext<MoneyManagerState, MoneyManagerContext>.loadMembersRep
     val group = groupService.getGroup(groupId)
     val memberIds = group?.memberIds ?: setOf(user.id)
 
-    val memberNames = memberIds.associateWith { memberId ->
-        val info = userInfoService.getUserInfoByTelegramId(memberId)
-        formatUserDisplayName(info, memberId)
-    }
+    val memberNames = userInfoService.displayNames(memberIds)
 
     context.reportText = financeReportService.generateMembersReport(groupId, monthStart, memberNames, group?.currency ?: Currency.DEFAULT, language)
 }

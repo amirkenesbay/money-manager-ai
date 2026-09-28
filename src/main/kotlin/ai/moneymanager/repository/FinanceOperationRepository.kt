@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository
 import java.time.LocalDate
 
 @Repository
-interface FinanceOperationRepository : MongoRepository<FinanceOperationEntity, ObjectId> {
+interface FinanceOperationRepository : MongoRepository<FinanceOperationEntity, ObjectId>, FinanceOperationRepositoryCustom {
     @Query(
         value = "{ 'groupId': ?0, 'operationDate': { '\$gte': ?1, '\$lte': ?2 } }",
         sort = "{ 'operationDate': -1 }"

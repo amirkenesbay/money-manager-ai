@@ -30,10 +30,11 @@ class SubscriptionLimitsService(
     fun maxHistoryDaysBack(hasPaidSubscription: Boolean): Int? =
         if (hasPaidSubscription) null else freeMaxHistoryDaysBack
 
-    fun isBeyondHistoryLimit(date: LocalDate, hasPaidSubscription: Boolean): Boolean {
-        val maxDaysBack = maxHistoryDaysBack(hasPaidSubscription) ?: return false
-        return date.isBefore(LocalDate.now().minusDays(maxDaysBack.toLong()))
-    }
+    fun earliestHistoryDate(hasPaidSubscription: Boolean): LocalDate? =
+        maxHistoryDaysBack(hasPaidSubscription)?.let { LocalDate.now().minusDays(it.toLong()) }
+
+    fun isBeyondHistoryLimit(date: LocalDate, hasPaidSubscription: Boolean): Boolean =
+        earliestHistoryDate(hasPaidSubscription)?.let { date.isBefore(it) } ?: false
 
     fun maxOwnedSharedGroups(hasPaidSubscription: Boolean): Int? =
         if (hasPaidSubscription) null else freeMaxOwnedSharedGroups

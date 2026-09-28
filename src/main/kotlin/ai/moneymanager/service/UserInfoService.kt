@@ -1,5 +1,6 @@
 package ai.moneymanager.service
 
+import ai.moneymanager.chat.reply.common.formatUserDisplayName
 import ai.moneymanager.domain.model.SubscriptionTier
 import ai.moneymanager.domain.model.TelegramProfile
 import ai.moneymanager.domain.model.UserInfo
@@ -33,6 +34,9 @@ class UserInfoService(
         val entity = userRepository.findUserInfoEntityByTelegramUserId(telegramUserId)
         return entity?.let { mapEntity(it) }
     }
+
+    fun displayNames(telegramUserIds: Set<Long>): Map<Long, String> =
+        telegramUserIds.associateWith { id -> formatUserDisplayName(getUserInfoByTelegramId(id), id) }
 
     fun updateTimezone(telegramUserId: Long, timezone: String): UserInfo? {
         val entity = userRepository.findUserInfoEntityByTelegramUserId(telegramUserId) ?: return null

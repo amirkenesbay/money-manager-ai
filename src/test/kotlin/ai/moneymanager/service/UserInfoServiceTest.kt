@@ -60,6 +60,16 @@ class UserInfoServiceTest {
         assertThat(notifiedUsers().map { it.telegramUserId }).containsExactly(NEW_OWNER_ID)
     }
 
+    @Test
+    fun `names known users by full name and unknown ones by id`() {
+        repository.givenUser(telegramUserId = FORMER_OWNER_ID, username = RECYCLED_USERNAME)
+
+        val names = service.displayNames(setOf(FORMER_OWNER_ID, NEW_OWNER_ID))
+
+        assertThat(names).containsEntry(FORMER_OWNER_ID, "Amir")
+        assertThat(names.getValue(NEW_OWNER_ID)).contains(NEW_OWNER_ID.toString())
+    }
+
     private fun notifiedUsers(): List<UserInfo> =
         mockingDetails(adminNotificationService).invocations.map { it.arguments.single() as UserInfo }
 
