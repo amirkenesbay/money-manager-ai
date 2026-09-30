@@ -1,5 +1,7 @@
 package ai.moneymanager.chat
 
+import ai.moneymanager.chat.reply.ai.describe
+import ai.moneymanager.chat.reply.ai.describeBatchItem
 import ai.moneymanager.chat.reply.finance.FinanceHistoryFormatter
 import ai.moneymanager.chat.reply.finance.FinanceReportFormatter
 import ai.moneymanager.domain.model.Category

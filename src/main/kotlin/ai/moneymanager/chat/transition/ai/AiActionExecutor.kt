@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.transition.ai
 
+import ai.moneymanager.chat.reply.ai.describe
 import ai.moneymanager.chat.transition.ai.handler.AiDomainHandler
 import ai.moneymanager.chat.transition.ai.handler.AiPreparationResult
 import ai.moneymanager.chat.reply.common.escapeHtml

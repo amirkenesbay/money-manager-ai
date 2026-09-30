@@ -18,14 +18,7 @@ private val RULES = listOf(
     BoundaryRule(CORE_LAYERS, listOf(BOT)),
 )
 
-private val KNOWN_VIOLATIONS = setOf(
-    "domain/model/nlp/AiPendingAction.kt -> ai.moneymanager.chat.reply.common.escapeHtml",
-    "domain/model/nlp/AiPendingAction.kt -> ai.moneymanager.chat.reply.common.formatAmount",
-    "domain/model/nlp/AiPendingAction.kt -> ai.moneymanager.chat.reply.common.formatDescriptionSuffix",
-    "domain/model/nlp/AiPendingAction.kt -> ai.moneymanager.chat.reply.common.formatIconPrefix",
-    "domain/model/nlp/AiPendingAction.kt -> ai.moneymanager.chat.reply.common.formatSignedAmount",
-    "domain/model/nlp/AiPendingAction.kt -> ai.moneymanager.chat.reply.common.formatTime",
-)
+private val KNOWN_VIOLATIONS = emptySet<String>()
 
 class LayerBoundariesTest {
     private val violations = findViolations()
