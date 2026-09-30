@@ -1,7 +1,7 @@
 package ai.moneymanager.chat.transition.nlp
 
-import ai.moneymanager.domain.model.MoneyManagerContext
-import ai.moneymanager.domain.model.MoneyManagerState
+import ai.moneymanager.chat.state.MoneyManagerContext
+import ai.moneymanager.chat.state.MoneyManagerState
 import gcardone.junidecode.Junidecode
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType

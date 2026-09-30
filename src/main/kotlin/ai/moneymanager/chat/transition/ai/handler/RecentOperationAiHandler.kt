@@ -6,7 +6,7 @@ import ai.moneymanager.chat.reply.common.formatSignedAmount
 import ai.moneymanager.chat.reply.common.resolveCurrency
 import ai.moneymanager.domain.text.matchesEntityName
 import ai.moneymanager.domain.model.CategoryType
-import ai.moneymanager.domain.model.MoneyManagerContext
+import ai.moneymanager.chat.state.MoneyManagerContext
 import ai.moneymanager.domain.model.nlp.AiPendingAction
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.repository.entity.FinanceOperationEntity

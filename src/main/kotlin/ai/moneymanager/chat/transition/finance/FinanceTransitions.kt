@@ -2,9 +2,9 @@ package ai.moneymanager.chat.transition.finance
 
 import ai.moneymanager.chat.reply.finance.FinanceHistoryFormatter
 import ai.moneymanager.domain.model.CategoryType
-import ai.moneymanager.domain.model.MoneyManagerButtonType
-import ai.moneymanager.domain.model.MoneyManagerContext
-import ai.moneymanager.domain.model.MoneyManagerState
+import ai.moneymanager.chat.state.MoneyManagerButtonType
+import ai.moneymanager.chat.state.MoneyManagerContext
+import ai.moneymanager.chat.state.MoneyManagerState
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.FinanceHistoryService
 import ai.moneymanager.service.FinanceOperationService

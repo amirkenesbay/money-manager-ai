@@ -1,5 +1,6 @@
-package ai.moneymanager.chat.config
+package ai.moneymanager.config
 
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.convert.converter.Converter
@@ -13,6 +14,7 @@ import java.util.Date
 
 @Configuration
 @EnableMongoAuditing
+@EnableMongoRepositories(basePackages = ["ai.moneymanager.repository"])
 class MongoConfig {
     @Bean
     fun customConversions(): MongoCustomConversions {

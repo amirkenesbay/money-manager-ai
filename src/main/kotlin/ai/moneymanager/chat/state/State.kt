@@ -1,5 +1,12 @@
-package ai.moneymanager.domain.model
+package ai.moneymanager.chat.state
 
+import ai.moneymanager.domain.model.BalanceBreakdown
+import ai.moneymanager.domain.model.Category
+import ai.moneymanager.domain.model.CategoryCreationResult
+import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.FrequencyType
+import ai.moneymanager.domain.model.MoneyGroup
+import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.domain.model.nlp.AiPendingAction
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.repository.entity.FinanceOperationEntity

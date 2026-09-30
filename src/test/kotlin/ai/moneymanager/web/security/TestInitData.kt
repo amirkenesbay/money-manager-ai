@@ -1,6 +1,9 @@
 package ai.moneymanager.web.security
 
 import ai.moneymanager.domain.model.TelegramProfile
+import ai.moneymanager.testing.TEST_FIRST_NAME
+import ai.moneymanager.testing.TEST_LANGUAGE_CODE
+import ai.moneymanager.testing.TEST_USER_ID
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.time.Instant
@@ -10,9 +13,6 @@ import javax.crypto.spec.SecretKeySpec
 const val TEST_BOT_TOKEN = "123456:TEST-BOT-TOKEN"
 
 private const val HMAC_ALGORITHM = "HmacSHA256"
-const val TEST_USER_ID = 42L
-const val TEST_FIRST_NAME = "Amir"
-const val TEST_LANGUAGE_CODE = "ru"
 private const val SECRET_KEY_SEED = "WebAppData"
 
 object TestInitData {

@@ -1,7 +1,7 @@
 package ai.moneymanager.chat.transition.category
 
-import ai.moneymanager.domain.model.MoneyManagerContext
-import ai.moneymanager.domain.model.MoneyManagerState
+import ai.moneymanager.chat.state.MoneyManagerContext
+import ai.moneymanager.chat.state.MoneyManagerState
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService

@@ -1,8 +1,8 @@
 package ai.moneymanager.chat.reply.common
 
-import ai.moneymanager.domain.model.MoneyManagerButtonType
-import ai.moneymanager.domain.model.MoneyManagerContext
-import ai.moneymanager.domain.model.MoneyManagerState
+import ai.moneymanager.chat.state.MoneyManagerButtonType
+import ai.moneymanager.chat.state.MoneyManagerContext
+import ai.moneymanager.chat.state.MoneyManagerState
 import kz.rmr.chatmachinist.api.reply.KeyboardBuilder
 
 fun KeyboardBuilder<MoneyManagerState, MoneyManagerContext>.backButton(

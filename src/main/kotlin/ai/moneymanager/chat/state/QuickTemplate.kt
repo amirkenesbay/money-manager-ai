@@ -1,4 +1,6 @@
-package ai.moneymanager.domain.model
+package ai.moneymanager.chat.state
+
+import ai.moneymanager.domain.model.CategoryType
 
 data class QuickNotificationTemplate(
     val buttonType: MoneyManagerButtonType,

@@ -51,8 +51,8 @@ import ai.moneymanager.chat.reply.settings.languageSelectReply
 import ai.moneymanager.chat.reply.settings.proInfoReply
 import ai.moneymanager.chat.reply.settings.settingsReply
 import ai.moneymanager.chat.reply.settings.subscriptionViewReply
-import ai.moneymanager.domain.model.MoneyManagerContext
-import ai.moneymanager.domain.model.MoneyManagerState
+import ai.moneymanager.chat.state.MoneyManagerContext
+import ai.moneymanager.chat.state.MoneyManagerState
 import ai.moneymanager.service.FinanceHistoryService
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService

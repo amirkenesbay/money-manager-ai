@@ -4,7 +4,7 @@ import ai.moneymanager.web.error.ApiError
 import ai.moneymanager.web.error.ApiErrorCode
 import ai.moneymanager.web.error.ApiErrorFactory
 import ai.moneymanager.web.testJsonMapper
-import ai.moneymanager.web.testLocalizationService
+import ai.moneymanager.testing.testLocalizationService
 import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletRequest
 import jakarta.servlet.ServletResponse

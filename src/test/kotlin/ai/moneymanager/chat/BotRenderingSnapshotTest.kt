@@ -13,11 +13,11 @@ import ai.moneymanager.domain.model.MoneyGroup
 import ai.moneymanager.domain.model.nlp.AiPendingAction
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import ai.moneymanager.repository.entity.NotificationEntity
-import ai.moneymanager.service.FakeFinanceOperationRepository
+import ai.moneymanager.testing.FakeFinanceOperationRepository
 import ai.moneymanager.service.FinanceHistoryService
 import ai.moneymanager.service.FinanceReportService
-import ai.moneymanager.web.ENGLISH
-import ai.moneymanager.web.testLocalizationService
+import ai.moneymanager.testing.ENGLISH
+import ai.moneymanager.testing.testLocalizationService
 import org.assertj.core.api.Assertions.assertThat
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test

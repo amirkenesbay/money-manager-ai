@@ -2,7 +2,7 @@ package ai.moneymanager.chat.transition.common
 
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.GroupCreationResult
-import ai.moneymanager.domain.model.MoneyManagerContext
+import ai.moneymanager.chat.state.MoneyManagerContext
 import ai.moneymanager.service.CategoryService
 
 fun MoneyManagerContext.handleGroupCreated(result: GroupCreationResult) {

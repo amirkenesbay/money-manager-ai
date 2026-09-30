@@ -6,7 +6,7 @@ import ai.moneymanager.chat.reply.common.formatTime
 import ai.moneymanager.chat.reply.notification.formatFrequencyShort
 import ai.moneymanager.domain.text.matchesEntityName
 import ai.moneymanager.domain.model.FrequencyType
-import ai.moneymanager.domain.model.MoneyManagerContext
+import ai.moneymanager.chat.state.MoneyManagerContext
 import ai.moneymanager.domain.model.NotificationCreationResult
 import ai.moneymanager.domain.model.nlp.AiPendingAction
 import ai.moneymanager.domain.model.nlp.BotCommand

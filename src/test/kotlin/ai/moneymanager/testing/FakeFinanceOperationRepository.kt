@@ -1,4 +1,4 @@
-package ai.moneymanager.service
+package ai.moneymanager.testing
 
 import ai.moneymanager.repository.FinanceOperationRepository
 import ai.moneymanager.repository.entity.FinanceOperationEntity

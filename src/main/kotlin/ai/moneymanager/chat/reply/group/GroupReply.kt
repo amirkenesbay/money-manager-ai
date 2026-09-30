@@ -6,9 +6,9 @@ import ai.moneymanager.chat.reply.common.cancelButton
 import ai.moneymanager.chat.reply.common.confirmAndCancelButtons
 import ai.moneymanager.domain.model.formatUserDisplayName
 import ai.moneymanager.domain.model.GroupType
-import ai.moneymanager.domain.model.MoneyManagerButtonType
-import ai.moneymanager.domain.model.MoneyManagerContext
-import ai.moneymanager.domain.model.MoneyManagerState
+import ai.moneymanager.chat.state.MoneyManagerButtonType
+import ai.moneymanager.chat.state.MoneyManagerContext
+import ai.moneymanager.chat.state.MoneyManagerState
 import ai.moneymanager.service.LocalizationService
 import kz.rmr.chatmachinist.api.reply.RepliesBuilder
 

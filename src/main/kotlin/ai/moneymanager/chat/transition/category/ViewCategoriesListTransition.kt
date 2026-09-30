@@ -3,9 +3,9 @@ package ai.moneymanager.chat.transition.category
 import ai.moneymanager.chat.transition.common.loadCategoriesByType
 import ai.moneymanager.chat.transition.common.simpleTransition
 import ai.moneymanager.domain.model.CategoryType
-import ai.moneymanager.domain.model.MoneyManagerButtonType
-import ai.moneymanager.domain.model.MoneyManagerContext
-import ai.moneymanager.domain.model.MoneyManagerState
+import ai.moneymanager.chat.state.MoneyManagerButtonType
+import ai.moneymanager.chat.state.MoneyManagerContext
+import ai.moneymanager.chat.state.MoneyManagerState
 import ai.moneymanager.service.CategoryService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 

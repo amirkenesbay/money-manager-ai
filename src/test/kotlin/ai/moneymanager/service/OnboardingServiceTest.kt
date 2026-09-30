@@ -1,11 +1,11 @@
 package ai.moneymanager.service
 
 import ai.moneymanager.domain.model.GroupType
-import ai.moneymanager.web.ENGLISH
-import ai.moneymanager.web.testGroup
-import ai.moneymanager.web.security.TEST_USER_ID
-import ai.moneymanager.web.testLocalizationService
-import ai.moneymanager.web.testUser
+import ai.moneymanager.testing.ENGLISH
+import ai.moneymanager.testing.testGroup
+import ai.moneymanager.testing.TEST_USER_ID
+import ai.moneymanager.testing.testLocalizationService
+import ai.moneymanager.testing.testUser
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.`when`

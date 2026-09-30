@@ -1,10 +1,13 @@
 package ai.moneymanager.web
 
+import ai.moneymanager.testing.ENGLISH
+import ai.moneymanager.testing.testUser
+import ai.moneymanager.testing.testGroup
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.UserInfoService
 import ai.moneymanager.web.access.GroupAccessGuard
-import ai.moneymanager.web.security.TEST_USER_ID
+import ai.moneymanager.testing.TEST_USER_ID
 import ai.moneymanager.web.security.TestInitData
 import org.bson.types.ObjectId
 import org.hamcrest.Matchers.containsString

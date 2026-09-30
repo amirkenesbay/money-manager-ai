@@ -7,10 +7,10 @@ import ai.moneymanager.chat.reply.common.confirmAndCancelButtons
 import ai.moneymanager.chat.transition.notification.POPULAR_TIMEZONES
 import ai.moneymanager.chat.transition.notification.EXTENDED_TIMEZONES
 import ai.moneymanager.domain.model.FrequencyType
-import ai.moneymanager.domain.model.MoneyManagerButtonType
-import ai.moneymanager.domain.model.MoneyManagerContext
-import ai.moneymanager.domain.model.MoneyManagerState
-import ai.moneymanager.domain.model.QuickTemplates
+import ai.moneymanager.chat.state.MoneyManagerButtonType
+import ai.moneymanager.chat.state.MoneyManagerContext
+import ai.moneymanager.chat.state.MoneyManagerState
+import ai.moneymanager.chat.state.QuickTemplates
 import ai.moneymanager.repository.entity.NotificationEntity
 import ai.moneymanager.service.LocalizationService
 import kz.rmr.chatmachinist.api.reply.RepliesBuilder

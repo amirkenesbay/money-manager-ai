@@ -3,9 +3,9 @@ package ai.moneymanager.web.access
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.web.error.ApiErrorCode
 import ai.moneymanager.web.error.ApiException
-import ai.moneymanager.web.security.TEST_USER_ID
-import ai.moneymanager.web.testGroup
-import ai.moneymanager.web.testUser
+import ai.moneymanager.testing.TEST_USER_ID
+import ai.moneymanager.testing.testGroup
+import ai.moneymanager.testing.testUser
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.catchThrowableOfType
 import org.bson.types.ObjectId

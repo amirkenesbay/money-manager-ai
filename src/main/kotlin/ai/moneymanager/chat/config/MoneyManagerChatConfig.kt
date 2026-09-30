@@ -4,8 +4,8 @@ import ai.moneymanager.chat.reply.finance.FinanceHistoryFormatter
 import ai.moneymanager.chat.dialog.moneyManagerDialog
 import ai.moneymanager.chat.transition.ai.AiActionExecutor
 import ai.moneymanager.chat.transition.ai.AiRequestHandler
-import ai.moneymanager.domain.model.MoneyManagerContext
-import ai.moneymanager.domain.model.MoneyManagerState
+import ai.moneymanager.chat.state.MoneyManagerContext
+import ai.moneymanager.chat.state.MoneyManagerState
 import ai.moneymanager.chat.telegram.AdminService
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.FinanceHistoryService
@@ -23,11 +23,9 @@ import kz.rmr.chatmachinist.api.transition.ChatBuilder
 import kz.rmr.chatmachinist.api.transition.chat
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.data.mongodb.repository.config.EnableMongoRepositories
 import org.springframework.scheduling.annotation.EnableScheduling
 
 @Configuration
-@EnableMongoRepositories(basePackages = ["ai.moneymanager.repository"])
 @EnableScheduling
 class MoneyManagerChatConfig(
     private val userInfoService: UserInfoService,

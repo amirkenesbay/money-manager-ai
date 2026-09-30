@@ -5,11 +5,11 @@ import ai.moneymanager.chat.reply.notification.parseMonth
 import ai.moneymanager.chat.transition.common.simpleTransition
 import ai.moneymanager.chat.transition.common.simpleTransitionWithAction
 import ai.moneymanager.domain.model.FrequencyType
-import ai.moneymanager.domain.model.MoneyManagerButtonType
-import ai.moneymanager.domain.model.MoneyManagerContext
-import ai.moneymanager.domain.model.MoneyManagerState
+import ai.moneymanager.chat.state.MoneyManagerButtonType
+import ai.moneymanager.chat.state.MoneyManagerContext
+import ai.moneymanager.chat.state.MoneyManagerState
 import ai.moneymanager.domain.model.NotificationCreationResult
-import ai.moneymanager.domain.model.QuickTemplates
+import ai.moneymanager.chat.state.QuickTemplates
 import ai.moneymanager.service.NotificationService
 import ai.moneymanager.service.SubscriptionLimitsService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder

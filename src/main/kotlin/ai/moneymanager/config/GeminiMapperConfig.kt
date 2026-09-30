@@ -1,4 +1,4 @@
-package ai.moneymanager.chat.config
+package ai.moneymanager.config
 
 import ai.moneymanager.mapper.GeminiArgsMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper

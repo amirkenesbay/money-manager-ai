@@ -15,9 +15,9 @@ import ai.moneymanager.chat.reply.common.operationListButtonText
 import ai.moneymanager.chat.reply.common.resolveCurrency
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.Currency
-import ai.moneymanager.domain.model.MoneyManagerButtonType
-import ai.moneymanager.domain.model.MoneyManagerContext
-import ai.moneymanager.domain.model.MoneyManagerState
+import ai.moneymanager.chat.state.MoneyManagerButtonType
+import ai.moneymanager.chat.state.MoneyManagerContext
+import ai.moneymanager.chat.state.MoneyManagerState
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService

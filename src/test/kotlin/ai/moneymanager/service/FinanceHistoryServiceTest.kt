@@ -1,5 +1,6 @@
 package ai.moneymanager.service
 
+import ai.moneymanager.testing.FakeFinanceOperationRepository
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import org.assertj.core.api.Assertions.assertThat

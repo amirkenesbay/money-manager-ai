@@ -6,7 +6,7 @@ import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.domain.text.matchesEntityName
 import ai.moneymanager.domain.model.GroupCreationResult
 import ai.moneymanager.domain.model.MoneyGroup
-import ai.moneymanager.domain.model.MoneyManagerContext
+import ai.moneymanager.chat.state.MoneyManagerContext
 import ai.moneymanager.domain.model.nlp.AiPendingAction
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.service.GroupService

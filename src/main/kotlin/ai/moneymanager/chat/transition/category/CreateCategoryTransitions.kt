@@ -4,10 +4,10 @@ import ai.moneymanager.chat.transition.common.simpleTransition
 import ai.moneymanager.chat.transition.common.simpleTransitionWithAction
 import ai.moneymanager.domain.model.CategoryCreationResult
 import ai.moneymanager.domain.model.CategoryType
-import ai.moneymanager.domain.model.MoneyManagerButtonType
-import ai.moneymanager.domain.model.MoneyManagerContext
-import ai.moneymanager.domain.model.MoneyManagerState
-import ai.moneymanager.domain.model.QuickTemplates
+import ai.moneymanager.chat.state.MoneyManagerButtonType
+import ai.moneymanager.chat.state.MoneyManagerContext
+import ai.moneymanager.chat.state.MoneyManagerState
+import ai.moneymanager.chat.state.QuickTemplates
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.SubscriptionLimitsService

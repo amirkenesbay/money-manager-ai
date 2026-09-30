@@ -6,12 +6,12 @@ import ai.moneymanager.service.OnboardingService
 import ai.moneymanager.service.SubscriptionLimitsService
 import ai.moneymanager.service.UserInfoService
 import ai.moneymanager.web.ApiWebLayerSetup
-import ai.moneymanager.web.ENGLISH
-import ai.moneymanager.web.security.TEST_FIRST_NAME
-import ai.moneymanager.web.security.TEST_LANGUAGE_CODE
-import ai.moneymanager.web.security.TEST_USER_ID
+import ai.moneymanager.testing.ENGLISH
+import ai.moneymanager.testing.TEST_FIRST_NAME
+import ai.moneymanager.testing.TEST_LANGUAGE_CODE
+import ai.moneymanager.testing.TEST_USER_ID
 import ai.moneymanager.web.security.TestInitData
-import ai.moneymanager.web.testUser
+import ai.moneymanager.testing.testUser
 import ai.moneymanager.web.withTelegramAuth
 import org.bson.types.ObjectId
 import org.hamcrest.Matchers.contains

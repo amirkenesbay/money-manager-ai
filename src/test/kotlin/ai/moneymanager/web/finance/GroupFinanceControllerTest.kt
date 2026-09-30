@@ -13,10 +13,10 @@ import ai.moneymanager.service.SubscriptionLimitsService
 import ai.moneymanager.service.UserInfoService
 import ai.moneymanager.web.ApiWebLayerSetup
 import ai.moneymanager.web.access.GroupAccessGuard
-import ai.moneymanager.web.security.TEST_USER_ID
+import ai.moneymanager.testing.TEST_USER_ID
 import ai.moneymanager.web.security.TestInitData
-import ai.moneymanager.web.testGroup
-import ai.moneymanager.web.testUser
+import ai.moneymanager.testing.testGroup
+import ai.moneymanager.testing.testUser
 import ai.moneymanager.web.withTelegramAuth
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.BeforeEach

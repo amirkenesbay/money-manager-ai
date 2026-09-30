@@ -5,7 +5,7 @@ import ai.moneymanager.chat.transition.ai.handler.AiDomainHandler
 import ai.moneymanager.chat.transition.ai.handler.AiPreparationResult
 import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.domain.model.Currency
-import ai.moneymanager.domain.model.MoneyManagerContext
+import ai.moneymanager.chat.state.MoneyManagerContext
 import ai.moneymanager.domain.model.nlp.AiPendingAction
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.service.AiPromptService
