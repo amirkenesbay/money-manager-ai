@@ -84,10 +84,10 @@ java --version  # Should show: openjdk 21.x.x
 ./gradlew build
 
 # Run the application
-./gradlew bootRun
+./gradlew :app:bootRun
 
 # Run with specific profile
-./gradlew bootRun --args='--spring.profiles.active=dev'
+./gradlew :app:bootRun --args='--spring.profiles.active=dev'
 ```
 
 ### Database
@@ -120,7 +120,7 @@ Bot token is hardcoded in `application.yml` (not recommended for production).
 ./gradlew test
 
 # Run specific test class
-./gradlew test --tests "ai.moneymanager.service.GroupServiceTest"
+./gradlew :core:test --tests "ai.moneymanager.service.GroupServiceTest"
 
 # Run tests with output
 ./gradlew test --info
@@ -209,14 +209,23 @@ MoneyManagerReplyConfig (maps states to replies)
   └─ nlpResponseReply() → NLP_RESPONSE state
 ```
 
-## Layer Boundaries
+## Modules
 
-Enforced by `src/test/kotlin/ai/moneymanager/architecture/LayerBoundariesTest.kt` (Konsist):
+Gradle multi-module build, one deployable jar:
 
-- `web` and core (`service`, `domain`, `repository`, `mapper`, `config`) must not import `ai.moneymanager.chat`, `kz.rmr` or `org.telegram`.
-- Telegram rendering (HTML, message texts) lives in `chat`; core services expose data (`build*`), the bot formats it.
-- Telegram-dependent services live in `ai.moneymanager.chat.telegram`. Core notifies the bot through Spring events (e.g. `NewUserRegistered`), never by calling it.
-- Bot rendering is pinned by `BotRenderingSnapshotTest`; a snapshot diff means user-visible text changed.
+| Module | Contents | Depends on |
+|---|---|---|
+| `core` | `domain`, `repository`, `service`, `mapper`, `config`; `messages*.properties`, `prompts/` | Spring Boot, Spring Data MongoDB, Gemini SDK |
+| `bot` | `chat/**` — dialogs, replies, Telegram rendering, `chat.telegram` services | `core`, chat-machinist, telegrambots |
+| `web` | `web/**` — REST API for the Mini App | `core`, Spring Web, Jackson 3 |
+| `app` | `MoneyManagerAIApplication`, `application.yml`, `logback.xml` | `core`, `bot`, `web` |
+
+- `core` and `web` cannot see the bot or Telegram libraries — a forbidden import does not compile.
+- Telegram rendering (HTML, message texts) lives in `bot`; `core` services expose data (`build*`), the bot formats it.
+- `core` notifies the bot through Spring events (e.g. `NewUserRegistered`), never by calling it.
+- Shared test fixtures live in `core/src/testFixtures` (`ai.moneymanager.testing`); consume them with `testImplementation(testFixtures(project(":core")))`.
+- Bot rendering is pinned by `BotRenderingSnapshotTest` (`bot`); a snapshot diff means user-visible text changed.
+- Kotlin forbids smart casts on properties from another module: copy into a local `val` first.
 
 ## Critical Patterns & Conventions
 
@@ -590,7 +599,7 @@ action {
 ## Testing the Bot
 
 After code changes:
-1. Restart the application: `./gradlew bootRun`
+1. Restart the application: `./gradlew :app:bootRun`
 2. Test basic flow: `/start` → verify the main menu appears
 3. Test group creation: Click "Совместный учет" → "Создать группу" → enter a name
 4. Test invite flow: Share invite link → open in a different Telegram account → verify the join process

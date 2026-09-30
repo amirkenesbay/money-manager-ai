@@ -74,7 +74,7 @@ BOT_TOKEN=123456:ANY npm run -s dev:launch-url
 docker compose up -d                                   # Mongo на :27019
 
 set -a; source .env.dev; set +a
-./gradlew bootRun                                      # JDK 21, API на :8080
+./gradlew :app:bootRun                                      # JDK 21, API на :8080
 
 cd webapp && npm run dev                               # Vite на :5173, /api → :8080
 ```

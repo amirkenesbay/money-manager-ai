@@ -1,94 +1,66 @@
-import org.gradle.kotlin.dsl.withType
+import io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.springframework.boot.gradle.plugin.SpringBootPlugin
 
 plugins {
-    id("org.springframework.boot") version "4.0.1"
-    id("io.spring.dependency-management") version "1.1.7"
-    kotlin("jvm") version "2.2.21"
-    kotlin("plugin.spring") version "2.2.21"
-    kotlin("kapt") version "2.2.21"
+    id("org.springframework.boot") version "4.0.1" apply false
+    id("io.spring.dependency-management") version "1.1.7" apply false
+    kotlin("jvm") version "2.2.21" apply false
+    kotlin("plugin.spring") version "2.2.21" apply false
+    kotlin("kapt") version "2.2.21" apply false
 }
 
-group = "ai.moneymanager"
-version = "0.0.1-SNAPSHOT"
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
+allprojects {
+    group = "ai.moneymanager"
+    version = "0.0.1-SNAPSHOT"
 }
 
-configurations {
-    compileOnly {
-        extendsFrom(configurations.annotationProcessor.get())
-    }
-}
+subprojects {
+    apply(plugin = "org.jetbrains.kotlin.jvm")
+    apply(plugin = "org.jetbrains.kotlin.plugin.spring")
+    apply(plugin = "io.spring.dependency-management")
 
-sourceSets {
-    main {
-        java {
-            srcDirs("src/main/kotlin")
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven {
+            name = "GitHubPackagesChatMachinist"
+            url = uri("https://maven.pkg.github.com/amirkenesbay/chat-machinist")
+            credentials {
+                username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
+                password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
+            }
         }
-        kotlin {
-            srcDirs("src/main/kotlin")
-        }
-    }
-}
-
-repositories {
-    mavenLocal()
-    mavenCentral()
-    maven {
-        name = "GitHubPackagesChatMachinist"
-        url = uri("https://maven.pkg.github.com/amirkenesbay/chat-machinist")
-        credentials {
-            username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
-            password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
+        maven {
+            name = "GitHubPackagesMongoPersistence"
+            url = uri("https://maven.pkg.github.com/amirkenesbay/chat-machinist-mongo-persistence-starter")
+            credentials {
+                username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
+                password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
+            }
         }
     }
-    maven {
-        name = "GitHubPackagesMongoPersistence"
-        url = uri("https://maven.pkg.github.com/amirkenesbay/chat-machinist-mongo-persistence-starter")
-        credentials {
-            username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
-            password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
+
+    extensions.configure<JavaPluginExtension> {
+        sourceCompatibility = JavaVersion.VERSION_21
+    }
+
+    extensions.configure<DependencyManagementExtension> {
+        imports {
+            mavenBom(SpringBootPlugin.BOM_COORDINATES)
         }
     }
-}
 
-val chatMachinistVersion: String by project
-val chatMachinistMongoVersion: String by project
-
-dependencies {
-    implementation("org.springframework.boot:spring-boot-starter")
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("com.chatmachinist:chat-machinist:$chatMachinistVersion")
-    implementation("com.chatmachinist:chat-machinist-mongo-persistence-starter:$chatMachinistMongoVersion")
-
-    // Google Gemini AI SDK
-    implementation("com.google.genai:google-genai:1.34.0")
-
-    // Jackson Kotlin module for data class deserialization
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("tools.jackson.module:jackson-module-kotlin")
-
-    // Transliteration library
-    implementation("com.github.sps.junidecode:junidecode:0.3")
-
-    kapt("org.springframework.boot:spring-boot-configuration-processor")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
-    testImplementation("com.lemonappdev:konsist:0.17.3")
-    testImplementation(kotlin("test"))
-}
-
-tasks.withType<KotlinCompile> {
-    compilerOptions {
-        freeCompilerArgs.add("-Xjsr305=strict")
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
-        javaParameters.set(true) // Required for Gemini function calling
+    tasks.withType<KotlinCompile> {
+        compilerOptions {
+            freeCompilerArgs.add("-Xjsr305=strict")
+            jvmTarget.set(JvmTarget.JVM_21)
+            javaParameters.set(true)
+        }
     }
-}
 
-tasks.withType<Test> {
-    useJUnitPlatform()
+    tasks.withType<Test> {
+        useJUnitPlatform()
+    }
 }

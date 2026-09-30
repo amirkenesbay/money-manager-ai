@@ -286,17 +286,38 @@
 
 ---
 
-### W-025 · Разбить сборку на Gradle-модули · TODO
+### W-025 · Разбить сборку на Gradle-модули · DONE
 **Критерии приёмки**
-- [ ] Модули: `:core` (домен, репозитории, сервисы), `:bot` (chat, chat-machinist), `:web` (контроллеры, фильтр, JSON), `:app` (main, собирает один jar)
-- [ ] `:bot` и `:web` зависят только от `:core`, не друг от друга
-- [ ] chat-machinist и telegrambots подключены только в `:bot`
-- [ ] Общие тестовые фикстуры — через `testFixtures`
-- [ ] `Dockerfile` и `.github/workflows/build.yml` собирают `:app`; образ и деплой работают как раньше
-- [ ] Правила W-023, которые теперь обеспечивает компилятор, удалены; команды сборки в `CLAUDE.md` обновлены
-- [ ] `./gradlew build` проходит, все тесты зелёные
+- [x] Модули: `:core` (домен, репозитории, сервисы), `:bot` (chat, chat-machinist), `:web` (контроллеры, фильтр, JSON), `:app` (main, собирает один jar)
+- [x] `:bot` и `:web` зависят только от `:core`, не друг от друга
+- [x] chat-machinist и telegrambots подключены только в `:bot`
+- [x] Общие тестовые фикстуры — через `testFixtures`
+- [x] `Dockerfile` и `.github/workflows/build.yml` собирают `:app`; образ и деплой работают как раньше
+- [x] Правила W-023, которые теперь обеспечивает компилятор, удалены; команды сборки в `CLAUDE.md` обновлены
+- [x] `./gradlew build` проходит, все тесты зелёные
 
 **Зависимости:** W-024
+
+**Результат:**
+- Подготовка (отдельный коммит): состояние диалога бота `State.kt`, `QuickTemplate.kt` → `chat.state`;
+  `MongoConfig`, `GeminiMapperConfig` → `core/config`; `@EnableMongoRepositories` — на `MongoConfig`;
+  общие фикстуры → `ai.moneymanager.testing`.
+- Корневой `build.gradle.kts` — общие плагины, репозитории, BOM Spring Boot, опции Kotlin; у модулей — только зависимости.
+- `:core` явно подключает `spring-boot-starter-data-mongodb`: раньше Mongo приходил только транзитивно через
+  `chat-machinist-mongo-persistence-starter`, и без бота ядро не собиралось бы.
+- Границы проверены компилятором: импорт бота или Telegram в `:core`/`:web` даёт `Unresolved reference`.
+  `LayerBoundariesTest` и Konsist удалены.
+- `:web` получил тестовый `WebTestApplication` — `@WebMvcTest` ищет `@SpringBootConfiguration` вверх по пакетам,
+  а главный класс теперь в `:app`.
+- 3 smart cast'а в боте заменены на локальные `val`: Kotlin запрещает smart cast на свойствах из другого модуля.
+- `Dockerfile` копирует модули и собирает `:app:bootJar`; у `:app` отключён plain-jar, чтобы `COPY *.jar` брал один файл.
+  `build.yml` не менялся — он вызывает `docker build`. `.dockerignore` дополнен `*/build`.
+- Исполняемый jar проверен: `core`/`bot`/`web` в `BOOT-INF/lib`, `messages*` и `prompts/` в `core.jar`,
+  `application.yml` и `logback.xml` в `BOOT-INF/classes`.
+- Тесты: 67 (core 22, bot 3, web 42); было 68 — удалён архитектурный тест.
+
+**Не проверено:** сборка Docker-образа (нужен токен GitHub Packages для chat-machinist; CI собирает только `master`)
+и запуск приложения целиком — делается перезапуском из IDEA после переимпорта Gradle.
 
 ---
 

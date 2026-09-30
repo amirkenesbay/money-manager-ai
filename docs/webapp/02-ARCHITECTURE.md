@@ -52,27 +52,24 @@ Telegram-клиент
 
 ## Структура проекта
 
+Gradle-модули, один исполняемый jar (решение D-009, задачи W-023 … W-025):
+
 ```
 money-manager-ai/
-├── src/main/kotlin/ai/moneymanager/
-│   ├── chat/          — бот (без изменений)
-│   ├── service/       — общий слой (правки: публикация build*-методов)
-│   ├── repository/    — без изменений
-│   ├── domain/model/  — без изменений
-│   └── web/           — НОВОЕ: REST-слой
-│       ├── security/    — валидация initData, фильтр, контекст пользователя
-│       ├── controller/  — REST-эндпоинты по доменам
-│       ├── dto/         — запросы и ответы API
-│       └── config/      — CORS, обработка ошибок
-└── webapp/            — НОВОЕ: фронтенд (React + Vite)
-    ├── src/
-    │   ├── api/         — HTTP-клиент, типы ответов
-    │   ├── components/  — переиспользуемые UI-компоненты
-    │   ├── pages/       — экраны
-    │   ├── hooks/       — работа с Telegram SDK, данные
-    │   └── i18n/        — переводы (ru/en/kk)
-    └── dist/          — сборка
+├── core/   — ядро: domain, repository, service, config; messages*, prompts/
+│           └── src/testFixtures — общие тестовые фикстуры (ai.moneymanager.testing)
+├── bot/    — Telegram-бот: chat/** (диалоги, ответы, рендер), chat.telegram — Telegram-сервисы
+├── web/    — REST API Mini App: web/** (security, access, error, json, me, finance)
+├── app/    — MoneyManagerAIApplication, application.yml, logback.xml → один jar
+└── webapp/ — фронтенд (React + Vite)
+    ├── src/api/        — HTTP-клиент, типы ответов
+    ├── src/telegram/   — инициализация Telegram SDK
+    ├── dev/            — мок API и генератор подписанных ссылок для разработки
+    └── dist/           — сборка
 ```
+
+Зависимости: `:bot` → `:core`, `:web` → `:core`, `:app` → все. `:core` и `:web` не видят бота
+и Telegram-библиотеки — нарушение границы не компилируется.
 
 ## Аутентификация
 
