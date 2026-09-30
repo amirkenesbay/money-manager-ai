@@ -1,6 +1,7 @@
 package ai.moneymanager.chat
 
 import ai.moneymanager.chat.reply.finance.FinanceHistoryFormatter
+import ai.moneymanager.chat.reply.finance.FinanceReportFormatter
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.Currency
@@ -12,7 +13,6 @@ import ai.moneymanager.repository.entity.FinanceOperationEntity
 import ai.moneymanager.repository.entity.NotificationEntity
 import ai.moneymanager.service.FakeFinanceOperationRepository
 import ai.moneymanager.service.FinanceHistoryService
-import ai.moneymanager.service.FinanceReportFormatter
 import ai.moneymanager.service.FinanceReportService
 import ai.moneymanager.web.ENGLISH
 import ai.moneymanager.web.testLocalizationService
@@ -43,7 +43,7 @@ class BotRenderingSnapshotTest {
     private val localization = testLocalizationService()
     private val repository = FakeFinanceOperationRepository().apply { operations = operations() }
     private val historyService = FinanceHistoryFormatter(FinanceHistoryService(repository), localization)
-    private val reportService = FinanceReportService(repository, FinanceReportFormatter(localization), FIXED_CLOCK)
+    private val reportService = FinanceReportFormatter(FinanceReportService(repository, FIXED_CLOCK), localization)
 
 
     @Test

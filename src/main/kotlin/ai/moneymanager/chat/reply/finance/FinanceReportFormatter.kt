@@ -1,4 +1,4 @@
-package ai.moneymanager.service
+package ai.moneymanager.chat.reply.finance
 
 import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.report.AnalyticsReport
@@ -16,7 +16,11 @@ import ai.moneymanager.chat.reply.common.progressBar
 import ai.moneymanager.domain.model.report.ComparisonReport
 import ai.moneymanager.domain.model.report.MembersReport
 import ai.moneymanager.domain.model.report.MemberTotal
+import ai.moneymanager.service.FinanceReportService
+import ai.moneymanager.service.LocalizationService
+import org.bson.types.ObjectId
 import org.springframework.stereotype.Component
+import java.time.LocalDate
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -26,8 +30,43 @@ private const val TREND_DOWN_MARKER = "🔻"
 
 @Component
 class FinanceReportFormatter(
+    private val financeReportService: FinanceReportService,
     private val localizationService: LocalizationService
 ) {
+    fun generateComparisonReport(groupId: ObjectId, previousMonthStart: LocalDate, currency: Currency, language: String?): String {
+        val report = financeReportService.buildComparisonReport(groupId, previousMonthStart, language)
+        return formatComparison(report, currency, language)
+    }
+
+    fun generateAnalyticsReport(groupId: ObjectId, monthStart: LocalDate, currency: Currency, language: String?): String {
+        val report = financeReportService.buildAnalyticsReport(groupId, monthStart, language)
+        return formatAnalytics(report, currency, language)
+    }
+
+    fun generateMembersReport(
+        groupId: ObjectId,
+        monthStart: LocalDate,
+        memberNames: Map<Long, String>,
+        currency: Currency,
+        language: String?
+    ): String {
+        val report = financeReportService.buildMembersReport(groupId, monthStart, memberNames, language)
+        return formatMembers(report, currency, language)
+    }
+
+    fun generateCategoryReport(
+        groupId: ObjectId,
+        categoryId: ObjectId,
+        categoryIcon: String?,
+        categoryName: String,
+        currency: Currency,
+        language: String?,
+        months: Int = 6
+    ): String {
+        val report = financeReportService.buildCategoryReport(groupId, categoryId, categoryIcon, categoryName, months, language)
+        return formatCategory(report, currency, language)
+    }
+
     fun formatComparison(report: ComparisonReport, currency: Currency, language: String?): String = buildString {
         append(bold(localizationService.t(
             "finance.report.comparison.title",

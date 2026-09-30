@@ -8,7 +8,7 @@ import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.FinanceHistoryService
 import ai.moneymanager.service.FinanceOperationService
-import ai.moneymanager.service.FinanceReportService
+import ai.moneymanager.chat.reply.finance.FinanceReportFormatter
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.SubscriptionLimitsService
@@ -20,7 +20,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.financeDialogTransitio
     financeOperationService: FinanceOperationService,
     financeHistoryService: FinanceHistoryService,
     financeHistoryFormatter: FinanceHistoryFormatter,
-    financeReportService: FinanceReportService,
+    financeReportFormatter: FinanceReportFormatter,
     userInfoService: UserInfoService,
     groupService: GroupService,
     subscriptionLimitsService: SubscriptionLimitsService,
@@ -32,7 +32,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.financeDialogTransitio
     financeDateTransitions(financeOperationService)
     financeOperationSavedTransitions(categoryService)
     financeHistoryTransitions(financeHistoryFormatter, groupService, subscriptionLimitsService, localizationService)
-    financeReportTransitions(financeReportService, userInfoService, categoryService, groupService, subscriptionLimitsService, localizationService)
+    financeReportTransitions(financeReportFormatter, userInfoService, categoryService, groupService, subscriptionLimitsService, localizationService)
     operationEditTransitions(financeHistoryService, financeOperationService, categoryService, groupService)
     financeBackTransitions()
 }

@@ -9,7 +9,7 @@ import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.nlp.AiPendingAction
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.service.FinanceOperationService
-import ai.moneymanager.service.FinanceReportService
+import ai.moneymanager.chat.reply.finance.FinanceReportFormatter
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
 import org.bson.types.ObjectId
@@ -24,7 +24,7 @@ private val VALID_YEAR_RANGE = 2000..2100
 class FinanceInfoAiHandler(
     private val groupService: GroupService,
     private val financeOperationService: FinanceOperationService,
-    private val financeReportService: FinanceReportService,
+    private val financeReportFormatter: FinanceReportFormatter,
     private val financeHistoryFormatter: FinanceHistoryFormatter,
     private val localizationService: LocalizationService
 ) : AiDomainHandler {
@@ -68,7 +68,7 @@ class FinanceInfoAiHandler(
         val now = LocalDate.now()
         val month = command.month?.takeIf { it in VALID_MONTH_RANGE } ?: now.monthValue
         val year = command.year?.takeIf { it in VALID_YEAR_RANGE } ?: now.year
-        return financeReportService.generateAnalyticsReport(groupId, LocalDate.of(year, month, 1), currency, lang)
+        return financeReportFormatter.generateAnalyticsReport(groupId, LocalDate.of(year, month, 1), currency, lang)
     }
 
     private fun renderHistory(command: BotCommand.ShowHistory, groupId: ObjectId, currency: Currency, lang: String?): String {

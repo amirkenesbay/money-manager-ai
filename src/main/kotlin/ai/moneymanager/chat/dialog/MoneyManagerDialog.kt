@@ -28,7 +28,7 @@ import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.SubscriptionLimitsService
 import ai.moneymanager.service.FinanceHistoryService
 import ai.moneymanager.service.FinanceOperationService
-import ai.moneymanager.service.FinanceReportService
+import ai.moneymanager.chat.reply.finance.FinanceReportFormatter
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.TelegramFileService
@@ -58,7 +58,7 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
     financeOperationService: FinanceOperationService,
     financeHistoryService: FinanceHistoryService,
     financeHistoryFormatter: FinanceHistoryFormatter,
-    financeReportService: FinanceReportService,
+    financeReportFormatter: FinanceReportFormatter,
     notificationService: NotificationService,
     localizationService: LocalizationService,
     aiActionExecutor: AiActionExecutor,
@@ -79,7 +79,7 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
         balanceDialogTransitions(groupService, userInfoService, financeOperationService)
         groupDialogTransitions(groupService, categoryService, userInfoService, localizationService)
         categoryDialogTransitions(categoryService, groupService, localizationService, subscriptionLimitsService)
-        financeDialogTransitions(categoryService, financeOperationService, financeHistoryService, financeHistoryFormatter, financeReportService, userInfoService, groupService, subscriptionLimitsService, localizationService)
+        financeDialogTransitions(categoryService, financeOperationService, financeHistoryService, financeHistoryFormatter, financeReportFormatter, userInfoService, groupService, subscriptionLimitsService, localizationService)
         notificationDialogTransitions(notificationService, userInfoService, subscriptionLimitsService)
         aiDialogTransitions(aiActionExecutor, aiRequestHandler, localizationService)
         adminDialogTransitions(adminService, userInfoService)

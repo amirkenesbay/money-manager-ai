@@ -6,7 +6,7 @@ import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.service.CategoryService
-import ai.moneymanager.service.FinanceReportService
+import ai.moneymanager.chat.reply.finance.FinanceReportFormatter
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.SubscriptionLimitsService
@@ -16,7 +16,7 @@ import kz.rmr.chatmachinist.model.ActionContext
 import java.time.LocalDate
 
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.financeReportTransitions(
-    financeReportService: FinanceReportService,
+    financeReportFormatter: FinanceReportFormatter,
     userInfoService: UserInfoService,
     categoryService: CategoryService,
     groupService: GroupService,
@@ -24,10 +24,10 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.financeReportTransitio
     localizationService: LocalizationService
 ) {
     openReportMenuTransition()
-    comparisonTransitions(financeReportService, groupService, subscriptionLimitsService, localizationService)
-    analyticsTransitions(financeReportService, groupService, subscriptionLimitsService, localizationService)
-    membersTransitions(financeReportService, userInfoService, groupService, subscriptionLimitsService, localizationService)
-    categoryReportTransitions(financeReportService, categoryService, groupService)
+    comparisonTransitions(financeReportFormatter, groupService, subscriptionLimitsService, localizationService)
+    analyticsTransitions(financeReportFormatter, groupService, subscriptionLimitsService, localizationService)
+    membersTransitions(financeReportFormatter, userInfoService, groupService, subscriptionLimitsService, localizationService)
+    categoryReportTransitions(financeReportFormatter, categoryService, groupService)
     reportBackTransitions()
 }
 
@@ -47,7 +47,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.openReportMenu
 }
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.comparisonTransitions(
-    financeReportService: FinanceReportService,
+    financeReportFormatter: FinanceReportFormatter,
     groupService: GroupService,
     subscriptionLimitsService: SubscriptionLimitsService,
     localizationService: LocalizationService
@@ -62,7 +62,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.comparisonTran
 
         action {
             context.reportMonth = LocalDate.now().minusMonths(1).withDayOfMonth(1)
-            loadComparisonReport(financeReportService, groupService, subscriptionLimitsService, localizationService)
+            loadComparisonReport(financeReportFormatter, groupService, subscriptionLimitsService, localizationService)
         }
 
         then {
@@ -80,7 +80,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.comparisonTran
 
         action {
             context.reportMonth = context.reportMonth?.minusMonths(1)
-            loadComparisonReport(financeReportService, groupService, subscriptionLimitsService, localizationService)
+            loadComparisonReport(financeReportFormatter, groupService, subscriptionLimitsService, localizationService)
         }
 
         then {
@@ -98,7 +98,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.comparisonTran
 
         action {
             context.reportMonth = context.reportMonth?.plusMonths(1)
-            loadComparisonReport(financeReportService, groupService, subscriptionLimitsService, localizationService)
+            loadComparisonReport(financeReportFormatter, groupService, subscriptionLimitsService, localizationService)
         }
 
         then {
@@ -108,7 +108,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.comparisonTran
 }
 
 private fun ActionContext<MoneyManagerState, MoneyManagerContext>.loadComparisonReport(
-    financeReportService: FinanceReportService,
+    financeReportFormatter: FinanceReportFormatter,
     groupService: GroupService,
     subscriptionLimitsService: SubscriptionLimitsService,
     localizationService: LocalizationService
@@ -123,11 +123,11 @@ private fun ActionContext<MoneyManagerState, MoneyManagerContext>.loadComparison
         return
     }
 
-    context.reportText = financeReportService.generateComparisonReport(groupId, month1Start, resolveCurrency(groupService, groupId), language)
+    context.reportText = financeReportFormatter.generateComparisonReport(groupId, month1Start, resolveCurrency(groupService, groupId), language)
 }
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.analyticsTransitions(
-    financeReportService: FinanceReportService,
+    financeReportFormatter: FinanceReportFormatter,
     groupService: GroupService,
     subscriptionLimitsService: SubscriptionLimitsService,
     localizationService: LocalizationService
@@ -142,7 +142,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.analyticsTrans
 
         action {
             context.reportMonth = LocalDate.now().withDayOfMonth(1)
-            loadAnalyticsReport(financeReportService, groupService, subscriptionLimitsService, localizationService)
+            loadAnalyticsReport(financeReportFormatter, groupService, subscriptionLimitsService, localizationService)
         }
 
         then {
@@ -160,7 +160,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.analyticsTrans
 
         action {
             context.reportMonth = context.reportMonth?.minusMonths(1)
-            loadAnalyticsReport(financeReportService, groupService, subscriptionLimitsService, localizationService)
+            loadAnalyticsReport(financeReportFormatter, groupService, subscriptionLimitsService, localizationService)
         }
 
         then {
@@ -178,7 +178,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.analyticsTrans
 
         action {
             context.reportMonth = context.reportMonth?.plusMonths(1)
-            loadAnalyticsReport(financeReportService, groupService, subscriptionLimitsService, localizationService)
+            loadAnalyticsReport(financeReportFormatter, groupService, subscriptionLimitsService, localizationService)
         }
 
         then {
@@ -188,7 +188,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.analyticsTrans
 }
 
 private fun ActionContext<MoneyManagerState, MoneyManagerContext>.loadAnalyticsReport(
-    financeReportService: FinanceReportService,
+    financeReportFormatter: FinanceReportFormatter,
     groupService: GroupService,
     subscriptionLimitsService: SubscriptionLimitsService,
     localizationService: LocalizationService
@@ -203,11 +203,11 @@ private fun ActionContext<MoneyManagerState, MoneyManagerContext>.loadAnalyticsR
         return
     }
 
-    context.reportText = financeReportService.generateAnalyticsReport(groupId, monthStart, resolveCurrency(groupService, groupId), language)
+    context.reportText = financeReportFormatter.generateAnalyticsReport(groupId, monthStart, resolveCurrency(groupService, groupId), language)
 }
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.membersTransitions(
-    financeReportService: FinanceReportService,
+    financeReportFormatter: FinanceReportFormatter,
     userInfoService: UserInfoService,
     groupService: GroupService,
     subscriptionLimitsService: SubscriptionLimitsService,
@@ -223,7 +223,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.membersTransit
 
         action {
             context.reportMonth = LocalDate.now().withDayOfMonth(1)
-            loadMembersReport(financeReportService, userInfoService, groupService, subscriptionLimitsService, localizationService)
+            loadMembersReport(financeReportFormatter, userInfoService, groupService, subscriptionLimitsService, localizationService)
         }
 
         then {
@@ -241,7 +241,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.membersTransit
 
         action {
             context.reportMonth = context.reportMonth?.minusMonths(1)
-            loadMembersReport(financeReportService, userInfoService, groupService, subscriptionLimitsService, localizationService)
+            loadMembersReport(financeReportFormatter, userInfoService, groupService, subscriptionLimitsService, localizationService)
         }
 
         then {
@@ -259,7 +259,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.membersTransit
 
         action {
             context.reportMonth = context.reportMonth?.plusMonths(1)
-            loadMembersReport(financeReportService, userInfoService, groupService, subscriptionLimitsService, localizationService)
+            loadMembersReport(financeReportFormatter, userInfoService, groupService, subscriptionLimitsService, localizationService)
         }
 
         then {
@@ -269,7 +269,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.membersTransit
 }
 
 private fun ActionContext<MoneyManagerState, MoneyManagerContext>.loadMembersReport(
-    financeReportService: FinanceReportService,
+    financeReportFormatter: FinanceReportFormatter,
     userInfoService: UserInfoService,
     groupService: GroupService,
     subscriptionLimitsService: SubscriptionLimitsService,
@@ -290,11 +290,11 @@ private fun ActionContext<MoneyManagerState, MoneyManagerContext>.loadMembersRep
 
     val memberNames = userInfoService.displayNames(memberIds)
 
-    context.reportText = financeReportService.generateMembersReport(groupId, monthStart, memberNames, group?.currency ?: Currency.DEFAULT, language)
+    context.reportText = financeReportFormatter.generateMembersReport(groupId, monthStart, memberNames, group?.currency ?: Currency.DEFAULT, language)
 }
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.categoryReportTransitions(
-    financeReportService: FinanceReportService,
+    financeReportFormatter: FinanceReportFormatter,
     categoryService: CategoryService,
     groupService: GroupService
 ) {
@@ -332,7 +332,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.categoryReport
             val groupId = context.userInfo?.activeGroupId ?: return@action
             val categoryId = category.id ?: return@action
             val language = context.userInfo?.language
-            context.reportText = financeReportService.generateCategoryReport(
+            context.reportText = financeReportFormatter.generateCategoryReport(
                 groupId, categoryId, category.icon, category.name, resolveCurrency(groupService, groupId), language
             )
         }

@@ -2,7 +2,6 @@ package ai.moneymanager.service
 
 import ai.moneymanager.domain.model.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.domain.model.CategoryType
-import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.report.AnalyticsReport
 import ai.moneymanager.domain.model.report.CategoryComparison
 import ai.moneymanager.domain.model.report.CategoryMonthData
@@ -27,43 +26,8 @@ import java.util.Locale
 @Service
 class FinanceReportService(
     private val financeOperationRepository: FinanceOperationRepository,
-    private val formatter: FinanceReportFormatter,
     private val clock: Clock
 ) {
-    fun generateComparisonReport(groupId: ObjectId, previousMonthStart: LocalDate, currency: Currency, language: String?): String {
-        val report = buildComparisonReport(groupId, previousMonthStart, language)
-        return formatter.formatComparison(report, currency, language)
-    }
-
-    fun generateAnalyticsReport(groupId: ObjectId, monthStart: LocalDate, currency: Currency, language: String?): String {
-        val report = buildAnalyticsReport(groupId, monthStart, language)
-        return formatter.formatAnalytics(report, currency, language)
-    }
-
-    fun generateMembersReport(
-        groupId: ObjectId,
-        monthStart: LocalDate,
-        memberNames: Map<Long, String>,
-        currency: Currency,
-        language: String?
-    ): String {
-        val report = buildMembersReport(groupId, monthStart, memberNames, language)
-        return formatter.formatMembers(report, currency, language)
-    }
-
-    fun generateCategoryReport(
-        groupId: ObjectId,
-        categoryId: ObjectId,
-        categoryIcon: String?,
-        categoryName: String,
-        currency: Currency,
-        language: String?,
-        months: Int = 6
-    ): String {
-        val report = buildCategoryReport(groupId, categoryId, categoryIcon, categoryName, months, language)
-        return formatter.formatCategory(report, currency, language)
-    }
-
     fun buildComparisonReport(
         groupId: ObjectId,
         previousMonthStart: LocalDate,
