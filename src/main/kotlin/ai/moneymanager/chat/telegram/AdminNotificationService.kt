@@ -1,8 +1,10 @@
-package ai.moneymanager.service
+package ai.moneymanager.chat.telegram
 
+import ai.moneymanager.domain.event.NewUserRegistered
 import ai.moneymanager.domain.model.UserInfo
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Service
 import org.telegram.telegrambots.bots.DefaultAbsSender
 import org.telegram.telegrambots.bots.DefaultBotOptions
@@ -21,7 +23,12 @@ class AdminNotificationService(
 ) : DefaultAbsSender(DefaultBotOptions(), botToken) {
     private val log = LoggerFactory.getLogger(this::class.java)
 
-    fun notifyNewUser(user: UserInfo) {
+    @EventListener
+    fun onNewUserRegistered(event: NewUserRegistered) {
+        notifyNewUser(event.user)
+    }
+
+    private fun notifyNewUser(user: UserInfo) {
         val chatId = alertChatId ?: return
         val username = user.username?.let { "@$it" } ?: NO_USERNAME_PLACEHOLDER
         val fullName = listOfNotNull(user.firstName, user.lastName).joinToString(" ").ifBlank { NO_NAME_PLACEHOLDER }

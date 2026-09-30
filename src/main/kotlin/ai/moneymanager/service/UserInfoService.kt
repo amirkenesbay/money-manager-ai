@@ -1,25 +1,27 @@
 package ai.moneymanager.service
 
+import ai.moneymanager.domain.event.NewUserRegistered
 import ai.moneymanager.domain.model.formatUserDisplayName
 import ai.moneymanager.domain.model.SubscriptionTier
 import ai.moneymanager.domain.model.TelegramProfile
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.repository.UserInfoRepository
 import ai.moneymanager.repository.entity.UserInfoEntity
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
 @Service
 class UserInfoService(
     private val userRepository: UserInfoRepository,
-    private val adminNotificationService: AdminNotificationService
+    private val eventPublisher: ApplicationEventPublisher
 ) {
     fun getOrCreate(profile: TelegramProfile): UserInfo {
         val existing = userRepository.findUserInfoEntityByTelegramUserId(profile.telegramUserId)
         if (existing != null) return mapEntity(existing)
 
         val newUser = mapEntity(userRepository.save(mapUserModel(profile)))
-        adminNotificationService.notifyNewUser(newUser)
+        eventPublisher.publishEvent(NewUserRegistered(newUser))
         return newUser
     }
 

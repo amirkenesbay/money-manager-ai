@@ -1,4 +1,4 @@
-package ai.moneymanager.service
+package ai.moneymanager.chat.telegram
 
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit

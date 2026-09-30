@@ -5,7 +5,7 @@ import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.service.GeminiService
 import ai.moneymanager.service.GroupService
-import ai.moneymanager.service.TelegramFileService
+import ai.moneymanager.chat.telegram.TelegramFileService
 import ai.moneymanager.service.UserInfoService
 import ai.moneymanager.service.nlp.CommandParserService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder

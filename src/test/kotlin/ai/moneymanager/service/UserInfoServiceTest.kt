@@ -1,5 +1,6 @@
 package ai.moneymanager.service
 
+import ai.moneymanager.domain.event.NewUserRegistered
 import ai.moneymanager.domain.model.TelegramProfile
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.repository.UserInfoRepository
@@ -8,7 +9,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
-import org.mockito.Mockito.mockingDetails
 
 private const val RECYCLED_USERNAME = "amir"
 private const val FORMER_OWNER_ID = 1L
@@ -16,8 +16,8 @@ private const val NEW_OWNER_ID = 2L
 
 class UserInfoServiceTest {
     private val repository = FakeUserInfoRepository()
-    private val adminNotificationService = mock(AdminNotificationService::class.java)
-    private val service = UserInfoService(repository, adminNotificationService)
+    private val publishedEvents = mutableListOf<Any>()
+    private val service = UserInfoService(repository) { publishedEvents.add(it) }
 
     @Test
     fun `returns existing user found by telegram id`() {
@@ -70,7 +70,7 @@ class UserInfoServiceTest {
     }
 
     private fun notifiedUsers(): List<UserInfo> =
-        mockingDetails(adminNotificationService).invocations.map { it.arguments.single() as UserInfo }
+        publishedEvents.filterIsInstance<NewUserRegistered>().map { it.user }
 
     private fun profile(telegramUserId: Long, username: String?) = TelegramProfile(
         telegramUserId = telegramUserId,

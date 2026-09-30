@@ -1,4 +1,4 @@
-package ai.moneymanager.mapper
+package ai.moneymanager.chat.telegram
 
 import ai.moneymanager.domain.model.TelegramProfile
 import org.telegram.telegrambots.meta.api.objects.User

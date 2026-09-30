@@ -1,6 +1,6 @@
-package ai.moneymanager.service
+package ai.moneymanager.chat.telegram
 
-import ai.moneymanager.config.TelegramFileProperties
+import ai.moneymanager.chat.telegram.TelegramFileProperties
 import jakarta.annotation.PreDestroy
 import kz.rmr.chatmachinist.ChatMachinistProperties
 import org.slf4j.LoggerFactory

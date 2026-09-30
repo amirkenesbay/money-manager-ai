@@ -2,7 +2,7 @@ package ai.moneymanager.chat.transition.admin
 
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
-import ai.moneymanager.service.AdminService
+import ai.moneymanager.chat.telegram.AdminService
 import ai.moneymanager.service.UserInfoService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType

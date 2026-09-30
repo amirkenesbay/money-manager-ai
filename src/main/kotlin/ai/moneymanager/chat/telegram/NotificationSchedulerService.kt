@@ -1,5 +1,8 @@
-package ai.moneymanager.service
+package ai.moneymanager.chat.telegram
 
+import ai.moneymanager.service.LocalizationService
+import ai.moneymanager.service.NotificationService
+import ai.moneymanager.service.UserInfoService
 import ai.moneymanager.domain.model.StartParameters
 import ai.moneymanager.repository.entity.NotificationEntity
 import org.slf4j.LoggerFactory

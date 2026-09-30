@@ -1,6 +1,6 @@
 package ai.moneymanager.chat.transition.nlp
 
-import ai.moneymanager.mapper.toTelegramProfile
+import ai.moneymanager.chat.telegram.toTelegramProfile
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState

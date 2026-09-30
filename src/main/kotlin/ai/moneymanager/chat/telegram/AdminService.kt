@@ -1,4 +1,4 @@
-package ai.moneymanager.service
+package ai.moneymanager.chat.telegram
 
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value

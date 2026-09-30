@@ -1,7 +1,7 @@
 package ai.moneymanager.chat.dialog
 
 import ai.moneymanager.chat.reply.finance.FinanceHistoryFormatter
-import ai.moneymanager.mapper.toTelegramProfile
+import ai.moneymanager.chat.telegram.toTelegramProfile
 import ai.moneymanager.chat.transition.admin.adminDialogTransitions
 import ai.moneymanager.chat.transition.ai.AiActionExecutor
 import ai.moneymanager.chat.transition.ai.AiRequestHandler
@@ -23,7 +23,7 @@ import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
 import ai.moneymanager.domain.model.PersistentAction
 import ai.moneymanager.domain.model.StartParameters
-import ai.moneymanager.service.AdminService
+import ai.moneymanager.chat.telegram.AdminService
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.SubscriptionLimitsService
 import ai.moneymanager.service.FinanceHistoryService
@@ -31,17 +31,17 @@ import ai.moneymanager.service.FinanceOperationService
 import ai.moneymanager.chat.reply.finance.FinanceReportFormatter
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
-import ai.moneymanager.service.TelegramFileService
-import ai.moneymanager.service.ADD_EXPENSE_BUTTON_TEXT
-import ai.moneymanager.service.ADD_INCOME_BUTTON_TEXT
-import ai.moneymanager.service.AI_BUTTON_TEXT
-import ai.moneymanager.service.MENU_BUTTON_TEXT
+import ai.moneymanager.chat.telegram.TelegramFileService
+import ai.moneymanager.chat.telegram.ADD_EXPENSE_BUTTON_TEXT
+import ai.moneymanager.chat.telegram.ADD_INCOME_BUTTON_TEXT
+import ai.moneymanager.chat.telegram.AI_BUTTON_TEXT
+import ai.moneymanager.chat.telegram.MENU_BUTTON_TEXT
 import ai.moneymanager.service.NotificationService
 import ai.moneymanager.service.OnboardingService
-import ai.moneymanager.service.PRO_MODE_BUTTON_TEXT
-import ai.moneymanager.service.PersistentMenuKeyboardService
-import ai.moneymanager.service.REPORT_BUTTON_TEXT
-import ai.moneymanager.service.SETTINGS_BUTTON_TEXT
+import ai.moneymanager.chat.telegram.PRO_MODE_BUTTON_TEXT
+import ai.moneymanager.chat.telegram.PersistentMenuKeyboardService
+import ai.moneymanager.chat.telegram.REPORT_BUTTON_TEXT
+import ai.moneymanager.chat.telegram.SETTINGS_BUTTON_TEXT
 import ai.moneymanager.service.UserInfoService
 import kz.rmr.chatmachinist.api.transition.ChatBuilder
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
