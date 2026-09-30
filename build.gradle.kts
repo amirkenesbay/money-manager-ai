@@ -77,6 +77,7 @@ dependencies {
     kapt("org.springframework.boot:spring-boot-configuration-processor")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+    testImplementation("com.lemonappdev:konsist:0.17.3")
     testImplementation(kotlin("test"))
 }
 

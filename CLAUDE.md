@@ -209,6 +209,14 @@ MoneyManagerReplyConfig (maps states to replies)
   └─ nlpResponseReply() → NLP_RESPONSE state
 ```
 
+## Layer Boundaries
+
+Enforced by `src/test/kotlin/ai/moneymanager/architecture/LayerBoundariesTest.kt` (Konsist):
+
+- `web` must not import `ai.moneymanager.chat`, `kz.rmr` or `org.telegram`.
+- Core (`service`, `domain`, `repository`, `mapper`) must not import `ai.moneymanager.chat`.
+- `KNOWN_VIOLATIONS` only shrinks. Never add an entry to it — move the shared code into core instead.
+
 ## Critical Patterns & Conventions
 
 ### Adding New States
