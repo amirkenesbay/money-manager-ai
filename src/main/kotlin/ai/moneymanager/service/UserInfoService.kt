@@ -1,25 +1,18 @@
 package ai.moneymanager.service
 
-import ai.moneymanager.chat.reply.common.formatUserDisplayName
+import ai.moneymanager.domain.model.formatUserDisplayName
 import ai.moneymanager.domain.model.SubscriptionTier
 import ai.moneymanager.domain.model.TelegramProfile
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.repository.UserInfoRepository
 import ai.moneymanager.repository.entity.UserInfoEntity
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import org.telegram.telegrambots.bots.DefaultAbsSender
-import org.telegram.telegrambots.bots.DefaultBotOptions
 import java.time.LocalDateTime
 
 @Service
 class UserInfoService(
     private val userRepository: UserInfoRepository,
-    private val adminNotificationService: AdminNotificationService,
-    @Value("\${chat-machinist.bot.token}")
-    private val botToken: String
-) : DefaultAbsSender(
-    DefaultBotOptions(), botToken
+    private val adminNotificationService: AdminNotificationService
 ) {
     fun getOrCreate(profile: TelegramProfile): UserInfo {
         val existing = userRepository.findUserInfoEntityByTelegramUserId(profile.telegramUserId)

@@ -4,7 +4,7 @@ import ai.moneymanager.chat.reply.common.backButton
 import ai.moneymanager.chat.reply.common.buildInviteLink
 import ai.moneymanager.chat.reply.common.cancelButton
 import ai.moneymanager.chat.reply.common.confirmAndCancelButtons
-import ai.moneymanager.chat.reply.common.formatUserDisplayName
+import ai.moneymanager.domain.model.formatUserDisplayName
 import ai.moneymanager.domain.model.GroupType
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext

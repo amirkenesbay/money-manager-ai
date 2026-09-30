@@ -4,7 +4,7 @@ import ai.moneymanager.chat.reply.common.formatIconPrefix
 import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.chat.reply.common.formatTime
 import ai.moneymanager.chat.reply.notification.formatFrequencyShort
-import ai.moneymanager.chat.transition.ai.matchesEntityName
+import ai.moneymanager.domain.text.matchesEntityName
 import ai.moneymanager.domain.model.FrequencyType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.NotificationCreationResult

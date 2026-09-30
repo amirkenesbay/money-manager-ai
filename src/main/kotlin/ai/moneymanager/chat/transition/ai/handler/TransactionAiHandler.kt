@@ -1,14 +1,14 @@
 package ai.moneymanager.chat.transition.ai.handler
 
-import ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON
+import ai.moneymanager.domain.model.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.chat.reply.common.formatAmount
 import ai.moneymanager.chat.reply.common.formatDescriptionSuffix
 import ai.moneymanager.chat.reply.common.formatIconPrefix
 import ai.moneymanager.chat.reply.common.escapeHtml
-import ai.moneymanager.chat.transition.ai.extractLeadingNonLetters
-import ai.moneymanager.chat.transition.ai.matchesEntityName
+import ai.moneymanager.domain.text.extractLeadingNonLetters
+import ai.moneymanager.domain.text.matchesEntityName
 import ai.moneymanager.chat.transition.ai.resolveOperationDate
-import ai.moneymanager.chat.transition.ai.stripLeadingNonLetters
+import ai.moneymanager.domain.text.stripLeadingNonLetters
 import ai.moneymanager.chat.reply.common.resolveCurrency
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryCreationResult

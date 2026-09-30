@@ -1,6 +1,6 @@
 package ai.moneymanager.service
 
-import ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON
+import ai.moneymanager.domain.model.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.chat.reply.common.bold
 import ai.moneymanager.chat.reply.common.italic
 import ai.moneymanager.chat.reply.common.code
@@ -13,7 +13,7 @@ import ai.moneymanager.chat.reply.common.formatSignedAmount
 import ai.moneymanager.chat.reply.common.pre
 import ai.moneymanager.chat.reply.common.progressBar
 import ai.moneymanager.chat.reply.common.shortDateFormatter
-import ai.moneymanager.chat.transition.ai.matchesEntityName
+import ai.moneymanager.domain.text.matchesEntityName
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.report.CategoryTotal

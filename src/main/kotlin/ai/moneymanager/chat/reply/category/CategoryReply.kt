@@ -1,6 +1,6 @@
 package ai.moneymanager.chat.reply.category
 
-import ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON
+import ai.moneymanager.domain.model.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.chat.reply.common.backButton
 import ai.moneymanager.chat.reply.common.cancelButton
 import ai.moneymanager.chat.reply.common.confirmAndCancelButtons

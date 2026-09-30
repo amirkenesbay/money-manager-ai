@@ -1,6 +1,6 @@
 package ai.moneymanager.chat.transition.category
 
-import ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON
+import ai.moneymanager.domain.model.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.chat.transition.common.confirmFlow
 import ai.moneymanager.chat.transition.common.refreshCategoryList
 import ai.moneymanager.chat.transition.common.simpleTransition

@@ -29,7 +29,6 @@ private val KNOWN_VIOLATIONS = setOf(
     "service/FinanceHistoryService.kt -> ai.moneymanager.chat.reply.common.bold",
     "service/FinanceHistoryService.kt -> ai.moneymanager.chat.reply.common.code",
     "service/FinanceHistoryService.kt -> ai.moneymanager.chat.reply.common.dateFormatter",
-    "service/FinanceHistoryService.kt -> ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON",
     "service/FinanceHistoryService.kt -> ai.moneymanager.chat.reply.common.escapeHtml",
     "service/FinanceHistoryService.kt -> ai.moneymanager.chat.reply.common.formatAmount",
     "service/FinanceHistoryService.kt -> ai.moneymanager.chat.reply.common.formatDescriptionSuffix",
@@ -38,7 +37,6 @@ private val KNOWN_VIOLATIONS = setOf(
     "service/FinanceHistoryService.kt -> ai.moneymanager.chat.reply.common.pre",
     "service/FinanceHistoryService.kt -> ai.moneymanager.chat.reply.common.progressBar",
     "service/FinanceHistoryService.kt -> ai.moneymanager.chat.reply.common.shortDateFormatter",
-    "service/FinanceHistoryService.kt -> ai.moneymanager.chat.transition.ai.matchesEntityName",
     "service/FinanceReportFormatter.kt -> ai.moneymanager.chat.reply.common.blockquote",
     "service/FinanceReportFormatter.kt -> ai.moneymanager.chat.reply.common.bold",
     "service/FinanceReportFormatter.kt -> ai.moneymanager.chat.reply.common.code",
@@ -47,11 +45,6 @@ private val KNOWN_VIOLATIONS = setOf(
     "service/FinanceReportFormatter.kt -> ai.moneymanager.chat.reply.common.italic",
     "service/FinanceReportFormatter.kt -> ai.moneymanager.chat.reply.common.pre",
     "service/FinanceReportFormatter.kt -> ai.moneymanager.chat.reply.common.progressBar",
-    "service/FinanceReportService.kt -> ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON",
-    "service/GeminiService.kt -> ai.moneymanager.chat.config.GeminiProperties",
-    "service/nlp/CommandParserService.kt -> ai.moneymanager.chat.config.GeminiProperties",
-    "service/UserInfoService.kt -> ai.moneymanager.chat.reply.common.formatUserDisplayName",
-    "web/finance/FinanceResponseFactory.kt -> ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON",
 )
 
 class LayerBoundariesTest {

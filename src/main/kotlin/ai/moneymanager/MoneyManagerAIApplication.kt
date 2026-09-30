@@ -1,6 +1,6 @@
 package ai.moneymanager
 
-import ai.moneymanager.chat.config.GeminiProperties
+import ai.moneymanager.config.GeminiProperties
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication

@@ -3,7 +3,7 @@ package ai.moneymanager.chat.transition.ai.handler
 import ai.moneymanager.chat.reply.common.buildInviteLink
 import ai.moneymanager.chat.reply.common.link
 import ai.moneymanager.chat.reply.common.escapeHtml
-import ai.moneymanager.chat.transition.ai.matchesEntityName
+import ai.moneymanager.domain.text.matchesEntityName
 import ai.moneymanager.domain.model.GroupCreationResult
 import ai.moneymanager.domain.model.MoneyGroup
 import ai.moneymanager.domain.model.MoneyManagerContext

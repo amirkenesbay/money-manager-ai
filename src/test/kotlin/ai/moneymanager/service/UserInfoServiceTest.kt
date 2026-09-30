@@ -4,7 +4,6 @@ import ai.moneymanager.domain.model.TelegramProfile
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.repository.UserInfoRepository
 import ai.moneymanager.repository.entity.UserInfoEntity
-import ai.moneymanager.web.security.TEST_BOT_TOKEN
 import org.assertj.core.api.Assertions.assertThat
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
@@ -18,7 +17,7 @@ private const val NEW_OWNER_ID = 2L
 class UserInfoServiceTest {
     private val repository = FakeUserInfoRepository()
     private val adminNotificationService = mock(AdminNotificationService::class.java)
-    private val service = UserInfoService(repository, adminNotificationService, TEST_BOT_TOKEN)
+    private val service = UserInfoService(repository, adminNotificationService)
 
     @Test
     fun `returns existing user found by telegram id`() {

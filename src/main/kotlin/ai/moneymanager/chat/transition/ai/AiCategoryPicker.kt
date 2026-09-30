@@ -1,6 +1,7 @@
 package ai.moneymanager.chat.transition.ai
 
-import ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON
+import ai.moneymanager.domain.text.stripLeadingNonLetters
+import ai.moneymanager.domain.model.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.nlp.AiPendingAction
 import gcardone.junidecode.Junidecode

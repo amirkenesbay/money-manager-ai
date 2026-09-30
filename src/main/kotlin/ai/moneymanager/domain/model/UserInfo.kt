@@ -21,3 +21,15 @@ data class UserInfo(
     fun hasActivePaidSubscription(now: LocalDateTime = LocalDateTime.now()): Boolean =
         subscriptionTier == SubscriptionTier.PAID && subscriptionExpiresAt?.isAfter(now) == true
 }
+
+private const val USER_ID_LABEL = "ID"
+private const val USERNAME_PREFIX = "@"
+
+fun formatUserDisplayName(userInfo: UserInfo?, fallbackId: Long): String {
+    val fullName = listOfNotNull(userInfo?.firstName, userInfo?.lastName).joinToString(" ")
+    return when {
+        fullName.isNotEmpty() -> fullName
+        !userInfo?.username.isNullOrEmpty() -> "$USERNAME_PREFIX${userInfo?.username}"
+        else -> "$USER_ID_LABEL $fallbackId"
+    }
+}

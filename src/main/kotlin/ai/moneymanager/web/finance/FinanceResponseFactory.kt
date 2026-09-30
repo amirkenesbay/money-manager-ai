@@ -1,6 +1,6 @@
 package ai.moneymanager.web.finance
 
-import ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON
+import ai.moneymanager.domain.model.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.domain.model.BalanceBreakdown
 import ai.moneymanager.domain.model.MoneyGroup
 import ai.moneymanager.repository.entity.FinanceOperationEntity

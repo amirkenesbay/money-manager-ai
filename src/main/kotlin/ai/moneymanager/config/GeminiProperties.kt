@@ -1,4 +1,4 @@
-package ai.moneymanager.chat.config
+package ai.moneymanager.config
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 

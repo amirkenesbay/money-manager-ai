@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.reply.common
 
+import ai.moneymanager.domain.model.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.domain.model.BalanceBreakdown
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
@@ -23,8 +24,6 @@ private const val ICON_NAME_SEPARATOR = " "
 private const val DESCRIPTION_PREFIX = " ("
 private const val DESCRIPTION_SUFFIX = ")"
 private const val TIME_PATTERN = "%02d:%02d"
-
-const val DEFAULT_CATEGORY_ICON: String = "📌"
 
 private const val BOT_USERNAME = "moneyManagerAIbot"
 private const val INVITE_LINK_TEMPLATE = "https://t.me/%s?start=join_%s"
@@ -115,19 +114,6 @@ fun formatBalanceBreakdown(
     |
     |${blockquote(bold(localizationService.t("balance.view.total", language, formatAmount(balance.total, currency))))}
 """.trimMargin()
-
-fun formatUserDisplayName(userInfo: UserInfo?, fallbackId: Long): String {
-    if (userInfo == null) return "ID $fallbackId"
-
-    val fullName = listOfNotNull(userInfo.firstName, userInfo.lastName)
-        .joinToString(" ")
-
-    return when {
-        fullName.isNotEmpty() -> fullName
-        !userInfo.username.isNullOrEmpty() -> "@${userInfo.username}"
-        else -> "ID $fallbackId"
-    }
-}
 
 fun categoryTypeLabel(type: CategoryType?, form: CategoryTypeForm = CategoryTypeForm.GENITIVE): String {
     return when (form) {

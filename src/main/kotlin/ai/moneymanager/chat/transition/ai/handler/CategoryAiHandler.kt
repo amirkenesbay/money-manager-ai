@@ -1,7 +1,7 @@
 package ai.moneymanager.chat.transition.ai.handler
 
 import ai.moneymanager.chat.reply.common.escapeHtml
-import ai.moneymanager.chat.transition.ai.matchesEntityName
+import ai.moneymanager.domain.text.matchesEntityName
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryCreationResult
 import ai.moneymanager.domain.model.CategoryType

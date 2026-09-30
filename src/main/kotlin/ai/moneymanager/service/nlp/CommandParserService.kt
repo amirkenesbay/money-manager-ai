@@ -1,6 +1,6 @@
 package ai.moneymanager.service.nlp
 
-import ai.moneymanager.chat.config.GeminiProperties
+import ai.moneymanager.config.GeminiProperties
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.domain.model.nlp.BotFunctions
 import ai.moneymanager.domain.model.nlp.arguments.AddExpenseArgs

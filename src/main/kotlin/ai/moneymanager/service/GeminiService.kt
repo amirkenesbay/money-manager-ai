@@ -1,6 +1,6 @@
 package ai.moneymanager.service
 
-import ai.moneymanager.chat.config.GeminiProperties
+import ai.moneymanager.config.GeminiProperties
 import com.google.genai.Client
 import com.google.genai.types.GenerateContentResponse
 import jakarta.annotation.PostConstruct

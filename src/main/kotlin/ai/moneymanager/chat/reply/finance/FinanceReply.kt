@@ -1,6 +1,6 @@
 package ai.moneymanager.chat.reply.finance
 
-import ai.moneymanager.chat.reply.common.DEFAULT_CATEGORY_ICON
+import ai.moneymanager.domain.model.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.chat.reply.common.bold
 import ai.moneymanager.chat.reply.common.code
 import ai.moneymanager.chat.reply.common.escapeHtml

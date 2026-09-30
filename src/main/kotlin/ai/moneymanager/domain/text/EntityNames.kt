@@ -1,4 +1,4 @@
-package ai.moneymanager.chat.transition.ai
+package ai.moneymanager.domain.text
 
 import gcardone.junidecode.Junidecode
 
@@ -15,12 +15,12 @@ fun matchesEntityName(entityName: String, searchName: String): Boolean {
     return translitEntity == translitSearch
 }
 
-internal fun stripLeadingNonLetters(value: String): String {
+fun stripLeadingNonLetters(value: String): String {
     val trimmed = value.trim()
     return trimmed.substring(indexOfFirstLetterOrDigit(trimmed)).trimStart()
 }
 
-internal fun extractLeadingNonLetters(value: String): String? {
+fun extractLeadingNonLetters(value: String): String? {
     val trimmed = value.trim()
     val cut = indexOfFirstLetterOrDigit(trimmed)
     if (cut == 0) return null
