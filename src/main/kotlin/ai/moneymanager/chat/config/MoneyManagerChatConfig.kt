@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.config
 
+import ai.moneymanager.chat.reply.finance.FinanceHistoryFormatter
 import ai.moneymanager.chat.dialog.moneyManagerDialog
 import ai.moneymanager.chat.transition.ai.AiActionExecutor
 import ai.moneymanager.chat.transition.ai.AiRequestHandler
@@ -35,6 +36,7 @@ class MoneyManagerChatConfig(
     private val telegramFileService: TelegramFileService,
     private val financeOperationService: FinanceOperationService,
     private val financeHistoryService: FinanceHistoryService,
+    private val financeHistoryFormatter: FinanceHistoryFormatter,
     private val financeReportService: FinanceReportService,
     private val notificationService: NotificationService,
     private val localizationService: LocalizationService,
@@ -63,7 +65,7 @@ class MoneyManagerChatConfig(
 
             moneyManagerDialog(
                 userInfoService, groupService, categoryService, telegramFileService,
-                financeOperationService, financeHistoryService, financeReportService,
+                financeOperationService, financeHistoryService, financeHistoryFormatter, financeReportService,
                 notificationService, localizationService, aiActionExecutor, aiRequestHandler,
                 persistentMenuKeyboardService, adminService, subscriptionLimitsService, onboardingService
             )

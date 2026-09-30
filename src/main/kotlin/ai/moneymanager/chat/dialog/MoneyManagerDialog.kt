@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.dialog
 
+import ai.moneymanager.chat.reply.finance.FinanceHistoryFormatter
 import ai.moneymanager.mapper.toTelegramProfile
 import ai.moneymanager.chat.transition.admin.adminDialogTransitions
 import ai.moneymanager.chat.transition.ai.AiActionExecutor
@@ -56,6 +57,7 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
     telegramFileService: TelegramFileService,
     financeOperationService: FinanceOperationService,
     financeHistoryService: FinanceHistoryService,
+    financeHistoryFormatter: FinanceHistoryFormatter,
     financeReportService: FinanceReportService,
     notificationService: NotificationService,
     localizationService: LocalizationService,
@@ -77,7 +79,7 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
         balanceDialogTransitions(groupService, userInfoService, financeOperationService)
         groupDialogTransitions(groupService, categoryService, userInfoService, localizationService)
         categoryDialogTransitions(categoryService, groupService, localizationService, subscriptionLimitsService)
-        financeDialogTransitions(categoryService, financeOperationService, financeHistoryService, financeReportService, userInfoService, groupService, subscriptionLimitsService, localizationService)
+        financeDialogTransitions(categoryService, financeOperationService, financeHistoryService, financeHistoryFormatter, financeReportService, userInfoService, groupService, subscriptionLimitsService, localizationService)
         notificationDialogTransitions(notificationService, userInfoService, subscriptionLimitsService)
         aiDialogTransitions(aiActionExecutor, aiRequestHandler, localizationService)
         adminDialogTransitions(adminService, userInfoService)

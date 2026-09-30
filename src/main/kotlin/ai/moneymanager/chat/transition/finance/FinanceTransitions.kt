@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.transition.finance
 
+import ai.moneymanager.chat.reply.finance.FinanceHistoryFormatter
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
@@ -18,6 +19,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.financeDialogTransitio
     categoryService: CategoryService,
     financeOperationService: FinanceOperationService,
     financeHistoryService: FinanceHistoryService,
+    financeHistoryFormatter: FinanceHistoryFormatter,
     financeReportService: FinanceReportService,
     userInfoService: UserInfoService,
     groupService: GroupService,
@@ -29,7 +31,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.financeDialogTransitio
     financeAmountTransitions()
     financeDateTransitions(financeOperationService)
     financeOperationSavedTransitions(categoryService)
-    financeHistoryTransitions(financeHistoryService, groupService, subscriptionLimitsService, localizationService)
+    financeHistoryTransitions(financeHistoryFormatter, groupService, subscriptionLimitsService, localizationService)
     financeReportTransitions(financeReportService, userInfoService, categoryService, groupService, subscriptionLimitsService, localizationService)
     operationEditTransitions(financeHistoryService, financeOperationService, categoryService, groupService)
     financeBackTransitions()

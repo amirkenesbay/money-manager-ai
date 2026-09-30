@@ -15,7 +15,7 @@ class FinanceHistoryServiceTest {
     private val endDate = LocalDate.of(2026, 7, 31)
 
     private val repository = FakeFinanceOperationRepository()
-    private val service = FinanceHistoryService(repository, mock(LocalizationService::class.java))
+    private val service = FinanceHistoryService(repository)
 
     @Test
     fun `splits operations into income and expense totals`() {

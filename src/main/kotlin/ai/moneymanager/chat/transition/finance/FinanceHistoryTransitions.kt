@@ -1,10 +1,10 @@
 package ai.moneymanager.chat.transition.finance
 
+import ai.moneymanager.chat.reply.finance.FinanceHistoryFormatter
 import ai.moneymanager.chat.reply.common.resolveCurrency
 import ai.moneymanager.domain.model.MoneyManagerButtonType
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.MoneyManagerState
-import ai.moneymanager.service.FinanceHistoryService
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.SubscriptionLimitsService
@@ -14,14 +14,14 @@ import kz.rmr.chatmachinist.widget.CalendarButtonType
 import java.time.LocalDate
 
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.financeHistoryTransitions(
-    financeHistoryService: FinanceHistoryService,
+    financeHistoryFormatter: FinanceHistoryFormatter,
     groupService: GroupService,
     subscriptionLimitsService: SubscriptionLimitsService,
     localizationService: LocalizationService
 ) {
-    openHistoryTransition(financeHistoryService, groupService, subscriptionLimitsService, localizationService)
-    quickDayTransitions(financeHistoryService, groupService, subscriptionLimitsService, localizationService)
-    changePeriodTransitions(financeHistoryService, groupService, subscriptionLimitsService, localizationService)
+    openHistoryTransition(financeHistoryFormatter, groupService, subscriptionLimitsService, localizationService)
+    quickDayTransitions(financeHistoryFormatter, groupService, subscriptionLimitsService, localizationService)
+    changePeriodTransitions(financeHistoryFormatter, groupService, subscriptionLimitsService, localizationService)
     historyCalendarTransitions()
     historyBackTransitions()
 }
@@ -36,7 +36,7 @@ private enum class HistoryQuickDay(
 }
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.quickDayTransitions(
-    financeHistoryService: FinanceHistoryService,
+    financeHistoryFormatter: FinanceHistoryFormatter,
     groupService: GroupService,
     subscriptionLimitsService: SubscriptionLimitsService,
     localizationService: LocalizationService
@@ -54,7 +54,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.quickDayTransi
                 val day = LocalDate.now().minusDays(quickDay.daysAgo)
                 context.historyStartDate = day
                 context.historyEndDate = day
-                loadReport(financeHistoryService, groupService, subscriptionLimitsService, localizationService)
+                loadReport(financeHistoryFormatter, groupService, subscriptionLimitsService, localizationService)
             }
 
             then {
@@ -65,7 +65,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.quickDayTransi
 }
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.openHistoryTransition(
-    financeHistoryService: FinanceHistoryService,
+    financeHistoryFormatter: FinanceHistoryFormatter,
     groupService: GroupService,
     subscriptionLimitsService: SubscriptionLimitsService,
     localizationService: LocalizationService
@@ -82,7 +82,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.openHistoryTra
             val now = LocalDate.now()
             context.historyStartDate = now.withDayOfMonth(1)
             context.historyEndDate = now.withDayOfMonth(now.lengthOfMonth())
-            loadReport(financeHistoryService, groupService, subscriptionLimitsService, localizationService)
+            loadReport(financeHistoryFormatter, groupService, subscriptionLimitsService, localizationService)
         }
 
         then {
@@ -92,7 +92,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.openHistoryTra
 }
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.changePeriodTransitions(
-    financeHistoryService: FinanceHistoryService,
+    financeHistoryFormatter: FinanceHistoryFormatter,
     groupService: GroupService,
     subscriptionLimitsService: SubscriptionLimitsService,
     localizationService: LocalizationService
@@ -122,7 +122,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.changePeriodTr
             val now = LocalDate.now()
             context.historyStartDate = now.withDayOfMonth(1)
             context.historyEndDate = now.withDayOfMonth(now.lengthOfMonth())
-            loadReport(financeHistoryService, groupService, subscriptionLimitsService, localizationService)
+            loadReport(financeHistoryFormatter, groupService, subscriptionLimitsService, localizationService)
         }
 
         then {
@@ -142,7 +142,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.changePeriodTr
             val lastMonth = LocalDate.now().minusMonths(1)
             context.historyStartDate = lastMonth.withDayOfMonth(1)
             context.historyEndDate = lastMonth.withDayOfMonth(lastMonth.lengthOfMonth())
-            loadReport(financeHistoryService, groupService, subscriptionLimitsService, localizationService)
+            loadReport(financeHistoryFormatter, groupService, subscriptionLimitsService, localizationService)
         }
 
         then {
@@ -162,7 +162,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.changePeriodTr
             val now = LocalDate.now()
             context.historyStartDate = now.withDayOfYear(1)
             context.historyEndDate = now.withMonth(12).withDayOfMonth(31)
-            loadReport(financeHistoryService, groupService, subscriptionLimitsService, localizationService)
+            loadReport(financeHistoryFormatter, groupService, subscriptionLimitsService, localizationService)
         }
 
         then {
@@ -225,7 +225,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.changePeriodTr
 
         action {
             context.historyEndDate = LocalDate.now()
-            loadReport(financeHistoryService, groupService, subscriptionLimitsService, localizationService)
+            loadReport(financeHistoryFormatter, groupService, subscriptionLimitsService, localizationService)
         }
 
         then {
@@ -243,7 +243,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.changePeriodTr
 
         action {
             context.historyEndDate = LocalDate.now().minusDays(1)
-            loadReport(financeHistoryService, groupService, subscriptionLimitsService, localizationService)
+            loadReport(financeHistoryFormatter, groupService, subscriptionLimitsService, localizationService)
         }
 
         then {
@@ -289,7 +289,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.changePeriodTr
                     dayText.toInt()
                 )
             }
-            loadReport(financeHistoryService, groupService, subscriptionLimitsService, localizationService)
+            loadReport(financeHistoryFormatter, groupService, subscriptionLimitsService, localizationService)
         }
 
         then {
@@ -531,7 +531,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.historyBackTra
 }
 
 private fun ActionContext<MoneyManagerState, MoneyManagerContext>.loadReport(
-    financeHistoryService: FinanceHistoryService,
+    financeHistoryFormatter: FinanceHistoryFormatter,
     groupService: GroupService,
     subscriptionLimitsService: SubscriptionLimitsService,
     localizationService: LocalizationService
@@ -549,5 +549,5 @@ private fun ActionContext<MoneyManagerState, MoneyManagerContext>.loadReport(
     }
 
     val currency = resolveCurrency(groupService, groupId)
-    context.historyReport = financeHistoryService.generateReport(groupId, startDate, endDate, currency, language)
+    context.historyReport = financeHistoryFormatter.generateReport(groupId, startDate, endDate, currency, language)
 }

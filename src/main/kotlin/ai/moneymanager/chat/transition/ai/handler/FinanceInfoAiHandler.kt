@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.transition.ai.handler
 
+import ai.moneymanager.chat.reply.finance.FinanceHistoryFormatter
 import ai.moneymanager.chat.reply.common.formatBalanceBreakdown
 import ai.moneymanager.chat.transition.ai.parseIsoDateOrNull
 import ai.moneymanager.domain.model.CategoryType
@@ -7,7 +8,6 @@ import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.MoneyManagerContext
 import ai.moneymanager.domain.model.nlp.AiPendingAction
 import ai.moneymanager.domain.model.nlp.BotCommand
-import ai.moneymanager.service.FinanceHistoryService
 import ai.moneymanager.service.FinanceOperationService
 import ai.moneymanager.service.FinanceReportService
 import ai.moneymanager.service.GroupService
@@ -25,7 +25,7 @@ class FinanceInfoAiHandler(
     private val groupService: GroupService,
     private val financeOperationService: FinanceOperationService,
     private val financeReportService: FinanceReportService,
-    private val financeHistoryService: FinanceHistoryService,
+    private val financeHistoryFormatter: FinanceHistoryFormatter,
     private val localizationService: LocalizationService
 ) : AiDomainHandler {
     override fun canHandle(command: BotCommand): Boolean = when (command) {
@@ -76,7 +76,7 @@ class FinanceInfoAiHandler(
         val start = parseIsoDateOrNull(command.startDate) ?: now.withDayOfMonth(1)
         val end = parseIsoDateOrNull(command.endDate) ?: now
         val (from, to) = if (start <= end) start to end else end to start
-        return financeHistoryService.generateReport(
+        return financeHistoryFormatter.generateReport(
             groupId, from, to, currency, lang,
             typeFilter = parseCategoryType(command.type),
             categoryFilter = command.categoryFilter
