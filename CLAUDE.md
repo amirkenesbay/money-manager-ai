@@ -213,9 +213,10 @@ MoneyManagerReplyConfig (maps states to replies)
 
 Enforced by `src/test/kotlin/ai/moneymanager/architecture/LayerBoundariesTest.kt` (Konsist):
 
-- `web` must not import `ai.moneymanager.chat`, `kz.rmr` or `org.telegram`.
-- Core (`service`, `domain`, `repository`, `mapper`) must not import `ai.moneymanager.chat`.
-- `KNOWN_VIOLATIONS` only shrinks. Never add an entry to it — move the shared code into core instead.
+- `web` and core (`service`, `domain`, `repository`, `mapper`, `config`) must not import `ai.moneymanager.chat`, `kz.rmr` or `org.telegram`.
+- Telegram rendering (HTML, message texts) lives in `chat`; core services expose data (`build*`), the bot formats it.
+- Telegram-dependent services live in `ai.moneymanager.chat.telegram`. Core notifies the bot through Spring events (e.g. `NewUserRegistered`), never by calling it.
+- Bot rendering is pinned by `BotRenderingSnapshotTest`; a snapshot diff means user-visible text changed.
 
 ## Critical Patterns & Conventions
 

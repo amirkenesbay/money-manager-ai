@@ -7,33 +7,22 @@ import org.junit.jupiter.api.Test
 private const val ROOT = "ai.moneymanager"
 private const val BOT = "$ROOT.chat"
 private const val SOURCE_ROOT = "src/main/kotlin/ai/moneymanager/"
-private val TELEGRAM = listOf("kz.rmr", "org.telegram")
+private val BOT_AND_TELEGRAM = listOf(BOT, "kz.rmr", "org.telegram")
 private val WEB_LAYER = listOf("$ROOT.web")
-private val CORE_LAYERS = listOf("$ROOT.service", "$ROOT.domain", "$ROOT.repository", "$ROOT.mapper")
+private val CORE_LAYERS = listOf("$ROOT.service", "$ROOT.domain", "$ROOT.repository", "$ROOT.mapper", "$ROOT.config")
 
 private data class BoundaryRule(val layers: List<String>, val forbiddenImports: List<String>)
 
 private val RULES = listOf(
-    BoundaryRule(WEB_LAYER, listOf(BOT) + TELEGRAM),
-    BoundaryRule(CORE_LAYERS, listOf(BOT)),
+    BoundaryRule(WEB_LAYER, BOT_AND_TELEGRAM),
+    BoundaryRule(CORE_LAYERS, BOT_AND_TELEGRAM),
 )
 
-private val KNOWN_VIOLATIONS = emptySet<String>()
-
 class LayerBoundariesTest {
-    private val violations = findViolations()
-
     @Test
-    fun `no layer imports code it must not depend on`() {
-        assertThat(violations - KNOWN_VIOLATIONS)
-            .describedAs("New boundary violations: web must not depend on the bot or Telegram, core must not depend on the bot")
-            .isEmpty()
-    }
-
-    @Test
-    fun `list of known violations only shrinks`() {
-        assertThat(KNOWN_VIOLATIONS - violations)
-            .describedAs("These violations are fixed: remove them from KNOWN_VIOLATIONS")
+    fun `web and core depend neither on the bot nor on Telegram`() {
+        assertThat(findViolations())
+            .describedAs("Web and core must not import the bot layer or Telegram libraries; move shared code into core instead")
             .isEmpty()
     }
 }

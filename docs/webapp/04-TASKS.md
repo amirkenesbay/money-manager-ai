@@ -252,16 +252,37 @@
 
 ---
 
-### W-024 · Отвязать ядро от бота · TODO
+### W-024 · Отвязать ядро от бота · DONE
 **Критерии приёмки**
-- [ ] Telegram-рендер отчётов и истории (`generate*`, `FinanceReportFormatter`) перенесён в `chat`; в сервисах остались только `build*` с данными
-- [ ] Нейтральные вещи — иконка категории по умолчанию, отображаемое имя пользователя, формат суммы — живут в `domain`, не в `chat.reply.common`
-- [ ] `UserInfoService` не наследует `DefaultAbsSender`; Telegram-зависимые сервисы (`AdminService`, `AdminNotificationService`, `TelegramFileService`, `PersistentMenuKeyboardService`, `NotificationSchedulerService`) перенесены в слой бота
-- [ ] Ядро не зависит от `GeminiProperties`, `matchesEntityName` и прочего из `chat`
-- [ ] Список исключений теста W-023 пуст
-- [ ] Поведение бота не изменилось: тексты отчётов, истории и уведомлений совпадают до и после (сверка рендера)
+- [x] Telegram-рендер отчётов и истории (`generate*`, `FinanceReportFormatter`) перенесён в `chat`; в сервисах остались только `build*` с данными
+- [x] Нейтральные вещи — иконка категории по умолчанию, отображаемое имя пользователя, формат суммы — живут в `domain`, не в `chat.reply.common`
+- [x] `UserInfoService` не наследует `DefaultAbsSender`; Telegram-зависимые сервисы (`AdminService`, `AdminNotificationService`, `TelegramFileService`, `PersistentMenuKeyboardService`, `NotificationSchedulerService`) перенесены в слой бота
+- [x] Ядро не зависит от `GeminiProperties`, `matchesEntityName` и прочего из `chat`
+- [x] Список исключений теста W-023 пуст
+- [x] Поведение бота не изменилось: тексты отчётов, истории и уведомлений совпадают до и после (сверка рендера)
 
 **Зависимости:** W-023
+
+**Результат:**
+- Страховка: `BotRenderingSnapshotTest` — 12 снимков рендера (история, 4 отчёта, AI-подтверждения, пакетные строки)
+  на фиксированных данных, записаны до переноса; после каждого шага совпадают посимвольно. Для отчёта по категории
+  в `FinanceReportService` внедрён `Clock` (бин `ClockConfig`), иначе снимок зависел бы от сегодняшней даты.
+- `FinanceHistoryFormatter` и `FinanceReportFormatter` (`chat/reply/finance`) — весь Telegram-HTML; в ядре остались
+  `buildHistoryReport` и `build*Report`.
+- Тексты AI-подтверждений — extension-функции `describe`/`describeBatchItem` в `chat/reply/ai`; `AiPendingAction` — только данные.
+- `DEFAULT_CATEGORY_ICON`, `formatUserDisplayName` → `domain.model`; `matchesEntityName` и нормализация имён → `domain.text`;
+  `GeminiProperties` → `config`.
+- `UserInfoService` не наследует `DefaultAbsSender` (наследование не использовалось). Уведомление админа о новом
+  пользователе — событие `NewUserRegistered` в ядре, слушатель `AdminNotificationService` в боте.
+- Telegram-сервисы, `AiFeedback`, `TelegramFileProperties`, `TelegramProfileMapper` → `chat.telegram`.
+- `LayerBoundariesTest`: список исключений удалён; ядру (`service`, `domain`, `repository`, `mapper`, `config`) и `web`
+  запрещены `chat`, `kz.rmr`, `org.telegram`. Мутации ловятся.
+
+**Выявлено для W-025** (архитектурный тест этого не ловит):
+- `domain/model/State.kt` и `QuickTemplate.kt` — состояние диалога бота, используются только `chat` → в `:bot`.
+- `chat/config/MongoConfig.kt` (`@EnableMongoAuditing`, конвертеры дат) и `GeminiMapperConfig` нужны ядру.
+- `@EnableMongoRepositories` и `@EnableScheduling` объявлены на `MoneyManagerChatConfig` (бот).
+- Тесты ядра импортируют фикстуры из тестов `web` (`OnboardingServiceTest`, `BotRenderingSnapshotTest`) → `testFixtures`.
 
 ---
 
