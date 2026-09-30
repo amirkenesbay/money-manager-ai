@@ -18,6 +18,7 @@ import ai.moneymanager.repository.entity.FinanceOperationEntity
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
+import java.time.Clock
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
@@ -26,7 +27,8 @@ import java.util.Locale
 @Service
 class FinanceReportService(
     private val financeOperationRepository: FinanceOperationRepository,
-    private val formatter: FinanceReportFormatter
+    private val formatter: FinanceReportFormatter,
+    private val clock: Clock
 ) {
     fun generateComparisonReport(groupId: ObjectId, previousMonthStart: LocalDate, currency: Currency, language: String?): String {
         val report = buildComparisonReport(groupId, previousMonthStart, language)
@@ -216,7 +218,7 @@ class FinanceReportService(
         months: Int,
         language: String?
     ): List<CategoryMonthData> {
-        val now = LocalDate.now()
+        val now = LocalDate.now(clock)
         val periodStart = now.minusMonths((months - 1).toLong()).withDayOfMonth(1)
         val periodEnd = now.withDayOfMonth(now.lengthOfMonth())
         val allOps = findOperations(groupId, periodStart, periodEnd)

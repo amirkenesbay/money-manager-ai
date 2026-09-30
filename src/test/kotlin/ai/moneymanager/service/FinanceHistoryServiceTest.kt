@@ -1,7 +1,6 @@
 package ai.moneymanager.service
 
 import ai.moneymanager.domain.model.CategoryType
-import ai.moneymanager.repository.FinanceOperationRepository
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import org.assertj.core.api.Assertions.assertThat
 import org.bson.types.ObjectId
@@ -144,16 +143,4 @@ class FinanceHistoryServiceTest {
         operationDate = startDate,
         description = description
     )
-}
-
-private class FakeFinanceOperationRepository(
-    private val delegate: FinanceOperationRepository = mock(FinanceOperationRepository::class.java)
-) : FinanceOperationRepository by delegate {
-    var operations: List<FinanceOperationEntity> = emptyList()
-
-    override fun findByGroupIdAndOperationDateBetweenOrderByOperationDateDesc(
-        groupId: ObjectId,
-        startDate: LocalDate,
-        endDate: LocalDate
-    ): List<FinanceOperationEntity> = operations
 }

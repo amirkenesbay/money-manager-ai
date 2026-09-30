@@ -1,0 +1,14 @@
+<b>📋 History: 10.06.2026 – 20.06.2026</b>
+
+📈 Income:
+<pre>💰 Зарплата  ████████████ 450 000$</pre>
+
+<blockquote><b>Total: 450 000$</b></blockquote>
+
+📉 Expenses:
+<pre>📌 Такси     ████████████ 12 000$
+🛒 Продукты  █████████░░░ 9 300$</pre>
+
+<blockquote><b>Total: 21 300$</b></blockquote>
+
+<blockquote><b>💰 Balance: +428 700$</b></blockquote>

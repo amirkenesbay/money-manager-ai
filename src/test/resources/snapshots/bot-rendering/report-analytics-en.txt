@@ -1,0 +1,18 @@
+<b>📈 Analytics for June 2026</b>
+
+📊 Summary:
+📉 Expenses: 21 300€
+📈 Income: 450 000€
+🔢 Operations: 5
+
+📉 Average expense per day: 710€
+📈 Average income per day: 15 000€
+
+🏆 Top-3 expenses:
+📌 Такси · <i>56%</i>
+<code>████████████ 12 000€</code>
+🛒 Продукты · <i>44%</i>
+<code>█████████░░░ 9 300€</code>
+
+<blockquote>💸 Max expense: 12 000€ (📌 Такси, 14 Jun)</blockquote>
+<blockquote>📅 Most expensive day: 14 June — 12 000€</blockquote>

@@ -1,0 +1,53 @@
+[category-create]
+Создать категорию ☕ «Кафе» (Расход)
+Create category ☕ «Кафе» (Expense)
+
+[category-delete]
+Удалить категорию «Такси» (Расход)
+Delete category «Такси» (Expense)
+
+[category-rename]
+Переименовать «Продукты» → «Еда» (Расход)
+Rename «Продукты» → «Еда» (Expense)
+
+[category-change-icon]
+Изменить иконку «Такси»: — → 🚕
+Change icon of «Такси»: — → 🚕
+
+[category-delete-all]
+Удалить ВСЕ категории группы (7 шт.)
+Delete ALL categories in the group (7 total)
+
+[group-create]
+Создать группу «Семья»
+Create group «Семья»
+
+[group-delete]
+Удалить группу «Семья» (2 чел.) — безвозвратно, вместе с категориями
+Delete group «Семья» (2 members) — permanent, together with its categories
+
+[notification-create]
+Создать напоминание «Записать траты» — каждый день в 21:05
+Create reminder «Записать траты» — every day at 21:05
+
+[notification-delete]
+Удалить напоминание 🌐 «Оплатить интернет»
+Delete reminder 🌐 «Оплатить интернет»
+
+[operation-delete]
+Удалить операцию: 🛒 Продукты · −3 500₸
+Delete operation: 🛒 Продукты · −3 500$
+
+[operation-edit]
+Изменить операцию 🛒 Продукты · −3 500₸: сумма → 4 200₸, категория → Такси, дата → 2026-06-03
+Edit operation 🛒 Продукты · −3 500$: amount → 4 200$, category → Такси, date → 2026-06-03
+
+[transaction-add]
+Добавить расход: 🛒 «Продукты» — 3 500₸ (Магнум & <сыр>)
+Add expense: 🛒 «Продукты» — 3 500$ (Магнум & <сыр>)
+
+[transaction-add-new-category]
+✨ Будет создана новая категория 💻 «Фриланс»
+Добавить доход: 💻 «Фриланс» — 150 000₸ (заказ <срочный>)
+✨ A new category 💻 «Фриланс» will be created
+Add income: 💻 «Фриланс» — 150 000$ (заказ <срочный>)
