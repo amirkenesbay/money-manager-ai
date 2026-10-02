@@ -1,3 +1,5 @@
+name: money-manager-ai
+
 version: "3.9"
 services:
   mongodb:

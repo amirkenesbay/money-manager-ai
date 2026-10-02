@@ -3,10 +3,12 @@ package ai.moneymanager.web.finance
 import ai.moneymanager.domain.model.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.domain.model.BalanceBreakdown
 import ai.moneymanager.domain.model.MoneyGroup
+import ai.moneymanager.domain.model.report.HistoryReport
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import ai.moneymanager.service.UserInfoService
 import org.springframework.data.domain.Page
 import org.springframework.stereotype.Component
+import java.time.YearMonth
 
 @Component
 class FinanceResponseFactory(
@@ -18,6 +20,16 @@ class FinanceResponseFactory(
         income = breakdown.income,
         expense = breakdown.expense,
         total = breakdown.total,
+    )
+
+    fun monthSummary(group: MoneyGroup, month: YearMonth, report: HistoryReport) = MonthSummaryResponse(
+        month = month,
+        currency = group.currency,
+        income = report.totalIncome,
+        expense = report.totalExpense,
+        net = report.balance,
+        operationCount = report.operations.size,
+        expenseByCategory = report.expenseByCategory.map { CategoryAmountResponse(it.icon, it.name, it.total) },
     )
 
     fun operationsPage(page: Page<FinanceOperationEntity>): OperationsPageResponse {

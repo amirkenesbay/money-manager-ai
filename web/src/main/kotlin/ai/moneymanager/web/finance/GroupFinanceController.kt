@@ -3,6 +3,7 @@ package ai.moneymanager.web.finance
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.OperationFilter
 import ai.moneymanager.domain.model.UserInfo
+import ai.moneymanager.service.FinanceHistoryService
 import ai.moneymanager.service.FinanceOperationService
 import ai.moneymanager.service.SubscriptionLimitsService
 import ai.moneymanager.web.API_V1_PREFIX
@@ -16,7 +17,9 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import java.time.Clock
 import java.time.LocalDate
+import java.time.YearMonth
 
 private const val FIRST_PAGE = 0
 private const val DEFAULT_PAGE_SIZE = 20
@@ -30,11 +33,21 @@ class GroupFinanceController(
     private val financeOperationService: FinanceOperationService,
     private val subscriptionLimitsService: SubscriptionLimitsService,
     private val financeResponseFactory: FinanceResponseFactory,
+    private val financeHistoryService: FinanceHistoryService,
+    private val clock: Clock,
 ) {
     @GetMapping("/balance")
     fun balance(user: UserInfo, @PathVariable groupId: ObjectId): BalanceResponse {
         val group = groupAccessGuard.requireMember(user, groupId)
         return financeResponseFactory.balance(group, financeOperationService.calculateBalance(groupId, group.initialBalance))
+    }
+
+    @GetMapping("/summary")
+    fun currentMonthSummary(user: UserInfo, @PathVariable groupId: ObjectId): MonthSummaryResponse {
+        val group = groupAccessGuard.requireMember(user, groupId)
+        val month = YearMonth.now(clock)
+        val report = financeHistoryService.buildHistoryReport(groupId, month.atDay(1), month.atEndOfMonth())
+        return financeResponseFactory.monthSummary(group, month, report)
     }
 
     @GetMapping("/operations")

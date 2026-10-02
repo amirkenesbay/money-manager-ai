@@ -7,6 +7,9 @@ import ai.moneymanager.domain.model.OperationFilter
 import ai.moneymanager.domain.model.SubscriptionTier
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.repository.entity.FinanceOperationEntity
+import ai.moneymanager.domain.model.report.CategoryTotal
+import ai.moneymanager.domain.model.report.HistoryReport
+import ai.moneymanager.service.FinanceHistoryService
 import ai.moneymanager.service.FinanceOperationService
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.SubscriptionLimitsService
@@ -25,6 +28,8 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mockingDetails
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
+import org.springframework.boot.test.context.TestConfiguration
+import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
@@ -34,12 +39,17 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.math.BigDecimal
+import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.YearMonth
+import java.time.ZoneOffset
 
 private const val DEFAULT_PAGE_SIZE = 20
 private const val CREATOR_NAME = "Amir"
 private const val FIND_OPERATIONS = "findOperations"
+private val SUMMARY_TODAY: LocalDate = LocalDate.of(2026, 10, 15)
+private val SUMMARY_MONTH: YearMonth = YearMonth.from(SUMMARY_TODAY)
 
 @WebMvcTest(controllers = [GroupFinanceController::class])
 @ApiWebLayerSetup
@@ -59,6 +69,15 @@ class GroupFinanceControllerTest {
 
     @MockitoBean
     private lateinit var financeOperationService: FinanceOperationService
+
+    @MockitoBean
+    private lateinit var financeHistoryService: FinanceHistoryService
+
+    @TestConfiguration
+    class FixedClock {
+        @Bean
+        fun clock(): Clock = Clock.fixed(SUMMARY_TODAY.atStartOfDay(ZoneOffset.UTC).toInstant(), ZoneOffset.UTC)
+    }
 
     private val groupId = ObjectId()
     private val foreignGroupId = ObjectId()
@@ -90,6 +109,38 @@ class GroupFinanceControllerTest {
     @Test
     fun `hides the balance of a group the user is not in`() {
         mockMvc.perform(get("/api/v1/groups/$foreignGroupId/balance").withTelegramAuth())
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `summarises the current month of the group`() {
+        val report = HistoryReport(
+            startDate = SUMMARY_MONTH.atDay(1),
+            endDate = SUMMARY_MONTH.atEndOfMonth(),
+            operations = emptyList(),
+            incomeByCategory = emptyList(),
+            expenseByCategory = listOf(CategoryTotal("🛒", "Продукты", BigDecimal("12000.50")), CategoryTotal("🚕", "Такси", BigDecimal("3000"))),
+            totalIncome = BigDecimal("450000"),
+            totalExpense = BigDecimal("15000.50"),
+            isEmpty = false,
+        )
+        `when`(financeHistoryService.buildHistoryReport(groupId, SUMMARY_MONTH.atDay(1), SUMMARY_MONTH.atEndOfMonth())).thenReturn(report)
+
+        mockMvc.perform(get("/api/v1/groups/$groupId/summary").withTelegramAuth())
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.month").value(SUMMARY_MONTH.toString()))
+            .andExpect(jsonPath("$.currency").value("KZT"))
+            .andExpect(jsonPath("$.income").value("450000"))
+            .andExpect(jsonPath("$.expense").value("15000.50"))
+            .andExpect(jsonPath("$.net").value("434999.50"))
+            .andExpect(jsonPath("$.expenseByCategory[0].name").value("Продукты"))
+            .andExpect(jsonPath("$.expenseByCategory[0].total").value("12000.50"))
+            .andExpect(jsonPath("$.expenseByCategory[1].icon").value("🚕"))
+    }
+
+    @Test
+    fun `hides the month summary of a group the user is not in`() {
+        mockMvc.perform(get("/api/v1/groups/$foreignGroupId/summary").withTelegramAuth())
             .andExpect(status().isForbidden)
     }
 

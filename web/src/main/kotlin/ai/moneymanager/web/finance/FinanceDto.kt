@@ -5,6 +5,7 @@ import ai.moneymanager.domain.model.Currency
 import org.bson.types.ObjectId
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.YearMonth
 
 data class BalanceResponse(
     val currency: Currency,
@@ -32,4 +33,20 @@ data class OperationsPageResponse(
     val page: Int,
     val size: Int,
     val totalItems: Long,
+)
+
+data class CategoryAmountResponse(
+    val icon: String,
+    val name: String,
+    val total: BigDecimal,
+)
+
+data class MonthSummaryResponse(
+    val month: YearMonth,
+    val currency: Currency,
+    val income: BigDecimal,
+    val expense: BigDecimal,
+    val net: BigDecimal,
+    val operationCount: Int,
+    val expenseByCategory: List<CategoryAmountResponse>,
 )
