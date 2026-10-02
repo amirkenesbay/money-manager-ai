@@ -31,8 +31,12 @@ function signedInitData(botToken: string): string {
     first_name: process.env.DEV_FIRST_NAME ?? DEFAULT_FIRST_NAME,
     language_code: DEFAULT_LANGUAGE_CODE,
   }
-  const fields = { auth_date: String(Math.floor(Date.now() / 1000)), user: JSON.stringify(user) }
-  return new URLSearchParams({ ...fields, signature: PLACEHOLDER_SIGNATURE, hash: sign(fields, botToken) }).toString()
+  const fields = {
+    auth_date: String(Math.floor(Date.now() / 1000)),
+    signature: PLACEHOLDER_SIGNATURE,
+    user: JSON.stringify(user),
+  }
+  return new URLSearchParams({ ...fields, hash: sign(fields, botToken) }).toString()
 }
 
 const launchParams = new URLSearchParams({

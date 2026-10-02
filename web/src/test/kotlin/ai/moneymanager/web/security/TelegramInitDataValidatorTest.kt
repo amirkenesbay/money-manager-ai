@@ -39,7 +39,20 @@ class TelegramInitDataValidatorTest {
     }
 
     @Test
-    fun `ignores signature field when computing hash`() {
+    fun `includes signature field when computing hash`() {
+        val initData = TestInitData.signed(
+            params = mapOf(
+                "auth_date" to TestInitData.currentTimestamp(),
+                "signature" to "ed25519-signature-not-checked",
+                "user" to """{"id":42,"first_name":"Amir"}""",
+            ),
+        )
+
+        assertThat(validator.validate(initData)).isNotNull
+    }
+
+    @Test
+    fun `returns null when signature field is not covered by hash`() {
         val initData = TestInitData.signed(
             params = mapOf(
                 "auth_date" to TestInitData.currentTimestamp(),
@@ -48,6 +61,18 @@ class TelegramInitDataValidatorTest {
             extraUnsignedParams = mapOf("signature" to "ed25519-signature-not-checked"),
         )
 
-        assertThat(validator.validate(initData)).isNotNull
+        assertThat(validator.validate(initData)).isNull()
+    }
+
+    @Test
+    fun `returns null when user is malformed JSON`() {
+        val initData = TestInitData.signed(
+            params = mapOf(
+                "auth_date" to TestInitData.currentTimestamp(),
+                "user" to "{not-json",
+            ),
+        )
+
+        assertThat(validator.validate(initData)).isNull()
     }
 }

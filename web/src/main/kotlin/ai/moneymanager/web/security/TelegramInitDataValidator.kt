@@ -2,6 +2,7 @@ package ai.moneymanager.web.security
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
+import tools.jackson.core.JacksonException
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.json.JsonMapper
 import java.net.URLDecoder
@@ -13,7 +14,6 @@ import javax.crypto.spec.SecretKeySpec
 
 private object InitDataField {
     const val HASH = "hash"
-    const val SIGNATURE = "signature"
     const val USER = "user"
     const val AUTH_DATE = "auth_date"
 }
@@ -25,8 +25,6 @@ private object UserField {
     const val USERNAME = "username"
     const val LANGUAGE_CODE = "language_code"
 }
-
-private val SIGNATURE_FIELDS = setOf(InitDataField.HASH, InitDataField.SIGNATURE)
 
 private const val HMAC_ALGORITHM = "HmacSHA256"
 
@@ -67,7 +65,7 @@ class TelegramInitDataValidator(
 
     private fun buildDataCheckString(params: Map<String, String>): String =
         params
-            .filterKeys { key -> key !in SIGNATURE_FIELDS }
+            .filterKeys { key -> key != InitDataField.HASH }
             .toSortedMap()
             .map { (key, value) -> "$key=$value" }
             .joinToString(DATA_CHECK_LINE_SEPARATOR)
@@ -76,7 +74,11 @@ class TelegramInitDataValidator(
         Instant.now().epochSecond - authDate > INIT_DATA_TTL_SECONDS
 
     private fun parseUser(userJson: String): TelegramPrincipal? {
-        val user = jsonMapper.readTree(userJson)
+        val user = try {
+            jsonMapper.readTree(userJson)
+        } catch (exception: JacksonException) {
+            return null
+        }
         val userId = user.text(UserField.ID)?.toLongOrNull() ?: return null
         return TelegramPrincipal(
             userId = userId,
