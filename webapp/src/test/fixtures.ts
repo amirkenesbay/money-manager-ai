@@ -1,0 +1,72 @@
+import type { Balance, Group, Me, MonthSummary, Operation, OperationsPage } from '../api/types'
+
+export const PERSONAL_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d0'
+export const FAMILY_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d1'
+
+export const me = (overrides: Partial<Me> = {}): Me => ({
+  userId: 42,
+  firstName: 'Амир',
+  username: 'amir',
+  language: 'ru',
+  timezone: null,
+  activeGroupId: PERSONAL_GROUP_ID,
+  subscription: {
+    tier: 'FREE',
+    expiresAt: null,
+    limits: { aiRequestsPerDay: 10, categoriesPerType: 10, ownedSharedGroups: 3, activeNotifications: 3, historyDaysBack: 30 },
+  },
+  ...overrides,
+})
+
+export const group = (overrides: Partial<Group> = {}): Group => ({
+  id: PERSONAL_GROUP_ID,
+  name: 'Личное',
+  type: 'PERSONAL',
+  currency: 'KZT',
+  isOwner: true,
+  isActive: true,
+  memberCount: 1,
+  initialBalance: '0',
+  ...overrides,
+})
+
+export const balance = (overrides: Partial<Balance> = {}): Balance => ({
+  currency: 'KZT',
+  initial: '50000',
+  income: '300000',
+  expense: '180000.5',
+  total: '169999.5',
+  ...overrides,
+})
+
+export const summary = (overrides: Partial<MonthSummary> = {}): MonthSummary => ({
+  month: '2026-10',
+  currency: 'KZT',
+  income: '300000',
+  expense: '15000',
+  net: '285000',
+  operationCount: 3,
+  expenseByCategory: [
+    { icon: '🛒', name: 'Продукты', total: '12000' },
+    { icon: '🚕', name: 'Такси', total: '2000' },
+    { icon: '🎬', name: 'Кино', total: '700' },
+    { icon: '☕', name: 'Кофе', total: '300' },
+  ],
+  ...overrides,
+})
+
+export const operation = (overrides: Partial<Operation> = {}): Operation => ({
+  id: 'op-1',
+  type: 'EXPENSE',
+  amount: '3500',
+  categoryId: 'cat-1',
+  categoryName: 'Продукты',
+  categoryIcon: '🛒',
+  operationDate: '2026-10-12',
+  description: 'Магнум',
+  creatorId: 42,
+  creatorName: 'Амир',
+  ...overrides,
+})
+
+export const operationsPage = (items: Operation[]): OperationsPage => ({ items, page: 0, size: 10, totalItems: items.length })

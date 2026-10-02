@@ -4,6 +4,7 @@ import type { ApiErrorBody } from './types'
 
 const API_BASE = '/api/v1'
 const JSON_CONTENT_TYPE = 'application/json'
+const NO_CONTENT_STATUS = 204
 
 export class ApiRequestError extends Error {
   readonly status: number | null
@@ -22,8 +23,12 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}, signal
     const body = await readErrorBody(response)
     throw new ApiRequestError(body?.message ?? response.statusText, response.status, body)
   }
+  if (response.status === NO_CONTENT_STATUS) return undefined as T
   return (await response.json()) as T
 }
+
+export const serverMessage = (error: unknown): string | null =>
+  error instanceof ApiRequestError ? (error.body?.message ?? null) : null
 
 async function send(path: string, init: RequestInit, signal?: AbortSignal): Promise<Response> {
   const headers = new Headers(init.headers)

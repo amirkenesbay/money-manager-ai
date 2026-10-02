@@ -1,5 +1,3 @@
-import type { SubscriptionTier } from './api/types'
-
 export const strings = {
   outsideTelegramTitle: '📱 Откройте приложение из Telegram',
   outsideTelegramHint: 'Money Manager работает внутри бота — откройте его оттуда.',
@@ -10,5 +8,17 @@ export const strings = {
   greeting: (name: string) => `👋 Привет, ${name}!`,
   defaultName: 'друг',
   noGroupHint: 'Сначала запустите бота — он создаст вашу первую группу. Потом вернитесь сюда.',
-  tier: (tier: SubscriptionTier) => `Тариф: ${tier === 'PAID' ? 'Premium ✨' : 'Free'}`,
+  dashboardTitle: '💰 Мои финансы',
+  groupLabel: 'Группа',
+  groupSwitchFailed: 'Не удалось переключить группу. Попробуйте ещё раз.',
+  balanceTitle: 'Баланс',
+  balanceInitial: 'Начальный',
+  balanceIncome: 'Доходы',
+  balanceExpense: 'Расходы',
+  monthSummaryTitle: (month: string) => `📅 ${month}`,
+  monthNet: 'Итог',
+  monthEmpty: 'В этом месяце операций пока нет.',
+  topExpensesTitle: 'Больше всего трат',
+  recentOperationsTitle: '🕒 Последние операции',
+  recentOperationsEmpty: 'Операций пока нет — запишите первую трату в боте.',
 }

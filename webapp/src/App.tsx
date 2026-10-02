@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react'
 import type { Me } from './api/types'
+import { Dashboard } from './dashboard/Dashboard'
 import { useMe } from './me/useMe'
 import { strings } from './strings'
+import { LoadError } from './ui/LoadError'
 
 export function App({ insideTelegram }: { insideTelegram: boolean }) {
   if (!insideTelegram) {
@@ -28,22 +30,20 @@ function MeScreen() {
   if (state.status === 'error') {
     return (
       <Screen>
-        <h1>{strings.loadFailedTitle}</h1>
-        <p className="hint">{state.message ?? strings.loadFailedFallback}</p>
-        <button type="button" onClick={reload}>{strings.retry}</button>
+        <LoadError message={state.message} onRetry={reload} />
       </Screen>
     )
   }
-  return <Welcome me={state.me} />
+  const me = state.data
+  if (me.activeGroupId === null) return <NoGroup me={me} />
+  return <Dashboard initialGroupId={me.activeGroupId} language={me.language} />
 }
 
-function Welcome({ me }: { me: Me }) {
+function NoGroup({ me }: { me: Me }) {
   return (
     <Screen>
       <h1>{strings.greeting(me.firstName ?? me.username ?? strings.defaultName)}</h1>
-      {me.activeGroupId === null
-        ? <p className="hint">{strings.noGroupHint}</p>
-        : <p className="hint">{strings.tier(me.subscription.tier)}</p>}
+      <p className="hint">{strings.noGroupHint}</p>
     </Screen>
   )
 }

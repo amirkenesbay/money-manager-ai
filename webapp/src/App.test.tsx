@@ -2,33 +2,31 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiRequestError } from './api/client'
-import type { Me } from './api/types'
 import { App } from './App'
+import { fetchBalance, fetchGroups, fetchMonthSummary, fetchRecentOperations } from './dashboard/dashboardApi'
 import { fetchMe } from './me/meApi'
 import { strings } from './strings'
+import { balance, group, me, operationsPage, summary } from './test/fixtures'
 
 vi.mock('./me/meApi', () => ({ fetchMe: vi.fn() }))
+vi.mock('./dashboard/dashboardApi', () => ({
+  RECENT_OPERATIONS_LIMIT: 10,
+  fetchGroups: vi.fn(),
+  activateGroup: vi.fn(),
+  fetchBalance: vi.fn(),
+  fetchMonthSummary: vi.fn(),
+  fetchRecentOperations: vi.fn(),
+}))
 
 const fetchMeMock = vi.mocked(fetchMe)
 
-const me = (overrides: Partial<Me> = {}): Me => ({
-  userId: 42,
-  firstName: 'Амир',
-  username: 'amir',
-  language: 'ru',
-  timezone: null,
-  activeGroupId: '6650a1b2c3d4e5f6a7b8c9d0',
-  subscription: {
-    tier: 'FREE',
-    expiresAt: null,
-    limits: { aiRequestsPerDay: 10, categoriesPerType: 10, ownedSharedGroups: 3, activeNotifications: 3, historyDaysBack: 30 },
-  },
-  ...overrides,
-})
-
 describe('App', () => {
   beforeEach(() => {
-    fetchMeMock.mockReset()
+    vi.resetAllMocks()
+    vi.mocked(fetchGroups).mockResolvedValue([group()])
+    vi.mocked(fetchBalance).mockResolvedValue(balance())
+    vi.mocked(fetchMonthSummary).mockResolvedValue(summary())
+    vi.mocked(fetchRecentOperations).mockResolvedValue(operationsPage([]))
   })
 
   it('asks to open the app from Telegram and does not call the API outside it', () => {
@@ -38,30 +36,23 @@ describe('App', () => {
     expect(fetchMeMock).not.toHaveBeenCalled()
   })
 
-  it('shows loading, then greets the user by name with the tariff', async () => {
+  it('shows loading, then the dashboard of the active group', async () => {
     fetchMeMock.mockResolvedValue(me())
 
     render(<App insideTelegram />)
 
     expect(screen.getByText(strings.loading)).toBeInTheDocument()
-    expect(await screen.findByText(strings.greeting('Амир'))).toBeInTheDocument()
-    expect(screen.getByText(strings.tier('FREE'))).toBeInTheDocument()
+    expect(await screen.findByText(strings.balanceTitle)).toBeInTheDocument()
   })
 
-  it('falls back to username when first name is missing', async () => {
-    fetchMeMock.mockResolvedValue(me({ firstName: null }))
+  it('greets and sends the user to the bot when there is no group yet', async () => {
+    fetchMeMock.mockResolvedValue(me({ activeGroupId: null, firstName: null }))
 
     render(<App insideTelegram />)
 
     expect(await screen.findByText(strings.greeting('amir'))).toBeInTheDocument()
-  })
-
-  it('sends the user to the bot when there is no group yet', async () => {
-    fetchMeMock.mockResolvedValue(me({ activeGroupId: null }))
-
-    render(<App insideTelegram />)
-
-    expect(await screen.findByText(strings.noGroupHint)).toBeInTheDocument()
+    expect(screen.getByText(strings.noGroupHint)).toBeInTheDocument()
+    expect(fetchBalance).not.toHaveBeenCalled()
   })
 
   it('shows the server message and recovers on retry', async () => {
@@ -72,12 +63,10 @@ describe('App', () => {
 
     render(<App insideTelegram />)
 
-    expect(await screen.findByText(strings.loadFailedTitle)).toBeInTheDocument()
-    expect(screen.getByText(serverMessage)).toBeInTheDocument()
-
+    expect(await screen.findByText(serverMessage)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: strings.retry }))
 
-    expect(await screen.findByText(strings.greeting('Амир'))).toBeInTheDocument()
+    expect(await screen.findByText(strings.balanceTitle)).toBeInTheDocument()
   })
 
   it('shows a generic hint when the network is down', async () => {
