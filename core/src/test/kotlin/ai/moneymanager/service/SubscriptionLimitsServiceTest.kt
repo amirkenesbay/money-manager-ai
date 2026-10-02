@@ -2,9 +2,12 @@ package ai.moneymanager.service
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.time.Clock
 import java.time.LocalDate
+import java.time.ZoneOffset
 
 private const val FREE_HISTORY_DAYS = 30
+private val TODAY: LocalDate = LocalDate.of(2026, 10, 15)
 
 class SubscriptionLimitsServiceTest {
     private val limits = SubscriptionLimitsService(
@@ -15,8 +18,9 @@ class SubscriptionLimitsServiceTest {
         freeMaxHistoryDaysBack = FREE_HISTORY_DAYS,
         freeMaxOwnedSharedGroups = 3,
         freeMaxActiveNotifications = 3,
+        clock = Clock.fixed(TODAY.atStartOfDay(ZoneOffset.UTC).toInstant(), ZoneOffset.UTC),
     )
-    private val earliestFreeDate = LocalDate.now().minusDays(FREE_HISTORY_DAYS.toLong())
+    private val earliestFreeDate = TODAY.minusDays(FREE_HISTORY_DAYS.toLong())
 
     @Test
     fun `free history starts exactly the configured number of days back`() {

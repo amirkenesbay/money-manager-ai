@@ -196,7 +196,8 @@ class FinanceReportService(
             CategoryMonthData(
                 label = "${monthNameShort(yearMonth.atDay(1), language)} ${yearMonth.year}",
                 total = sumAmounts(ops),
-                count = ops.size
+                count = ops.size,
+                month = yearMonth
             )
         }
     }

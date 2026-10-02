@@ -3,6 +3,7 @@ package ai.moneymanager.domain.model.report
 import ai.moneymanager.domain.model.CategoryType
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.YearMonth
 
 data class ComparisonReport(
     val previousMonthName: String,
@@ -82,7 +83,8 @@ data class CategoryReport(
 data class CategoryMonthData(
     val label: String,
     val total: BigDecimal,
-    val count: Int
+    val count: Int,
+    val month: YearMonth
 )
 
 data class HistoryReport(

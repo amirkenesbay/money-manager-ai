@@ -2,6 +2,7 @@ package ai.moneymanager.service
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.time.Clock
 import java.time.LocalDate
 
 @Service
@@ -19,7 +20,8 @@ class SubscriptionLimitsService(
     @Value("\${group.max-owned-shared-free:3}")
     private val freeMaxOwnedSharedGroups: Int,
     @Value("\${notification.max-active-free:3}")
-    private val freeMaxActiveNotifications: Int
+    private val freeMaxActiveNotifications: Int,
+    private val clock: Clock
 ) {
     fun maxAiRequestsPerDay(hasPaidSubscription: Boolean): Int =
         if (hasPaidSubscription) paidMaxAiRequestsPerDay else freeMaxAiRequestsPerDay
@@ -31,7 +33,7 @@ class SubscriptionLimitsService(
         if (hasPaidSubscription) null else freeMaxHistoryDaysBack
 
     fun earliestHistoryDate(hasPaidSubscription: Boolean): LocalDate? =
-        maxHistoryDaysBack(hasPaidSubscription)?.let { LocalDate.now().minusDays(it.toLong()) }
+        maxHistoryDaysBack(hasPaidSubscription)?.let { LocalDate.now(clock).minusDays(it.toLong()) }
 
     fun isBeyondHistoryLimit(date: LocalDate, hasPaidSubscription: Boolean): Boolean =
         earliestHistoryDate(hasPaidSubscription)?.let { date.isBefore(it) } ?: false

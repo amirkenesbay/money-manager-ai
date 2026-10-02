@@ -5,9 +5,9 @@ import ai.moneymanager.domain.model.OperationFilter
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.service.FinanceHistoryService
 import ai.moneymanager.service.FinanceOperationService
-import ai.moneymanager.service.SubscriptionLimitsService
 import ai.moneymanager.web.API_V1_PREFIX
 import ai.moneymanager.web.access.GroupAccessGuard
+import ai.moneymanager.web.access.HistoryAccessPolicy
 import ai.moneymanager.web.error.ApiErrorCode
 import ai.moneymanager.web.error.ApiException
 import org.bson.types.ObjectId
@@ -24,14 +24,13 @@ import java.time.YearMonth
 private const val FIRST_PAGE = 0
 private const val DEFAULT_PAGE_SIZE = 20
 private const val MAX_PAGE_SIZE = 100
-private const val HISTORY_DAYS_BACK_DETAIL = "historyDaysBack"
 
 @RestController
 @RequestMapping("$API_V1_PREFIX/groups/{groupId}")
 class GroupFinanceController(
     private val groupAccessGuard: GroupAccessGuard,
     private val financeOperationService: FinanceOperationService,
-    private val subscriptionLimitsService: SubscriptionLimitsService,
+    private val historyAccessPolicy: HistoryAccessPolicy,
     private val financeResponseFactory: FinanceResponseFactory,
     private val financeHistoryService: FinanceHistoryService,
     private val clock: Clock,
@@ -70,15 +69,9 @@ class GroupFinanceController(
     }
 
     private fun historyStart(user: UserInfo, requestedFrom: LocalDate?): LocalDate? {
-        val paid = user.hasActivePaidSubscription()
-        if (requestedFrom == null) return subscriptionLimitsService.earliestHistoryDate(paid)
-        if (!subscriptionLimitsService.isBeyondHistoryLimit(requestedFrom, paid)) return requestedFrom
-        val daysBack = checkNotNull(subscriptionLimitsService.maxHistoryDaysBack(paid))
-        throw ApiException(
-            code = ApiErrorCode.PREMIUM_REQUIRED,
-            messageArgs = listOf(daysBack),
-            details = mapOf(HISTORY_DAYS_BACK_DETAIL to daysBack),
-        )
+        if (requestedFrom == null) return historyAccessPolicy.earliestAllowedDate(user)
+        historyAccessPolicy.requireWithinHistory(user, requestedFrom)
+        return requestedFrom
     }
 
     private fun requireValidRequest(from: LocalDate?, to: LocalDate?, page: Int, size: Int) {

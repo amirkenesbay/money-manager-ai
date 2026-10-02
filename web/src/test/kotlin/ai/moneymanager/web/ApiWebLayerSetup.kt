@@ -1,5 +1,6 @@
 package ai.moneymanager.web
 
+import ai.moneymanager.config.ClockConfig
 import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.web.config.WebSecurityConfig
 import ai.moneymanager.web.error.ApiErrorFactory
@@ -17,6 +18,7 @@ import org.springframework.test.context.TestPropertySource
     ApiErrorFactory::class,
     TelegramInitDataValidator::class,
     LocalizationService::class,
+    ClockConfig::class,
 )
 @TestPropertySource(properties = ["chat-machinist.bot.token=$TEST_BOT_TOKEN"])
 annotation class ApiWebLayerSetup

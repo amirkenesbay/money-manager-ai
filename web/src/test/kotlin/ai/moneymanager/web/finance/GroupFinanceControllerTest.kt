@@ -16,6 +16,7 @@ import ai.moneymanager.service.SubscriptionLimitsService
 import ai.moneymanager.service.UserInfoService
 import ai.moneymanager.web.ApiWebLayerSetup
 import ai.moneymanager.web.access.GroupAccessGuard
+import ai.moneymanager.web.access.HistoryAccessPolicy
 import ai.moneymanager.testing.TEST_USER_ID
 import ai.moneymanager.web.security.TestInitData
 import ai.moneymanager.testing.testGroup
@@ -31,6 +32,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
+import org.springframework.context.annotation.Primary
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.test.context.bean.override.mockito.MockitoBean
@@ -53,7 +55,7 @@ private val SUMMARY_MONTH: YearMonth = YearMonth.from(SUMMARY_TODAY)
 
 @WebMvcTest(controllers = [GroupFinanceController::class])
 @ApiWebLayerSetup
-@Import(GroupAccessGuard::class, FinanceResponseFactory::class, SubscriptionLimitsService::class)
+@Import(GroupAccessGuard::class, HistoryAccessPolicy::class, FinanceResponseFactory::class, SubscriptionLimitsService::class)
 class GroupFinanceControllerTest {
     @Autowired
     private lateinit var mockMvc: MockMvc
@@ -76,7 +78,8 @@ class GroupFinanceControllerTest {
     @TestConfiguration
     class FixedClock {
         @Bean
-        fun clock(): Clock = Clock.fixed(SUMMARY_TODAY.atStartOfDay(ZoneOffset.UTC).toInstant(), ZoneOffset.UTC)
+        @Primary
+        fun fixedClock(): Clock = Clock.fixed(SUMMARY_TODAY.atStartOfDay(ZoneOffset.UTC).toInstant(), ZoneOffset.UTC)
     }
 
     private val groupId = ObjectId()
