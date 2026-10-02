@@ -193,17 +193,47 @@ Invite-ссылка: `{ "inviteToken": "ABC123XYZ", "url": "https://t.me/..." }`
 Все отчёты отдают **данные**, не размеченный текст. Источник — публичные `build*`-методы `FinanceReportService`
 (модели описаны в `domain/model/report/ReportData.kt`).
 
+`month` — `yyyy-MM`, по умолчанию текущий. Названия месяцев не локализуются на сервере — фронтенд берёт даты.
+
 ### `GET /groups/{groupId}/reports/analytics?month=2026-07`
-Аналитика за месяц: суммы, количество операций, топ категорий, максимальная трата, самый дорогой день.
+```json
+{
+  "month": "2026-07", "currency": "KZT", "income": "450000", "expense": "15000",
+  "operationCount": 7, "daysInMonth": 31,
+  "topExpenses": [{ "icon": "🛒", "name": "Продукты", "total": "12000" }],
+  "maxExpense": { "amount": "8000", "icon": "🛒", "categoryName": "Продукты", "date": "2026-07-12" },
+  "mostExpensiveDay": { "date": "2026-07-12", "total": "9000" }
+}
+```
 
 ### `GET /groups/{groupId}/reports/comparison?month=2026-07`
-Сравнение месяца с предыдущим, включая разбивку по категориям.
+Месяц `month` против предыдущего. Лимит Free проверяется по началу **предыдущего** месяца.
+```json
+{
+  "month": "2026-07", "previousMonth": "2026-06", "currency": "KZT",
+  "income": { "previous": "400000", "current": "450000" },
+  "expense": { "previous": "20000", "current": "15000" },
+  "categories": [{ "icon": "🛒", "name": "Продукты", "previous": "14000", "current": "12000" }]
+}
+```
 
 ### `GET /groups/{groupId}/reports/members?month=2026-07`
-Разбивка по участникам группы.
+```json
+{
+  "month": "2026-07", "currency": "KZT", "income": "450000", "expense": "15000",
+  "incomeByMember": [{ "name": "Амир", "total": "450000" }],
+  "expenseByMember": [{ "name": "Амир", "total": "10000" }, { "name": "@esen", "total": "5000" }]
+}
+```
 
 ### `GET /groups/{groupId}/reports/category?categoryId=...&months=6`
-Динамика по категории за N месяцев.
+`months` 1–12, по умолчанию 6; категория чужой группы → `404`. Лимит Free — по началу первого месяца.
+```json
+{
+  "categoryId": "6651...", "icon": "🛒", "name": "Продукты", "currency": "KZT",
+  "months": [{ "month": "2026-05", "total": "9000", "count": 3 }]
+}
+```
 
 Для всех: `422 PREMIUM_REQUIRED`, если запрошенный период глубже лимита Free.
 
