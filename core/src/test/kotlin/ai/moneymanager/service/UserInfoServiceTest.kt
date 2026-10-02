@@ -9,6 +9,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
+import org.springframework.dao.DuplicateKeyException
 
 private const val RECYCLED_USERNAME = "amir"
 private const val FORMER_OWNER_ID = 1L
@@ -60,6 +61,17 @@ class UserInfoServiceTest {
     }
 
     @Test
+    fun `returns the user created by a concurrent request instead of a duplicate`() {
+        repository.loseRaceTo(NEW_OWNER_ID)
+
+        val user = service.getOrCreate(profile(NEW_OWNER_ID, username = null))
+
+        assertThat(repository.users).hasSize(1)
+        assertThat(user.id).isEqualTo(repository.users.single().id)
+        assertThat(notifiedUsers()).isEmpty()
+    }
+
+    @Test
     fun `names known users by full name and unknown ones by id`() {
         repository.givenUser(telegramUserId = FORMER_OWNER_ID, username = RECYCLED_USERNAME)
 
@@ -86,26 +98,35 @@ private class FakeUserInfoRepository(
 ) : UserInfoRepository by delegate {
 
     val users = mutableListOf<UserInfoEntity>()
+    private var concurrentlyInsertedUser: UserInfoEntity? = null
 
-    fun givenUser(telegramUserId: Long, username: String?): UserInfoEntity =
-        save(
-            UserInfoEntity(
-                username = username,
-                firstName = "Amir",
-                lastName = null,
-                telegramUserId = telegramUserId,
-                languageCode = "ru",
-            )
-        )
+    fun loseRaceTo(telegramUserId: Long) {
+        concurrentlyInsertedUser = newUser(telegramUserId, username = null)
+    }
 
-    override fun findUserInfoEntityByTelegramUserId(id: Long): UserInfoEntity? =
+    fun givenUser(telegramUserId: Long, username: String?): UserInfoEntity = save(newUser(telegramUserId, username))
+
+    private fun newUser(telegramUserId: Long, username: String?) = UserInfoEntity(
+        username = username,
+        firstName = "Amir",
+        lastName = null,
+        telegramUserId = telegramUserId,
+        languageCode = "ru",
+    )
+
+    override fun findFirstByTelegramUserIdOrderByIdAsc(id: Long): UserInfoEntity? =
         users.firstOrNull { it.telegramUserId == id }
 
-    override fun findUserInfoEntityByUsername(username: String): UserInfoEntity? =
+    override fun findFirstByUsernameOrderByIdAsc(username: String): UserInfoEntity? =
         users.firstOrNull { it.username == username }
 
     @Suppress("UNCHECKED_CAST")
     override fun <S : UserInfoEntity> save(entity: S): S {
+        concurrentlyInsertedUser?.let { winner ->
+            concurrentlyInsertedUser = null
+            users.add(winner.copy(id = ObjectId()))
+            throw DuplicateKeyException("duplicate telegramUserId ${winner.telegramUserId}")
+        }
         val stored = entity.copy(id = entity.id ?: ObjectId())
         users.removeIf { it.id == stored.id }
         users.add(stored)

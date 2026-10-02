@@ -91,14 +91,14 @@ class GroupService(
     }
 
     fun switchActiveGroup(userId: Long, groupId: ObjectId) {
-        val userEntity = userRepository.findUserInfoEntityByTelegramUserId(userId)
+        val userEntity = userRepository.findFirstByTelegramUserIdOrderByIdAsc(userId)
         if (userEntity != null && userEntity.groupIds.contains(groupId)) {
             userRepository.save(userEntity.copy(activeGroupId = groupId))
         }
     }
 
     fun getActiveGroup(userId: Long): MoneyGroup? {
-        val userEntity = userRepository.findUserInfoEntityByTelegramUserId(userId) ?: return null
+        val userEntity = userRepository.findFirstByTelegramUserIdOrderByIdAsc(userId) ?: return null
         val activeGroupId = userEntity.activeGroupId ?: return null
         return getGroup(activeGroupId)
     }
@@ -196,7 +196,7 @@ class GroupService(
     }
 
     private fun updateUserGroupInfo(userId: Long, update: (UserInfoEntity) -> UserInfoEntity) {
-        val userEntity = userRepository.findUserInfoEntityByTelegramUserId(userId)
+        val userEntity = userRepository.findFirstByTelegramUserIdOrderByIdAsc(userId)
         if (userEntity != null) {
             userRepository.save(update(userEntity))
         } else {

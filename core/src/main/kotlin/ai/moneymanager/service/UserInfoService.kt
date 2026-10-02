@@ -8,6 +8,7 @@ import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.repository.UserInfoRepository
 import ai.moneymanager.repository.entity.UserInfoEntity
 import org.springframework.context.ApplicationEventPublisher
+import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
@@ -17,16 +18,21 @@ class UserInfoService(
     private val eventPublisher: ApplicationEventPublisher
 ) {
     fun getOrCreate(profile: TelegramProfile): UserInfo {
-        val existing = userRepository.findUserInfoEntityByTelegramUserId(profile.telegramUserId)
+        val existing = userRepository.findFirstByTelegramUserIdOrderByIdAsc(profile.telegramUserId)
         if (existing != null) return mapEntity(existing)
 
-        val newUser = mapEntity(userRepository.save(mapUserModel(profile)))
+        val saved = try {
+            userRepository.save(mapUserModel(profile))
+        } catch (exception: DuplicateKeyException) {
+            return mapEntity(checkNotNull(userRepository.findFirstByTelegramUserIdOrderByIdAsc(profile.telegramUserId)))
+        }
+        val newUser = mapEntity(saved)
         eventPublisher.publishEvent(NewUserRegistered(newUser))
         return newUser
     }
 
     fun getUserInfoByTelegramId(telegramUserId: Long): UserInfo? {
-        val entity = userRepository.findUserInfoEntityByTelegramUserId(telegramUserId)
+        val entity = userRepository.findFirstByTelegramUserIdOrderByIdAsc(telegramUserId)
         return entity?.let { mapEntity(it) }
     }
 
@@ -34,19 +40,19 @@ class UserInfoService(
         telegramUserIds.associateWith { id -> formatUserDisplayName(getUserInfoByTelegramId(id), id) }
 
     fun updateTimezone(telegramUserId: Long, timezone: String): UserInfo? {
-        val entity = userRepository.findUserInfoEntityByTelegramUserId(telegramUserId) ?: return null
+        val entity = userRepository.findFirstByTelegramUserIdOrderByIdAsc(telegramUserId) ?: return null
         val updated = userRepository.save(entity.copy(timezone = timezone))
         return mapEntity(updated)
     }
 
     fun updateLanguage(telegramUserId: Long, language: String): UserInfo? {
-        val entity = userRepository.findUserInfoEntityByTelegramUserId(telegramUserId) ?: return null
+        val entity = userRepository.findFirstByTelegramUserIdOrderByIdAsc(telegramUserId) ?: return null
         val updated = userRepository.save(entity.copy(language = language))
         return mapEntity(updated)
     }
 
     fun markOnboardingCompleted(telegramUserId: Long): UserInfo? {
-        val entity = userRepository.findUserInfoEntityByTelegramUserId(telegramUserId) ?: return null
+        val entity = userRepository.findFirstByTelegramUserIdOrderByIdAsc(telegramUserId) ?: return null
         if (entity.onboardingCompleted) return mapEntity(entity)
         val updated = userRepository.save(entity.copy(onboardingCompleted = true))
         return mapEntity(updated)
@@ -54,13 +60,13 @@ class UserInfoService(
 
     fun findUserByUsernameOrTelegramId(identifier: String): UserInfo? {
         val entity = identifier.toLongOrNull()
-            ?.let { userRepository.findUserInfoEntityByTelegramUserId(it) }
-            ?: userRepository.findUserInfoEntityByUsername(identifier.removePrefix("@"))
+            ?.let { userRepository.findFirstByTelegramUserIdOrderByIdAsc(it) }
+            ?: userRepository.findFirstByUsernameOrderByIdAsc(identifier.removePrefix("@"))
         return entity?.let { mapEntity(it) }
     }
 
     fun activateSubscription(telegramUserId: Long, days: Long): UserInfo? {
-        val entity = userRepository.findUserInfoEntityByTelegramUserId(telegramUserId) ?: return null
+        val entity = userRepository.findFirstByTelegramUserIdOrderByIdAsc(telegramUserId) ?: return null
         val currentExpiry = entity.subscriptionExpiresAt?.takeIf { it.isAfter(LocalDateTime.now()) }
         val newExpiry = (currentExpiry ?: LocalDateTime.now()).plusDays(days)
         val updated = userRepository.save(
