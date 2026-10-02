@@ -1,37 +1,26 @@
-import { useCallback, useState } from 'react'
-import { serverMessage } from '../api/client'
 import type { Balance, Currency, Group, MonthSummary, Operation } from '../api/types'
-import { useAsync } from '../api/useAsync'
-import { formatMoney, formatMonthTitle, formatShortDate, formatSignedMoney } from '../format'
+import { formatMoney, formatMonthTitle, formatSignedMoney } from '../format'
+import { OperationList } from '../operations/OperationList'
 import { strings } from '../strings'
 import { LoadError } from '../ui/LoadError'
-import { activateGroup, fetchGroups } from './dashboardApi'
 import { useDashboard } from './useDashboard'
 
 const TOP_CATEGORIES_LIMIT = 3
 const FULL_PERCENT = 100
 
-export function Dashboard({ initialGroupId, language }: { initialGroupId: string; language: string }) {
-  const [groupId, setGroupId] = useState(initialGroupId)
-  const [switchError, setSwitchError] = useState<string | null>(null)
-  const groups = useAsync(fetchGroups)
+export function Dashboard({ groups, groupId, language, switchError, onSwitchGroup, onOpenOperations }: {
+  groups: Group[]
+  groupId: string
+  language: string
+  switchError: string | null
+  onSwitchGroup: (groupId: string) => void
+  onOpenOperations: () => void
+}) {
   const dashboard = useDashboard(groupId)
-
-  const switchGroup = useCallback(async (nextGroupId: string) => {
-    setSwitchError(null)
-    try {
-      await activateGroup(nextGroupId)
-      setGroupId(nextGroupId)
-    } catch (error) {
-      setSwitchError(serverMessage(error) ?? strings.groupSwitchFailed)
-    }
-  }, [])
 
   return (
     <main className="screen">
-      {groups.state.status === 'ready' && (
-        <GroupSwitcher groups={groups.state.data} activeGroupId={groupId} onSwitch={switchGroup} />
-      )}
+      <GroupSwitcher groups={groups} activeGroupId={groupId} onSwitch={onSwitchGroup} />
       {switchError && <p className="error-text" role="alert">{switchError}</p>}
       {dashboard.state.status === 'loading' && <p className="hint">{strings.loading}</p>}
       {dashboard.state.status === 'error' && <LoadError message={dashboard.state.message} onRetry={dashboard.reload} />}
@@ -43,6 +32,7 @@ export function Dashboard({ initialGroupId, language }: { initialGroupId: string
             operations={dashboard.state.data.operations.items}
             currency={dashboard.state.data.balance.currency}
             language={language}
+            onOpenOperations={onOpenOperations}
           />
         </>
       )}
@@ -129,32 +119,19 @@ function IncomeExpenseRows({ income, expense, currency, language }: {
   )
 }
 
-function RecentOperations({ operations, currency, language }: {
+function RecentOperations({ operations, currency, language, onOpenOperations }: {
   operations: Operation[]
   currency: Currency
   language: string
+  onOpenOperations: () => void
 }) {
   return (
     <section className="card">
       <h2>{strings.recentOperationsTitle}</h2>
-      {operations.length === 0 ? (
-        <p className="hint">{strings.recentOperationsEmpty}</p>
-      ) : (
-        <ul className="operations">
-          {operations.map((operation) => (
-            <li key={operation.id}>
-              <span className="operation-icon">{operation.categoryIcon}</span>
-              <span className="operation-main">
-                <span>{operation.categoryName}</span>
-                <span className="hint">{[formatShortDate(operation.operationDate, language), operation.description].filter(Boolean).join(' · ')}</span>
-              </span>
-              <span className={operation.type === 'INCOME' ? 'positive' : 'negative'}>
-                {formatSignedMoney(operation.type, operation.amount, currency, language)}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+      {operations.length === 0
+        ? <p className="hint">{strings.recentOperationsEmpty}</p>
+        : <OperationList operations={operations} currency={currency} language={language} />}
+      <button type="button" className="secondary-button" onClick={onOpenOperations}>{strings.allOperations}</button>
     </section>
   )
 }

@@ -1,7 +1,8 @@
-import type { Balance, Group, Me, MonthSummary, Operation, OperationsPage } from '../api/types'
+import type { Balance, Category, Group, Me, MonthSummary, Operation, OperationsPage } from '../api/types'
 
 export const PERSONAL_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d0'
 export const FAMILY_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d1'
+export const SUBSCRIBE_URL = 'https://t.me/tribute/app?startapp=test'
 
 export const me = (overrides: Partial<Me> = {}): Me => ({
   userId: 42,
@@ -14,6 +15,7 @@ export const me = (overrides: Partial<Me> = {}): Me => ({
     tier: 'FREE',
     expiresAt: null,
     limits: { aiRequestsPerDay: 10, categoriesPerType: 10, ownedSharedGroups: 3, activeNotifications: 3, historyDaysBack: 30 },
+    subscribeUrl: SUBSCRIBE_URL,
   },
   ...overrides,
 })
@@ -69,4 +71,13 @@ export const operation = (overrides: Partial<Operation> = {}): Operation => ({
   ...overrides,
 })
 
-export const operationsPage = (items: Operation[]): OperationsPage => ({ items, page: 0, size: 10, totalItems: items.length })
+export const operationsPage = (items: Operation[], totalItems: number = items.length, page = 0): OperationsPage =>
+  ({ items, page, size: 20, totalItems })
+
+export const category = (overrides: Partial<Category> = {}): Category => ({
+  id: 'cat-1',
+  name: 'Продукты',
+  icon: '🛒',
+  type: 'EXPENSE',
+  ...overrides,
+})

@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { serverMessage } from './client'
+import { serverErrorCode, serverMessage } from './client'
+import type { ApiErrorCode } from './types'
 
 export type AsyncState<T> =
   | { status: 'loading' }
-  | { status: 'error'; message: string | null }
+  | { status: 'error'; message: string | null; code: ApiErrorCode | null }
   | { status: 'ready'; data: T }
 
 type SettledState<T> = Exclude<AsyncState<T>, { status: 'loading' }>
@@ -19,7 +20,7 @@ export function useAsync<T>(load: (signal: AbortSignal) => Promise<T>): { state:
       .then((data) => setSettled({ request, state: { status: 'ready', data } }))
       .catch((error: unknown) => {
         if (controller.signal.aborted) return
-        setSettled({ request, state: { status: 'error', message: serverMessage(error) } })
+        setSettled({ request, state: { status: 'error', message: serverMessage(error), code: serverErrorCode(error) } })
       })
     return () => controller.abort()
   }, [request])

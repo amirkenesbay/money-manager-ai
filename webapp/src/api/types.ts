@@ -26,6 +26,7 @@ export interface Subscription {
   tier: SubscriptionTier
   expiresAt: string | null
   limits: Limits
+  subscribeUrl: string
 }
 
 export interface Me {
@@ -97,4 +98,11 @@ export interface MonthSummary {
   net: string
   operationCount: number
   expenseByCategory: CategoryAmount[]
+}
+
+export interface Category {
+  id: string
+  name: string
+  icon: string
+  type: CategoryType
 }

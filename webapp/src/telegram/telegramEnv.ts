@@ -1,4 +1,4 @@
-import { init, isTMA, miniApp, retrieveRawInitData, themeParams } from '@tma.js/sdk-react'
+import { backButton, init, isTMA, miniApp, openTelegramLink, retrieveRawInitData, themeParams } from '@tma.js/sdk-react'
 
 export function initTelegram(): boolean {
   if (!isTMA()) return false
@@ -7,6 +7,7 @@ export function initTelegram(): boolean {
     themeParams.mount.ifAvailable()
     themeParams.bindCssVars.ifAvailable()
     miniApp.mount.ifAvailable()
+    backButton.mount.ifAvailable()
     miniApp.ready.ifAvailable()
   } catch (error) {
     console.warn('Telegram SDK initialization failed, continuing with default styling', error)
@@ -20,4 +21,12 @@ export function rawInitData(): string | undefined {
   } catch {
     return undefined
   }
+}
+
+export function openExternalLink(url: string): void {
+  if (openTelegramLink.isAvailable()) {
+    openTelegramLink(url)
+    return
+  }
+  window.open(url, '_blank', 'noopener')
 }

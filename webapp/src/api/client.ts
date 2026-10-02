@@ -1,6 +1,6 @@
 import { rawInitData } from '../telegram/telegramEnv'
 import { authorizationHeader } from './auth'
-import type { ApiErrorBody } from './types'
+import type { ApiErrorBody, ApiErrorCode } from './types'
 
 const API_BASE = '/api/v1'
 const JSON_CONTENT_TYPE = 'application/json'
@@ -29,6 +29,9 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}, signal
 
 export const serverMessage = (error: unknown): string | null =>
   error instanceof ApiRequestError ? (error.body?.message ?? null) : null
+
+export const serverErrorCode = (error: unknown): ApiErrorCode | null =>
+  error instanceof ApiRequestError ? (error.body?.code ?? null) : null
 
 async function send(path: string, init: RequestInit, signal?: AbortSignal): Promise<Response> {
   const headers = new Headers(init.headers)

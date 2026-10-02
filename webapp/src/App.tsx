@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { Me } from './api/types'
-import { Dashboard } from './dashboard/Dashboard'
+import { MainScreen } from './main/MainScreen'
 import { useMe } from './me/useMe'
 import { strings } from './strings'
 import { LoadError } from './ui/LoadError'
@@ -36,7 +36,7 @@ function MeScreen() {
   }
   const me = state.data
   if (me.activeGroupId === null) return <NoGroup me={me} />
-  return <Dashboard initialGroupId={me.activeGroupId} language={me.language} />
+  return <MainScreen me={me} activeGroupId={me.activeGroupId} />
 }
 
 function NoGroup({ me }: { me: Me }) {

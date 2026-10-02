@@ -5,11 +5,12 @@ import { ApiRequestError } from '../api/client'
 import { formatMoney, formatSignedMoney } from '../format'
 import { strings } from '../strings'
 import { asRendered } from '../test/text'
-import { balance, FAMILY_GROUP_ID, group, operation, operationsPage, PERSONAL_GROUP_ID, summary } from '../test/fixtures'
-import { Dashboard } from './Dashboard'
-import { activateGroup, fetchBalance, fetchGroups, fetchMonthSummary, fetchRecentOperations } from './dashboardApi'
+import { balance, FAMILY_GROUP_ID, group, me, operation, operationsPage, PERSONAL_GROUP_ID, summary } from '../test/fixtures'
+import { MainScreen } from './MainScreen'
+import { activateGroup, fetchBalance, fetchGroups, fetchMonthSummary, fetchRecentOperations } from '../dashboard/dashboardApi'
+import { fetchCategories, fetchOperations } from '../operations/operationsApi'
 
-vi.mock('./dashboardApi', () => ({
+vi.mock('../dashboard/dashboardApi', () => ({
   RECENT_OPERATIONS_LIMIT: 10,
   fetchGroups: vi.fn(),
   activateGroup: vi.fn(),
@@ -18,12 +19,19 @@ vi.mock('./dashboardApi', () => ({
   fetchRecentOperations: vi.fn(),
 }))
 
+vi.mock('../operations/operationsApi', () => ({
+  OPERATIONS_PAGE_SIZE: 20,
+  NO_FILTERS: { from: null, to: null, type: null, categoryId: null },
+  fetchOperations: vi.fn(),
+  fetchCategories: vi.fn(),
+}))
+
 const LANGUAGE = 'ru'
 const familyGroup = group({ id: FAMILY_GROUP_ID, name: 'Семья', type: 'SHARED', isActive: false, memberCount: 3 })
 
-const renderDashboard = () => render(<Dashboard initialGroupId={PERSONAL_GROUP_ID} language={LANGUAGE} />)
+const renderDashboard = () => render(<MainScreen me={me()} activeGroupId={PERSONAL_GROUP_ID} />)
 
-describe('Dashboard', () => {
+describe('MainScreen dashboard', () => {
   beforeEach(() => {
     vi.resetAllMocks()
     vi.mocked(fetchGroups).mockResolvedValue([group()])
@@ -31,6 +39,8 @@ describe('Dashboard', () => {
     vi.mocked(fetchMonthSummary).mockResolvedValue(summary())
     vi.mocked(fetchRecentOperations).mockResolvedValue(operationsPage([operation()]))
     vi.mocked(activateGroup).mockResolvedValue(undefined)
+    vi.mocked(fetchOperations).mockResolvedValue(operationsPage([operation()]))
+    vi.mocked(fetchCategories).mockResolvedValue([])
   })
 
   it('shows the balance with its breakdown', async () => {
@@ -101,6 +111,19 @@ describe('Dashboard', () => {
     renderDashboard()
 
     await userEvent.click(await screen.findByRole('button', { name: strings.retry }))
+
+    expect(await screen.findByText(strings.balanceTitle)).toBeInTheDocument()
+  })
+
+  it('opens all operations of the active group and returns back', async () => {
+    renderDashboard()
+
+    await userEvent.click(await screen.findByRole('button', { name: strings.allOperations }))
+
+    expect(await screen.findByRole('heading', { name: strings.operationsTitle })).toBeInTheDocument()
+    expect(fetchOperations).toHaveBeenCalledWith(PERSONAL_GROUP_ID, expect.anything(), 0, expect.anything())
+
+    await userEvent.click(screen.getByRole('button', { name: strings.back }))
 
     expect(await screen.findByText(strings.balanceTitle)).toBeInTheDocument()
   })
