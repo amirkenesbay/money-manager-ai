@@ -63,7 +63,8 @@
       "ownedSharedGroups": 3,
       "activeNotifications": 3,
       "historyDaysBack": 30
-    }
+    },
+    "subscribeUrl": "https://t.me/tribute/app?startapp=..."
   }
 }
 ```

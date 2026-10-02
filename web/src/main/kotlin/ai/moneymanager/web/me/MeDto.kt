@@ -18,6 +18,7 @@ data class SubscriptionResponse(
     val tier: SubscriptionTier,
     val expiresAt: Instant?,
     val limits: LimitsResponse,
+    val subscribeUrl: String,
 )
 
 data class LimitsResponse(

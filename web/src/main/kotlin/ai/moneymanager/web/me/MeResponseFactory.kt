@@ -1,5 +1,6 @@
 package ai.moneymanager.web.me
 
+import ai.moneymanager.domain.model.PREMIUM_SUBSCRIBE_LINK
 import ai.moneymanager.domain.model.SubscriptionTier
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.service.LocalizationService
@@ -28,6 +29,7 @@ class MeResponseFactory(
             tier = if (paid) SubscriptionTier.PAID else SubscriptionTier.FREE,
             expiresAt = user.subscriptionExpiresAt?.takeIf { paid }?.atZone(ZoneId.systemDefault())?.toInstant(),
             limits = limitsOf(paid),
+            subscribeUrl = PREMIUM_SUBSCRIBE_LINK,
         )
     }
 

@@ -1,6 +1,6 @@
 package ai.moneymanager.chat.reply.settings
 
-import ai.moneymanager.chat.reply.common.TRIBUTE_SUBSCRIBE_LINK
+import ai.moneymanager.domain.model.PREMIUM_SUBSCRIBE_LINK
 import ai.moneymanager.chat.reply.common.backButton
 import ai.moneymanager.chat.reply.common.dateFormatter
 import ai.moneymanager.chat.state.MoneyManagerButtonType
@@ -33,7 +33,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.subscriptionViewReply
                     "subscription.view.free", lang,
                     subscriptionLimitsService.maxAiRequestsPerDay(hasPaidSubscription = false), subscriptionLimitsService.maxAiRequestsPerDay(hasPaidSubscription = true)
                 )
-                freeBody + localizationService.t("subscription.view.upgrade_hint", lang, TRIBUTE_SUBSCRIBE_LINK)
+                freeBody + localizationService.t("subscription.view.upgrade_hint", lang, PREMIUM_SUBSCRIBE_LINK)
             }
 
             text = "$title\n\n$body"

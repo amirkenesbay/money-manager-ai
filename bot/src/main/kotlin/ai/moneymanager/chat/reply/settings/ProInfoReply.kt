@@ -1,6 +1,6 @@
 package ai.moneymanager.chat.reply.settings
 
-import ai.moneymanager.chat.reply.common.TRIBUTE_SUBSCRIBE_LINK
+import ai.moneymanager.domain.model.PREMIUM_SUBSCRIBE_LINK
 import ai.moneymanager.chat.state.MoneyManagerButtonType
 import ai.moneymanager.chat.state.MoneyManagerContext
 import ai.moneymanager.chat.state.MoneyManagerState
@@ -29,7 +29,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.proInfoReply(
                     button {
                         text = localizationService.t("pro.info.button.subscribe", lang)
                         type = MoneyManagerButtonType.SUBSCRIBE_PRO_LINK
-                        link = TRIBUTE_SUBSCRIBE_LINK
+                        link = PREMIUM_SUBSCRIBE_LINK
                     }
                 }
             }

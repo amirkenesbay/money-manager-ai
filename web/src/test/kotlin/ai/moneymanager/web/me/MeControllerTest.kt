@@ -1,5 +1,6 @@
 package ai.moneymanager.web.me
 
+import ai.moneymanager.domain.model.PREMIUM_SUBSCRIBE_LINK
 import ai.moneymanager.domain.model.SubscriptionTier
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.service.OnboardingService
@@ -65,6 +66,7 @@ class MeControllerTest {
             .andExpect(jsonPath("$.activeGroupId").value(groupId.toHexString()))
             .andExpect(jsonPath("$.subscription.tier").value("FREE"))
             .andExpect(jsonPath("$.subscription.expiresAt").value(nullValue()))
+            .andExpect(jsonPath("$.subscription.subscribeUrl").value(PREMIUM_SUBSCRIBE_LINK))
             .andExpectLimits(paid = false)
     }
 
