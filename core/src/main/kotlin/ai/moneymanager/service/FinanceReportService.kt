@@ -23,11 +23,15 @@ import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
 
+const val CATEGORY_REPORT_DEFAULT_MONTHS = 6
+
 @Service
 class FinanceReportService(
     private val financeOperationRepository: FinanceOperationRepository,
     private val clock: Clock
 ) {
+    fun categoryReportStart(months: Int): LocalDate = YearMonth.now(clock).minusMonths(months - 1L).atDay(1)
+
     fun buildComparisonReport(
         groupId: ObjectId,
         previousMonthStart: LocalDate,

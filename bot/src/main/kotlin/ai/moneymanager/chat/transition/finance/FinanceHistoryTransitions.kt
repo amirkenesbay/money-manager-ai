@@ -541,10 +541,8 @@ private fun ActionContext<MoneyManagerState, MoneyManagerContext>.loadReport(
     val endDate = context.historyEndDate ?: return
     val language = context.userInfo?.language
 
-    val hasPaidSubscription = context.userInfo?.hasActivePaidSubscription() == true
-    if (subscriptionLimitsService.isBeyondHistoryLimit(startDate, hasPaidSubscription)) {
-        val maxDaysBack = subscriptionLimitsService.maxHistoryDaysBack(hasPaidSubscription) ?: 0
-        context.historyReport = localizationService.t("finance.history.premium_required", language, maxDaysBack)
+    subscriptionLimitsService.premiumRequiredText(startDate, context.userInfo, localizationService)?.let {
+        context.historyReport = it
         return
     }
 

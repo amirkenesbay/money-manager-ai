@@ -14,6 +14,7 @@ import ai.moneymanager.domain.model.report.ExpensiveDay
 import ai.moneymanager.domain.model.report.MaxExpense
 import ai.moneymanager.domain.model.report.MemberTotal
 import ai.moneymanager.domain.model.report.MembersReport
+import ai.moneymanager.service.CATEGORY_REPORT_DEFAULT_MONTHS
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.FinanceReportService
 import ai.moneymanager.service.GroupService
@@ -93,6 +94,9 @@ class ReportControllerTest {
         `when`(groupService.getGroup(foreignGroupId)).thenReturn(testGroup(foreignGroupId, members = setOf(TEST_USER_ID + 1)))
         `when`(categoryService.getCategory(groceries.id!!)).thenReturn(groceries)
         `when`(categoryService.getCategory(foreignCategory.id!!)).thenReturn(foreignCategory)
+        listOf(1, CATEGORY_REPORT_DEFAULT_MONTHS).forEach { months ->
+            `when`(financeReportService.categoryReportStart(months)).thenReturn(CURRENT_MONTH.minusMonths(months - 1L).atDay(1))
+        }
     }
 
     @Test

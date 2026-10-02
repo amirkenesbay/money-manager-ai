@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.reply.finance
 
+import ai.moneymanager.service.CATEGORY_REPORT_DEFAULT_MONTHS
 import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.report.AnalyticsReport
 import ai.moneymanager.domain.model.report.CategoryComparison
@@ -61,7 +62,7 @@ class FinanceReportFormatter(
         categoryName: String,
         currency: Currency,
         language: String?,
-        months: Int = 6
+        months: Int = CATEGORY_REPORT_DEFAULT_MONTHS
     ): String {
         val report = financeReportService.buildCategoryReport(groupId, categoryId, categoryIcon, categoryName, months, language)
         return formatCategory(report, currency, language)

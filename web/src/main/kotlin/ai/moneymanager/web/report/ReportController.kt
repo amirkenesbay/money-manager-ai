@@ -1,5 +1,6 @@
 package ai.moneymanager.web.report
 
+import ai.moneymanager.service.CATEGORY_REPORT_DEFAULT_MONTHS
 import ai.moneymanager.domain.model.MoneyGroup
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.service.CategoryService
@@ -23,7 +24,6 @@ import java.time.LocalDate
 import java.time.YearMonth
 
 private const val MONTH_PATTERN = "yyyy-MM"
-private const val DEFAULT_CATEGORY_MONTHS = 6
 private const val MAX_CATEGORY_MONTHS = 12
 private const val CATEGORY_NOT_FOUND_KEY = "${API_ERROR_KEY_PREFIX}category_not_found"
 
@@ -80,11 +80,11 @@ class ReportController(
         @RequestParam(required = false) months: Int?,
     ): CategoryReportResponse {
         val group = groupAccessGuard.requireMember(user, groupId)
-        val monthCount = months ?: DEFAULT_CATEGORY_MONTHS
+        val monthCount = months ?: CATEGORY_REPORT_DEFAULT_MONTHS
         if (monthCount !in 1..MAX_CATEGORY_MONTHS) throw ApiException(ApiErrorCode.BAD_REQUEST)
         val category = categoryService.getCategory(categoryId)?.takeIf { it.groupId == groupId }
             ?: throw ApiException(ApiErrorCode.NOT_FOUND, CATEGORY_NOT_FOUND_KEY)
-        historyAccessPolicy.requireWithinHistory(user, YearMonth.now(clock).minusMonths(monthCount - 1L).atDay(1))
+        historyAccessPolicy.requireWithinHistory(user, financeReportService.categoryReportStart(monthCount))
         val report = financeReportService.buildCategoryReport(groupId, categoryId, category.icon, category.name, monthCount, user.language)
         return reportResponseFactory.category(report, categoryId, group.currency)
     }

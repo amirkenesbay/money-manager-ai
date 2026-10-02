@@ -1,5 +1,7 @@
 package ai.moneymanager.chat.transition.finance
 
+import ai.moneymanager.service.CATEGORY_REPORT_DEFAULT_MONTHS
+import ai.moneymanager.service.FinanceReportService
 import ai.moneymanager.chat.reply.common.resolveCurrency
 import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.chat.state.MoneyManagerButtonType
@@ -17,6 +19,7 @@ import java.time.LocalDate
 
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.financeReportTransitions(
     financeReportFormatter: FinanceReportFormatter,
+    financeReportService: FinanceReportService,
     userInfoService: UserInfoService,
     categoryService: CategoryService,
     groupService: GroupService,
@@ -27,7 +30,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.financeReportTransitio
     comparisonTransitions(financeReportFormatter, groupService, subscriptionLimitsService, localizationService)
     analyticsTransitions(financeReportFormatter, groupService, subscriptionLimitsService, localizationService)
     membersTransitions(financeReportFormatter, userInfoService, groupService, subscriptionLimitsService, localizationService)
-    categoryReportTransitions(financeReportFormatter, categoryService, groupService)
+    categoryReportTransitions(financeReportFormatter, financeReportService, categoryService, groupService, subscriptionLimitsService, localizationService)
     reportBackTransitions()
 }
 
@@ -117,9 +120,8 @@ private fun ActionContext<MoneyManagerState, MoneyManagerContext>.loadComparison
     val month1Start = context.reportMonth ?: return
     val language = context.userInfo?.language
 
-    val hasPaidSubscription = context.userInfo?.hasActivePaidSubscription() == true
-    if (subscriptionLimitsService.isBeyondHistoryLimit(month1Start, hasPaidSubscription)) {
-        context.reportText = localizationService.t("finance.history.premium_required", language, subscriptionLimitsService.maxHistoryDaysBack(hasPaidSubscription) ?: 0)
+    subscriptionLimitsService.premiumRequiredText(month1Start, context.userInfo, localizationService)?.let {
+        context.reportText = it
         return
     }
 
@@ -197,9 +199,8 @@ private fun ActionContext<MoneyManagerState, MoneyManagerContext>.loadAnalyticsR
     val monthStart = context.reportMonth ?: return
     val language = context.userInfo?.language
 
-    val hasPaidSubscription = context.userInfo?.hasActivePaidSubscription() == true
-    if (subscriptionLimitsService.isBeyondHistoryLimit(monthStart, hasPaidSubscription)) {
-        context.reportText = localizationService.t("finance.history.premium_required", language, subscriptionLimitsService.maxHistoryDaysBack(hasPaidSubscription) ?: 0)
+    subscriptionLimitsService.premiumRequiredText(monthStart, context.userInfo, localizationService)?.let {
+        context.reportText = it
         return
     }
 
@@ -279,9 +280,8 @@ private fun ActionContext<MoneyManagerState, MoneyManagerContext>.loadMembersRep
     val monthStart = context.reportMonth ?: return
     val language = context.userInfo?.language
 
-    val hasPaidSubscription = context.userInfo?.hasActivePaidSubscription() == true
-    if (subscriptionLimitsService.isBeyondHistoryLimit(monthStart, hasPaidSubscription)) {
-        context.reportText = localizationService.t("finance.history.premium_required", language, subscriptionLimitsService.maxHistoryDaysBack(hasPaidSubscription) ?: 0)
+    subscriptionLimitsService.premiumRequiredText(monthStart, context.userInfo, localizationService)?.let {
+        context.reportText = it
         return
     }
 
@@ -295,8 +295,11 @@ private fun ActionContext<MoneyManagerState, MoneyManagerContext>.loadMembersRep
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.categoryReportTransitions(
     financeReportFormatter: FinanceReportFormatter,
+    financeReportService: FinanceReportService,
     categoryService: CategoryService,
-    groupService: GroupService
+    groupService: GroupService,
+    subscriptionLimitsService: SubscriptionLimitsService,
+    localizationService: LocalizationService
 ) {
     transition {
         name = "Open category select for report"
@@ -332,6 +335,11 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.categoryReport
             val groupId = context.userInfo?.activeGroupId ?: return@action
             val categoryId = category.id ?: return@action
             val language = context.userInfo?.language
+            val periodStart = financeReportService.categoryReportStart(CATEGORY_REPORT_DEFAULT_MONTHS)
+            subscriptionLimitsService.premiumRequiredText(periodStart, context.userInfo, localizationService)?.let {
+                context.reportText = it
+                return@action
+            }
             context.reportText = financeReportFormatter.generateCategoryReport(
                 groupId, categoryId, category.icon, category.name, resolveCurrency(groupService, groupId), language
             )
