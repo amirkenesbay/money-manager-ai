@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.telegram
 
+import ai.moneymanager.domain.model.DEFAULT_NOTIFICATION_ICON
 import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.NotificationService
 import ai.moneymanager.service.UserInfoService
@@ -16,7 +17,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
 import java.time.LocalDateTime
 
-private const val DEFAULT_NOTIFICATION_ICON = "🔔"
 
 @Service
 class NotificationSchedulerService(

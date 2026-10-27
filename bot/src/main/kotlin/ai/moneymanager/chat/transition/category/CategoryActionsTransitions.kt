@@ -44,7 +44,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.categoryActionsTransit
             val categoryId = context.currentCategory?.id ?: return@textInputFlow
 
             val lang = context.userInfo?.language
-            val updatedCategory = categoryService.updateCategoryName(categoryId, newName)
+            val updatedCategory = categoryService.updateCategoryName(user.id, categoryId, newName)
             if (updatedCategory != null) {
                 context.currentCategory = updatedCategory
                 context.renameConfirmation = localizationService.t("category.edit_name.success", lang, updatedCategory.name)
@@ -106,7 +106,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.categoryActionsTransit
         triggerButton = MoneyManagerButtonType.DELETE_CATEGORY_BUTTON,
         onConfirm = {
             val categoryId = context.currentCategory?.id ?: return@confirmFlow
-            val deleted = categoryService.deleteCategory(categoryId)
+            val deleted = categoryService.deleteCategory(user.id, categoryId)
             if (deleted) {
                 context.refreshCategoryList(categoryService)
                 context.currentCategory = null

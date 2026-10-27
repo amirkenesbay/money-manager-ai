@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component
 
 private const val GROUP_NOT_FOUND_KEY = "${API_ERROR_KEY_PREFIX}group_not_found"
 private const val GROUP_ACCESS_DENIED_KEY = "${API_ERROR_KEY_PREFIX}group_access_denied"
+private const val GROUP_OWNER_ONLY_KEY = "${API_ERROR_KEY_PREFIX}group_owner_only"
 
 @Component
 class GroupAccessGuard(
@@ -23,6 +24,12 @@ class GroupAccessGuard(
         if (userId == null || userId !in group.memberIds) {
             throw ApiException(ApiErrorCode.FORBIDDEN, GROUP_ACCESS_DENIED_KEY)
         }
+        return group
+    }
+
+    fun requireOwner(user: UserInfo, groupId: ObjectId): MoneyGroup {
+        val group = requireMember(user, groupId)
+        if (group.ownerId != user.telegramUserId) throw ApiException(ApiErrorCode.FORBIDDEN, GROUP_OWNER_ONLY_KEY)
         return group
     }
 }

@@ -3,23 +3,28 @@ package ai.moneymanager.web.me
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.OnboardingService
+import ai.moneymanager.service.UserInfoService
 import ai.moneymanager.web.API_V1_PREFIX
 import ai.moneymanager.web.error.API_ERROR_KEY_PREFIX
 import ai.moneymanager.web.error.ApiErrorCode
 import ai.moneymanager.web.error.ApiException
+import ai.moneymanager.web.error.badRequest
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import java.time.ZoneId
 
 private const val UNSUPPORTED_LANGUAGE_KEY = "${API_ERROR_KEY_PREFIX}unsupported_language"
 private const val SUPPORTED_LANGUAGES_DETAIL = "supported"
+private const val UNSUPPORTED_TIMEZONE_KEY = "${API_ERROR_KEY_PREFIX}unsupported_timezone"
 
 @RestController
 @RequestMapping("$API_V1_PREFIX/me")
 class MeController(
     private val onboardingService: OnboardingService,
+    private val userInfoService: UserInfoService,
     private val meResponseFactory: MeResponseFactory,
 ) {
     @GetMapping
@@ -27,10 +32,19 @@ class MeController(
 
     @PatchMapping
     fun update(user: UserInfo, @RequestBody request: UpdateMeRequest): MeResponse {
-        requireSupported(request.language)
-        val updated = onboardingService.selectLanguage(checkNotNull(user.telegramUserId), request.language)
-            ?: throw ApiException(ApiErrorCode.NOT_FOUND)
+        val userId = checkNotNull(user.telegramUserId)
+        if (request.language == null && request.timezone == null) throw ApiException(ApiErrorCode.BAD_REQUEST)
+        request.language?.let { requireSupported(it) }
+        request.timezone?.let { requireZone(it) }
+        val withLanguage = request.language?.let { found(onboardingService.selectLanguage(userId, it)) } ?: user
+        val updated = request.timezone?.let { found(userInfoService.updateTimezone(userId, it)) } ?: withLanguage
         return meResponseFactory.create(updated)
+    }
+
+    private fun found(user: UserInfo?): UserInfo = user ?: throw ApiException(ApiErrorCode.NOT_FOUND)
+
+    private fun requireZone(timezone: String) {
+        if (runCatching { ZoneId.of(timezone) }.isFailure) throw badRequest(UNSUPPORTED_TIMEZONE_KEY)
     }
 
     private fun requireSupported(language: String) {

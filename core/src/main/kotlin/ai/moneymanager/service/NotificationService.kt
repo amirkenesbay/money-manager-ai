@@ -2,6 +2,7 @@ package ai.moneymanager.service
 
 import ai.moneymanager.domain.model.FrequencyType
 import ai.moneymanager.domain.model.NotificationCreationResult
+import ai.moneymanager.domain.model.NotificationToggleResult
 import ai.moneymanager.repository.NotificationRepository
 import ai.moneymanager.repository.entity.NotificationEntity
 import org.bson.types.ObjectId
@@ -34,11 +35,8 @@ class NotificationService(
         userTimezone: String,
         maxActiveNotifications: Int? = null
     ): NotificationCreationResult {
-        if (maxActiveNotifications != null) {
-            val activeCount = notificationRepository.countByTelegramUserIdAndIsActiveTrue(telegramUserId)
-            if (activeCount >= maxActiveNotifications) {
-                return NotificationCreationResult.LimitReached(maxActiveNotifications)
-            }
+        if (isActiveLimitReached(telegramUserId, maxActiveNotifications)) {
+            return NotificationCreationResult.LimitReached(checkNotNull(maxActiveNotifications))
         }
 
         val nextFireTime = computeNextFireTime(
@@ -71,22 +69,24 @@ class NotificationService(
     fun getNotification(id: ObjectId): NotificationEntity? =
         notificationRepository.findById(id).orElse(null)
 
-    fun toggleNotification(id: ObjectId, userTimezone: String): NotificationEntity? {
-        val entity = notificationRepository.findById(id).orElse(null) ?: return null
-        val toggled = entity.copy(isActive = !entity.isActive)
-
-        val updated = if (toggled.isActive) {
-            val newFireTime = computeNextFireTime(
-                toggled.frequencyType, toggled.customInterval, toggled.hour, toggled.minute,
-                toggled.dayOfWeek, toggled.dayOfMonth, toggled.monthOfYear, userTimezone
-            )
-            toggled.copy(nextFireTime = newFireTime)
-        } else {
-            toggled
+    fun setActive(id: ObjectId, active: Boolean, userTimezone: String, maxActiveNotifications: Int?): NotificationToggleResult {
+        val entity = notificationRepository.findById(id).orElse(null) ?: return NotificationToggleResult.NotFound
+        if (entity.isActive == active) return NotificationToggleResult.Updated(entity)
+        if (!active) return NotificationToggleResult.Updated(notificationRepository.save(entity.copy(isActive = false)))
+        if (isActiveLimitReached(entity.telegramUserId, maxActiveNotifications)) {
+            return NotificationToggleResult.LimitReached(checkNotNull(maxActiveNotifications))
         }
 
-        return notificationRepository.save(updated)
+        val nextFireTime = computeNextFireTime(
+            entity.frequencyType, entity.customInterval, entity.hour, entity.minute,
+            entity.dayOfWeek, entity.dayOfMonth, entity.monthOfYear, userTimezone
+        )
+        return NotificationToggleResult.Updated(notificationRepository.save(entity.copy(isActive = true, nextFireTime = nextFireTime)))
     }
+
+    private fun isActiveLimitReached(telegramUserId: Long, maxActiveNotifications: Int?): Boolean =
+        maxActiveNotifications != null &&
+            notificationRepository.countByTelegramUserIdAndIsActiveTrue(telegramUserId) >= maxActiveNotifications
 
     fun updateName(id: ObjectId, newName: String): NotificationEntity? {
         val entity = notificationRepository.findById(id).orElse(null) ?: return null

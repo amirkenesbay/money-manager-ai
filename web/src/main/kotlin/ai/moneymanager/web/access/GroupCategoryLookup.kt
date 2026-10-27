@@ -16,5 +16,7 @@ class GroupCategoryLookup(
 ) {
     fun requireCategory(groupId: ObjectId, categoryId: ObjectId): Category =
         categoryService.getCategory(categoryId)?.takeIf { it.groupId == groupId }
-            ?: throw ApiException(ApiErrorCode.NOT_FOUND, CATEGORY_NOT_FOUND_KEY)
+            ?: throw notFound()
+
+    fun notFound() = ApiException(ApiErrorCode.NOT_FOUND, CATEGORY_NOT_FOUND_KEY)
 }

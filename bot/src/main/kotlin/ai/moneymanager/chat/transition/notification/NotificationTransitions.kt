@@ -15,6 +15,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationDialogTran
     notificationTimezoneTransitions(userInfoService, notificationService)
     notificationListTransitions(notificationService)
     notificationCreateTransitions(notificationService, subscriptionLimitsService)
-    notificationEditTransitions(notificationService)
+    notificationEditTransitions(notificationService, subscriptionLimitsService)
     notificationDeleteTransitions(notificationService)
 }

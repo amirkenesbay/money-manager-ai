@@ -15,3 +15,28 @@ data class GroupResponse(
     val memberCount: Int,
     val initialBalance: BigDecimal,
 )
+
+data class CreateGroupRequest(
+    val name: String?,
+    val currency: Currency,
+)
+
+data class UpdateGroupRequest(
+    val name: String?,
+    val currency: Currency?,
+)
+
+data class InitialBalanceRequest(
+    val amount: BigDecimal,
+)
+
+data class MemberResponse(
+    val userId: Long,
+    val name: String,
+    val isOwner: Boolean,
+)
+
+data class InviteResponse(
+    val inviteToken: String,
+    val url: String,
+)

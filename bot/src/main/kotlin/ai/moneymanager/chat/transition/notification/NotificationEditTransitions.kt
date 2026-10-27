@@ -4,12 +4,15 @@ import ai.moneymanager.chat.transition.common.simpleTransition
 import ai.moneymanager.chat.state.MoneyManagerButtonType
 import ai.moneymanager.chat.state.MoneyManagerContext
 import ai.moneymanager.chat.state.MoneyManagerState
+import ai.moneymanager.domain.model.NotificationToggleResult
 import ai.moneymanager.service.NotificationService
+import ai.moneymanager.service.SubscriptionLimitsService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType
 
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationEditTransitions(
-    notificationService: NotificationService
+    notificationService: NotificationService,
+    subscriptionLimitsService: SubscriptionLimitsService
 ) {
     simpleTransition(
         "Open edit menu",
@@ -111,9 +114,15 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationEditTransi
             button = MoneyManagerButtonType.TOGGLE_NOTIFICATION
         }
         action {
-            val id = context.currentNotification?.id ?: return@action
+            val notification = context.currentNotification ?: return@action
+            val id = notification.id ?: return@action
             val timezone = context.userInfo?.timezone ?: "UTC"
-            context.currentNotification = notificationService.toggleNotification(id, timezone)
+            val maxActive = subscriptionLimitsService.maxActiveNotifications(context.userInfo?.hasActivePaidSubscription() == true)
+            when (val result = notificationService.setActive(id, !notification.isActive, timezone, maxActive)) {
+                is NotificationToggleResult.Updated -> context.currentNotification = result.notification
+                is NotificationToggleResult.LimitReached -> context.notifLimitReached = result.limit
+                NotificationToggleResult.NotFound -> context.currentNotification = null
+            }
         }
         then {
             to = MoneyManagerState.NOTIFICATION_ACTIONS

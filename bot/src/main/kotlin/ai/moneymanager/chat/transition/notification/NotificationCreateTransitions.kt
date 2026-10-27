@@ -5,6 +5,7 @@ import ai.moneymanager.chat.reply.notification.parseMonth
 import ai.moneymanager.chat.transition.common.simpleTransition
 import ai.moneymanager.chat.transition.common.simpleTransitionWithAction
 import ai.moneymanager.domain.model.FrequencyType
+import ai.moneymanager.domain.model.MAX_NOTIFICATION_NAME_LENGTH
 import ai.moneymanager.chat.state.MoneyManagerButtonType
 import ai.moneymanager.chat.state.MoneyManagerContext
 import ai.moneymanager.chat.state.MoneyManagerState
@@ -144,7 +145,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
         }
         action {
             val name = update.message?.text?.trim() ?: ""
-            if (name.isEmpty() || name.length > 100) {
+            if (name.isEmpty() || name.length > MAX_NOTIFICATION_NAME_LENGTH) {
                 context.notifNameInputError = true
             } else {
                 context.notifNameInputError = false
@@ -231,13 +232,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
         action {
             val text = update.message?.text?.trim() ?: ""
             val n = text.toIntOrNull()
-            val max = when (context.notifFrequencyType) {
-                FrequencyType.CUSTOM_DAYS -> 365
-                FrequencyType.CUSTOM_WEEKS -> 52
-                FrequencyType.CUSTOM_MONTHS -> 24
-                FrequencyType.CUSTOM_YEARS -> 10
-                else -> 365
-            }
+            val max = checkNotNull(context.notifFrequencyType?.maxCustomInterval ?: FrequencyType.CUSTOM_DAYS.maxCustomInterval)
             if (n == null || n < 1 || n > max) {
                 context.notifCustomInputError = true
             } else {

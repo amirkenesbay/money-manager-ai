@@ -4,6 +4,7 @@ import ai.moneymanager.chat.transition.common.simpleTransition
 import ai.moneymanager.chat.transition.common.simpleTransitionWithAction
 import ai.moneymanager.domain.model.CategoryCreationResult
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.MAX_CATEGORY_NAME_LENGTH
 import ai.moneymanager.chat.state.MoneyManagerButtonType
 import ai.moneymanager.chat.state.MoneyManagerContext
 import ai.moneymanager.chat.state.MoneyManagerState
@@ -17,7 +18,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("CreateCategoryTransitions")
-private const val MAX_CATEGORY_NAME_LENGTH = 50
 
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createCategoryTransitions(
     categoryService: CategoryService,

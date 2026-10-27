@@ -1,5 +1,7 @@
 package ai.moneymanager.web.me
 
+import ai.moneymanager.domain.model.PREMIUM_MONTHLY_PRICE
+import ai.moneymanager.domain.model.PREMIUM_PRICE_CURRENCY
 import ai.moneymanager.domain.model.PREMIUM_SUBSCRIBE_LINK
 import ai.moneymanager.domain.model.SubscriptionTier
 import ai.moneymanager.domain.model.UserInfo
@@ -36,6 +38,7 @@ import java.time.ZoneId
 
 private const val ME_PATH = "/api/v1/me"
 private const val UNSUPPORTED_LANGUAGE = "de"
+private const val DEVICE_TIMEZONE = "Asia/Almaty"
 
 @WebMvcTest(controllers = [MeController::class])
 @ApiWebLayerSetup
@@ -133,6 +136,37 @@ class MeControllerTest {
             .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
 
         assertOnboardingUntouched()
+    }
+
+    @Test
+    fun `remembers the time zone of the device`() {
+        givenCurrentUser(testUser())
+        `when`(userInfoService.updateTimezone(TEST_USER_ID, DEVICE_TIMEZONE)).thenReturn(testUser().copy(timezone = DEVICE_TIMEZONE))
+
+        mockMvc.perform(patch(ME_PATH).withTelegramAuth().contentType(MediaType.APPLICATION_JSON).content("""{"timezone":"$DEVICE_TIMEZONE"}"""))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.timezone").value(DEVICE_TIMEZONE))
+    }
+
+    @Test
+    fun `rejects an unknown time zone`() {
+        givenCurrentUser(testUser())
+
+        mockMvc.perform(patch(ME_PATH).withTelegramAuth().contentType(MediaType.APPLICATION_JSON).content("""{"timezone":"Mars/Olympus"}"""))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.message").value("Этот часовой пояс не поддерживается."))
+    }
+
+    @Test
+    fun `describes premium with its limits and price`() {
+        givenCurrentUser(testUser())
+
+        mockMvc.perform(get(ME_PATH).withTelegramAuth())
+            .andExpect(jsonPath("$.subscription.freeLimits.categoriesPerType").value(limits.maxCategoriesPerType(false)))
+            .andExpect(jsonPath("$.subscription.paidLimits.categoriesPerType").value(limits.maxCategoriesPerType(true)))
+            .andExpect(jsonPath("$.subscription.paidLimits.ownedSharedGroups").value(nullValue()))
+            .andExpect(jsonPath("$.subscription.price.amount").value(PREMIUM_MONTHLY_PRICE.toPlainString()))
+            .andExpect(jsonPath("$.subscription.price.currency").value(PREMIUM_PRICE_CURRENCY.name))
     }
 
     private fun patchLanguage(language: String) =

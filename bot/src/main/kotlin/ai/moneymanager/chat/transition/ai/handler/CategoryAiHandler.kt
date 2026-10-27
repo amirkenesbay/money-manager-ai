@@ -58,8 +58,8 @@ class CategoryAiHandler(
         if (action !is AiPendingAction.CategoryAction) return localizationService.t("ai.error.unknown_command", lang)
         return when (action) {
             is AiPendingAction.CategoryAction.Create -> executeCreate(action, context, lang)
-            is AiPendingAction.CategoryAction.Delete -> executeDelete(action, lang)
-            is AiPendingAction.CategoryAction.Rename -> executeRename(action, lang)
+            is AiPendingAction.CategoryAction.Delete -> executeDelete(action, actorOf(context), lang)
+            is AiPendingAction.CategoryAction.Rename -> executeRename(action, actorOf(context), lang)
             is AiPendingAction.CategoryAction.ChangeIcon -> executeChangeIcon(action, lang)
             is AiPendingAction.CategoryAction.DeleteAll -> executeDeleteAll(action, lang)
         }
@@ -168,10 +168,12 @@ class CategoryAiHandler(
         }
     }
 
-    private fun executeDelete(action: AiPendingAction.CategoryAction.Delete, lang: String?): String {
+    private fun actorOf(context: MoneyManagerContext): Long = checkNotNull(context.userInfo?.telegramUserId)
+
+    private fun executeDelete(action: AiPendingAction.CategoryAction.Delete, actorId: Long, lang: String?): String {
         val categoryId = action.category.id
             ?: return localizationService.t("ai.category.no_id", lang)
-        val success = categoryService.deleteCategory(categoryId)
+        val success = categoryService.deleteCategory(actorId, categoryId)
         return if (success) {
             val iconPart = action.category.icon?.let { "$it " } ?: ""
             localizationService.t("ai.category.delete.success", lang, escapeHtml(iconPart), escapeHtml(action.category.name))
@@ -180,10 +182,10 @@ class CategoryAiHandler(
         }
     }
 
-    private fun executeRename(action: AiPendingAction.CategoryAction.Rename, lang: String?): String {
+    private fun executeRename(action: AiPendingAction.CategoryAction.Rename, actorId: Long, lang: String?): String {
         val categoryId = action.category.id
             ?: return localizationService.t("ai.category.no_id", lang)
-        val updated = categoryService.updateCategoryName(categoryId, action.newName)
+        val updated = categoryService.updateCategoryName(actorId, categoryId, action.newName)
             ?: return localizationService.t("ai.category.rename.failed", lang, escapeHtml(action.category.name))
         return localizationService.t("ai.category.rename.success", lang, escapeHtml(action.category.name), escapeHtml(updated.name))
     }

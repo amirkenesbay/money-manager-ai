@@ -1,12 +1,16 @@
 package ai.moneymanager.service
 
+import ai.moneymanager.domain.event.CategoryDeleted
+import ai.moneymanager.domain.event.CategoryRenamed
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryCreationResult
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.CategoryUpdateResult
 import ai.moneymanager.repository.CategoryRepository
 import ai.moneymanager.repository.entity.CategoryEntity
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 
 private data class DefaultCategorySeed(val nameKey: String, val icon: String, val type: CategoryType)
@@ -27,7 +31,8 @@ private val DEFAULT_CATEGORY_SEEDS = listOf(
 @Service
 class CategoryService(
     private val categoryRepository: CategoryRepository,
-    private val localizationService: LocalizationService
+    private val localizationService: LocalizationService,
+    private val eventPublisher: ApplicationEventPublisher
 ) {
     private val log = LoggerFactory.getLogger(CategoryService::class.java)
 
@@ -69,11 +74,21 @@ class CategoryService(
             .orElse(null)
     }
 
-    fun updateCategoryName(categoryId: ObjectId, newName: String): Category? {
-        val categoryEntity = categoryRepository.findById(categoryId).orElse(null) ?: return null
-        val updatedCategory = categoryEntity.copy(name = newName)
-        val savedCategory = categoryRepository.save(updatedCategory)
-        return mapToModel(savedCategory)
+    fun updateCategory(actorId: Long, categoryId: ObjectId, name: String, icon: String?): CategoryUpdateResult {
+        val entity = categoryRepository.findById(categoryId).orElse(null) ?: return CategoryUpdateResult.NotFound
+        val namesake = categoryRepository.findByGroupIdAndNameAndType(entity.groupId, name, entity.type)
+        if (namesake != null && namesake.id != categoryId) return CategoryUpdateResult.Duplicate
+
+        val saved = categoryRepository.save(entity.copy(name = name, icon = icon))
+        if (entity.name != name) {
+            eventPublisher.publishEvent(CategoryRenamed(entity.groupId, actorId, saved.icon, entity.name, name))
+        }
+        return CategoryUpdateResult.Updated(mapToModel(saved))
+    }
+
+    fun updateCategoryName(actorId: Long, categoryId: ObjectId, newName: String): Category? {
+        val category = getCategory(categoryId) ?: return null
+        return (updateCategory(actorId, categoryId, newName, category.icon) as? CategoryUpdateResult.Updated)?.category
     }
 
     fun updateCategoryIcon(categoryId: ObjectId, newIcon: String?): Category? {
@@ -83,13 +98,11 @@ class CategoryService(
         return mapToModel(savedCategory)
     }
 
-    fun deleteCategory(categoryId: ObjectId): Boolean {
-        return try {
-            categoryRepository.deleteById(categoryId)
-            true
-        } catch (e: Exception) {
-            false
-        }
+    fun deleteCategory(actorId: Long, categoryId: ObjectId): Boolean {
+        val entity = categoryRepository.findById(categoryId).orElse(null) ?: return false
+        categoryRepository.delete(entity)
+        eventPublisher.publishEvent(CategoryDeleted(entity.groupId, actorId, entity.icon, entity.name))
+        return true
     }
 
     fun deleteAllCategoriesForGroup(groupId: ObjectId): Long {

@@ -15,6 +15,7 @@ import ai.moneymanager.web.ApiWebLayerSetup
 import ai.moneymanager.web.access.GroupAccessGuard
 import ai.moneymanager.web.access.GroupCategoryLookup
 import ai.moneymanager.web.security.TestInitData
+import ai.moneymanager.web.json
 import ai.moneymanager.web.withTelegramAuth
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.BeforeEach
@@ -27,10 +28,8 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.Primary
-import org.springframework.http.MediaType
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
@@ -213,6 +212,4 @@ class OperationControllerTest {
         operationDate = draft.operationDate,
         description = draft.description,
     )
-
-    private fun MockHttpServletRequestBuilder.json(content: String) = contentType(MediaType.APPLICATION_JSON).content(content)
 }

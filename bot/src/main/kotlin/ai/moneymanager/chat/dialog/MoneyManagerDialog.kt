@@ -144,8 +144,8 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
             val messageText = update.message?.text
             if (messageText != null) {
                 val parts = messageText.split(" ")
-                if (parts.size == 2 && parts[1].startsWith("join_")) {
-                    val token = parts[1].removePrefix("join_")
+                if (parts.size == 2 && parts[1].startsWith(StartParameters.JOIN_PREFIX)) {
+                    val token = parts[1].removePrefix(StartParameters.JOIN_PREFIX)
                     context.pendingInviteToken = token
                     val group = groupService.getGroupByToken(token)
                     context.pendingGroup = group

@@ -1,5 +1,7 @@
 package ai.moneymanager.web.me
 
+import ai.moneymanager.domain.model.PREMIUM_MONTHLY_PRICE
+import ai.moneymanager.domain.model.PREMIUM_PRICE_CURRENCY
 import ai.moneymanager.domain.model.PREMIUM_SUBSCRIBE_LINK
 import ai.moneymanager.domain.model.SubscriptionTier
 import ai.moneymanager.domain.model.UserInfo
@@ -29,6 +31,9 @@ class MeResponseFactory(
             tier = if (paid) SubscriptionTier.PAID else SubscriptionTier.FREE,
             expiresAt = user.subscriptionExpiresAt?.takeIf { paid }?.atZone(ZoneId.systemDefault())?.toInstant(),
             limits = limitsOf(paid),
+            freeLimits = limitsOf(false),
+            paidLimits = limitsOf(true),
+            price = PriceResponse(PREMIUM_MONTHLY_PRICE, PREMIUM_PRICE_CURRENCY),
             subscribeUrl = PREMIUM_SUBSCRIBE_LINK,
         )
     }

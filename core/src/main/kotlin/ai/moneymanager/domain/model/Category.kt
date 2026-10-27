@@ -3,6 +3,7 @@ package ai.moneymanager.domain.model
 import org.bson.types.ObjectId
 
 const val DEFAULT_CATEGORY_ICON: String = "📌"
+const val MAX_CATEGORY_NAME_LENGTH = 50
 
 data class Category(
     val id: ObjectId? = null,

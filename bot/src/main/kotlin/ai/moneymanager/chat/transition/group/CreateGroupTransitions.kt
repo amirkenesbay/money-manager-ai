@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.transition.group
 
+import ai.moneymanager.domain.model.MAX_GROUP_NAME_LENGTH
 import ai.moneymanager.chat.transition.common.simpleTransitionWithAction
 import ai.moneymanager.chat.state.MoneyManagerButtonType
 import ai.moneymanager.chat.state.MoneyManagerContext
@@ -9,7 +10,6 @@ import ai.moneymanager.service.LocalizationService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType
 
-private const val MAX_GROUP_NAME_LENGTH = 50
 
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.createGroupTransitions(
     localizationService: LocalizationService

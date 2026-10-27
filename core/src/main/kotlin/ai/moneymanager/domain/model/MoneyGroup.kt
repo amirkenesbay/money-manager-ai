@@ -3,6 +3,8 @@ package ai.moneymanager.domain.model
 import org.bson.types.ObjectId
 import java.math.BigDecimal
 
+const val MAX_GROUP_NAME_LENGTH = 50
+
 data class MoneyGroup(
     val id: ObjectId? = null,
     val name: String,

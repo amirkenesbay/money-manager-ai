@@ -4,8 +4,7 @@ import ai.moneymanager.domain.model.OperationDraft
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.web.access.GroupCategoryLookup
 import ai.moneymanager.web.error.API_ERROR_KEY_PREFIX
-import ai.moneymanager.web.error.ApiErrorCode
-import ai.moneymanager.web.error.ApiException
+import ai.moneymanager.web.error.badRequest
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -31,7 +30,7 @@ class OperationDraftFactory(
         if (request.operationDate.isAfter(today(user))) throw badRequest(FUTURE_DATE_KEY)
         val description = request.description?.trim()?.takeIf { it.isNotEmpty() }
         if (description != null && description.length > MAX_DESCRIPTION_LENGTH) {
-            throw ApiException(ApiErrorCode.BAD_REQUEST, DESCRIPTION_TOO_LONG_KEY, listOf(MAX_DESCRIPTION_LENGTH))
+            throw badRequest(DESCRIPTION_TOO_LONG_KEY, MAX_DESCRIPTION_LENGTH)
         }
         val category = groupCategoryLookup.requireCategory(groupId, request.categoryId)
         if (category.type != request.type) throw badRequest(CATEGORY_TYPE_MISMATCH_KEY)
@@ -42,6 +41,4 @@ class OperationDraftFactory(
 
     private fun userZone(user: UserInfo): ZoneId =
         user.timezone?.let { runCatching { ZoneId.of(it) }.getOrNull() } ?: EARLIEST_ZONE_ON_EARTH
-
-    private fun badRequest(messageKey: String) = ApiException(ApiErrorCode.BAD_REQUEST, messageKey)
 }

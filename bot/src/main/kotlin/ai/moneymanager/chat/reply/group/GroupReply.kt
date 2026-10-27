@@ -1,7 +1,7 @@
 package ai.moneymanager.chat.reply.group
 
 import ai.moneymanager.chat.reply.common.backButton
-import ai.moneymanager.chat.reply.common.buildInviteLink
+import ai.moneymanager.domain.model.buildInviteLink
 import ai.moneymanager.chat.reply.common.cancelButton
 import ai.moneymanager.chat.reply.common.confirmAndCancelButtons
 import ai.moneymanager.domain.model.formatUserDisplayName

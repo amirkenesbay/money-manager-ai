@@ -25,11 +25,6 @@ private const val DESCRIPTION_PREFIX = " ("
 private const val DESCRIPTION_SUFFIX = ")"
 private const val TIME_PATTERN = "%02d:%02d"
 
-private const val BOT_USERNAME = "moneyManagerAIbot"
-private const val INVITE_LINK_TEMPLATE = "https://t.me/%s?start=join_%s"
-
-fun buildInviteLink(inviteToken: String): String = INVITE_LINK_TEMPLATE.format(BOT_USERNAME, inviteToken)
-
 private val amountFormat = DecimalFormat(
     AMOUNT_PATTERN,
     DecimalFormatSymbols().apply { groupingSeparator = THOUSANDS_SEPARATOR }

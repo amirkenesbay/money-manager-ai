@@ -1,6 +1,6 @@
 package ai.moneymanager.chat.transition.ai.handler
 
-import ai.moneymanager.chat.reply.common.buildInviteLink
+import ai.moneymanager.domain.model.buildInviteLink
 import ai.moneymanager.chat.reply.common.link
 import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.domain.text.matchesEntityName

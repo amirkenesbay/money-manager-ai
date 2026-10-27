@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.reply.notification
 
+import ai.moneymanager.domain.model.DEFAULT_NOTIFICATION_ICON
 import ai.moneymanager.chat.reply.common.backButton
 import ai.moneymanager.chat.reply.common.formatTime
 import ai.moneymanager.chat.reply.common.cancelButton
@@ -19,7 +20,6 @@ import java.time.Month
 import java.time.format.TextStyle
 import java.util.Locale
 
-private const val DEFAULT_NOTIFICATION_ICON = "🔔"
 private const val ACTIVE_STATUS_ICON = "🟢"
 private const val PAUSED_STATUS_ICON = "⏸️"
 
@@ -97,11 +97,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.notificationListReply
             val notifications = context.notifications
             val title = localizationService.t("notification.list.title", lang)
 
-            val limitReached = context.notifLimitReached
-            val limitBanner = if (limitReached != null) {
-                context.notifLimitReached = null
-                localizationService.t("notification.create.error.limit_reached", lang, limitReached) + "\n\n"
-            } else ""
+            val limitBanner = context.consumeLimitBanner(localizationService, lang)
 
             text = if (notifications.isEmpty()) {
                 """
@@ -169,8 +165,10 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.notificationActionsRe
             val freq = if (n != null) formatFrequencyFull(n, localizationService, lang) else ""
             val name = n?.name ?: localizationService.t("notification.actions.fallback_name", lang)
 
+            val limitBanner = context.consumeLimitBanner(localizationService, lang)
+
             text = """
-                |$icon $name
+                |$limitBanner$icon $name
                 |
                 |$statusText
                 |$freq
@@ -774,3 +772,9 @@ private fun monthFull(month: Month, locale: Locale): String =
 
 private fun localeFor(language: String?): Locale =
     Locale.of(language ?: LocalizationService.FALLBACK_LANGUAGE)
+
+private fun MoneyManagerContext.consumeLimitBanner(localizationService: LocalizationService, lang: String?): String {
+    val limit = notifLimitReached ?: return ""
+    notifLimitReached = null
+    return localizationService.t("notification.create.error.limit_reached", lang, limit) + "\n\n"
+}
