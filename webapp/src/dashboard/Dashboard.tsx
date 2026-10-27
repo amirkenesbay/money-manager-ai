@@ -6,13 +6,12 @@ import { AlertIcon, ChevronDownIcon, ChevronRightIcon, KeyboardIcon, MicIcon } f
 import { LoadError } from '../ui/LoadError'
 import { SkeletonCard, SkeletonRows } from '../ui/Skeleton'
 import { useCountUp } from '../ui/useCountUp'
-import { useSoonNotice } from '../ui/useSoonNotice'
 import './Dashboard.css'
 import { useDashboard } from './useDashboard'
 
 const RECENT_SKELETON_ROWS = 3
 
-export function Dashboard({ name, groups, groupId, language, switchError, onSwitchGroup, onOpenOperations, onOpenReports, onAddOperation, onSelectOperation }: {
+export function Dashboard({ name, groups, groupId, language, switchError, onSwitchGroup, onOpenOperations, onOpenReports, onAddOperation, onRecordVoice, onSelectOperation }: {
   name: string
   groups: Group[]
   groupId: string
@@ -22,10 +21,10 @@ export function Dashboard({ name, groups, groupId, language, switchError, onSwit
   onOpenOperations: () => void
   onOpenReports: () => void
   onAddOperation: () => void
+  onRecordVoice: () => void
   onSelectOperation: (operation: Operation) => void
 }) {
   const dashboard = useDashboard(groupId)
-  const soon = useSoonNotice()
   const ready = dashboard.state.status === 'ready' ? dashboard.state.data : null
 
   return (
@@ -52,7 +51,7 @@ export function Dashboard({ name, groups, groupId, language, switchError, onSwit
           />
         </>
       )}
-      <VoiceEntry firstTime={ready?.operations.items.length === 0} soonVisible={soon.visible} onSoon={soon.show} onManual={onAddOperation} />
+      <VoiceEntry firstTime={ready?.operations.items.length === 0} onRecord={onRecordVoice} onManual={onAddOperation} />
     </>
   )
 }
@@ -151,10 +150,9 @@ function RecentOperations({ operations, currency, language, onOpenOperations, on
   )
 }
 
-function VoiceEntry({ firstTime, soonVisible, onSoon, onManual }: {
+function VoiceEntry({ firstTime, onRecord, onManual }: {
   firstTime: boolean
-  soonVisible: boolean
-  onSoon: () => void
+  onRecord: () => void
   onManual: () => void
 }) {
   return (
@@ -167,7 +165,7 @@ function VoiceEntry({ firstTime, soonVisible, onSoon, onManual }: {
         <span aria-hidden="true" />
         <span className="voice-ring">
           <span className="voice-inner-ring">
-            <button type="button" className="voice-button pressable" aria-label={strings.recordVoice} onClick={onSoon}><MicIcon /></button>
+            <button type="button" className="voice-button pressable" aria-label={strings.recordVoice} onClick={onRecord}><MicIcon /></button>
           </span>
         </span>
         <button type="button" className="manual-button" aria-label={strings.manualEntryLabel} onClick={onManual}>
@@ -175,7 +173,6 @@ function VoiceEntry({ firstTime, soonVisible, onSoon, onManual }: {
           {strings.manualEntry}
         </button>
       </div>
-      <p className="notice" role="status" hidden={!soonVisible}>{strings.comingSoon}</p>
     </section>
   )
 }

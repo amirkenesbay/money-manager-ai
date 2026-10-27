@@ -1,0 +1,47 @@
+import { downsample, encodeWav, isSilent, joinChunks, WAV_MIME_TYPE } from './wav'
+
+const BUFFER_SIZE = 4096
+
+export type Recording = { kind: 'audio'; wav: Blob } | { kind: 'silence' }
+
+export type MicrophoneError = 'denied' | 'unsupported'
+
+export interface Recorder {
+  stop: () => Recording
+  cancel: () => void
+}
+
+export const microphoneSupported = (): boolean => typeof navigator.mediaDevices?.getUserMedia === 'function'
+
+export async function startRecording(): Promise<Recorder> {
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } })
+  const context = new AudioContext()
+  const source = context.createMediaStreamSource(stream)
+  const processor = context.createScriptProcessor(BUFFER_SIZE, 1, 1)
+  const chunks: Float32Array[] = []
+  processor.onaudioprocess = (event) => chunks.push(new Float32Array(event.inputBuffer.getChannelData(0)))
+  source.connect(processor)
+  processor.connect(context.destination)
+  await context.resume()
+
+  const release = () => {
+    processor.disconnect()
+    source.disconnect()
+    stream.getTracks().forEach((track) => track.stop())
+    void context.close()
+  }
+
+  return {
+    stop: () => {
+      release()
+      const samples = downsample(joinChunks(chunks), context.sampleRate)
+      if (isSilent(samples)) return { kind: 'silence' }
+      return { kind: 'audio', wav: new Blob([encodeWav(samples)], { type: WAV_MIME_TYPE }) }
+    },
+    cancel: release,
+  }
+}
+
+export function microphoneErrorOf(error: unknown): MicrophoneError {
+  return error instanceof DOMException && (error.name === 'NotAllowedError' || error.name === 'SecurityError') ? 'denied' : 'unsupported'
+}

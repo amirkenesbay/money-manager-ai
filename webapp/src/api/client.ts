@@ -36,7 +36,7 @@ export const serverErrorCode = (error: unknown): ApiErrorCode | null =>
 async function send(path: string, init: RequestInit, signal?: AbortSignal): Promise<Response> {
   const headers = new Headers(init.headers)
   headers.set('Authorization', authorizationHeader(rawInitData() ?? ''))
-  if (init.body !== undefined) headers.set('Content-Type', JSON_CONTENT_TYPE)
+  if (init.body !== undefined && !headers.has('Content-Type')) headers.set('Content-Type', JSON_CONTENT_TYPE)
   try {
     return await fetch(`${API_BASE}${path}`, { ...init, headers, signal })
   } catch (error) {

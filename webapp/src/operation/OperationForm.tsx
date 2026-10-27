@@ -13,17 +13,16 @@ import { LoadError } from '../ui/LoadError'
 import { ScreenHeader } from '../ui/ScreenHeader'
 import { Segmented } from '../ui/Segmented'
 import { useConfirmClosing } from '../ui/useConfirmClosing'
-import { Sheet } from '../ui/Sheet'
 import { SkeletonRows } from '../ui/Skeleton'
 import { HUGE_AMOUNT, parseAmount } from './amount'
-import { Calendar } from './Calendar'
+import { CalendarSheet } from './CalendarSheet'
 import { DeleteSheet } from './DeleteSheet'
 import './operation.css'
+import { MAX_COMMENT_LENGTH } from './limits'
 
 const OPERATION_TYPES: CategoryType[] = ['EXPENSE', 'INCOME']
 const QUICK_DAYS_AGO = [0, 1, 2]
 const CATEGORY_SKELETON_ROWS = 2
-const MAX_COMMENT_LENGTH = 200
 
 export type SaveResult = { operation: Operation; created: boolean }
 
@@ -179,23 +178,6 @@ function FormFields({ group, language, operation, categories, onSaved, onDeleted
         <DeleteSheet group={group} language={language} operation={operation} onDeleted={onDeleted} onClose={() => setDeleteOpen(false)} />
       )}
     </>
-  )
-}
-
-function CalendarSheet({ value, max, language, onPick, onClose }: {
-  value: string
-  max: string
-  language: string
-  onPick: (date: string) => void
-  onClose: () => void
-}) {
-  const [picked, setPicked] = useState(value)
-  return (
-    <Sheet label={strings.calendarLabel} onClose={onClose}>
-      <Calendar value={picked} max={max} language={language} onChange={setPicked} />
-      <p className="caption">{strings.futureDatesHint}</p>
-      <Button onClick={() => onPick(picked)}>{strings.confirmDate(formatDayLabel(picked, new Date(), language).toLowerCase())}</Button>
-    </Sheet>
   )
 }
 

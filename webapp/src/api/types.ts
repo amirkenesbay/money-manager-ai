@@ -9,6 +9,9 @@ export type ApiErrorCode =
   | 'GROUP_DUPLICATE'
   | 'GROUP_LIMIT_REACHED'
   | 'NOTIFICATION_LIMIT_REACHED'
+  | 'AI_LIMIT_REACHED'
+  | 'AI_BUSY'
+  | 'AI_UNAVAILABLE'
   | 'INTERNAL_ERROR'
 
 export interface ApiErrorBody {
@@ -239,4 +242,19 @@ export interface Reminder extends ReminderSchedule {
   icon: string
   isActive: boolean
   nextFireTime: string
+}
+
+export interface VoiceOperation {
+  type: CategoryType
+  amount: string
+  categoryId: string | null
+  categoryName: string | null
+  categoryIcon: string | null
+  isNewCategory: boolean
+  operationDate: string
+  description: string | null
+}
+
+export interface VoiceResult {
+  operations: VoiceOperation[]
 }

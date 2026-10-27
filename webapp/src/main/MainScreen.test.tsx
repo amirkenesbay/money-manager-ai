@@ -113,12 +113,14 @@ describe('MainScreen dashboard', () => {
     expect(fetchBalance).not.toHaveBeenCalledWith(FAMILY_GROUP_ID, expect.anything())
   })
 
-  it('tells that voice entry is coming soon', async () => {
+  it('explains the microphone before the first voice recording', async () => {
     renderDashboard()
 
     await userEvent.click(await screen.findByRole('button', { name: strings.recordVoice }))
 
-    expect(screen.getByRole('status')).toHaveTextContent(strings.comingSoon)
+    expect(screen.getByRole('dialog', { name: strings.voiceAskTitle })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: strings.voiceAskLater }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('records an operation manually, refreshes the data and lets the user undo it', async () => {

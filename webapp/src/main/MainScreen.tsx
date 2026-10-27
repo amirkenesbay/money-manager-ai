@@ -15,6 +15,7 @@ import { OperationsScreen } from '../operations/OperationsScreen'
 import { PremiumScreen } from '../premium/PremiumScreen'
 import { RemindersScreen } from '../reminders/RemindersScreen'
 import { ReportsScreen } from '../reports/ReportsScreen'
+import { VoiceFlow } from '../voice/VoiceFlow'
 import { strings } from '../strings'
 import { notifyOutcome } from '../telegram/haptics'
 import { LoadError } from '../ui/LoadError'
@@ -27,6 +28,7 @@ type Overlay =
   | { kind: 'form'; operation: Operation | null }
   | { kind: 'detail'; operation: Operation }
   | { kind: 'section'; section: Section }
+  | { kind: 'voice' }
 
 interface Navigation {
   addOperation: () => void
@@ -109,27 +111,33 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
     openSection: (section) => setOverlay({ kind: 'section', section }),
   }
 
-  const undo = async (operation: Operation) => {
+  const undo = async (operations: Operation[]) => {
     toast.hide()
     try {
-      await deleteOperation(groupId, operation.id)
+      await Promise.all(operations.map((operation) => deleteOperation(groupId, operation.id)))
       notifyOutcome('success')
       refresh()
-      toast.show({ title: strings.undoneToast, detail: summary(operation) })
+      toast.show({ title: strings.undoneToast, detail: operations.length === 1 ? summary(operations[0]) : strings.savedCount(operations.length) })
     } catch {
       notifyOutcome('error')
       toast.show({ title: strings.undoFailed })
     }
   }
 
-  const saved = ({ operation, created }: SaveResult) => {
+  const recorded = (operations: Operation[]) => {
     refresh()
+    setOverlay(null)
+    setTab('home')
+    const detail = operations.length === 1 ? summary(operations[0]) : strings.savedCount(operations.length)
+    toast.show({ title: strings.savedToast, detail, action: { label: strings.undo, onClick: () => void undo(operations) } })
+  }
+
+  const saved = ({ operation, created }: SaveResult) => {
     if (created) {
-      setOverlay(null)
-      setTab('home')
-      toast.show({ title: strings.savedToast, detail: summary(operation), action: { label: strings.undo, onClick: () => void undo(operation) } })
+      recorded([operation])
       return
     }
+    refresh()
     setOverlay({ kind: 'detail', operation })
     toast.show({ title: strings.changedToast, detail: summary(operation) })
   }
@@ -151,7 +159,19 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
     <>
       <main className={overlay ? 'screen' : 'screen with-tab-bar'}>
         {overlay?.kind === 'section' && workspace && <SectionScreen key={overlay.section} section={overlay.section} workspace={workspace} onBack={closeSection} />}
-        {overlay && overlay.kind !== 'section' && group && (
+        {overlay?.kind === 'voice' && group && (
+          <VoiceFlow
+            me={me}
+            group={group}
+            onClose={() => {
+              setOverlay(null)
+              refresh()
+            }}
+            onManual={navigation.addOperation}
+            onSaved={recorded}
+          />
+        )}
+        {overlay && (overlay.kind === 'form' || overlay.kind === 'detail') && group && (
           <OperationOverlay
             overlay={overlay}
             group={group}
@@ -180,6 +200,7 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
                 onOpenOperations={() => setTab('operations')}
                 onOpenReports={() => setTab('reports')}
                 onAddOperation={navigation.addOperation}
+                onRecordVoice={() => setOverlay({ kind: 'voice' })}
                 onSelectOperation={navigation.selectOperation}
               />
             )
@@ -193,7 +214,7 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
 }
 
 function OperationOverlay({ overlay, group, language, onClose, onEdit, onOpenDetail, onSaved, onDeleted }: {
-  overlay: Exclude<Overlay, { kind: 'section' }>
+  overlay: Extract<Overlay, { kind: 'form' | 'detail' }>
   group: Group
   language: string
   onClose: () => void

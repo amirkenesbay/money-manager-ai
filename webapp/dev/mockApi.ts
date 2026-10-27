@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Plugin } from 'vite'
 import { AUTH_SCHEME } from '../src/api/auth.ts'
-import type { AnalyticsReport, ApiErrorBody, ApiErrorCode, Balance, Category, CategoryReport, ComparisonReport, Currency, Group, Invite, Limits, Me, Member, MembersReport, MonthSummary, Operation, OperationsPage, Reminder, ReminderInput, SubscriptionTier } from '../src/api/types.ts'
+import type { VoiceResult, AnalyticsReport, ApiErrorBody, ApiErrorCode, Balance, Category, CategoryReport, ComparisonReport, Currency, Group, Invite, Limits, Me, Member, MembersReport, MonthSummary, Operation, OperationsPage, Reminder, ReminderInput, SubscriptionTier } from '../src/api/types.ts'
 
 const API_PREFIX = '/api/v1'
 const SCENARIO_PARAM = 'mock'
@@ -14,7 +14,7 @@ const PERSONAL_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d0'
 const FAMILY_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d1'
 const PREMIUM_EXPIRES_AT = '2026-12-31T00:00:00Z'
 const NO_CONTENT_STATUS = 204
-const GROUP_ROUTE = /^\/groups\/([0-9a-f]{24})(?:\/(balance|summary|operations|activate|categories|members|invite|initial-balance|reports\/[a-z]+))?(?:\/([^/]+))?$/
+const GROUP_ROUTE = /^\/groups\/([0-9a-f]{24})(?:\/(balance|summary|operations|activate|categories|members|invite|initial-balance|voice|reports\/[a-z]+))?(?:\/([^/]+))?$/
 const REMINDER_ROUTE = /^\/notifications(?:\/([^/]+))?$/
 const GROUP_ID_PREFIX = '6650a1b2c3d4e5f6a7b8'
 const GROUP_ID_DIGITS = 4
@@ -23,12 +23,13 @@ const CONFLICT_STATUS = 409
 const LIMIT_STATUS = 422
 const CREATED_STATUS = 201
 const DEFAULT_REMINDER_ICON = '🔔'
+const VOICE_DELAY_MS = 1500
 const SUBSCRIBE_URL = 'https://t.me/tribute/app?startapp=s11rb'
 const FREE_HISTORY_DAYS = 30
 const DEFAULT_PAGE_SIZE = 20
 const FILLER_OPERATIONS = 26
 
-type Body = Me | Group | Group[] | Balance | MonthSummary | Operation | OperationsPage | Category | Category[] | AnalyticsReport | ComparisonReport | MembersReport | CategoryReport | Member[] | Invite | Reminder | Reminder[] | ApiErrorBody | null
+type Body = Me | Group | Group[] | Balance | MonthSummary | Operation | OperationsPage | Category | Category[] | AnalyticsReport | ComparisonReport | MembersReport | CategoryReport | Member[] | Invite | Reminder | Reminder[] | VoiceResult | ApiErrorBody | null
 type MockResponse = { status: number; body: Body; delayMs?: number }
 
 const ok = (body: Body, delayMs?: number): MockResponse => ({ status: 200, body, delayMs })
@@ -336,6 +337,16 @@ const MEMBERS: Member[] = [
 
 let createdGroups = 0
 
+function voiceResult(groupId: string): VoiceResult {
+  const known = categoriesOf(groupId).find((category) => category.type === 'EXPENSE')
+  return {
+    operations: [
+      { type: 'EXPENSE', amount: '2000.0', categoryId: known?.id ?? null, categoryName: known?.name ?? null, categoryIcon: known?.icon ?? null, isNewCategory: false, operationDate: daysAgo(0), description: null },
+      { type: 'EXPENSE', amount: '1500.0', categoryId: null, categoryName: 'Кафе', categoryIcon: '☕', isNewCategory: true, operationDate: daysAgo(1), description: 'капучино' },
+    ],
+  }
+}
+
 function groupRoute(path: string, query: URLSearchParams, scenario: string, method: string, body: string): MockResponse | null {
   const match = GROUP_ROUTE.exec(path)
   if (!match || !groups.some((group) => group.id === match[1])) return null
@@ -359,6 +370,8 @@ function groupRoute(path: string, query: URLSearchParams, scenario: string, meth
       return ok(groupOf(groupId).isOwner ? MEMBERS.map((member) => ({ ...member, isOwner: member.userId === 1 })) : MEMBERS)
     case 'invite':
       return ok({ inviteToken: `K7Q2${groupId.slice(-5)}`, url: `${BOT_LINK}K7Q2${groupId.slice(-5)}` })
+    case 'voice':
+      return ok(voiceResult(groupId), VOICE_DELAY_MS)
     case 'initial-balance':
       return ok(replaceGroup(groupId, { initialBalance: (JSON.parse(body) as { amount: string }).amount }))
     default:
