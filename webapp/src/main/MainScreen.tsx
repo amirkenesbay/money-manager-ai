@@ -7,6 +7,7 @@ import { activateGroup, fetchGroups } from '../dashboard/dashboardApi'
 import { OperationsScreen } from '../operations/OperationsScreen'
 import { strings } from '../strings'
 import { LoadError } from '../ui/LoadError'
+import { SkeletonCard } from '../ui/Skeleton'
 
 type Screen = 'dashboard' | 'operations'
 
@@ -27,7 +28,7 @@ export function MainScreen({ me, activeGroupId }: { me: Me; activeGroupId: strin
     }
   }, [])
 
-  if (groups.state.status === 'loading') return <main className="screen"><p className="hint">{strings.loading}</p></main>
+  if (groups.state.status === 'loading') return <main className="screen" aria-busy="true" aria-label={strings.loading}><SkeletonCard /></main>
   if (groups.state.status === 'error') {
     return <main className="screen"><LoadError message={groups.state.message} onRetry={groups.reload} /></main>
   }
@@ -35,6 +36,7 @@ export function MainScreen({ me, activeGroupId }: { me: Me; activeGroupId: strin
   if (screen === 'operations' && group) return <OperationsScreen me={me} group={group} onBack={openDashboard} />
   return (
     <Dashboard
+      name={displayName(me)}
       groups={groups.state.data}
       groupId={groupId}
       language={me.language}
@@ -43,4 +45,8 @@ export function MainScreen({ me, activeGroupId }: { me: Me; activeGroupId: strin
       onOpenOperations={() => setScreen('operations')}
     />
   )
+}
+
+function displayName(me: Me): string {
+  return me.firstName ?? me.username ?? strings.defaultName
 }

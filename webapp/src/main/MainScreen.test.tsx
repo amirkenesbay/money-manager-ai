@@ -1,8 +1,8 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiRequestError } from '../api/client'
-import { formatMoney, formatSignedMoney } from '../format'
+import { formatDayLabel, formatMoney, formatSignedMoney } from '../format'
 import { strings } from '../strings'
 import { asRendered } from '../test/text'
 import { balance, FAMILY_GROUP_ID, group, me, operation, operationsPage, PERSONAL_GROUP_ID, summary } from '../test/fixtures'
@@ -43,27 +43,27 @@ describe('MainScreen dashboard', () => {
     vi.mocked(fetchCategories).mockResolvedValue([])
   })
 
-  it('shows the balance with its breakdown', async () => {
+  it('shows the balance with the month expense and income', async () => {
     renderDashboard()
 
     expect(await screen.findByText(asRendered(formatMoney('169999.5', 'KZT', LANGUAGE)))).toBeInTheDocument()
-    expect(screen.getByText(asRendered(formatMoney('50000', 'KZT', LANGUAGE)))).toBeInTheDocument()
-    expect(screen.getByText(asRendered(formatSignedMoney('EXPENSE', '180000.5', 'KZT', LANGUAGE)))).toBeInTheDocument()
+    expect(screen.getByText(asRendered(strings.monthExpense(formatSignedMoney('EXPENSE', '15000', 'KZT', LANGUAGE))))).toBeInTheDocument()
+    expect(screen.getByText(asRendered(strings.monthIncome(formatSignedMoney('INCOME', '300000', 'KZT', LANGUAGE))))).toBeInTheDocument()
   })
 
-  it('shows only the top three expense categories of the month', async () => {
+  it('warns when the month expenses exceed the income', async () => {
+    vi.mocked(fetchMonthSummary).mockResolvedValue(summary({ income: '10000', expense: '22400', net: '-12400' }))
+
     renderDashboard()
 
-    const categories = await screen.findByRole('list', { name: strings.topExpensesTitle })
-    expect(within(categories).getAllByRole('listitem')).toHaveLength(3)
-    expect(within(categories).queryByText(/Кофе/)).not.toBeInTheDocument()
+    expect(await screen.findByText(asRendered(strings.monthOverspent(formatMoney('12400', 'KZT', LANGUAGE))))).toBeInTheDocument()
   })
 
-  it('lists recent operations with sign and description', async () => {
+  it('lists recent operations with sign and day', async () => {
     renderDashboard()
 
     expect(await screen.findByText(asRendered(formatSignedMoney('EXPENSE', '3500', 'KZT', LANGUAGE)))).toBeInTheDocument()
-    expect(screen.getByText(/Магнум/)).toBeInTheDocument()
+    expect(screen.getByText(formatDayLabel('2026-10-12', new Date(), LANGUAGE))).toBeInTheDocument()
   })
 
   it('explains empty month and empty history', async () => {
@@ -72,14 +72,14 @@ describe('MainScreen dashboard', () => {
 
     renderDashboard()
 
-    expect(await screen.findByText(strings.monthEmpty)).toBeInTheDocument()
+    expect(await screen.findByText(strings.monthNoExpense)).toBeInTheDocument()
     expect(screen.getByText(strings.recentOperationsEmpty)).toBeInTheDocument()
   })
 
-  it('shows the group name as a title when there is only one group', async () => {
+  it('shows the group name without a picker when there is only one group', async () => {
     renderDashboard()
 
-    expect(await screen.findByRole('heading', { name: 'Личное' })).toBeInTheDocument()
+    expect(await screen.findByText('Личное')).toBeInTheDocument()
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
   })
 
@@ -104,6 +104,14 @@ describe('MainScreen dashboard', () => {
     expect(await screen.findByText(strings.groupSwitchFailed)).toBeInTheDocument()
     expect(screen.getByRole('combobox')).toHaveValue(PERSONAL_GROUP_ID)
     expect(fetchBalance).not.toHaveBeenCalledWith(FAMILY_GROUP_ID, expect.anything())
+  })
+
+  it('tells that voice and manual entry are coming soon', async () => {
+    renderDashboard()
+
+    await userEvent.click(await screen.findByRole('button', { name: strings.recordVoice }))
+
+    expect(screen.getByRole('status')).toHaveTextContent(strings.comingSoon)
   })
 
   it('recovers dashboard data on retry', async () => {

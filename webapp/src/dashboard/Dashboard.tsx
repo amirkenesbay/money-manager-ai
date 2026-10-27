@@ -1,14 +1,19 @@
 import type { Balance, Currency, Group, MonthSummary, Operation } from '../api/types'
-import { formatMoney, formatMonthTitle, formatSignedMoney } from '../format'
+import { formatDayLabel, formatMoney, formatSignedMoney } from '../format'
 import { OperationList } from '../operations/OperationList'
 import { strings } from '../strings'
+import { AlertIcon, ChevronDownIcon, ChevronRightIcon, KeyboardIcon, MicIcon } from '../ui/icons'
 import { LoadError } from '../ui/LoadError'
+import { SkeletonCard, SkeletonRows } from '../ui/Skeleton'
+import { useCountUp } from '../ui/useCountUp'
+import { useSoonNotice } from '../ui/useSoonNotice'
+import './Dashboard.css'
 import { useDashboard } from './useDashboard'
 
-const TOP_CATEGORIES_LIMIT = 3
-const FULL_PERCENT = 100
+const RECENT_SKELETON_ROWS = 3
 
-export function Dashboard({ groups, groupId, language, switchError, onSwitchGroup, onOpenOperations }: {
+export function Dashboard({ name, groups, groupId, language, switchError, onSwitchGroup, onOpenOperations }: {
+  name: string
   groups: Group[]
   groupId: string
   language: string
@@ -17,105 +22,107 @@ export function Dashboard({ groups, groupId, language, switchError, onSwitchGrou
   onOpenOperations: () => void
 }) {
   const dashboard = useDashboard(groupId)
+  const soon = useSoonNotice()
+  const ready = dashboard.state.status === 'ready' ? dashboard.state.data : null
 
   return (
     <main className="screen">
-      <GroupSwitcher groups={groups} activeGroupId={groupId} onSwitch={onSwitchGroup} />
+      <header className="home-header">
+        <span className="home-greeting">
+          <span className="hint">{strings.greetingLabel}</span>
+          <span className="title">{name}</span>
+        </span>
+        <GroupChip groups={groups} activeGroupId={groupId} onSwitch={onSwitchGroup} />
+      </header>
       {switchError && <p className="error-text" role="alert">{switchError}</p>}
-      {dashboard.state.status === 'loading' && <p className="hint">{strings.loading}</p>}
+      {dashboard.state.status === 'loading' && <DashboardSkeleton />}
       {dashboard.state.status === 'error' && <LoadError message={dashboard.state.message} onRetry={dashboard.reload} />}
-      {dashboard.state.status === 'ready' && (
+      {ready && (
         <>
-          <BalanceCard balance={dashboard.state.data.balance} language={language} />
-          <MonthSummaryCard summary={dashboard.state.data.summary} language={language} />
+          <BalanceCard balance={ready.balance} summary={ready.summary} language={language} onOpenReport={soon.show} />
           <RecentOperations
-            operations={dashboard.state.data.operations.items}
-            currency={dashboard.state.data.balance.currency}
+            operations={ready.operations.items}
+            currency={ready.balance.currency}
             language={language}
             onOpenOperations={onOpenOperations}
           />
         </>
       )}
+      <VoiceEntry firstTime={ready?.operations.items.length === 0} soonVisible={soon.visible} onSoon={soon.show} />
     </main>
   )
 }
 
-function GroupSwitcher({ groups, activeGroupId, onSwitch }: {
+function GroupChip({ groups, activeGroupId, onSwitch }: {
   groups: Group[]
   activeGroupId: string
   onSwitch: (groupId: string) => void
 }) {
   const active = groups.find((group) => group.id === activeGroupId)
-  if (groups.length < 2) return <h1>{active?.name ?? strings.dashboardTitle}</h1>
+  const switchable = groups.length > 1
   return (
-    <label className="group-switcher">
-      <span className="hint">{strings.groupLabel}</span>
-      <select value={activeGroupId} onChange={(event) => onSwitch(event.target.value)}>
-        {groups.map((group) => (
-          <option key={group.id} value={group.id}>{group.name}</option>
-        ))}
-      </select>
-    </label>
-  )
-}
-
-function BalanceCard({ balance, language }: { balance: Balance; language: string }) {
-  const money = (amount: string) => formatMoney(amount, balance.currency, language)
-  return (
-    <section className="card">
-      <p className="hint">{strings.balanceTitle}</p>
-      <p className={`balance-total ${Number(balance.total) < 0 ? 'negative' : ''}`}>{money(balance.total)}</p>
-      <dl className="breakdown">
-        <dt>{strings.balanceInitial}</dt><dd>{money(balance.initial)}</dd>
-        <IncomeExpenseRows income={balance.income} expense={balance.expense} currency={balance.currency} language={language} />
-      </dl>
-    </section>
-  )
-}
-
-function MonthSummaryCard({ summary, language }: { summary: MonthSummary; language: string }) {
-  const money = (amount: string) => formatMoney(amount, summary.currency, language)
-  const topCategories = summary.expenseByCategory.slice(0, TOP_CATEGORIES_LIMIT)
-  const maxTotal = Math.max(...topCategories.map((category) => Number(category.total)), 0)
-  return (
-    <section className="card">
-      <h2>{strings.monthSummaryTitle(formatMonthTitle(summary.month, language))}</h2>
-      {summary.operationCount === 0 ? (
-        <p className="hint">{strings.monthEmpty}</p>
-      ) : (
+    <span className={`chip group-chip ${switchable ? 'pressable' : ''}`}>
+      <span className="group-chip-text">
+        <span className="caption">{strings.groupLabel}</span>
+        <span className="row-title">{active?.name}</span>
+      </span>
+      {switchable && (
         <>
-          <dl className="breakdown">
-            <IncomeExpenseRows income={summary.income} expense={summary.expense} currency={summary.currency} language={language} />
-            <dt>{strings.monthNet}</dt><dd className={Number(summary.net) < 0 ? 'negative' : 'positive'}>{money(summary.net)}</dd>
-          </dl>
-          {topCategories.length > 0 && (
-            <ul className="categories" aria-label={strings.topExpensesTitle}>
-              {topCategories.map((category) => (
-                <li key={category.name}>
-                  <span>{category.icon} {category.name}</span>
-                  <span>{money(category.total)}</span>
-                  <span className="bar" style={{ width: `${(Number(category.total) / maxTotal) * FULL_PERCENT}%` }} />
-                </li>
-              ))}
-            </ul>
-          )}
+          <ChevronDownIcon />
+          <select aria-label={strings.groupLabel} value={activeGroupId} onChange={(event) => onSwitch(event.target.value)}>
+            {groups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
+          </select>
         </>
+      )}
+    </span>
+  )
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="home-skeleton" aria-busy="true" aria-label={strings.loading}>
+      <SkeletonCard />
+      <SkeletonRows count={RECENT_SKELETON_ROWS} />
+    </div>
+  )
+}
+
+function BalanceCard({ balance, summary, language, onOpenReport }: {
+  balance: Balance
+  summary: MonthSummary
+  language: string
+  onOpenReport: () => void
+}) {
+  const total = useCountUp(Number(balance.total))
+  const shownTotal = total === Number(balance.total) ? balance.total : String(Math.round(total))
+  const overspent = Number(summary.net) < 0
+  return (
+    <section className="well balance">
+      <span className="balance-head">
+        <h2 className="balance-title">{strings.balanceTitle}</h2>
+        <button type="button" className="link-button" onClick={onOpenReport}>{strings.reportLink}<ChevronRightIcon /></button>
+      </span>
+      <p className={`amount balance-total ${Number(balance.total) < 0 ? 'negative' : ''}`}>
+        {formatMoney(shownTotal, balance.currency, language)}
+      </p>
+      <MonthFlow summary={summary} language={language} />
+      {overspent && (
+        <p className="balance-warning negative">
+          <AlertIcon />
+          {strings.monthOverspent(formatMoney(String(Math.abs(Number(summary.net))), summary.currency, language))}
+        </p>
       )}
     </section>
   )
 }
 
-function IncomeExpenseRows({ income, expense, currency, language }: {
-  income: string
-  expense: string
-  currency: Currency
-  language: string
-}) {
+function MonthFlow({ summary, language }: { summary: MonthSummary; language: string }) {
+  if (summary.operationCount === 0) return <p className="balance-flow caption">{strings.monthNoExpense}</p>
   return (
-    <>
-      <dt>{strings.balanceIncome}</dt><dd className="positive">{formatSignedMoney('INCOME', income, currency, language)}</dd>
-      <dt>{strings.balanceExpense}</dt><dd className="negative">{formatSignedMoney('EXPENSE', expense, currency, language)}</dd>
-    </>
+    <p className="balance-flow amount">
+      <span>{strings.monthExpense(formatSignedMoney('EXPENSE', summary.expense, summary.currency, language))}</span>
+      <span className="income">{strings.monthIncome(formatSignedMoney('INCOME', summary.income, summary.currency, language))}</span>
+    </p>
   )
 }
 
@@ -125,13 +132,40 @@ function RecentOperations({ operations, currency, language, onOpenOperations }: 
   language: string
   onOpenOperations: () => void
 }) {
+  const today = new Date()
   return (
-    <section className="card">
-      <h2>{strings.recentOperationsTitle}</h2>
+    <section className="recent">
+      <span className="recent-head">
+        <h2 className="section-title">{strings.recentOperationsTitle}</h2>
+        {operations.length > 0 && <button type="button" className="link-button" onClick={onOpenOperations}>{strings.allOperations}</button>}
+      </span>
       {operations.length === 0
-        ? <p className="hint">{strings.recentOperationsEmpty}</p>
-        : <OperationList operations={operations} currency={currency} language={language} />}
-      <button type="button" className="secondary-button" onClick={onOpenOperations}>{strings.allOperations}</button>
+        ? <p className="recent-empty caption">{strings.recentOperationsEmpty}</p>
+        : <OperationList operations={operations} currency={currency} language={language} note={(operation) => formatDayLabel(operation.operationDate, today, language)} />}
+    </section>
+  )
+}
+
+function VoiceEntry({ firstTime, soonVisible, onSoon }: { firstTime: boolean; soonVisible: boolean; onSoon: () => void }) {
+  return (
+    <section className="voice">
+      <span className="voice-text">
+        <span className="voice-title">{firstTime ? strings.voiceTitleFirst : strings.voiceTitle}</span>
+        <span className="caption">{strings.voiceExample}</span>
+      </span>
+      <div className="voice-controls">
+        <span aria-hidden="true" />
+        <span className="voice-ring">
+          <span className="voice-inner-ring">
+            <button type="button" className="voice-button pressable" aria-label={strings.recordVoice} onClick={onSoon}><MicIcon /></button>
+          </span>
+        </span>
+        <button type="button" className="manual-button" aria-label={strings.manualEntryLabel} onClick={onSoon}>
+          <span className="manual-circle pressable"><KeyboardIcon /></span>
+          {strings.manualEntry}
+        </button>
+      </div>
+      <p className="notice" role="status" hidden={!soonVisible}>{strings.comingSoon}</p>
     </section>
   )
 }

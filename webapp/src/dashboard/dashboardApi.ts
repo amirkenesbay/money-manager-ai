@@ -2,7 +2,7 @@ import { apiRequest } from '../api/client'
 import type { Balance, Group, MonthSummary, OperationsPage } from '../api/types'
 import { fetchOperations, NO_FILTERS } from '../operations/operationsApi'
 
-export const RECENT_OPERATIONS_LIMIT = 10
+export const RECENT_OPERATIONS_LIMIT = 3
 
 export const fetchGroups = (signal?: AbortSignal): Promise<Group[]> => apiRequest<Group[]>('/groups', {}, signal)
 

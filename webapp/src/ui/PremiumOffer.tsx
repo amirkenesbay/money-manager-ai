@@ -1,12 +1,16 @@
 import { strings } from '../strings'
 import { openExternalLink } from '../telegram/telegramEnv'
+import { ChevronRightIcon, LockIcon } from './icons'
 
 export function PremiumOffer({ historyDaysBack, subscribeUrl }: { historyDaysBack: number | null; subscribeUrl: string }) {
   return (
-    <section className="card premium-offer">
-      <h2>{strings.premiumTitle}</h2>
-      <p className="hint">{strings.premiumHistoryLimit(historyDaysBack)}</p>
-      <button type="button" onClick={() => openExternalLink(subscribeUrl)}>{strings.premiumSubscribe}</button>
-    </section>
+    <button type="button" className="premium-offer pressable" onClick={() => openExternalLink(subscribeUrl)}>
+      <span className="income"><LockIcon /></span>
+      <span className="row-main">
+        <span className="row-title">{strings.premiumHistoryTitle(historyDaysBack)}</span>
+        <span className="caption">{strings.premiumHistoryHint}</span>
+      </span>
+      <ChevronRightIcon />
+    </button>
   )
 }

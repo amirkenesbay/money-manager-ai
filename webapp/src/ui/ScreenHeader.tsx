@@ -1,14 +1,16 @@
+import type { ReactNode } from 'react'
 import { strings } from '../strings'
 import { useBackButton } from '../telegram/useBackButton'
 
-export function ScreenHeader({ title, onBack }: { title: string; onBack: () => void }) {
+export function ScreenHeader({ title, onBack, action }: { title: string; onBack: () => void; action?: ReactNode }) {
   const telegramBack = useBackButton(onBack)
   return (
     <header className="screen-header">
-      {!telegramBack && (
-        <button type="button" className="link-button" onClick={onBack}>{strings.back}</button>
-      )}
-      <h1>{title}</h1>
+      {!telegramBack && <button type="button" className="link-button" onClick={onBack}>{strings.back}</button>}
+      <div className="screen-header-row">
+        <h1 className="title">{title}</h1>
+        {action}
+      </div>
     </header>
   )
 }

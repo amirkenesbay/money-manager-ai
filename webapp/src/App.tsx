@@ -1,16 +1,16 @@
 import type { ReactNode } from 'react'
-import type { Me } from './api/types'
 import { MainScreen } from './main/MainScreen'
 import { useMe } from './me/useMe'
 import { strings } from './strings'
 import { LoadError } from './ui/LoadError'
+import { SkeletonCard } from './ui/Skeleton'
+import { StateView } from './ui/StateView'
 
 export function App({ insideTelegram }: { insideTelegram: boolean }) {
   if (!insideTelegram) {
     return (
       <Screen>
-        <h1>{strings.outsideTelegramTitle}</h1>
-        <p className="hint">{strings.outsideTelegramHint}</p>
+        <StateView icon={strings.outsideTelegramIcon} title={strings.outsideTelegramTitle} body={strings.outsideTelegramHint} />
       </Screen>
     )
   }
@@ -23,7 +23,7 @@ function MeScreen() {
   if (state.status === 'loading') {
     return (
       <Screen>
-        <p className="hint">{strings.loading}</p>
+        <div aria-busy="true" aria-label={strings.loading}><SkeletonCard /></div>
       </Screen>
     )
   }
@@ -35,17 +35,14 @@ function MeScreen() {
     )
   }
   const me = state.data
-  if (me.activeGroupId === null) return <NoGroup me={me} />
+  if (me.activeGroupId === null) {
+    return (
+      <Screen>
+        <StateView icon={strings.noGroupIcon} title={strings.noGroupTitle} body={strings.noGroupHint} />
+      </Screen>
+    )
+  }
   return <MainScreen me={me} activeGroupId={me.activeGroupId} />
-}
-
-function NoGroup({ me }: { me: Me }) {
-  return (
-    <Screen>
-      <h1>{strings.greeting(me.firstName ?? me.username ?? strings.defaultName)}</h1>
-      <p className="hint">{strings.noGroupHint}</p>
-    </Screen>
-  )
 }
 
 function Screen({ children }: { children: ReactNode }) {

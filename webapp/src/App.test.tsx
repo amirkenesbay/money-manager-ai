@@ -41,16 +41,16 @@ describe('App', () => {
 
     render(<App insideTelegram />)
 
-    expect(screen.getByText(strings.loading)).toBeInTheDocument()
+    expect(screen.getByLabelText(strings.loading)).toBeInTheDocument()
     expect(await screen.findByText(strings.balanceTitle)).toBeInTheDocument()
   })
 
-  it('greets and sends the user to the bot when there is no group yet', async () => {
+  it('sends the user to the bot when there is no group yet', async () => {
     fetchMeMock.mockResolvedValue(me({ activeGroupId: null, firstName: null }))
 
     render(<App insideTelegram />)
 
-    expect(await screen.findByText(strings.greeting('amir'))).toBeInTheDocument()
+    expect(await screen.findByText(strings.noGroupTitle)).toBeInTheDocument()
     expect(screen.getByText(strings.noGroupHint)).toBeInTheDocument()
     expect(fetchBalance).not.toHaveBeenCalled()
   })

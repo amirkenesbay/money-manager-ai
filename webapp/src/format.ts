@@ -1,8 +1,10 @@
 import type { CategoryType, Currency } from './api/types'
+import { strings } from './strings'
 
 const FRACTION_DIGITS = 2
 const POSITIVE_SIGN = '+'
 const NEGATIVE_SIGN = '−'
+const NO_BREAK_SPACE = '\u00A0'
 
 const CURRENCY_SYMBOLS: Record<Currency, string> = {
   KZT: '₸',
@@ -19,7 +21,7 @@ export function formatMoney(amount: string, currency: Currency, language: string
     minimumFractionDigits: fractionDigits,
     maximumFractionDigits: fractionDigits,
   }).format(value)
-  const formatted = `${number}${CURRENCY_SYMBOLS[currency]}`
+  const formatted = `${number}${NO_BREAK_SPACE}${CURRENCY_SYMBOLS[currency]}`
   return Number(amount) < 0 ? `${NEGATIVE_SIGN}${formatted}` : formatted
 }
 
@@ -30,13 +32,15 @@ export function formatSignedMoney(type: CategoryType, amount: string, currency: 
   return `${sign}${formatted}`
 }
 
-export function formatShortDate(isoDate: string, language: string): string {
-  return new Intl.DateTimeFormat(language, { day: 'numeric', month: 'short' }).format(parseLocalDate(isoDate))
+export function formatDayLabel(isoDate: string, today: Date, language: string): string {
+  if (isoDate === toIsoDate(today)) return strings.today
+  if (isoDate === toIsoDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1))) return strings.yesterday
+  return new Intl.DateTimeFormat(language, { day: 'numeric', month: 'long' }).format(parseLocalDate(isoDate))
 }
 
-export function formatMonthTitle(isoMonth: string, language: string): string {
-  const title = new Intl.DateTimeFormat(language, { month: 'long', year: 'numeric' }).format(parseLocalDate(`${isoMonth}-01`))
-  return title.charAt(0).toUpperCase() + title.slice(1)
+export function toIsoDate(date: Date): string {
+  const pad = (value: number) => String(value).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
 function parseLocalDate(isoDate: string): Date {

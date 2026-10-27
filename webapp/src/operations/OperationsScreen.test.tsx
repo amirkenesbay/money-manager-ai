@@ -1,8 +1,10 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiRequestError } from '../api/client'
+import { formatSignedMoney } from '../format'
 import { strings } from '../strings'
+import { asRendered } from '../test/text'
 import { openExternalLink } from '../telegram/telegramEnv'
 import { category, group, me, operation, operationsPage, PERSONAL_GROUP_ID, SUBSCRIBE_URL } from '../test/fixtures'
 import { fetchCategories, fetchOperations } from './operationsApi'
@@ -51,7 +53,7 @@ describe('OperationsScreen', () => {
     renderScreen()
     await screen.findByText('Продукты')
 
-    await userEvent.click(screen.getByRole('button', { name: strings.typeFilter('INCOME') }))
+    await userEvent.click(screen.getByRole('radio', { name: strings.typeFilter('INCOME') }))
 
     expect(lastQuery()).toMatchObject({ type: 'INCOME', categoryId: null })
     const categorySelect = await screen.findByRole('combobox', { name: strings.categoryFilterLabel })
@@ -85,9 +87,9 @@ describe('OperationsScreen', () => {
     await userEvent.click(await screen.findByRole('button', { name: strings.loadMore }))
     await screen.findByText('Последняя')
 
-    await userEvent.click(screen.getByRole('button', { name: strings.typeFilter('INCOME') }))
+    await userEvent.click(screen.getByRole('radio', { name: strings.typeFilter('INCOME') }))
 
-    expect(await screen.findByText('Зарплата', { selector: '.operation-main span' })).toBeInTheDocument()
+    expect(await screen.findByText('Зарплата', { selector: '.row-title' })).toBeInTheDocument()
     expect(screen.queryByText('Последняя')).not.toBeInTheDocument()
     expect(screen.queryByText('Покупка 0')).not.toBeInTheDocument()
   })
@@ -99,8 +101,7 @@ describe('OperationsScreen', () => {
 
     await userEvent.selectOptions(screen.getByRole('combobox', { name: strings.periodFilterLabel }), 'lastMonth')
 
-    expect(await screen.findByText(strings.premiumHistoryLimit(30))).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: strings.premiumSubscribe }))
+    await userEvent.click(await screen.findByRole('button', { name: new RegExp(strings.premiumHistoryTitle(30)) }))
     expect(openExternalLink).toHaveBeenCalledWith(SUBSCRIBE_URL)
   })
 
@@ -111,16 +112,43 @@ describe('OperationsScreen', () => {
 
     await userEvent.selectOptions(screen.getByRole('combobox', { name: strings.periodFilterLabel }), 'allTime')
 
-    expect(await screen.findByText(strings.premiumHistoryLimit(30))).toBeInTheDocument()
+    expect(await screen.findByText(strings.premiumHistoryTitle(30))).toBeInTheDocument()
     expect(fetchOperations).not.toHaveBeenCalled()
   })
 
-  it('explains an empty result', async () => {
+  it('explains an empty result and resets the filters', async () => {
     vi.mocked(fetchOperations).mockResolvedValue(operationsPage([]))
+    renderScreen()
+    await userEvent.click(await screen.findByRole('radio', { name: strings.typeFilter('INCOME') }))
+
+    expect(await screen.findByText(strings.operationsEmptyTitle)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: strings.resetFilters }))
+
+    expect(lastQuery()).toMatchObject({ ...periodRange('last30Days', new Date()), type: null, categoryId: null })
+    expect(screen.getByRole('radio', { name: strings.typeFilter(null) })).toBeChecked()
+  })
+
+  it('groups operations by day with the day total', async () => {
+    vi.mocked(fetchOperations).mockResolvedValue(operationsPage([
+      operation({ id: 'op-1', amount: '3500' }),
+      operation({ id: 'op-2', amount: '1500', categoryName: 'Такси' }),
+      operation({ id: 'op-3', operationDate: '2026-10-11', type: 'INCOME', amount: '20000', categoryName: 'Зарплата' }),
+    ]))
 
     renderScreen()
 
-    expect(await screen.findByText(strings.operationsEmptyTitle)).toBeInTheDocument()
+    const day = await screen.findByRole('region', { name: '12 октября' })
+    expect(within(day).getAllByRole('listitem')).toHaveLength(2)
+    expect(within(day).getByText(asRendered(formatSignedMoney('EXPENSE', '5000', 'KZT', 'ru')))).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: '11 октября' })).toBeInTheDocument()
+  })
+
+  it('tells that adding operations is coming soon', async () => {
+    renderScreen()
+
+    await userEvent.click(screen.getByRole('button', { name: strings.addOperation }))
+
+    expect(screen.getByRole('status')).toHaveTextContent(strings.comingSoon)
   })
 
   it('goes back by the in-app button outside Telegram', async () => {
