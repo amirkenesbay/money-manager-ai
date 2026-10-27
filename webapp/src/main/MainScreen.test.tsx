@@ -5,15 +5,19 @@ import { ApiRequestError } from '../api/client'
 import { formatDayLabel, formatMoney, formatSignedMoney } from '../format'
 import { strings } from '../strings'
 import { asRendered } from '../test/text'
-import { balance, category, FAMILY_GROUP_ID, group, me, operation, operationsPage, PERSONAL_GROUP_ID, summary } from '../test/fixtures'
+import { balance, category, FAMILY_GROUP_ID, group, me, operation, operationsPage, PERSONAL_GROUP_ID, reminder, summary } from '../test/fixtures'
 import { MainScreen } from './MainScreen'
-import { activateGroup, fetchBalance, fetchGroups, fetchMonthSummary, fetchRecentOperations } from '../dashboard/dashboardApi'
-import { createOperation, deleteOperation, fetchCategories, fetchOperations } from '../operations/operationsApi'
+import { fetchCategories } from '../categories/categoriesApi'
+import { fetchBalance, fetchMonthSummary, fetchRecentOperations } from '../dashboard/dashboardApi'
+import { activateGroup, createGroup, fetchGroups, fetchInvite, fetchMembers } from '../groups/groupsApi'
+import { fetchReminders } from '../reminders/remindersApi'
+import { createOperation, deleteOperation, fetchOperations } from '../operations/operationsApi'
 
+vi.mock('../groups/groupsApi', () => ({ fetchGroups: vi.fn(), activateGroup: vi.fn(), createGroup: vi.fn(), fetchMembers: vi.fn(), fetchInvite: vi.fn() }))
+vi.mock('../reminders/remindersApi', () => ({ fetchReminders: vi.fn() }))
+vi.mock('../categories/categoriesApi', () => ({ fetchCategories: vi.fn() }))
 vi.mock('../dashboard/dashboardApi', () => ({
   RECENT_OPERATIONS_LIMIT: 10,
-  fetchGroups: vi.fn(),
-  activateGroup: vi.fn(),
   fetchBalance: vi.fn(),
   fetchMonthSummary: vi.fn(),
   fetchRecentOperations: vi.fn(),
@@ -23,7 +27,6 @@ vi.mock('../operations/operationsApi', () => ({
   OPERATIONS_PAGE_SIZE: 20,
   NO_FILTERS: { from: null, to: null, type: null, categoryId: null },
   fetchOperations: vi.fn(),
-  fetchCategories: vi.fn(),
   createOperation: vi.fn(),
   replaceOperation: vi.fn(),
   deleteOperation: vi.fn(),
@@ -32,7 +35,7 @@ vi.mock('../operations/operationsApi', () => ({
 const LANGUAGE = 'ru'
 const familyGroup = group({ id: FAMILY_GROUP_ID, name: 'Семья', type: 'SHARED', isActive: false, memberCount: 3 })
 
-const renderDashboard = () => render(<MainScreen me={me()} activeGroupId={PERSONAL_GROUP_ID} />)
+const renderDashboard = () => render(<MainScreen me={me()} activeGroupId={PERSONAL_GROUP_ID} onMeChanged={vi.fn()} />)
 
 describe('MainScreen dashboard', () => {
   beforeEach(() => {
@@ -44,6 +47,7 @@ describe('MainScreen dashboard', () => {
     vi.mocked(activateGroup).mockResolvedValue(undefined)
     vi.mocked(fetchOperations).mockResolvedValue(operationsPage([operation()]))
     vi.mocked(fetchCategories).mockResolvedValue([])
+    vi.mocked(fetchReminders).mockResolvedValue([])
   })
 
   it('shows the balance with the month expense and income', async () => {
@@ -169,5 +173,42 @@ describe('MainScreen dashboard', () => {
     await userEvent.click(screen.getByRole('button', { name: strings.tabHome }))
 
     expect(await screen.findByText(strings.balanceTitle)).toBeInTheDocument()
+  })
+
+  it('opens settings from the More tab and the premium screen from there', async () => {
+    vi.mocked(fetchReminders).mockResolvedValue([reminder()])
+    renderDashboard()
+
+    await userEvent.click(await screen.findByRole('button', { name: strings.tabMore }))
+
+    expect(await screen.findByRole('heading', { name: strings.moreTitle })).toBeInTheDocument()
+    expect(await screen.findByText(strings.remindersOn(1))).toBeInTheDocument()
+    expect(screen.getByText(strings.tierFree)).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: strings.premiumButton }))
+
+    expect(screen.getByRole('button', { name: strings.subscribeFor(formatMoney('990', 'KZT', LANGUAGE)) })).toBeInTheDocument()
+    expect(screen.queryByRole('navigation', { name: strings.tabBarLabel })).not.toBeInTheDocument()
+  })
+
+  it('switches the active group to a newly created one', async () => {
+    const created = group({ id: 'g-new', name: 'Квартира', type: 'SHARED', isActive: true })
+    vi.mocked(createGroup).mockResolvedValue(created)
+    vi.mocked(fetchMembers).mockResolvedValue([])
+    vi.mocked(fetchInvite).mockResolvedValue({ inviteToken: 'ABC', url: 'https://t.me/bot?start=join_ABC' })
+    renderDashboard()
+
+    await userEvent.click(await screen.findByRole('button', { name: strings.tabMore }))
+    await userEvent.click(await screen.findByRole('button', { name: new RegExp(strings.groupsTitle) }))
+    await userEvent.click(screen.getByRole('button', { name: strings.createGroup }))
+    await userEvent.type(screen.getByRole('textbox', { name: strings.nameLabel }), 'Квартира')
+    await userEvent.click(screen.getByRole('button', { name: strings.createGroup }))
+
+    expect(await screen.findByText(strings.groupCreatedToast('Квартира'))).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: strings.back }))
+    await userEvent.click(screen.getByRole('button', { name: strings.back }))
+    await userEvent.click(screen.getByRole('button', { name: strings.tabHome }))
+
+    await vi.waitFor(() => expect(fetchBalance).toHaveBeenCalledWith('g-new', expect.anything()))
   })
 })

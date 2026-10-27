@@ -3,18 +3,20 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiRequestError } from '../api/client'
 import { formatMoney, toIsoDate } from '../format'
-import { createOperation, fetchCategories, replaceOperation } from '../operations/operationsApi'
+import { fetchCategories } from '../categories/categoriesApi'
+import { createOperation, replaceOperation } from '../operations/operationsApi'
 import { strings } from '../strings'
 import { category, group, operation, PERSONAL_GROUP_ID } from '../test/fixtures'
 import { asRendered } from '../test/text'
 import { OperationForm } from './OperationForm'
 
 vi.mock('../operations/operationsApi', () => ({
-  fetchCategories: vi.fn(),
   createOperation: vi.fn(),
   replaceOperation: vi.fn(),
   deleteOperation: vi.fn(),
 }))
+
+vi.mock('../categories/categoriesApi', () => ({ fetchCategories: vi.fn() }))
 
 const onSaved = vi.fn()
 const today = () => toIsoDate(new Date())

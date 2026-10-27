@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
-import { chartColor, FULL_PERCENT, percentOf } from './chartMath'
+import { percentOf } from '../percent'
+import { chartColor } from './chartMath'
 
 const RADIUS = 64
 const STROKE = 20
@@ -31,14 +32,6 @@ export function Donut({ values, label, children }: { values: number[]; label: st
       </svg>
       <div className="donut-center">{children}</div>
     </div>
-  )
-}
-
-export function Meter({ percent, color = 'var(--accent)' }: { percent: number; color?: string }) {
-  return (
-    <span className="meter" aria-hidden="true">
-      <span style={{ width: `${Math.min(percent, FULL_PERCENT)}%`, background: color }} />
-    </span>
   )
 }
 

@@ -2,6 +2,8 @@ import { backButton, closingBehavior, init, isTMA, miniApp, openTelegramLink, re
 import { applyTheme } from '../theme/theme'
 
 const APP_HEIGHT_VAR = '--app-height'
+const INIT_DATA_USER = 'user'
+const LANGUAGE_CODE_LENGTH = 2
 
 export function initTelegram(): boolean {
   if (!isTMA()) return false
@@ -52,6 +54,15 @@ export function rawInitData(): string | undefined {
     return retrieveRawInitData()
   } catch {
     return undefined
+  }
+}
+
+export function launchLanguage(): string {
+  const user = new URLSearchParams(rawInitData() ?? '').get(INIT_DATA_USER)
+  try {
+    return (user ? (JSON.parse(user) as { language_code?: string }).language_code : undefined) ?? navigator.language.slice(0, LANGUAGE_CODE_LENGTH)
+  } catch {
+    return navigator.language.slice(0, LANGUAGE_CODE_LENGTH)
   }
 }
 

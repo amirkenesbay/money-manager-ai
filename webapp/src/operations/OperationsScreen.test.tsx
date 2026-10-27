@@ -7,7 +7,8 @@ import { strings } from '../strings'
 import { asRendered } from '../test/text'
 import { openExternalLink } from '../telegram/telegramEnv'
 import { category, group, me, operation, operationsPage, PERSONAL_GROUP_ID, SUBSCRIBE_URL } from '../test/fixtures'
-import { fetchCategories, fetchOperations } from './operationsApi'
+import { fetchCategories } from '../categories/categoriesApi'
+import { fetchOperations } from './operationsApi'
 import { OperationsScreen } from './OperationsScreen'
 import { periodRange } from './periods'
 
@@ -15,8 +16,8 @@ vi.mock('./operationsApi', () => ({
   OPERATIONS_PAGE_SIZE: 20,
   NO_FILTERS: { from: null, to: null, type: null, categoryId: null },
   fetchOperations: vi.fn(),
-  fetchCategories: vi.fn(),
 }))
+vi.mock('../categories/categoriesApi', () => ({ fetchCategories: vi.fn() }))
 vi.mock('../telegram/telegramEnv', () => ({ openExternalLink: vi.fn(), rawInitData: () => undefined }))
 
 const PAGE_SIZE = 20

@@ -1,5 +1,5 @@
 import { apiRequest } from '../api/client'
-import type { Category, CategoryType, Operation, OperationsPage } from '../api/types'
+import type { CategoryType, Operation, OperationsPage } from '../api/types'
 import type { DateRange } from './periods'
 
 export const OPERATIONS_PAGE_SIZE = 20
@@ -27,9 +27,6 @@ export function fetchOperations(
   if (query.categoryId) params.set('categoryId', query.categoryId)
   return apiRequest<OperationsPage>(`${operationsPath(groupId)}?${params}`, {}, signal)
 }
-
-export const fetchCategories = (groupId: string, signal?: AbortSignal): Promise<Category[]> =>
-  apiRequest<Category[]>(`/groups/${groupId}/categories`, {}, signal)
 
 export interface OperationInput {
   type: CategoryType

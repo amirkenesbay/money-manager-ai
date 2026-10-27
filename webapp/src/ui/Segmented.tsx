@@ -1,5 +1,6 @@
-export function Segmented<T>({ label, options, value, optionKey, optionLabel, onChange }: {
+export function Segmented<T>({ label, options, value, optionKey, optionLabel, onChange, variant = 'segmented' }: {
   label: string
+  variant?: 'segmented' | 'choices'
   options: T[]
   value: T
   optionKey: (option: T) => string
@@ -7,7 +8,7 @@ export function Segmented<T>({ label, options, value, optionKey, optionLabel, on
   onChange: (option: T) => void
 }) {
   return (
-    <div className="segmented" role="radiogroup" aria-label={label}>
+    <div className={variant} role="radiogroup" aria-label={label}>
       {options.map((option) => (
         <button key={optionKey(option)} type="button" role="radio" aria-checked={option === value} onClick={() => onChange(option)}>
           {optionLabel(option)}

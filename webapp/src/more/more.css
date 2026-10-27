@@ -1,0 +1,12 @@
+.card.profile-card {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1rem;
+}
+
+.profile-avatar {
+  width: 3rem;
+  height: 3rem;
+  font-size: var(--text-lg);
+}

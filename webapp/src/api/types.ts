@@ -4,6 +4,11 @@ export type ApiErrorCode =
   | 'FORBIDDEN'
   | 'NOT_FOUND'
   | 'PREMIUM_REQUIRED'
+  | 'CATEGORY_DUPLICATE'
+  | 'CATEGORY_LIMIT_REACHED'
+  | 'GROUP_DUPLICATE'
+  | 'GROUP_LIMIT_REACHED'
+  | 'NOTIFICATION_LIMIT_REACHED'
   | 'INTERNAL_ERROR'
 
 export interface ApiErrorBody {
@@ -22,10 +27,18 @@ export interface Limits {
   historyDaysBack: number | null
 }
 
+export interface Price {
+  amount: string
+  currency: Currency
+}
+
 export interface Subscription {
   tier: SubscriptionTier
   expiresAt: string | null
   limits: Limits
+  freeLimits: Limits
+  paidLimits: Limits
+  price: Price
   subscribeUrl: string
 }
 
@@ -178,4 +191,52 @@ export interface CategoryReport {
   name: string
   currency: Currency
   months: CategoryMonth[]
+}
+
+export interface Member {
+  userId: number
+  name: string
+  isOwner: boolean
+}
+
+export interface Invite {
+  inviteToken: string
+  url: string
+}
+
+export type FrequencyType =
+  | 'DAILY'
+  | 'WEEKLY'
+  | 'BIWEEKLY'
+  | 'MONTHLY'
+  | 'BIMONTHLY'
+  | 'YEARLY'
+  | 'CUSTOM_DAYS'
+  | 'CUSTOM_WEEKS'
+  | 'CUSTOM_MONTHS'
+  | 'CUSTOM_YEARS'
+
+export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY'
+
+export interface ReminderSchedule {
+  frequencyType: FrequencyType
+  customInterval: number | null
+  hour: number
+  minute: number
+  dayOfWeek: DayOfWeek | null
+  dayOfMonth: number | null
+  monthOfYear: number | null
+}
+
+export interface ReminderInput extends ReminderSchedule {
+  name: string
+  icon: string | null
+}
+
+export interface Reminder extends ReminderSchedule {
+  id: string
+  name: string
+  icon: string
+  isActive: boolean
+  nextFireTime: string
 }

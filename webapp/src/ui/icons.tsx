@@ -38,3 +38,31 @@ export const ChartIcon = () => <Icon size={20} strokeWidth={1.9}><path d="M4 20V
 export const GridIcon = () => <Icon size={20} strokeWidth={1.9}><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" /></Icon>
 
 export const ChevronLeftIcon = () => <Icon size={16} strokeWidth={2.2}><path d="M15 18l-6-6 6-6" /></Icon>
+
+export const UsersIcon = () => (
+  <Icon size={18}><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21a7 7 0 0 1 14 0M17 11a3 3 0 1 0 0-6M22 21a6 6 0 0 0-5-6" /></Icon>
+)
+
+export const UserIcon = () => <Icon size={18}><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" /></Icon>
+
+export const BellIcon = () => <Icon size={18}><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0" /></Icon>
+
+export const GlobeIcon = () => (
+  <Icon size={18}><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></Icon>
+)
+
+export const CoinIcon = () => <Icon size={18}><circle cx="12" cy="12" r="9" /><path d="M9 9h6M9 12h6M12 9v8" /></Icon>
+
+export const WalletIcon = () => (
+  <Icon size={18}><path d="M3 7a2 2 0 0 1 2-2h13v4M3 7v10a2 2 0 0 0 2 2h15V9H5a2 2 0 0 1-2-2zM16 14h.01" /></Icon>
+)
+
+export const CrownIcon = () => <Icon size={40} strokeWidth={1.9}><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" /></Icon>
+
+export const CopyIcon = () => <Icon size={16}><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V5a1 1 0 0 1 1-1h9" /></Icon>
+
+export const SendIcon = () => <Icon size={16}><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z" /></Icon>
+
+export const TrashIcon = () => <Icon size={16}><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></Icon>
+
+export const EditIcon = () => <Icon size={16}><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4" /></Icon>

@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Plugin } from 'vite'
 import { AUTH_SCHEME } from '../src/api/auth.ts'
-import type { AnalyticsReport, ApiErrorBody, Balance, Category, CategoryReport, ComparisonReport, Group, Me, MembersReport, MonthSummary, Operation, OperationsPage, SubscriptionTier } from '../src/api/types.ts'
+import type { AnalyticsReport, ApiErrorBody, ApiErrorCode, Balance, Category, CategoryReport, ComparisonReport, Currency, Group, Invite, Limits, Me, Member, MembersReport, MonthSummary, Operation, OperationsPage, Reminder, ReminderInput, SubscriptionTier } from '../src/api/types.ts'
 
 const API_PREFIX = '/api/v1'
 const SCENARIO_PARAM = 'mock'
@@ -14,37 +14,50 @@ const PERSONAL_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d0'
 const FAMILY_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d1'
 const PREMIUM_EXPIRES_AT = '2026-12-31T00:00:00Z'
 const NO_CONTENT_STATUS = 204
-const GROUP_ROUTE = /^\/groups\/([0-9a-f]{24})\/(balance|summary|operations|activate|categories|reports\/[a-z]+)(?:\/([a-z0-9-]+))?/
+const GROUP_ROUTE = /^\/groups\/([0-9a-f]{24})(?:\/(balance|summary|operations|activate|categories|members|invite|initial-balance|reports\/[a-z]+))?(?:\/([^/]+))?$/
+const REMINDER_ROUTE = /^\/notifications(?:\/([^/]+))?$/
+const GROUP_ID_PREFIX = '6650a1b2c3d4e5f6a7b8'
+const GROUP_ID_DIGITS = 4
+const BOT_LINK = 'https://t.me/moneyManagerAIbot?start=join_'
+const CONFLICT_STATUS = 409
+const LIMIT_STATUS = 422
+const CREATED_STATUS = 201
+const DEFAULT_REMINDER_ICON = '🔔'
 const SUBSCRIBE_URL = 'https://t.me/tribute/app?startapp=s11rb'
 const FREE_HISTORY_DAYS = 30
 const DEFAULT_PAGE_SIZE = 20
 const FILLER_OPERATIONS = 26
 
-type Body = Me | Group[] | Balance | MonthSummary | Operation | OperationsPage | Category[] | AnalyticsReport | ComparisonReport | MembersReport | CategoryReport | ApiErrorBody | null
+type Body = Me | Group | Group[] | Balance | MonthSummary | Operation | OperationsPage | Category | Category[] | AnalyticsReport | ComparisonReport | MembersReport | CategoryReport | Member[] | Invite | Reminder | Reminder[] | ApiErrorBody | null
 type MockResponse = { status: number; body: Body; delayMs?: number }
 
 const ok = (body: Body, delayMs?: number): MockResponse => ({ status: 200, body, delayMs })
+
+const FREE_LIMITS: Limits = { aiRequestsPerDay: 10, categoriesPerType: 10, ownedSharedGroups: 3, activeNotifications: 3, historyDaysBack: FREE_HISTORY_DAYS }
+const PAID_LIMITS: Limits = { aiRequestsPerDay: 100, categoriesPerType: 1000, ownedSharedGroups: null, activeNotifications: null, historyDaysBack: null }
+
+const profile = { language: 'ru', timezone: null as string | null }
 
 const me = (activeGroupId: string | null, tier: SubscriptionTier): Me => ({
   userId: 1,
   firstName: 'Dev',
   username: 'dev',
-  language: 'ru',
-  timezone: 'Asia/Almaty',
+  language: profile.language,
+  timezone: profile.timezone,
   activeGroupId,
   subscription: {
     tier,
     expiresAt: tier === 'PAID' ? PREMIUM_EXPIRES_AT : null,
-    limits: {
-      aiRequestsPerDay: tier === 'PAID' ? 100 : 10,
-      categoriesPerType: tier === 'PAID' ? 1000 : 10,
-      ownedSharedGroups: tier === 'PAID' ? null : 3,
-      activeNotifications: tier === 'PAID' ? null : 3,
-      historyDaysBack: tier === 'PAID' ? null : FREE_HISTORY_DAYS,
-    },
+    limits: tier === 'PAID' ? PAID_LIMITS : FREE_LIMITS,
+    freeLimits: FREE_LIMITS,
+    paidLimits: PAID_LIMITS,
+    price: { amount: '990', currency: 'KZT' },
     subscribeUrl: SUBSCRIBE_URL,
   },
 })
+
+const failure = (status: number, code: ApiErrorCode, message: string, details: Record<string, unknown> = {}): MockResponse =>
+  ({ status, body: { code, message, details } })
 
 const serverError: MockResponse = {
   status: 500,
@@ -61,15 +74,14 @@ const premiumRequired: MockResponse = {
   body: { code: 'PREMIUM_REQUIRED', message: `На Free доступна история только за последние ${FREE_HISTORY_DAYS} дн.`, details: { historyDaysBack: FREE_HISTORY_DAYS } },
 }
 
-const groups: Group[] = [
+let groups: Group[] = [
   { id: PERSONAL_GROUP_ID, name: 'Личное', type: 'PERSONAL', currency: 'KZT', isOwner: true, isActive: true, memberCount: 1, initialBalance: '50000' },
   { id: FAMILY_GROUP_ID, name: 'Семья', type: 'SHARED', currency: 'USD', isOwner: false, isActive: false, memberCount: 3, initialBalance: '0' },
 ]
 
-const balances: Record<string, Balance> = {
-  [PERSONAL_GROUP_ID]: { currency: 'KZT', initial: '50000', income: '450000', expense: '187450.5', total: '312549.5' },
-  [FAMILY_GROUP_ID]: { currency: 'USD', initial: '0', income: '3200', expense: '4100', total: '-900' },
-}
+const groupOf = (groupId: string): Group => groups.find((group) => group.id === groupId) ?? groups[0]
+
+const currencyOf = (groupId: string): Currency => groupOf(groupId).currency
 
 const currentMonth = (): string => new Date().toISOString().slice(0, 7)
 
@@ -96,8 +108,8 @@ const operations: Record<string, Operation[]> = {
 
 const balanceOf = (groupId: string): Balance => {
   const sum = (type: Operation['type']) => operations[groupId].filter((op) => op.type === type).reduce((total, op) => total + Number(op.amount), 0)
-  const initial = Number(balances[groupId].initial)
-  return { ...balances[groupId], income: String(sum('INCOME')), expense: String(sum('EXPENSE')), total: String(initial + sum('INCOME') - sum('EXPENSE')) }
+  const initial = Number(groupOf(groupId).initialBalance)
+  return { currency: currencyOf(groupId), initial: String(initial), income: String(sum('INCOME')), expense: String(sum('EXPENSE')), total: String(initial + sum('INCOME') - sum('EXPENSE')) }
 }
 
 const summaryOf = (groupId: string): MonthSummary => {
@@ -110,7 +122,7 @@ const summaryOf = (groupId: string): MonthSummary => {
   })
   return {
     month: currentMonth(),
-    currency: balances[groupId].currency,
+    currency: currencyOf(groupId),
     income: String(sum('INCOME')),
     expense: String(sum('EXPENSE')),
     net: String(sum('INCOME') - sum('EXPENSE')),
@@ -139,10 +151,46 @@ const meScenarios: Record<string, () => MockResponse> = {
     : ok(me(activeGroupId, 'FREE'))),
 }
 
+const categories: Record<string, Category[]> = {}
+let createdCategories = 0
+
 function categoriesOf(groupId: string): Category[] {
-  const seen = new Map<string, Category>()
-  operations[groupId].forEach((op) => seen.set(op.categoryName, { id: op.categoryId, name: op.categoryName, icon: op.categoryIcon, type: op.type }))
-  return [...seen.values()]
+  if (!categories[groupId]) {
+    const seen = new Map<string, Category>()
+    operations[groupId].forEach((op) => seen.set(op.categoryName, { id: op.categoryId, name: op.categoryName, icon: op.categoryIcon, type: op.type }))
+    categories[groupId] = [...seen.values()]
+  }
+  return categories[groupId]
+}
+
+const freeTier = (scenario: string) => scenario !== 'premium'
+
+function mutateCategory(groupId: string, method: string, categoryId: string | undefined, body: string, scenario: string): MockResponse {
+  const list = categoriesOf(groupId)
+  if (method === 'DELETE') {
+    categories[groupId] = list.filter((category) => category.id !== categoryId)
+    return { status: NO_CONTENT_STATUS, body: null }
+  }
+  const input = JSON.parse(body) as Partial<Category>
+  const current = list.find((category) => category.id === categoryId)
+  const type = current?.type ?? input.type ?? 'EXPENSE'
+  const name = input.name?.trim() ?? current?.name ?? ''
+  if (list.some((category) => category.name === name && category.type === type && category.id !== categoryId)) {
+    return failure(CONFLICT_STATUS, 'CATEGORY_DUPLICATE', `Категория «${name}» уже есть.`)
+  }
+  if (!current) {
+    const limit = FREE_LIMITS.categoriesPerType
+    if (freeTier(scenario) && list.filter((category) => category.type === type).length >= limit) {
+      return failure(LIMIT_STATUS, 'CATEGORY_LIMIT_REACHED', `На Free — до ${limit} категорий каждого типа.`, { limit })
+    }
+    createdCategories += 1
+    const created: Category = { id: `cat-new-${createdCategories}`, name, icon: input.icon ?? '📌', type }
+    categories[groupId] = [...list, created]
+    return { status: CREATED_STATUS, body: created }
+  }
+  const updated: Category = { ...current, name, icon: input.icon ?? current.icon }
+  categories[groupId] = list.map((category) => (category.id === categoryId ? updated : category))
+  return ok(updated)
 }
 
 function operationsResponse(groupId: string, query: URLSearchParams, scenario: string): MockResponse {
@@ -179,7 +227,7 @@ function analyticsReport(groupId: string, month: string): AnalyticsReport {
   const max = [...expenses].sort((a, b) => Number(b.amount) - Number(a.amount))[0]
   return {
     month,
-    currency: balances[groupId].currency,
+    currency: currencyOf(groupId),
     income: String(sumOf(ops, 'INCOME')),
     expense: String(sumOf(ops, 'EXPENSE')),
     operationCount: ops.length,
@@ -196,7 +244,7 @@ function comparisonReport(groupId: string, month: string): ComparisonReport {
   return {
     month,
     previousMonth: shiftMonth(month, -1),
-    currency: balances[groupId].currency,
+    currency: currencyOf(groupId),
     income: { previous: String(sumOf(previous, 'INCOME')), current: String(sumOf(current, 'INCOME')) },
     expense: { previous: String(sumOf(previous, 'EXPENSE')), current: String(sumOf(current, 'EXPENSE')) },
     categories: [],
@@ -210,7 +258,7 @@ function membersReport(groupId: string, month: string): MembersReport {
   const expenseByMember = expense === 0 ? [] : shared
     ? [{ name: 'Dev', total: String(Math.round(expense * 0.6)) }, { name: 'Айгерим', total: String(Math.round(expense * 0.4)) }]
     : [{ name: 'Dev', total: String(expense) }]
-  return { month, currency: balances[groupId].currency, income: String(sumOf(ops, 'INCOME')), expense: String(expense), incomeByMember: [], expenseByMember }
+  return { month, currency: currencyOf(groupId), income: String(sumOf(ops, 'INCOME')), expense: String(expense), incomeByMember: [], expenseByMember }
 }
 
 function categoryReport(groupId: string, categoryId: string): CategoryReport {
@@ -220,7 +268,7 @@ function categoryReport(groupId: string, categoryId: string): CategoryReport {
     categoryId: category.id,
     icon: category.icon,
     name: category.name,
-    currency: balances[groupId].currency,
+    currency: currencyOf(groupId),
     months: [5, 4, 3, 2, 1, 0].map((back) => {
       const month = shiftMonth(thisMonth, -back)
       const ops = operations[groupId].filter((op) => op.categoryId === category.id && op.operationDate.startsWith(month))
@@ -280,11 +328,21 @@ function mutateOperation(groupId: string, method: string, operationId: string | 
   return ok(replaced)
 }
 
+const MEMBERS: Member[] = [
+  { userId: 7, name: 'Айгерим', isOwner: true },
+  { userId: 1, name: 'Dev', isOwner: false },
+  { userId: 8, name: 'Данияр', isOwner: false },
+]
+
+let createdGroups = 0
+
 function groupRoute(path: string, query: URLSearchParams, scenario: string, method: string, body: string): MockResponse | null {
   const match = GROUP_ROUTE.exec(path)
-  if (!match || !(match[1] in balances)) return null
-  const [, groupId, resource, operationId] = match
-  if (resource === 'operations' && method !== 'GET') return mutateOperation(groupId, method, operationId, body)
+  if (!match || !groups.some((group) => group.id === match[1])) return null
+  const [, groupId, resource, itemId] = match
+  if (resource === undefined) return mutateGroup(groupId, method, body)
+  if (resource === 'operations' && method !== 'GET') return mutateOperation(groupId, method, itemId, body)
+  if (resource === 'categories' && method !== 'GET') return mutateCategory(groupId, method, itemId && decodeURIComponent(itemId), body, scenario)
   const empty = scenario === EMPTY_SCENARIO
   if (resource.startsWith('reports/')) return reportRoute(groupId, resource.slice('reports/'.length), query, scenario)
   switch (resource) {
@@ -292,19 +350,99 @@ function groupRoute(path: string, query: URLSearchParams, scenario: string, meth
       activeGroupId = groupId
       return { status: NO_CONTENT_STATUS, body: null }
     case 'balance':
-      return ok(empty ? { ...balances[groupId], income: '0', expense: '0', total: balances[groupId].initial } : balanceOf(groupId))
+      return ok(empty ? { ...balanceOf(groupId), income: '0', expense: '0', total: groupOf(groupId).initialBalance } : balanceOf(groupId))
     case 'summary':
       return ok(empty ? emptySummary(groupId) : summaryOf(groupId))
     case 'categories':
       return ok(categoriesOf(groupId))
+    case 'members':
+      return ok(groupOf(groupId).isOwner ? MEMBERS.map((member) => ({ ...member, isOwner: member.userId === 1 })) : MEMBERS)
+    case 'invite':
+      return ok({ inviteToken: `K7Q2${groupId.slice(-5)}`, url: `${BOT_LINK}K7Q2${groupId.slice(-5)}` })
+    case 'initial-balance':
+      return ok(replaceGroup(groupId, { initialBalance: (JSON.parse(body) as { amount: string }).amount }))
     default:
       return empty ? ok({ items: [], page: 0, size: DEFAULT_PAGE_SIZE, totalItems: 0 }) : operationsResponse(groupId, query, scenario)
   }
 }
 
+function replaceGroup(groupId: string, changes: Partial<Group>): Group {
+  groups = groups.map((group) => (group.id === groupId ? { ...group, ...changes } : group))
+  return { ...groupOf(groupId), isActive: groupId === activeGroupId }
+}
+
+function mutateGroup(groupId: string, method: string, body: string): MockResponse {
+  if (method === 'DELETE') {
+    groups = groups.filter((group) => group.id !== groupId)
+    if (activeGroupId === groupId) activeGroupId = PERSONAL_GROUP_ID
+    return { status: NO_CONTENT_STATUS, body: null }
+  }
+  return ok(replaceGroup(groupId, JSON.parse(body) as Partial<Group>))
+}
+
+function createGroup(body: string, scenario: string): MockResponse {
+  const input = JSON.parse(body) as { name: string; currency: Currency }
+  const name = input.name.trim()
+  if (groups.some((group) => group.isOwner && group.name === name)) return failure(CONFLICT_STATUS, 'GROUP_DUPLICATE', `Группа «${name}» у вас уже есть.`)
+  const limit = FREE_LIMITS.ownedSharedGroups ?? 0
+  if (freeTier(scenario) && groups.filter((group) => group.isOwner && group.type === 'SHARED').length >= limit) {
+    return failure(LIMIT_STATUS, 'GROUP_LIMIT_REACHED', `На Free можно создать до ${limit} совместных групп.`, { limit })
+  }
+  createdGroups += 1
+  const id = `${GROUP_ID_PREFIX}${String(createdGroups).padStart(GROUP_ID_DIGITS, '0')}`
+  const created: Group = { id, name, type: 'SHARED', currency: input.currency, isOwner: true, isActive: true, memberCount: 1, initialBalance: '0' }
+  groups = [...groups, created]
+  operations[id] = []
+  activeGroupId = id
+  return { status: CREATED_STATUS, body: created }
+}
+
+let reminders: Reminder[] = [
+  { id: 'rem-1', name: 'Записать траты за день', icon: '💸', isActive: true, frequencyType: 'DAILY', customInterval: null, hour: 21, minute: 0, dayOfWeek: null, dayOfMonth: null, monthOfYear: null, nextFireTime: new Date().toISOString() },
+  { id: 'rem-2', name: 'Оплатить интернет', icon: '📱', isActive: true, frequencyType: 'MONTHLY', customInterval: null, hour: 10, minute: 0, dayOfWeek: null, dayOfMonth: 5, monthOfYear: null, nextFireTime: new Date().toISOString() },
+  { id: 'rem-3', name: 'Итоги недели', icon: '📊', isActive: false, frequencyType: 'WEEKLY', customInterval: null, hour: 20, minute: 0, dayOfWeek: 'SUNDAY', dayOfMonth: null, monthOfYear: null, nextFireTime: new Date().toISOString() },
+]
+let createdReminders = 0
+
+const reminderLimit = (): MockResponse => {
+  const limit = FREE_LIMITS.activeNotifications ?? 0
+  return failure(LIMIT_STATUS, 'NOTIFICATION_LIMIT_REACHED', `На Free одновременно активны до ${limit} напоминаний.`, { limit })
+}
+
+const activeReminders = () => reminders.filter((reminder) => reminder.isActive).length
+
+function reminderRoute(reminderId: string | undefined, method: string, body: string, scenario: string): MockResponse {
+  const atLimit = freeTier(scenario) && activeReminders() >= (FREE_LIMITS.activeNotifications ?? 0)
+  if (reminderId === undefined) {
+    if (method === 'GET') return ok(reminders)
+    if (atLimit) return reminderLimit()
+    createdReminders += 1
+    const input = JSON.parse(body) as ReminderInput
+    const created: Reminder = { ...input, id: `rem-new-${createdReminders}`, icon: input.icon ?? DEFAULT_REMINDER_ICON, isActive: true, nextFireTime: new Date().toISOString() }
+    reminders = [...reminders, created]
+    return { status: CREATED_STATUS, body: created }
+  }
+  if (method === 'DELETE') {
+    reminders = reminders.filter((reminder) => reminder.id !== reminderId)
+    return { status: NO_CONTENT_STATUS, body: null }
+  }
+  const changes = JSON.parse(body) as Partial<Reminder>
+  if (changes.isActive === true && atLimit) return reminderLimit()
+  reminders = reminders.map((reminder) => (reminder.id === reminderId ? { ...reminder, ...changes, icon: changes.icon ?? reminder.icon } : reminder))
+  return ok(reminders.find((reminder) => reminder.id === reminderId) ?? null)
+}
+
 function route(path: string, query: URLSearchParams, scenario: string, method: string, body: string): MockResponse | null {
-  if (path === '/me') return meScenarios[scenario]()
-  if (path === '/groups') return ok(groups.map((group) => ({ ...group, isActive: group.id === activeGroupId })))
+  if (path === '/me') {
+    if (method === 'PATCH') Object.assign(profile, JSON.parse(body))
+    return meScenarios[scenario]()
+  }
+  if (path === '/groups') {
+    if (method === 'POST') return createGroup(body, scenario)
+    return ok(groups.map((group) => ({ ...group, isActive: group.id === activeGroupId })))
+  }
+  const reminder = REMINDER_ROUTE.exec(path)
+  if (reminder) return reminderRoute(reminder[1], method, body, scenario)
   return groupRoute(path, query, scenario, method, body)
 }
 

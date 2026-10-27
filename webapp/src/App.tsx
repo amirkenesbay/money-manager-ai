@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react'
+import { type ReactNode, useCallback, useState } from 'react'
+import type { Me } from './api/types'
 import { MainScreen } from './main/MainScreen'
 import { useMe } from './me/useMe'
-import { strings } from './strings'
+import { applyLanguage, strings } from './strings'
 import { LoadError } from './ui/LoadError'
 import { SkeletonCard } from './ui/Skeleton'
 import { StateView } from './ui/StateView'
@@ -19,6 +20,11 @@ export function App({ insideTelegram }: { insideTelegram: boolean }) {
 
 function MeScreen() {
   const { state, reload } = useMe()
+  const [changed, setChanged] = useState<Me | null>(null)
+  const changeMe = useCallback((next: Me) => {
+    applyLanguage(next.language)
+    setChanged(next)
+  }, [])
 
   if (state.status === 'loading') {
     return (
@@ -34,7 +40,8 @@ function MeScreen() {
       </Screen>
     )
   }
-  const me = state.data
+  const me = changed ?? state.data
+  applyLanguage(me.language)
   if (me.activeGroupId === null) {
     return (
       <Screen>
@@ -42,7 +49,7 @@ function MeScreen() {
       </Screen>
     )
   }
-  return <MainScreen me={me} activeGroupId={me.activeGroupId} />
+  return <MainScreen me={me} activeGroupId={me.activeGroupId} onMeChanged={changeMe} />
 }
 
 function Screen({ children }: { children: ReactNode }) {

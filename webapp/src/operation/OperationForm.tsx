@@ -1,17 +1,18 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { serverMessage } from '../api/client'
 import type { Category, CategoryType, Group, Operation } from '../api/types'
-import { useCategories } from '../operations/useCategories'
+import { useCategories } from '../categories/useCategories'
 import { currencySymbol, formatDayLabel, formatMoney, toIsoDate } from '../format'
 import { createOperation, type OperationInput, replaceOperation } from '../operations/operationsApi'
 import { strings } from '../strings'
-import { confirmClosing, notifyOutcome } from '../telegram/haptics'
+import { notifyOutcome } from '../telegram/haptics'
 import { BottomBar } from '../ui/BottomBar'
 import { Button } from '../ui/Button'
 import { CalendarIcon } from '../ui/icons'
 import { LoadError } from '../ui/LoadError'
 import { ScreenHeader } from '../ui/ScreenHeader'
 import { Segmented } from '../ui/Segmented'
+import { useConfirmClosing } from '../ui/useConfirmClosing'
 import { Sheet } from '../ui/Sheet'
 import { SkeletonRows } from '../ui/Skeleton'
 import { HUGE_AMOUNT, parseAmount } from './amount'
@@ -76,10 +77,7 @@ function FormFields({ group, language, operation, categories, onSaved, onDeleted
   const customDate = !quickDates.includes(date)
   const dirty = operation === null ? amountText.trim() !== '' || comment.trim() !== '' : true
 
-  useEffect(() => {
-    confirmClosing(dirty)
-    return () => confirmClosing(false)
-  }, [dirty])
+  useConfirmClosing(dirty)
 
   const selectType = (next: CategoryType) => {
     setType(next)

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiRequestError } from '../api/client'
 import type { AnalyticsReport, CategoryReport, ComparisonReport, MembersReport } from '../api/types'
 import { formatMoney, shiftMonth, toIsoMonth } from '../format'
-import { fetchCategories } from '../operations/operationsApi'
+import { fetchCategories } from '../categories/categoriesApi'
 import { strings } from '../strings'
 import { category, FAMILY_GROUP_ID, group, me, PERSONAL_GROUP_ID } from '../test/fixtures'
 import { asRendered } from '../test/text'
@@ -17,7 +17,7 @@ vi.mock('./reportsApi', () => ({
   fetchMembers: vi.fn(),
   fetchCategoryReport: vi.fn(),
 }))
-vi.mock('../operations/operationsApi', () => ({ fetchCategories: vi.fn() }))
+vi.mock('../categories/categoriesApi', () => ({ fetchCategories: vi.fn() }))
 vi.mock('../telegram/telegramEnv', () => ({ openExternalLink: vi.fn(), rawInitData: () => undefined }))
 
 const LANGUAGE = 'ru'

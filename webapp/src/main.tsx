@@ -6,11 +6,13 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './App'
 import './index.css'
-import { initTelegram } from './telegram/telegramEnv'
+import { applyLanguage } from './strings'
+import { initTelegram, launchLanguage } from './telegram/telegramEnv'
 import { applyTheme, systemTheme } from './theme/theme'
 
 const insideTelegram = initTelegram()
 if (!insideTelegram) applyTheme(systemTheme())
+applyLanguage(launchLanguage())
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

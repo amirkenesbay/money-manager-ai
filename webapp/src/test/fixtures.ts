@@ -1,8 +1,11 @@
-import type { Balance, Category, Group, Me, MonthSummary, Operation, OperationsPage } from '../api/types'
+import type { Balance, Category, Group, Limits, Me, MonthSummary, Operation, OperationsPage, Reminder } from '../api/types'
 
 export const PERSONAL_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d0'
 export const FAMILY_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d1'
 export const SUBSCRIBE_URL = 'https://t.me/tribute/app?startapp=test'
+
+const FREE_LIMITS: Limits = { aiRequestsPerDay: 10, categoriesPerType: 10, ownedSharedGroups: 3, activeNotifications: 3, historyDaysBack: 30 }
+const PAID_LIMITS: Limits = { aiRequestsPerDay: 100, categoriesPerType: 1000, ownedSharedGroups: null, activeNotifications: null, historyDaysBack: null }
 
 export const me = (overrides: Partial<Me> = {}): Me => ({
   userId: 42,
@@ -14,7 +17,10 @@ export const me = (overrides: Partial<Me> = {}): Me => ({
   subscription: {
     tier: 'FREE',
     expiresAt: null,
-    limits: { aiRequestsPerDay: 10, categoriesPerType: 10, ownedSharedGroups: 3, activeNotifications: 3, historyDaysBack: 30 },
+    limits: FREE_LIMITS,
+    freeLimits: FREE_LIMITS,
+    paidLimits: PAID_LIMITS,
+    price: { amount: '990', currency: 'KZT' },
     subscribeUrl: SUBSCRIBE_URL,
   },
   ...overrides,
@@ -79,5 +85,21 @@ export const category = (overrides: Partial<Category> = {}): Category => ({
   name: 'Продукты',
   icon: '🛒',
   type: 'EXPENSE',
+  ...overrides,
+})
+
+export const reminder = (overrides: Partial<Reminder> = {}): Reminder => ({
+  id: 'rem-1',
+  name: 'Записать траты',
+  icon: '💸',
+  isActive: true,
+  frequencyType: 'DAILY',
+  customInterval: null,
+  hour: 21,
+  minute: 0,
+  dayOfWeek: null,
+  dayOfMonth: null,
+  monthOfYear: null,
+  nextFireTime: '2026-10-28T16:00:00Z',
   ...overrides,
 })

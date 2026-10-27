@@ -1,6 +1,6 @@
 import { type ReactNode, useMemo, useState } from 'react'
 import type { CategoryType, Group, Me, Operation } from '../api/types'
-import { useCategories } from './useCategories'
+import { useCategories } from '../categories/useCategories'
 import { formatDayLabel, formatSignedMoney } from '../format'
 import { strings } from '../strings'
 import { Button } from '../ui/Button'

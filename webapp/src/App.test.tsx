@@ -3,16 +3,16 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiRequestError } from './api/client'
 import { App } from './App'
-import { fetchBalance, fetchGroups, fetchMonthSummary, fetchRecentOperations } from './dashboard/dashboardApi'
+import { fetchBalance, fetchMonthSummary, fetchRecentOperations } from './dashboard/dashboardApi'
+import { fetchGroups } from './groups/groupsApi'
 import { fetchMe } from './me/meApi'
-import { strings } from './strings'
+import { applyLanguage, dictionaries, strings } from './strings'
 import { balance, group, me, operationsPage, summary } from './test/fixtures'
 
 vi.mock('./me/meApi', () => ({ fetchMe: vi.fn() }))
+vi.mock('./groups/groupsApi', () => ({ fetchGroups: vi.fn(), activateGroup: vi.fn() }))
 vi.mock('./dashboard/dashboardApi', () => ({
   RECENT_OPERATIONS_LIMIT: 10,
-  fetchGroups: vi.fn(),
-  activateGroup: vi.fn(),
   fetchBalance: vi.fn(),
   fetchMonthSummary: vi.fn(),
   fetchRecentOperations: vi.fn(),
@@ -75,5 +75,15 @@ describe('App', () => {
     render(<App insideTelegram />)
 
     expect(await screen.findByText(strings.loadFailedFallback)).toBeInTheDocument()
+  })
+
+  it('speaks the language of the profile', async () => {
+    fetchMeMock.mockResolvedValue(me({ language: 'en' }))
+
+    render(<App insideTelegram />)
+
+    expect(await screen.findByText(dictionaries.en.balanceTitle)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: dictionaries.en.tabMore })).toBeInTheDocument()
+    applyLanguage('ru')
   })
 })

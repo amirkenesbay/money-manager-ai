@@ -85,3 +85,7 @@ function monthStart(isoMonth: string): Date {
 function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
+
+export function formatDate(isoDateTime: string, language: string): string {
+  return new Intl.DateTimeFormat(language, { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(isoDateTime))
+}

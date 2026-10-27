@@ -1,13 +1,8 @@
 import { apiRequest } from '../api/client'
-import type { Balance, Group, MonthSummary, OperationsPage } from '../api/types'
+import type { Balance, MonthSummary, OperationsPage } from '../api/types'
 import { fetchOperations, NO_FILTERS } from '../operations/operationsApi'
 
 export const RECENT_OPERATIONS_LIMIT = 3
-
-export const fetchGroups = (signal?: AbortSignal): Promise<Group[]> => apiRequest<Group[]>('/groups', {}, signal)
-
-export const activateGroup = (groupId: string): Promise<void> =>
-  apiRequest<void>(`/groups/${groupId}/activate`, { method: 'POST' })
 
 export const fetchBalance = (groupId: string, signal?: AbortSignal): Promise<Balance> =>
   apiRequest<Balance>(`/groups/${groupId}/balance`, {}, signal)
