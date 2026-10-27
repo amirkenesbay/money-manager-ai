@@ -52,6 +52,9 @@ class AiPromptService {
 
     fun currencyPreamble(currency: Currency): String = CURRENCY_TEMPLATE.format(currency.name)
 
+    fun groupContext(currency: Currency, categories: List<Category>): String =
+        currencyPreamble(currency) + "\n" + categoryContextPreamble(categories)
+
     fun categoryContextPreamble(categories: List<Category>): String {
         if (categories.isEmpty()) {
             return "$CATEGORY_CONTEXT_HEADER\n$CATEGORY_CONTEXT_EMPTY_LINE"

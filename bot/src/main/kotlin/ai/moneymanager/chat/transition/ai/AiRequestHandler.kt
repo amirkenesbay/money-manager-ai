@@ -138,7 +138,7 @@ class AiRequestHandler(
         val categories: List<Category> = categoryService.getCategoriesByGroup(groupId)
         context.aiCategoriesCache = categories
         val currency = resolveCurrency(groupService, groupId)
-        return aiPromptService.currencyPreamble(currency) + "\n" + aiPromptService.categoryContextPreamble(categories)
+        return aiPromptService.groupContext(currency, categories)
     }
 
     private fun showErrorStageIfNeeded(commands: List<BotCommand>, feedback: AiFeedback, language: String?) {

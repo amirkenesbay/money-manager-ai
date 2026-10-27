@@ -2,7 +2,7 @@ package ai.moneymanager.chat.transition.ai.handler
 
 import ai.moneymanager.chat.reply.finance.FinanceHistoryFormatter
 import ai.moneymanager.chat.reply.common.formatBalanceBreakdown
-import ai.moneymanager.chat.transition.ai.parseIsoDateOrNull
+import ai.moneymanager.domain.text.parseIsoDateOrNull
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.chat.state.MoneyManagerContext

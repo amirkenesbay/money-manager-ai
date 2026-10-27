@@ -15,6 +15,7 @@ import ai.moneymanager.web.ApiWebLayerSetup
 import ai.moneymanager.web.access.GroupAccessGuard
 import ai.moneymanager.web.access.GroupCategoryLookup
 import ai.moneymanager.web.security.TestInitData
+import ai.moneymanager.web.time.UserCalendar
 import ai.moneymanager.web.json
 import ai.moneymanager.web.withTelegramAuth
 import org.bson.types.ObjectId
@@ -45,7 +46,7 @@ private const val CREATOR_NAME = "Amir"
 
 @WebMvcTest(controllers = [OperationController::class])
 @ApiWebLayerSetup
-@Import(GroupAccessGuard::class, GroupCategoryLookup::class, OperationDraftFactory::class, FinanceResponseFactory::class)
+@Import(GroupAccessGuard::class, GroupCategoryLookup::class, OperationDraftFactory::class, FinanceResponseFactory::class, UserCalendar::class)
 class OperationControllerTest {
     @Autowired
     private lateinit var mockMvc: MockMvc

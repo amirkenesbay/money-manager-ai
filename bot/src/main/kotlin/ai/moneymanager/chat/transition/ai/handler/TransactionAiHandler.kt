@@ -1,14 +1,9 @@
 package ai.moneymanager.chat.transition.ai.handler
 
-import ai.moneymanager.domain.model.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.chat.reply.common.formatAmount
 import ai.moneymanager.chat.reply.common.formatDescriptionSuffix
 import ai.moneymanager.chat.reply.common.formatIconPrefix
 import ai.moneymanager.chat.reply.common.escapeHtml
-import ai.moneymanager.domain.text.extractLeadingNonLetters
-import ai.moneymanager.domain.text.matchesEntityName
-import ai.moneymanager.chat.transition.ai.resolveOperationDate
-import ai.moneymanager.domain.text.stripLeadingNonLetters
 import ai.moneymanager.chat.reply.common.resolveCurrency
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryCreationResult
@@ -17,6 +12,9 @@ import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.chat.state.MoneyManagerContext
 import ai.moneymanager.domain.model.nlp.AiPendingAction
 import ai.moneymanager.domain.model.nlp.BotCommand
+import ai.moneymanager.domain.model.nlp.OperationSuggestion
+import ai.moneymanager.domain.text.matchesEntityName
+import ai.moneymanager.service.nlp.suggestOperation
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.FinanceOperationService
 import ai.moneymanager.service.GroupService
@@ -59,18 +57,38 @@ class TransactionAiHandler(
         val creatorId = context.userInfo?.telegramUserId
             ?: return AiPreparationResult.ImmediateResult(localizationService.t("ai.error.no_user", lang))
 
-        return when (command) {
-            is BotCommand.AddExpense -> prepareAdd(
-                groupId, creatorId, CategoryType.EXPENSE, command.amount,
-                command.category, command.description, command.suggestedCategoryIcon,
-                resolveOperationDate(command.operationDate), context.aiCategoriesCache, lang
+        val categories = context.aiCategoriesCache ?: categoryService.getCategoriesByGroup(groupId)
+        return when (val suggestion = suggestOperation(command, categories)) {
+            null -> AiPreparationResult.ImmediateResult(localizationService.t("ai.error.unknown_command", lang))
+            OperationSuggestion.AmountNotPositive ->
+                AiPreparationResult.ImmediateResult(localizationService.t("ai.transaction.amount_not_positive", lang))
+            is OperationSuggestion.CategoryMissing -> AiPreparationResult.ImmediateResult(categoryMissing(suggestion.type, lang))
+            is OperationSuggestion.AmbiguousCategory -> AiPreparationResult.ImmediateResult(
+                localizationService.t("ai.transaction.category_ambiguous", lang, escapeHtml(suggestion.categoryName))
             )
-            is BotCommand.AddIncome -> prepareAdd(
-                groupId, creatorId, CategoryType.INCOME, command.amount,
-                command.category, command.description, command.suggestedCategoryIcon,
-                resolveOperationDate(command.operationDate), context.aiCategoriesCache, lang
+            is OperationSuggestion.Ready -> AiPreparationResult.RequiresConfirmation(
+                AiPendingAction.TransactionAction.Add(
+                    groupId = groupId,
+                    creatorId = creatorId,
+                    type = suggestion.type,
+                    amount = suggestion.amount,
+                    category = suggestion.category,
+                    description = suggestion.description,
+                    operationDate = suggestion.operationDate
+                )
             )
-            else -> AiPreparationResult.ImmediateResult(localizationService.t("ai.error.unknown_command", lang))
+            is OperationSuggestion.NewCategory -> AiPreparationResult.RequiresConfirmation(
+                AiPendingAction.TransactionAction.AddWithNewCategory(
+                    groupId = groupId,
+                    creatorId = creatorId,
+                    type = suggestion.type,
+                    amount = suggestion.amount,
+                    suggestedCategoryName = suggestion.categoryName,
+                    suggestedCategoryIcon = suggestion.categoryIcon,
+                    description = suggestion.description,
+                    operationDate = suggestion.operationDate
+                )
+            )
         }
     }
 
@@ -80,67 +98,6 @@ class TransactionAiHandler(
         return when (action) {
             is AiPendingAction.TransactionAction.Add -> executeAdd(action, lang)
             is AiPendingAction.TransactionAction.AddWithNewCategory -> executeAddWithNewCategory(action, context, lang)
-        }
-    }
-
-    private fun prepareAdd(
-        groupId: ObjectId,
-        creatorId: Long,
-        type: CategoryType,
-        amount: Double,
-        categoryName: String?,
-        description: String?,
-        suggestedCategoryIcon: String?,
-        operationDate: LocalDate,
-        cachedCategories: List<Category>?,
-        lang: String?
-    ): AiPreparationResult {
-        if (amount <= 0) {
-            return AiPreparationResult.ImmediateResult(localizationService.t("ai.transaction.amount_not_positive", lang))
-        }
-        if (categoryName.isNullOrBlank()) {
-            return AiPreparationResult.ImmediateResult(categoryMissing(type, lang))
-        }
-
-        val available = cachedCategories?.filter { it.type == type }
-            ?: categoryService.getCategoriesByGroupAndType(groupId, type)
-        val matches = available.filter { matchesEntityName(it.name, categoryName) }
-        val trimmedDescription = description?.trim()?.takeIf { it.isNotEmpty() }
-        val cleanCategoryName = stripLeadingNonLetters(categoryName).takeIf { it.isNotBlank() }
-            ?: return AiPreparationResult.ImmediateResult(categoryMissing(type, lang))
-        val effectiveIcon = suggestedCategoryIcon
-            ?.trim()
-            ?.takeIf { it.isNotEmpty() }
-            ?: extractLeadingNonLetters(categoryName)
-            ?: DEFAULT_CATEGORY_ICON
-        val resolved = resolveSingleMatch(matches, categoryName, cleanCategoryName)
-        return when {
-            resolved != null -> AiPreparationResult.RequiresConfirmation(
-                AiPendingAction.TransactionAction.Add(
-                    groupId = groupId,
-                    creatorId = creatorId,
-                    type = type,
-                    amount = amount,
-                    category = resolved,
-                    description = trimmedDescription,
-                    operationDate = operationDate
-                )
-            )
-            matches.isEmpty() -> AiPreparationResult.RequiresConfirmation(
-                AiPendingAction.TransactionAction.AddWithNewCategory(
-                    groupId = groupId,
-                    creatorId = creatorId,
-                    type = type,
-                    amount = amount,
-                    suggestedCategoryName = cleanCategoryName,
-                    suggestedCategoryIcon = effectiveIcon,
-                    description = trimmedDescription,
-                    operationDate = operationDate
-                )
-            )
-            else -> AiPreparationResult.ImmediateResult(
-                localizationService.t("ai.transaction.category_ambiguous", lang, escapeHtml(categoryName))
-            )
         }
     }
 
@@ -259,22 +216,6 @@ class TransactionAiHandler(
         )
         if (!isNewCategory) return baseMessage
         return baseMessage + localizationService.t(SUCCESS_NEW_CATEGORY_SUFFIX_KEY, lang)
-    }
-
-    private fun resolveSingleMatch(
-        matches: List<Category>,
-        rawSearch: String,
-        cleanSearch: String
-    ): Category? {
-        if (matches.size <= 1) return matches.firstOrNull()
-        matches.firstOrNull { it.name.equals(cleanSearch, ignoreCase = true) }
-            ?.let { return it }
-        val leadingIcon = extractLeadingNonLetters(rawSearch)
-        if (leadingIcon != null) {
-            matches.firstOrNull { it.icon == leadingIcon }
-                ?.let { return it }
-        }
-        return null
     }
 
     private fun categoryMissing(type: CategoryType, lang: String?): String {

@@ -40,6 +40,9 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
+const val TELEGRAM_VOICE_MIME_TYPE = "audio/ogg"
+const val WAV_MIME_TYPE = "audio/wav"
+
 @Service
 class CommandParserService(
     private val geminiProperties: GeminiProperties,
@@ -134,14 +137,18 @@ class CommandParserService(
         }
     }
 
-    fun parseVoiceCommands(audioBytes: ByteArray, categoryContext: String? = null): List<BotCommand> {
+    fun parseVoiceCommands(
+        audioBytes: ByteArray,
+        categoryContext: String? = null,
+        mimeType: String = TELEGRAM_VOICE_MIME_TYPE
+    ): List<BotCommand> {
         return try {
             log.info("Processing voice message: ${audioBytes.size} bytes")
 
             val audioPart = Part.builder()
                 .inlineData(
                     Blob.builder()
-                        .mimeType(VOICE_MIME_TYPE)
+                        .mimeType(mimeType)
                         .data(audioBytes)
                         .build()
                 )
@@ -335,7 +342,6 @@ class CommandParserService(
 
     companion object {
         private const val HTTP_TOO_MANY_REQUESTS = 429
-        private const val VOICE_MIME_TYPE = "audio/ogg"
         private const val VOICE_MESSAGE_PLACEHOLDER = "[voice message]"
         private val RETRY_AFTER_REGEX = Regex("""Please retry in (\d+(?:\.\d+)?)s""")
 
