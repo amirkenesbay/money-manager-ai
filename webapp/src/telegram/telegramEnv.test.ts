@@ -13,6 +13,7 @@ vi.mock('@tma.js/sdk-react', () => {
     retrieveRawInitData: vi.fn(),
     themeParams: { mount: available() },
     backButton: { mount: available() },
+    closingBehavior: { mount: available() },
     swipeBehavior: { mount: available(), disableVertical: available() },
     viewport: { mount: available(), expand: available(), stableHeight: signal(STABLE_HEIGHT) },
     miniApp: {

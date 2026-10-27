@@ -28,3 +28,13 @@ export const MicIcon = () => (
 export const KeyboardIcon = () => (
   <Icon size={22} strokeWidth={1.8}><rect x="2" y="6" width="20" height="12" rx="2" /><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10" /></Icon>
 )
+
+export const HomeIcon = () => <Icon size={20} strokeWidth={1.9}><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" /></Icon>
+
+export const ListIcon = () => <Icon size={20} strokeWidth={1.9}><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></Icon>
+
+export const ChartIcon = () => <Icon size={20} strokeWidth={1.9}><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></Icon>
+
+export const GridIcon = () => <Icon size={20} strokeWidth={1.9}><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" /></Icon>
+
+export const ChevronLeftIcon = () => <Icon size={16} strokeWidth={2.2}><path d="M15 18l-6-6 6-6" /></Icon>

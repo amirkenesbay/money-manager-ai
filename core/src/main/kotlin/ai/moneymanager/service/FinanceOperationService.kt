@@ -2,6 +2,7 @@ package ai.moneymanager.service
 
 import ai.moneymanager.domain.model.BalanceBreakdown
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.OperationDraft
 import ai.moneymanager.domain.model.OperationFilter
 import ai.moneymanager.repository.FinanceOperationRepository
 import ai.moneymanager.repository.entity.FinanceOperationEntity
@@ -46,12 +47,25 @@ class FinanceOperationService(
         categoryIcon: String?,
         operationDate: LocalDate,
         description: String?
+    ): FinanceOperationEntity =
+        saveOperation(groupId, creatorId, type, BigDecimal.valueOf(amount), categoryId, categoryName, categoryIcon, operationDate, description)
+
+    private fun saveOperation(
+        groupId: ObjectId,
+        creatorId: Long,
+        type: CategoryType,
+        amount: BigDecimal,
+        categoryId: ObjectId,
+        categoryName: String,
+        categoryIcon: String?,
+        operationDate: LocalDate,
+        description: String?
     ): FinanceOperationEntity {
         val entity = FinanceOperationEntity(
             groupId = groupId,
             creatorId = creatorId,
             type = type,
-            amount = BigDecimal.valueOf(amount),
+            amount = amount,
             categoryId = categoryId,
             categoryName = categoryName,
             categoryIcon = categoryIcon,
@@ -63,6 +77,24 @@ class FinanceOperationService(
         log.info("Saved finance operation: type={}, amount={}, category={}, groupId={}", type, amount, categoryName, groupId)
         return saved
     }
+
+    fun create(groupId: ObjectId, creatorId: Long, draft: OperationDraft): FinanceOperationEntity {
+        val categoryId = checkNotNull(draft.category.id)
+        return saveOperation(groupId, creatorId, draft.type, draft.amount, categoryId, draft.category.name, draft.category.icon, draft.operationDate, draft.description)
+    }
+
+    fun replace(groupId: ObjectId, operationId: ObjectId, draft: OperationDraft): FinanceOperationEntity? =
+        updateOperation(groupId, operationId) {
+            it.copy(
+                type = draft.type,
+                amount = draft.amount,
+                categoryId = checkNotNull(draft.category.id),
+                categoryName = draft.category.name,
+                categoryIcon = draft.category.icon,
+                operationDate = draft.operationDate,
+                description = draft.description,
+            )
+        }
 
     fun getOperation(groupId: ObjectId, operationId: ObjectId): FinanceOperationEntity? =
         financeOperationRepository.findByGroupIdAndIdIn(groupId, listOf(operationId)).firstOrNull()

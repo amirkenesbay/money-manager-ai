@@ -5,10 +5,10 @@ import { ApiRequestError } from '../api/client'
 import { formatDayLabel, formatMoney, formatSignedMoney } from '../format'
 import { strings } from '../strings'
 import { asRendered } from '../test/text'
-import { balance, FAMILY_GROUP_ID, group, me, operation, operationsPage, PERSONAL_GROUP_ID, summary } from '../test/fixtures'
+import { balance, category, FAMILY_GROUP_ID, group, me, operation, operationsPage, PERSONAL_GROUP_ID, summary } from '../test/fixtures'
 import { MainScreen } from './MainScreen'
 import { activateGroup, fetchBalance, fetchGroups, fetchMonthSummary, fetchRecentOperations } from '../dashboard/dashboardApi'
-import { fetchCategories, fetchOperations } from '../operations/operationsApi'
+import { createOperation, deleteOperation, fetchCategories, fetchOperations } from '../operations/operationsApi'
 
 vi.mock('../dashboard/dashboardApi', () => ({
   RECENT_OPERATIONS_LIMIT: 10,
@@ -24,6 +24,9 @@ vi.mock('../operations/operationsApi', () => ({
   NO_FILTERS: { from: null, to: null, type: null, categoryId: null },
   fetchOperations: vi.fn(),
   fetchCategories: vi.fn(),
+  createOperation: vi.fn(),
+  replaceOperation: vi.fn(),
+  deleteOperation: vi.fn(),
 }))
 
 const LANGUAGE = 'ru'
@@ -106,12 +109,43 @@ describe('MainScreen dashboard', () => {
     expect(fetchBalance).not.toHaveBeenCalledWith(FAMILY_GROUP_ID, expect.anything())
   })
 
-  it('tells that voice and manual entry are coming soon', async () => {
+  it('tells that voice entry is coming soon', async () => {
     renderDashboard()
 
     await userEvent.click(await screen.findByRole('button', { name: strings.recordVoice }))
 
     expect(screen.getByRole('status')).toHaveTextContent(strings.comingSoon)
+  })
+
+  it('records an operation manually, refreshes the data and lets the user undo it', async () => {
+    vi.mocked(fetchCategories).mockResolvedValue([category()])
+    vi.mocked(createOperation).mockResolvedValue(operation({ id: 'new-op', amount: '700' }))
+    vi.mocked(deleteOperation).mockResolvedValue(undefined)
+    renderDashboard()
+
+    await userEvent.click(await screen.findByRole('button', { name: strings.manualEntryLabel }))
+    await userEvent.type(await screen.findByRole('textbox', { name: strings.amountLabel }), '700')
+    await userEvent.click(screen.getByRole('button', { name: strings.save }))
+
+    expect(await screen.findByText(strings.savedToast)).toBeInTheDocument()
+    await vi.waitFor(() => expect(fetchBalance).toHaveBeenCalledTimes(2))
+
+    await userEvent.click(screen.getByRole('button', { name: strings.undo }))
+
+    expect(deleteOperation).toHaveBeenCalledWith(PERSONAL_GROUP_ID, 'new-op')
+    expect(await screen.findByText(strings.undoneToast)).toBeInTheDocument()
+  })
+
+  it('opens a recent operation and returns home with the back control', async () => {
+    renderDashboard()
+
+    await userEvent.click(await screen.findByRole('button', { name: /Продукты/ }))
+    expect(screen.getByRole('heading', { name: strings.operationTitle })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: strings.back }))
+
+    expect(screen.queryByRole('heading', { name: strings.operationTitle })).not.toBeInTheDocument()
+    expect(screen.getByText(strings.balanceTitle)).toBeVisible()
   })
 
   it('recovers dashboard data on retry', async () => {
@@ -123,15 +157,16 @@ describe('MainScreen dashboard', () => {
     expect(await screen.findByText(strings.balanceTitle)).toBeInTheDocument()
   })
 
-  it('opens all operations of the active group and returns back', async () => {
+  it('opens all operations of the active group and returns home from the tab bar', async () => {
     renderDashboard()
 
     await userEvent.click(await screen.findByRole('button', { name: strings.allOperations }))
 
     expect(await screen.findByRole('heading', { name: strings.operationsTitle })).toBeInTheDocument()
     expect(fetchOperations).toHaveBeenCalledWith(PERSONAL_GROUP_ID, expect.anything(), 0, expect.anything())
+    expect(screen.getByRole('button', { name: strings.operationsTitle })).toHaveAttribute('aria-current', 'page')
 
-    await userEvent.click(screen.getByRole('button', { name: strings.back }))
+    await userEvent.click(screen.getByRole('button', { name: strings.tabHome }))
 
     expect(await screen.findByText(strings.balanceTitle)).toBeInTheDocument()
   })

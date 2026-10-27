@@ -1,8 +1,10 @@
 import { apiRequest } from '../api/client'
-import type { Category, CategoryType, OperationsPage } from '../api/types'
+import type { Category, CategoryType, Operation, OperationsPage } from '../api/types'
 import type { DateRange } from './periods'
 
 export const OPERATIONS_PAGE_SIZE = 20
+
+const operationsPath = (groupId: string) => `/groups/${groupId}/operations`
 
 export interface OperationsQuery extends DateRange {
   type: CategoryType | null
@@ -23,8 +25,25 @@ export function fetchOperations(
   if (query.to) params.set('to', query.to)
   if (query.type) params.set('type', query.type)
   if (query.categoryId) params.set('categoryId', query.categoryId)
-  return apiRequest<OperationsPage>(`/groups/${groupId}/operations?${params}`, {}, signal)
+  return apiRequest<OperationsPage>(`${operationsPath(groupId)}?${params}`, {}, signal)
 }
 
 export const fetchCategories = (groupId: string, signal?: AbortSignal): Promise<Category[]> =>
   apiRequest<Category[]>(`/groups/${groupId}/categories`, {}, signal)
+
+export interface OperationInput {
+  type: CategoryType
+  amount: string
+  categoryId: string
+  operationDate: string
+  description: string | null
+}
+
+export const createOperation = (groupId: string, input: OperationInput): Promise<Operation> =>
+  apiRequest<Operation>(operationsPath(groupId), { method: 'POST', body: JSON.stringify(input) })
+
+export const replaceOperation = (groupId: string, operationId: string, input: OperationInput): Promise<Operation> =>
+  apiRequest<Operation>(`${operationsPath(groupId)}/${operationId}`, { method: 'PUT', body: JSON.stringify(input) })
+
+export const deleteOperation = (groupId: string, operationId: string): Promise<void> =>
+  apiRequest<void>(`${operationsPath(groupId)}/${operationId}`, { method: 'DELETE' })

@@ -12,7 +12,7 @@ import { useDashboard } from './useDashboard'
 
 const RECENT_SKELETON_ROWS = 3
 
-export function Dashboard({ name, groups, groupId, language, switchError, onSwitchGroup, onOpenOperations }: {
+export function Dashboard({ name, groups, groupId, language, switchError, onSwitchGroup, onOpenOperations, onOpenReports, onAddOperation, onSelectOperation }: {
   name: string
   groups: Group[]
   groupId: string
@@ -20,13 +20,16 @@ export function Dashboard({ name, groups, groupId, language, switchError, onSwit
   switchError: string | null
   onSwitchGroup: (groupId: string) => void
   onOpenOperations: () => void
+  onOpenReports: () => void
+  onAddOperation: () => void
+  onSelectOperation: (operation: Operation) => void
 }) {
   const dashboard = useDashboard(groupId)
   const soon = useSoonNotice()
   const ready = dashboard.state.status === 'ready' ? dashboard.state.data : null
 
   return (
-    <main className="screen">
+    <>
       <header className="home-header">
         <span className="home-greeting">
           <span className="hint">{strings.greetingLabel}</span>
@@ -39,17 +42,18 @@ export function Dashboard({ name, groups, groupId, language, switchError, onSwit
       {dashboard.state.status === 'error' && <LoadError message={dashboard.state.message} onRetry={dashboard.reload} />}
       {ready && (
         <>
-          <BalanceCard balance={ready.balance} summary={ready.summary} language={language} onOpenReport={soon.show} />
+          <BalanceCard balance={ready.balance} summary={ready.summary} language={language} onOpenReport={onOpenReports} />
           <RecentOperations
             operations={ready.operations.items}
             currency={ready.balance.currency}
             language={language}
             onOpenOperations={onOpenOperations}
+            onSelectOperation={onSelectOperation}
           />
         </>
       )}
-      <VoiceEntry firstTime={ready?.operations.items.length === 0} soonVisible={soon.visible} onSoon={soon.show} />
-    </main>
+      <VoiceEntry firstTime={ready?.operations.items.length === 0} soonVisible={soon.visible} onSoon={soon.show} onManual={onAddOperation} />
+    </>
   )
 }
 
@@ -126,11 +130,12 @@ function MonthFlow({ summary, language }: { summary: MonthSummary; language: str
   )
 }
 
-function RecentOperations({ operations, currency, language, onOpenOperations }: {
+function RecentOperations({ operations, currency, language, onOpenOperations, onSelectOperation }: {
   operations: Operation[]
   currency: Currency
   language: string
   onOpenOperations: () => void
+  onSelectOperation: (operation: Operation) => void
 }) {
   const today = new Date()
   return (
@@ -141,12 +146,17 @@ function RecentOperations({ operations, currency, language, onOpenOperations }: 
       </span>
       {operations.length === 0
         ? <p className="recent-empty caption">{strings.recentOperationsEmpty}</p>
-        : <OperationList operations={operations} currency={currency} language={language} note={(operation) => formatDayLabel(operation.operationDate, today, language)} />}
+        : <OperationList operations={operations} currency={currency} language={language} note={(operation) => formatDayLabel(operation.operationDate, today, language)} onSelect={onSelectOperation} />}
     </section>
   )
 }
 
-function VoiceEntry({ firstTime, soonVisible, onSoon }: { firstTime: boolean; soonVisible: boolean; onSoon: () => void }) {
+function VoiceEntry({ firstTime, soonVisible, onSoon, onManual }: {
+  firstTime: boolean
+  soonVisible: boolean
+  onSoon: () => void
+  onManual: () => void
+}) {
   return (
     <section className="voice">
       <span className="voice-text">
@@ -160,7 +170,7 @@ function VoiceEntry({ firstTime, soonVisible, onSoon }: { firstTime: boolean; so
             <button type="button" className="voice-button pressable" aria-label={strings.recordVoice} onClick={onSoon}><MicIcon /></button>
           </span>
         </span>
-        <button type="button" className="manual-button" aria-label={strings.manualEntryLabel} onClick={onSoon}>
+        <button type="button" className="manual-button" aria-label={strings.manualEntryLabel} onClick={onManual}>
           <span className="manual-circle pressable"><KeyboardIcon /></span>
           {strings.manualEntry}
         </button>

@@ -1,0 +1,20 @@
+import { closingBehavior, hapticFeedback } from '@tma.js/sdk-react'
+
+type Outcome = 'success' | 'error' | 'warning'
+
+export function notifyOutcome(outcome: Outcome): void {
+  try {
+    hapticFeedback.notificationOccurred.ifAvailable(outcome)
+  } catch {
+    return
+  }
+}
+
+export function confirmClosing(enabled: boolean): void {
+  try {
+    if (enabled) closingBehavior.enableConfirmation.ifAvailable()
+    else closingBehavior.disableConfirmation.ifAvailable()
+  } catch {
+    return
+  }
+}

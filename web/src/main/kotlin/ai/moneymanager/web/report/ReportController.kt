@@ -3,13 +3,12 @@ package ai.moneymanager.web.report
 import ai.moneymanager.service.CATEGORY_REPORT_DEFAULT_MONTHS
 import ai.moneymanager.domain.model.MoneyGroup
 import ai.moneymanager.domain.model.UserInfo
-import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.FinanceReportService
 import ai.moneymanager.service.UserInfoService
 import ai.moneymanager.web.API_V1_PREFIX
 import ai.moneymanager.web.access.GroupAccessGuard
+import ai.moneymanager.web.access.GroupCategoryLookup
 import ai.moneymanager.web.access.HistoryAccessPolicy
-import ai.moneymanager.web.error.API_ERROR_KEY_PREFIX
 import ai.moneymanager.web.error.ApiErrorCode
 import ai.moneymanager.web.error.ApiException
 import org.bson.types.ObjectId
@@ -25,7 +24,6 @@ import java.time.YearMonth
 
 private const val MONTH_PATTERN = "yyyy-MM"
 private const val MAX_CATEGORY_MONTHS = 12
-private const val CATEGORY_NOT_FOUND_KEY = "${API_ERROR_KEY_PREFIX}category_not_found"
 
 @RestController
 @RequestMapping("$API_V1_PREFIX/groups/{groupId}/reports")
@@ -33,7 +31,7 @@ class ReportController(
     private val groupAccessGuard: GroupAccessGuard,
     private val historyAccessPolicy: HistoryAccessPolicy,
     private val financeReportService: FinanceReportService,
-    private val categoryService: CategoryService,
+    private val groupCategoryLookup: GroupCategoryLookup,
     private val userInfoService: UserInfoService,
     private val reportResponseFactory: ReportResponseFactory,
     private val clock: Clock,
@@ -82,8 +80,7 @@ class ReportController(
         val group = groupAccessGuard.requireMember(user, groupId)
         val monthCount = months ?: CATEGORY_REPORT_DEFAULT_MONTHS
         if (monthCount !in 1..MAX_CATEGORY_MONTHS) throw ApiException(ApiErrorCode.BAD_REQUEST)
-        val category = categoryService.getCategory(categoryId)?.takeIf { it.groupId == groupId }
-            ?: throw ApiException(ApiErrorCode.NOT_FOUND, CATEGORY_NOT_FOUND_KEY)
+        val category = groupCategoryLookup.requireCategory(groupId, categoryId)
         historyAccessPolicy.requireWithinHistory(user, financeReportService.categoryReportStart(monthCount))
         val report = financeReportService.buildCategoryReport(groupId, categoryId, category.icon, category.name, monthCount, user.language)
         return reportResponseFactory.category(report, categoryId, group.currency)

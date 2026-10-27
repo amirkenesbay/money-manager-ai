@@ -1,0 +1,215 @@
+.report,
+.report-premium,
+.report-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.donut {
+  position: relative;
+  display: flex;
+  align-self: center;
+  align-items: center;
+  justify-content: center;
+  width: 12.5rem;
+  height: 12.5rem;
+  border-radius: 50%;
+  box-shadow: var(--raise-lg);
+}
+
+.donut svg {
+  width: 10.5rem;
+  height: 10.5rem;
+  transform: rotate(-90deg);
+}
+
+.donut circle {
+  transition: stroke-dasharray var(--appear);
+}
+
+.donut-center {
+  position: absolute;
+  inset: 2.25rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.125rem;
+}
+
+.donut-total {
+  font-size: 0.875rem;
+  white-space: normal;
+}
+
+.donut-skeleton {
+  box-shadow: var(--inset-md);
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: var(--text-sm);
+}
+
+.legend-swatch {
+  flex-shrink: 0;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 0.25rem;
+}
+
+.legend-name {
+  flex-grow: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legend-spacer {
+  flex-grow: 1;
+}
+
+.legend-percent {
+  width: 2.75rem;
+  text-align: right;
+}
+
+.facts {
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.875rem 1rem;
+  box-shadow: var(--inset-sm);
+}
+
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.fact dd {
+  margin: 0;
+}
+
+.comparison {
+  gap: 0.75rem;
+}
+
+.comparison-head,
+.comparison-bar-head,
+.member-head,
+.average {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.comparison-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.meter {
+  display: block;
+  height: 0.75rem;
+  padding: 2px;
+  border-radius: 0.375rem;
+  box-shadow: var(--inset-sm);
+}
+
+.meter > span {
+  display: block;
+  height: 100%;
+  border-radius: 0.25rem;
+  transition: width var(--appear);
+}
+
+.member {
+  gap: 0.625rem;
+}
+
+.member-initial {
+  width: 2.5rem;
+  height: 2.5rem;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.member-name {
+  flex-grow: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hint-box {
+  padding: 0.875rem 1rem;
+  border-radius: 1.25rem;
+  box-shadow: var(--inset-sm);
+  line-height: 1.5;
+}
+
+.month-bars {
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 13.75rem;
+  padding: 1.125rem 0.75rem 0.875rem;
+}
+
+.month-bar {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  height: 100%;
+  min-width: 0;
+}
+
+.month-bar .amount {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.month-bar-fill {
+  width: 1.75rem;
+  max-height: 100%;
+  min-height: 0.25rem;
+  border-radius: 0.625rem;
+  background: var(--accent-soft);
+  box-shadow: var(--raise-xs);
+  transition: height var(--appear);
+}
+
+.month-bar-current .amount {
+  color: var(--accent);
+}
+
+.month-bar-current .month-bar-fill {
+  background: var(--accent);
+}
+
+.average {
+  padding: 0 0.25rem;
+  font-size: var(--text-sm);
+}

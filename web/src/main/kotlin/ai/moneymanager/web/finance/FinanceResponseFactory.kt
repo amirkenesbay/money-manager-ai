@@ -42,6 +42,9 @@ class FinanceResponseFactory(
         )
     }
 
+    fun operation(operation: FinanceOperationEntity): OperationResponse =
+        operation.toResponse(userInfoService.displayNames(setOf(operation.creatorId)).getValue(operation.creatorId))
+
     private fun FinanceOperationEntity.toResponse(creatorName: String) = OperationResponse(
         id = checkNotNull(id),
         type = type,

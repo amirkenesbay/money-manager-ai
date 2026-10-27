@@ -23,7 +23,9 @@ const PAGE_SIZE = 20
 const firstPage = Array.from({ length: PAGE_SIZE }, (_, index) => operation({ id: `op-${index}`, categoryName: `Покупка ${index}` }))
 const premiumRequired = new ApiRequestError('limit', 422, { code: 'PREMIUM_REQUIRED', message: 'limit', details: { historyDaysBack: 30 } })
 
-const renderScreen = (onBack = vi.fn()) => render(<OperationsScreen me={me()} group={group()} onBack={onBack} />)
+const onAddOperation = vi.fn()
+const onSelectOperation = vi.fn()
+const renderScreen = () => render(<OperationsScreen me={me()} group={group()} onAddOperation={onAddOperation} onSelectOperation={onSelectOperation} />)
 const lastQuery = () => vi.mocked(fetchOperations).mock.lastCall?.[1]
 
 describe('OperationsScreen', () => {
@@ -143,20 +145,13 @@ describe('OperationsScreen', () => {
     expect(screen.getByRole('region', { name: '11 октября' })).toBeInTheDocument()
   })
 
-  it('tells that adding operations is coming soon', async () => {
+  it('opens the new operation form and the tapped operation', async () => {
     renderScreen()
 
     await userEvent.click(screen.getByRole('button', { name: strings.addOperation }))
+    await userEvent.click(await screen.findByRole('button', { name: /Продукты/ }))
 
-    expect(screen.getByRole('status')).toHaveTextContent(strings.comingSoon)
-  })
-
-  it('goes back by the in-app button outside Telegram', async () => {
-    const onBack = vi.fn()
-    renderScreen(onBack)
-
-    await userEvent.click(screen.getByRole('button', { name: strings.back }))
-
-    expect(onBack).toHaveBeenCalled()
+    expect(onAddOperation).toHaveBeenCalled()
+    expect(onSelectOperation).toHaveBeenCalledWith(operation())
   })
 })

@@ -106,3 +106,76 @@ export interface Category {
   icon: string
   type: CategoryType
 }
+
+export interface MaxExpense {
+  amount: string
+  icon: string
+  categoryName: string
+  date: string
+}
+
+export interface ExpensiveDay {
+  date: string
+  total: string
+}
+
+export interface AnalyticsReport {
+  month: string
+  currency: Currency
+  income: string
+  expense: string
+  operationCount: number
+  daysInMonth: number
+  topExpenses: CategoryAmount[]
+  maxExpense: MaxExpense | null
+  mostExpensiveDay: ExpensiveDay | null
+}
+
+export interface MonthPair {
+  previous: string
+  current: string
+}
+
+export interface CategoryComparison {
+  icon: string
+  name: string
+  previous: string
+  current: string
+}
+
+export interface ComparisonReport {
+  month: string
+  previousMonth: string
+  currency: Currency
+  income: MonthPair
+  expense: MonthPair
+  categories: CategoryComparison[]
+}
+
+export interface MemberAmount {
+  name: string
+  total: string
+}
+
+export interface MembersReport {
+  month: string
+  currency: Currency
+  income: string
+  expense: string
+  incomeByMember: MemberAmount[]
+  expenseByMember: MemberAmount[]
+}
+
+export interface CategoryMonth {
+  month: string
+  total: string
+  count: number
+}
+
+export interface CategoryReport {
+  categoryId: string
+  icon: string
+  name: string
+  currency: Currency
+  months: CategoryMonth[]
+}

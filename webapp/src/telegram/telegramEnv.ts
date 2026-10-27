@@ -1,4 +1,4 @@
-import { backButton, init, isTMA, miniApp, openTelegramLink, retrieveRawInitData, swipeBehavior, themeParams, viewport } from '@tma.js/sdk-react'
+import { backButton, closingBehavior, init, isTMA, miniApp, openTelegramLink, retrieveRawInitData, swipeBehavior, themeParams, viewport } from '@tma.js/sdk-react'
 import { applyTheme } from '../theme/theme'
 
 const APP_HEIGHT_VAR = '--app-height'
@@ -10,6 +10,7 @@ export function initTelegram(): boolean {
     themeParams.mount.ifAvailable()
     miniApp.mount.ifAvailable()
     backButton.mount.ifAvailable()
+    closingBehavior.mount.ifAvailable()
     swipeBehavior.mount.ifAvailable()
     swipeBehavior.disableVertical.ifAvailable()
     followColorScheme()

@@ -25,6 +25,7 @@ import ai.moneymanager.testing.testGroup
 import ai.moneymanager.testing.testUser
 import ai.moneymanager.web.ApiWebLayerSetup
 import ai.moneymanager.web.access.GroupAccessGuard
+import ai.moneymanager.web.access.GroupCategoryLookup
 import ai.moneymanager.web.access.HistoryAccessPolicy
 import ai.moneymanager.web.security.TestInitData
 import ai.moneymanager.web.withTelegramAuth
@@ -57,7 +58,7 @@ private const val REPORT_METHOD_PREFIX = "build"
 
 @WebMvcTest(controllers = [ReportController::class])
 @ApiWebLayerSetup
-@Import(GroupAccessGuard::class, HistoryAccessPolicy::class, SubscriptionLimitsService::class, ReportResponseFactory::class)
+@Import(GroupAccessGuard::class, GroupCategoryLookup::class, HistoryAccessPolicy::class, SubscriptionLimitsService::class, ReportResponseFactory::class)
 class ReportControllerTest {
     @Autowired
     private lateinit var mockMvc: MockMvc

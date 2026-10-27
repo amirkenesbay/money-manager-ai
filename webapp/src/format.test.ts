@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { strings } from './strings'
 import { asRendered } from './test/text'
-import { formatDayLabel, formatMoney, formatSignedMoney } from './format'
+import { formatDayLabel, formatMoney, formatMonthShort, formatMonthTitle, formatSignedMoney, shiftMonth } from './format'
 
 const LANGUAGE = 'ru'
 
@@ -31,5 +31,15 @@ describe('format', () => {
     expect(formatDayLabel('2026-10-01', today, LANGUAGE)).toBe(strings.today)
     expect(formatDayLabel('2026-09-30', today, LANGUAGE)).toBe(strings.yesterday)
     expect(formatDayLabel('2026-09-20', today, LANGUAGE)).toBe('20 сентября')
+  })
+
+  it('titles a month without the year suffix', () => {
+    expect(formatMonthTitle('2026-10', LANGUAGE)).toBe('Октябрь 2026')
+    expect(formatMonthShort('2026-09', LANGUAGE)).toBe('сент')
+  })
+
+  it('shifts months across the year boundary', () => {
+    expect(shiftMonth('2026-01', -1)).toBe('2025-12')
+    expect(shiftMonth('2026-12', 1)).toBe('2027-01')
   })
 })
