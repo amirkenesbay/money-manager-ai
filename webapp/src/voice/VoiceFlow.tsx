@@ -5,6 +5,8 @@ import { strings } from '../strings'
 import { notifyOutcome } from '../telegram/haptics'
 import { openExternalLink } from '../telegram/telegramEnv'
 import { Button } from '../ui/Button'
+import { Moment } from '../three/Moment'
+import type { MomentInputs } from '../three/moments'
 import { MicIcon } from '../ui/icons'
 import { ScreenHeader } from '../ui/ScreenHeader'
 import { Sheet } from '../ui/Sheet'
@@ -23,6 +25,8 @@ const SECONDS_IN_MINUTE = 60
 const SECONDS_DIGITS = 2
 const EXPLAINED_KEY = 'voice.microphoneExplained'
 const PROBLEM_ICON = '🎙️'
+
+const THINKING: MomentInputs['orb'] = { mode: 'thinking', level: () => 0 }
 
 type Problem = 'denied' | 'unsupported' | 'silence' | 'notUnderstood' | 'aiLimit' | 'aiBusy' | 'network'
 
@@ -125,6 +129,7 @@ function RecordingScreen({ onRecorded, onPaused, onSilence, onMicrophoneError, o
   const recorder = useRef<Recorder | null>(null)
   const [seconds, setSeconds] = useState(0)
   const [ready, setReady] = useState(false)
+  const level = useCallback(() => recorder.current?.level() ?? 0, [])
   useConfirmClosing(true)
 
   const finish = useCallback((deliver: (wav: Blob) => void) => {
@@ -187,8 +192,14 @@ function RecordingScreen({ onRecorded, onPaused, onSilence, onMicrophoneError, o
       <section className="voice-stage">
         <p className="hint centered">{strings.recordingHint}</p>
         <p className={`amount voice-timer ${ending ? 'negative' : ''}`} role="timer">{`${formatSeconds(seconds)} / ${formatSeconds(MAX_RECORDING_SECONDS)}`}</p>
-        <button type="button" className="voice-stop pressable" aria-label={strings.stopRecording} disabled={!ready} onClick={() => finish(onRecorded)}>
-          <span className="voice-stop-square" aria-hidden="true" />
+        <button type="button" className="voice-orb-button pressable" aria-label={strings.stopRecording} disabled={!ready} onClick={() => finish(onRecorded)}>
+          <Moment
+            kind="orb"
+            input={{ mode: 'listening', level }}
+            className="voice-orb"
+            fallback={<span className="voice-stop"><span className="voice-stop-square" aria-hidden="true" /></span>}
+            overlay={<span className="voice-stop-square voice-orb-stop" aria-hidden="true" />}
+          />
         </button>
         <ul className="voice-examples">
           {strings.voiceExamples.map((example) => <li key={example} className="caption">{example}</li>)}
@@ -222,7 +233,7 @@ function ProcessingScreen({ group, wav, onParsed, onFailed, onCancel }: {
     <>
       <ScreenHeader title={strings.processingTitle} onBack={onCancel} />
       <section className="voice-stage" aria-busy="true">
-        <span className="voice-processing" aria-hidden="true"><MicIcon /></span>
+        <Moment kind="orb" input={THINKING} className="voice-orb" fallback={<span className="voice-processing" aria-hidden="true"><MicIcon /></span>} />
         <p className="hint centered">{strings.processingHint}</p>
       </section>
       <Button variant="secondary" onClick={onCancel}>{strings.cancel}</Button>

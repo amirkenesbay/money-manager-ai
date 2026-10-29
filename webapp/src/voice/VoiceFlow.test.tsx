@@ -36,7 +36,7 @@ const voiceOperation = (overrides: Partial<VoiceOperation> = {}): VoiceOperation
   description: null,
   ...overrides,
 })
-const recorderReturning = (recording: ReturnType<Recorder['stop']>): Recorder => ({ stop: () => recording, cancel: vi.fn() })
+const recorderReturning = (recording: ReturnType<Recorder['stop']>): Recorder => ({ stop: () => recording, level: () => 0, cancel: vi.fn() })
 const renderFlow = () => render(<VoiceFlow me={me()} group={group()} onClose={vi.fn()} onManual={onManual} onSaved={onSaved} />)
 
 async function recordPhrase() {

@@ -96,6 +96,22 @@ describe('ReportsScreen', () => {
     expect(fetchAnalytics).toHaveBeenCalledWith(PERSONAL_GROUP_ID, CURRENT_MONTH, expect.anything())
   })
 
+  it('focuses the chart on a category picked in the legend and releases it on a second tap', async () => {
+    renderReports()
+    const groceries = await screen.findByRole('button', { name: /Продукты/ })
+
+    await userEvent.click(groceries)
+
+    expect(groceries).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getAllByText(money('21000'))).toHaveLength(2)
+    expect(screen.queryByText(money('48200'))).not.toBeInTheDocument()
+
+    await userEvent.click(groceries)
+
+    expect(groceries).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByText(money('48200'))).toBeInTheDocument()
+  })
+
   it('moves between months but not into the future', async () => {
     renderReports()
     await screen.findByText(strings.otherCategories)

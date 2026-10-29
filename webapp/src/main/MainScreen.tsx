@@ -129,7 +129,7 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
     setOverlay(null)
     setTab('home')
     const detail = operations.length === 1 ? summary(operations[0]) : strings.savedCount(operations.length)
-    toast.show({ title: strings.savedToast, detail, action: { label: strings.undo, onClick: () => void undo(operations) } })
+    toast.show({ title: strings.savedToast, detail, celebrate: true, action: { label: strings.undo, onClick: () => void undo(operations) } })
   }
 
   const saved = ({ operation, created }: SaveResult) => {

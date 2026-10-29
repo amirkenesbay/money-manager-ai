@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 import type { AnalyticsReport, CategoryMonth, Currency, MemberAmount, MonthPair } from '../api/types'
 import { useAsync } from '../api/useAsync'
 import { useCategories } from '../categories/useCategories'
-import { formatCompactMoney, formatDayLabel, formatMoney, formatMonthShort, formatMonthTitle } from '../format'
+import { formatCompactMoney, formatDayLabel, formatMoney, formatMonthShort, formatMonthTitle, initialOf } from '../format'
 import { strings } from '../strings'
 import { ChipSelect } from '../ui/ChipSelect'
 import { StateView } from '../ui/StateView'
@@ -10,7 +10,7 @@ import { Button } from '../ui/Button'
 import { percentOf } from '../percent'
 import { Meter } from '../ui/Meter'
 import { chartColor } from './chartMath'
-import { Donut, MonthBars } from './charts'
+import { MonthBars, RingChart } from './charts'
 import { ReportFrame } from './ReportFrame'
 import type { ReportContext } from './ReportsScreen'
 import { fetchAnalytics, fetchCategoryReport, fetchComparison, fetchMembers } from './reportsApi'
@@ -30,6 +30,7 @@ export function AnalyticsView({ context }: { context: ReportContext }) {
 
 function Analytics({ report, context }: { report: AnalyticsReport; context: ReportContext }) {
   const { language } = context.me
+  const [selected, setSelected] = useState<number | null>(null)
   const money = (amount: string | number) => formatMoney(String(amount), report.currency, language)
   if (report.operationCount === 0) return <EmptyMonth context={context} />
   const expense = Number(report.expense)
@@ -39,19 +40,23 @@ function Analytics({ report, context }: { report: AnalyticsReport; context: Repo
     ...(expense - topTotal > 0 ? [{ name: strings.otherCategories, value: expense - topTotal }] : []),
   ]
   const monthTitle = formatMonthTitle(report.month, language)
+  const focused = selected === null ? null : slices[selected]
+  const toggle = (index: number) => setSelected((current) => (current === index ? null : index))
   return (
     <section className="report">
-      <Donut values={slices.map((slice) => slice.value)} label={strings.expensesByCategory(monthTitle)}>
-        <span className="caption">{strings.expensesLabel}</span>
-        <span className="amount donut-total">{money(expense)}</span>
-      </Donut>
+      <RingChart values={slices.map((slice) => slice.value)} label={strings.expensesByCategory(monthTitle)} selected={selected} onSelect={toggle}>
+        <span className="caption">{focused ? focused.name : strings.expensesLabel}</span>
+        <span className="amount donut-total">{money(focused ? focused.value : expense)}</span>
+      </RingChart>
       <ul className="legend">
         {slices.map((slice, index) => (
-          <li key={slice.name} className="legend-row">
-            <span className="legend-swatch" style={{ background: chartColor(index) }} aria-hidden="true" />
-            <span className="legend-name">{slice.name}</span>
-            <span className="caption legend-percent">{Math.round(percentOf(slice.value, expense))}%</span>
-            <span className="amount">{money(slice.value)}</span>
+          <li key={slice.name}>
+            <button type="button" className="legend-row pressable" aria-pressed={selected === index} onClick={() => toggle(index)}>
+              <span className="legend-swatch" style={{ background: chartColor(index) }} aria-hidden="true" />
+              <span className="legend-name">{slice.name}</span>
+              <span className="caption legend-percent">{Math.round(percentOf(slice.value, expense))}%</span>
+              <span className="amount">{money(slice.value)}</span>
+            </button>
           </li>
         ))}
       </ul>
@@ -164,7 +169,7 @@ function MemberCards({ members, currency, language }: { members: MemberAmount[];
       {members.map((member) => (
         <li key={member.name} className="card member">
           <span className="member-head">
-            <span className="icon-circle member-initial" aria-hidden="true">{member.name.charAt(0)}</span>
+            <span className="icon-circle member-initial" aria-hidden="true">{initialOf(member.name)}</span>
             <span className="row-title member-name">{member.name}</span>
             <span className="amount">{formatMoney(member.total, currency, language)}</span>
           </span>

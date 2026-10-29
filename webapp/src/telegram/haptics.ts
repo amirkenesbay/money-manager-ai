@@ -10,6 +10,14 @@ export function notifyOutcome(outcome: Outcome): void {
   }
 }
 
+export function tapImpact(): void {
+  try {
+    hapticFeedback.impactOccurred.ifAvailable('light')
+  } catch {
+    return
+  }
+}
+
 export function confirmClosing(enabled: boolean): void {
   try {
     if (enabled) closingBehavior.enableConfirmation.ifAvailable()

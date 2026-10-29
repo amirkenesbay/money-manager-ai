@@ -1,8 +1,11 @@
 import { useCallback, useState } from 'react'
-import type { Group, Me } from '../api/types'
+import type { Group, Me, Member } from '../api/types'
 import { useAsync } from '../api/useAsync'
+import { initialOf } from '../format'
 import { strings } from '../strings'
 import { openExternalLink } from '../telegram/telegramEnv'
+import { Moment } from '../three/Moment'
+import { MAX_GROUP_BALLS } from '../three/moments'
 import { Button } from '../ui/Button'
 import { ConfirmSheet } from '../ui/ConfirmSheet'
 import { CoinIcon, CopyIcon, EditIcon, SendIcon, TrashIcon } from '../ui/icons'
@@ -87,11 +90,12 @@ function SharedGroupPanels({ me, group, notify }: { me: Me; group: Group; notify
         <h2 className="section-title">{strings.membersTitle}</h2>
         {members.state.status === 'loading' && <SkeletonRows count={MEMBER_SKELETON_ROWS} />}
         {members.state.status === 'error' && <LoadError message={members.state.message} onRetry={members.reload} />}
+        {members.state.status === 'ready' && <MembersMoment members={members.state.data} userId={me.userId} />}
         {members.state.status === 'ready' && (
           <ul className="member-list">
             {members.state.data.map((member) => (
               <li key={member.userId} className="member-item">
-                <span className="avatar" aria-hidden="true">{member.name.charAt(0)}</span>
+                <span className="avatar" aria-hidden="true">{initialOf(member.name)}</span>
                 <span className="row-title">{member.name}</span>
                 {member.userId === me.userId && <span className="caption">{strings.youMark}</span>}
                 {member.isOwner && <span className="badge">{strings.ownerMark}</span>}
@@ -107,6 +111,20 @@ function SharedGroupPanels({ me, group, notify }: { me: Me; group: Group; notify
         {invite.state.status === 'ready' && <InviteActions url={invite.state.data.url} groupName={group.name} notify={notify} />}
       </section>
     </>
+  )
+}
+
+function MembersMoment({ members, userId }: { members: Member[]; userId: number }) {
+  const shown = members.slice(0, MAX_GROUP_BALLS)
+  const you = Math.max(shown.findIndex((member) => member.userId === userId), 0)
+  return (
+    <Moment
+      key={shown.map((member) => member.userId).join()}
+      kind="group"
+      input={{ initials: shown.map((member) => initialOf(member.name)), you }}
+      className="group-moment"
+      fallback={null}
+    />
   )
 }
 

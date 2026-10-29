@@ -89,3 +89,5 @@ function capitalize(text: string): string {
 export function formatDate(isoDateTime: string, language: string): string {
   return new Intl.DateTimeFormat(language, { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(isoDateTime))
 }
+
+export const initialOf = (name: string): string => name.charAt(0)

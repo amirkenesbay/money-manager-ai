@@ -28,6 +28,11 @@
   color: var(--on-accent);
 }
 
+.moment.premium-crystal {
+  width: 10rem;
+  height: 10rem;
+}
+
 .premium-title {
   font-family: var(--font-mono);
   font-size: 1.625rem;

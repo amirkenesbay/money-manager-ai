@@ -30,6 +30,10 @@
   padding: 1.125rem;
 }
 
+.moment.group-moment {
+  height: 9rem;
+}
+
 .member-list {
   display: flex;
   flex-direction: column;

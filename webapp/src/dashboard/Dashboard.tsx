@@ -2,6 +2,7 @@ import type { Balance, Currency, Group, MonthSummary, Operation } from '../api/t
 import { formatDayLabel, formatMoney, formatSignedMoney } from '../format'
 import { OperationList } from '../operations/OperationList'
 import { strings } from '../strings'
+import { Moment } from '../three/Moment'
 import { AlertIcon, ChevronDownIcon, ChevronRightIcon, KeyboardIcon, MicIcon } from '../ui/icons'
 import { LoadError } from '../ui/LoadError'
 import { SkeletonCard, SkeletonRows } from '../ui/Skeleton'
@@ -101,6 +102,7 @@ function BalanceCard({ balance, summary, language, onOpenReport }: {
   const overspent = Number(summary.net) < 0
   return (
     <section className="well balance">
+      <Moment kind="wave" input={{ level: balanceLevel(balance, summary) }} className="balance-wave" fallback={null} />
       <span className="balance-head">
         <h2 className="balance-title">{strings.balanceTitle}</h2>
         <button type="button" className="link-button" onClick={onOpenReport}>{strings.reportLink}<ChevronRightIcon /></button>
@@ -117,6 +119,11 @@ function BalanceCard({ balance, summary, language, onOpenReport }: {
       )}
     </section>
   )
+}
+
+function balanceLevel(balance: Balance, summary: MonthSummary): number {
+  const total = Number(balance.total)
+  return total > 0 ? total / (total + Number(summary.expense)) : 0
 }
 
 function MonthFlow({ summary, language }: { summary: MonthSummary; language: string }) {

@@ -2,6 +2,7 @@ import type { Limits, Me } from '../api/types'
 import { formatDate, formatMoney } from '../format'
 import { strings } from '../strings'
 import { openExternalLink } from '../telegram/telegramEnv'
+import { Moment } from '../three/Moment'
 import { BottomBar } from '../ui/BottomBar'
 import { Button } from '../ui/Button'
 import { CrownIcon } from '../ui/icons'
@@ -9,6 +10,7 @@ import { ScreenHeader } from '../ui/ScreenHeader'
 import './premium.css'
 
 const DAYS_IN_MONTH = 30
+const CRYSTAL_INPUT = {}
 
 interface LimitRow {
   label: () => string
@@ -36,7 +38,12 @@ export function PremiumScreen({ me, onBack }: { me: Me; onBack: () => void }) {
     <>
       <ScreenHeader title={strings.premiumTitle} onBack={onBack} />
       <section className="premium-hero">
-        <span className="premium-crown" aria-hidden="true"><span><CrownIcon /></span></span>
+        <Moment
+          kind="crystal"
+          input={CRYSTAL_INPUT}
+          className="premium-crystal"
+          fallback={<span className="premium-crown" aria-hidden="true"><span><CrownIcon /></span></span>}
+        />
         <h2 className="premium-title">{paid ? strings.premiumActiveTitle : strings.premiumTitle}</h2>
         <p className="hint centered">
           {paid && subscription.expiresAt ? strings.premiumActiveBody(formatDate(subscription.expiresAt, language)) : strings.premiumTagline}

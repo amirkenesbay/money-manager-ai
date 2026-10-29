@@ -1,4 +1,4 @@
-import { downsample, encodeWav, isSilent, joinChunks, WAV_MIME_TYPE } from './wav'
+import { downsample, encodeWav, isSilent, joinChunks, rms, WAV_MIME_TYPE } from './wav'
 
 const BUFFER_SIZE = 4096
 
@@ -8,6 +8,7 @@ export type MicrophoneError = 'denied' | 'unsupported'
 
 export interface Recorder {
   stop: () => Recording
+  level: () => number
   cancel: () => void
 }
 
@@ -19,7 +20,12 @@ export async function startRecording(): Promise<Recorder> {
   const source = context.createMediaStreamSource(stream)
   const processor = context.createScriptProcessor(BUFFER_SIZE, 1, 1)
   const chunks: Float32Array[] = []
-  processor.onaudioprocess = (event) => chunks.push(new Float32Array(event.inputBuffer.getChannelData(0)))
+  let level = 0
+  processor.onaudioprocess = (event) => {
+    const chunk = new Float32Array(event.inputBuffer.getChannelData(0))
+    chunks.push(chunk)
+    level = rms(chunk)
+  }
   source.connect(processor)
   processor.connect(context.destination)
   await context.resume()
@@ -38,6 +44,7 @@ export async function startRecording(): Promise<Recorder> {
       if (isSilent(samples)) return { kind: 'silence' }
       return { kind: 'audio', wav: new Blob([encodeWav(samples)], { type: WAV_MIME_TYPE }) }
     },
+    level: () => level,
     cancel: release,
   }
 }

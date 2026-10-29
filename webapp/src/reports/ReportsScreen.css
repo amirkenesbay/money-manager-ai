@@ -44,6 +44,24 @@
   white-space: normal;
 }
 
+.moment.ring {
+  align-self: stretch;
+  height: 14rem;
+}
+
+.ring-center {
+  position: absolute;
+  top: 0.25rem;
+  right: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  text-align: center;
+  pointer-events: none;
+}
+
 .donut-skeleton {
   box-shadow: var(--inset-md);
 }
@@ -62,6 +80,22 @@
   align-items: center;
   gap: 0.625rem;
   font-size: var(--text-sm);
+}
+
+button.legend-row {
+  width: 100%;
+  padding: 0.375rem 0.625rem;
+  border: none;
+  border-radius: var(--radius-row);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+}
+
+button.legend-row[aria-pressed='true'] {
+  box-shadow: var(--inset-sm);
 }
 
 .legend-swatch {

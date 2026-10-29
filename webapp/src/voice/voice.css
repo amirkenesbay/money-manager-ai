@@ -25,9 +25,28 @@
   animation: voice-pulse 1.6s ease-in-out infinite;
 }
 
-.voice-stop:disabled {
+.voice-orb-button {
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+}
+
+.voice-orb-button:disabled .voice-stop {
   opacity: 0.6;
   animation: none;
+}
+
+.moment.voice-orb {
+  width: 12rem;
+  height: 12rem;
+}
+
+.voice-stop-square.voice-orb-stop {
+  position: absolute;
+  width: 1.75rem;
+  height: 1.75rem;
+  pointer-events: none;
 }
 
 .voice-stop-square {

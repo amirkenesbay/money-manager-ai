@@ -1,6 +1,6 @@
 export type Theme = 'light' | 'dark'
 
-const THEME_ATTRIBUTE = 'data-theme'
+export const THEME_ATTRIBUTE = 'data-theme'
 const DARK_SCHEME_QUERY = '(prefers-color-scheme: dark)'
 const BACKGROUND_VAR = '--bg'
 

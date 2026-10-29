@@ -654,6 +654,12 @@ button {
   color: var(--accent);
 }
 
+.moment.toast-coin {
+  flex-shrink: 0;
+  width: 3rem;
+  height: 3rem;
+}
+
 .toast-text {
   display: flex;
   flex-direction: column;

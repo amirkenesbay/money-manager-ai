@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { percentOf } from '../percent'
+import { Moment } from '../three/Moment'
 import { chartColor } from './chartMath'
 
 const RADIUS = 64
@@ -8,8 +9,29 @@ const VIEW_BOX = 168
 const CENTER = VIEW_BOX / 2
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 const SLICE_GAP = 2
+const DIMMED_OPACITY = 0.35
 
-export function Donut({ values, label, children }: { values: number[]; label: string; children?: ReactNode }) {
+export function RingChart({ values, label, selected, onSelect, children }: {
+  values: number[]
+  label: string
+  selected: number | null
+  onSelect: (index: number) => void
+  children: ReactNode
+}) {
+  return (
+    <Moment
+      key={values.join()}
+      kind="ring"
+      input={{ values, selected, onSelect }}
+      label={label}
+      className="ring"
+      fallback={<Donut values={values} label={label} selected={selected}>{children}</Donut>}
+      overlay={<div className="ring-center">{children}</div>}
+    />
+  )
+}
+
+function Donut({ values, label, selected, children }: { values: number[]; label: string; selected: number | null; children: ReactNode }) {
   const total = values.reduce((sum, value) => sum + value, 0) || 1
   const offsets = values.map((_, index) => values.slice(0, index).reduce((sum, value) => sum + (value / total) * CIRCUMFERENCE, 0))
   return (
@@ -27,6 +49,7 @@ export function Donut({ values, label, children }: { values: number[]; label: st
             strokeWidth={STROKE}
             strokeDasharray={`${Math.max((value / total) * CIRCUMFERENCE - SLICE_GAP, 0)} ${CIRCUMFERENCE}`}
             strokeDashoffset={-offsets[index]}
+            opacity={selected === null || selected === index ? 1 : DIMMED_OPACITY}
           />
         ))}
       </svg>
