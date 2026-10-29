@@ -3,6 +3,8 @@ package ai.moneymanager.chat.transition.balance
 import ai.moneymanager.chat.state.MoneyManagerButtonType
 import ai.moneymanager.chat.state.MoneyManagerContext
 import ai.moneymanager.chat.state.MoneyManagerState
+import ai.moneymanager.chat.telegram.MiniAppGateway
+import ai.moneymanager.chat.transition.gateway.toHome
 import ai.moneymanager.service.FinanceOperationService
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.UserInfoService
@@ -17,17 +19,19 @@ private val log = LoggerFactory.getLogger("BalanceTransitions")
 fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.balanceDialogTransitions(
     groupService: GroupService,
     userInfoService: UserInfoService,
-    financeOperationService: FinanceOperationService
+    financeOperationService: FinanceOperationService,
+    miniAppGateway: MiniAppGateway
 ) {
-    onboardingPromptTransitions(groupService, userInfoService, financeOperationService)
-    onboardingEnterAmountTransitions(groupService, userInfoService, financeOperationService)
+    onboardingPromptTransitions(groupService, userInfoService, financeOperationService, miniAppGateway)
+    onboardingEnterAmountTransitions(groupService, userInfoService, financeOperationService, miniAppGateway)
     balanceViewTransitions(groupService, financeOperationService)
 }
 
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.onboardingPromptTransitions(
     groupService: GroupService,
     userInfoService: UserInfoService,
-    financeOperationService: FinanceOperationService
+    financeOperationService: FinanceOperationService,
+    miniAppGateway: MiniAppGateway
 ) {
     transition {
         name = "Balance onboarding: start from zero"
@@ -42,7 +46,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.onboardingProm
         }
 
         then {
-            to = MoneyManagerState.MENU
+            toHome(miniAppGateway)
         }
     }
 
@@ -67,7 +71,8 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.onboardingProm
 private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.onboardingEnterAmountTransitions(
     groupService: GroupService,
     userInfoService: UserInfoService,
-    financeOperationService: FinanceOperationService
+    financeOperationService: FinanceOperationService,
+    miniAppGateway: MiniAppGateway
 ) {
     transition {
         name = "Balance onboarding: save valid amount"
@@ -87,7 +92,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.onboardingEnte
         }
 
         then {
-            to = MoneyManagerState.MENU
+            toHome(miniAppGateway)
         }
     }
 
@@ -121,7 +126,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.onboardingEnte
         }
 
         then {
-            to = MoneyManagerState.MENU
+            toHome(miniAppGateway)
         }
     }
 }

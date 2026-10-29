@@ -142,6 +142,18 @@ describe('MainScreen dashboard', () => {
     expect(await screen.findByText(strings.undoneToast)).toBeInTheDocument()
   })
 
+  it('opens the operation form when the bot reminder asks for it', async () => {
+    window.history.replaceState(null, '', '/?screen=add')
+    vi.mocked(fetchCategories).mockResolvedValue([category()])
+    try {
+      renderDashboard()
+
+      expect(await screen.findByRole('textbox', { name: strings.amountLabel })).toBeInTheDocument()
+    } finally {
+      window.history.replaceState(null, '', '/')
+    }
+  })
+
   it('opens a recent operation and returns home with the back control', async () => {
     renderDashboard()
 

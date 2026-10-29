@@ -16,6 +16,7 @@ import { PremiumScreen } from '../premium/PremiumScreen'
 import { RemindersScreen } from '../reminders/RemindersScreen'
 import { ReportsScreen } from '../reports/ReportsScreen'
 import { VoiceFlow } from '../voice/VoiceFlow'
+import { type LaunchScreen, launchScreen } from './launchScreen'
 import { strings } from '../strings'
 import { notifyOutcome } from '../telegram/haptics'
 import { LoadError } from '../ui/LoadError'
@@ -29,6 +30,11 @@ type Overlay =
   | { kind: 'detail'; operation: Operation }
   | { kind: 'section'; section: Section }
   | { kind: 'voice' }
+
+const LAUNCH_OVERLAYS: Record<LaunchScreen, Overlay> = {
+  add: { kind: 'form', operation: null },
+  categories: { kind: 'section', section: 'categories' },
+}
 
 interface Navigation {
   addOperation: () => void
@@ -65,7 +71,7 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
   const [groupId, setGroupId] = useState(initialGroupId)
   const [switchError, setSwitchError] = useState<string | null>(null)
   const [tab, setTab] = useState<Tab>('home')
-  const [overlay, setOverlay] = useState<Overlay | null>(null)
+  const [overlay, setOverlay] = useState<Overlay | null>(launchOverlay)
   const [version, setVersion] = useState(0)
   const toast = useToast()
   const group = groups.find((candidate) => candidate.id === groupId)
@@ -275,6 +281,11 @@ function TabContent({ tab, workspace, navigation }: { tab: Exclude<Tab, 'home'>;
         />
       )
   }
+}
+
+function launchOverlay(): Overlay | null {
+  const screen = launchScreen()
+  return screen ? LAUNCH_OVERLAYS[screen] : null
 }
 
 function displayName(me: Me): string {

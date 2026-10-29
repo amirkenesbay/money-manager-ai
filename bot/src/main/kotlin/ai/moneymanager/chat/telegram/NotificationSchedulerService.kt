@@ -17,12 +17,15 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
 import java.time.LocalDateTime
 
+private const val ADD_OPERATION_BUTTON_KEY = "mini_app.button.add_operation"
+
 
 @Service
 class NotificationSchedulerService(
     private val notificationService: NotificationService,
     private val userInfoService: UserInfoService,
     private val localizationService: LocalizationService,
+    private val miniAppGateway: MiniAppGateway,
     @Value("\${chat-machinist.bot.token}")
     private val botToken: String,
     @Value("\${chat-machinist.bot.name}")
@@ -58,23 +61,23 @@ class NotificationSchedulerService(
         val icon = notification.icon ?: DEFAULT_NOTIFICATION_ICON
         val messageText = localizationService.t("notification.push.body", language, icon, notification.name)
 
-        val openFinanceText = localizationService.t("notification.push.button.open_finance", language)
-        val keyboard = InlineKeyboardMarkup().apply {
-            keyboard = listOf(
-                listOf(
-                    InlineKeyboardButton(openFinanceText).apply {
-                        url = "https://t.me/$botUsername?start=${StartParameters.OPEN_FINANCE}"
-                    }
-                )
-            )
-        }
-
         val sendMessage = SendMessage().apply {
             chatId = notification.telegramUserId.toString()
             text = messageText
-            replyMarkup = keyboard
+            replyMarkup = reminderKeyboard(language)
         }
 
         execute(sendMessage)
+    }
+
+    private fun reminderKeyboard(language: String?): InlineKeyboardMarkup {
+        if (miniAppGateway.enabled) {
+            return miniAppGateway.keyboard(ADD_OPERATION_BUTTON_KEY, language, MiniAppScreen.ADD_OPERATION)
+        }
+        val openFinanceText = localizationService.t("notification.push.button.open_finance", language)
+        val button = InlineKeyboardButton(openFinanceText).apply {
+            url = "https://t.me/$botUsername?start=${StartParameters.OPEN_FINANCE}"
+        }
+        return InlineKeyboardMarkup(listOf(listOf(button)))
     }
 }

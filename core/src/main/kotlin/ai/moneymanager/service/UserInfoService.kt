@@ -58,6 +58,12 @@ class UserInfoService(
         return mapEntity(updated)
     }
 
+    fun markMiniAppIntroduced(telegramUserId: Long) {
+        val entity = userRepository.findFirstByTelegramUserIdOrderByIdAsc(telegramUserId) ?: return
+        if (entity.miniAppIntroduced) return
+        userRepository.save(entity.copy(miniAppIntroduced = true))
+    }
+
     fun findUserByUsernameOrTelegramId(identifier: String): UserInfo? {
         val entity = identifier.toLongOrNull()
             ?.let { userRepository.findFirstByTelegramUserIdOrderByIdAsc(it) }
@@ -98,6 +104,7 @@ class UserInfoService(
             groupIds = it.groupIds,
             timezone = it.timezone,
             onboardingCompleted = it.onboardingCompleted,
+            miniAppIntroduced = it.miniAppIntroduced,
             subscriptionTier = it.subscriptionTier,
             subscriptionExpiresAt = it.subscriptionExpiresAt
         )

@@ -5,6 +5,7 @@ import ai.moneymanager.chat.state.MoneyManagerState
 import ai.moneymanager.chat.telegram.AdminService
 import ai.moneymanager.service.UserInfoService
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
+import kz.rmr.chatmachinist.model.ActionContext
 import kz.rmr.chatmachinist.model.EventType
 
 private const val ACTIVATE_COMMAND = "/activate"
@@ -19,12 +20,11 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.adminDialogTransitions
     transition {
         name = "Activate subscription (admin)"
 
-        condition {
-            from = MoneyManagerState.MENU
-            eventType = EventType.COMMAND
-
-            guard {
-                update.message?.text?.startsWith(ACTIVATE_COMMAND) == true && adminService.isAdmin(user.id)
+        listOf(MoneyManagerState.MENU, MoneyManagerState.MINI_APP_GATEWAY).forEach { state ->
+            condition {
+                from = state
+                eventType = EventType.COMMAND
+                guard { isAdminActivation(adminService) }
             }
         }
 
@@ -60,3 +60,6 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.adminDialogTransitions
         }
     }
 }
+
+fun ActionContext<MoneyManagerState, MoneyManagerContext>.isAdminActivation(adminService: AdminService): Boolean =
+    update.message?.text?.startsWith(ACTIVATE_COMMAND) == true && adminService.isAdmin(user.id)

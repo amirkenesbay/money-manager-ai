@@ -116,6 +116,7 @@ enum class MoneyManagerState {
     NOTIFICATION_DELETE_ALL_CONFIRM,
     NOTIFICATION_TIMEZONE_SELECT,
     NOTIFICATION_TIMEZONE_EXTENDED,
+    MINI_APP_GATEWAY,
 }
 
 enum class MoneyManagerButtonType {

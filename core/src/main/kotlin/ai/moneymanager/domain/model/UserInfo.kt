@@ -15,6 +15,7 @@ data class UserInfo(
     val groupIds: Set<ObjectId> = emptySet(),
     val timezone: String? = null,
     val onboardingCompleted: Boolean = false,
+    val miniAppIntroduced: Boolean = false,
     val subscriptionTier: SubscriptionTier = SubscriptionTier.FREE,
     val subscriptionExpiresAt: LocalDateTime? = null
 ) {

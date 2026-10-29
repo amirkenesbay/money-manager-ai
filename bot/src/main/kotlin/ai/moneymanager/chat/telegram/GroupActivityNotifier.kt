@@ -17,12 +17,14 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 
 private const val CATEGORY_RENAMED_KEY = "group.category_notice.renamed"
 private const val CATEGORY_DELETED_KEY = "group.category_notice.deleted"
+private const val OPEN_CATEGORIES_BUTTON_KEY = "mini_app.button.categories"
 
 @Service
 class GroupActivityNotifier(
     private val groupService: GroupService,
     private val userInfoService: UserInfoService,
     private val localizationService: LocalizationService,
+    private val miniAppGateway: MiniAppGateway,
     @Value("\${chat-machinist.bot.token}")
     botToken: String,
 ) : DefaultAbsSender(DefaultBotOptions(), botToken) {
@@ -52,8 +54,15 @@ class GroupActivityNotifier(
         val actorName = userInfoService.displayNames(setOf(actorId)).getValue(actorId)
         recipients.forEach { memberId ->
             val language = userInfoService.getUserInfoByTelegramId(memberId)?.language
-            runCatching { execute(SendMessage(memberId.toString(), text(language, group.name, actorName))) }
+            runCatching { execute(categoryNotice(memberId, language, text(language, group.name, actorName))) }
                 .onFailure { log.warn("Failed to notify member {} of group {}: {}", memberId, groupId, it.message) }
         }
     }
+
+    private fun categoryNotice(memberId: Long, language: String?, text: String): SendMessage =
+        SendMessage(memberId.toString(), text).apply {
+            if (miniAppGateway.enabled) {
+                replyMarkup = miniAppGateway.keyboard(OPEN_CATEGORIES_BUTTON_KEY, language, MiniAppScreen.CATEGORIES)
+            }
+        }
 }

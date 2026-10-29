@@ -19,6 +19,7 @@ import ai.moneymanager.chat.transition.settings.currencyDialogTransitions
 import ai.moneymanager.chat.transition.settings.languageDialogTransitions
 import ai.moneymanager.chat.transition.settings.settingsDialogTransitions
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.MoneyGroup
 import ai.moneymanager.chat.state.MoneyManagerButtonType
 import ai.moneymanager.chat.state.MoneyManagerContext
 import ai.moneymanager.chat.state.MoneyManagerState
@@ -41,6 +42,12 @@ import ai.moneymanager.service.NotificationService
 import ai.moneymanager.service.OnboardingService
 import ai.moneymanager.chat.telegram.PRO_MODE_BUTTON_TEXT
 import ai.moneymanager.chat.telegram.PersistentMenuKeyboardService
+import ai.moneymanager.chat.telegram.MiniAppGateway
+import ai.moneymanager.chat.transition.common.inviteTokenOf
+import ai.moneymanager.chat.transition.gateway.miniAppGatewayTransitions
+import ai.moneymanager.chat.transition.gateway.toGatewayOrMenu
+import ai.moneymanager.chat.transition.gateway.toHome
+import kz.rmr.chatmachinist.model.ActionContext
 import ai.moneymanager.chat.telegram.REPORT_BUTTON_TEXT
 import ai.moneymanager.chat.telegram.SETTINGS_BUTTON_TEXT
 import ai.moneymanager.service.UserInfoService
@@ -68,17 +75,19 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
     persistentMenuKeyboardService: PersistentMenuKeyboardService,
     adminService: AdminService,
     subscriptionLimitsService: SubscriptionLimitsService,
-    onboardingService: OnboardingService
+    onboardingService: OnboardingService,
+    miniAppGateway: MiniAppGateway
 ) {
     dialog {
         name = "Money Manager Dialog"
 
-        startMoneyManagerDialogTransition(userInfoService, groupService, categoryService, financeOperationService, telegramFileService, persistentMenuKeyboardService, aiActionExecutor)
-        joinGroupDialogTransitions(groupService, userInfoService, financeOperationService, localizationService, onboardingService)
+        miniAppGatewayTransitions(miniAppGateway, userInfoService, adminService)
+        startMoneyManagerDialogTransition(userInfoService, groupService, categoryService, financeOperationService, telegramFileService, persistentMenuKeyboardService, aiActionExecutor, miniAppGateway)
+        joinGroupDialogTransitions(groupService, userInfoService, financeOperationService, localizationService, onboardingService, miniAppGateway)
         settingsDialogTransitions()
         languageDialogTransitions(onboardingService)
         currencyDialogTransitions(groupService, subscriptionLimitsService)
-        balanceDialogTransitions(groupService, userInfoService, financeOperationService)
+        balanceDialogTransitions(groupService, userInfoService, financeOperationService, miniAppGateway)
         groupDialogTransitions(groupService, categoryService, userInfoService, localizationService)
         categoryDialogTransitions(categoryService, groupService, localizationService, subscriptionLimitsService)
         financeDialogTransitions(categoryService, financeOperationService, financeHistoryService, financeHistoryFormatter, financeReportFormatter, financeReportService, userInfoService, groupService, subscriptionLimitsService, localizationService)
@@ -104,7 +113,8 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
     financeOperationService: FinanceOperationService,
     telegramFileService: TelegramFileService,
     persistentMenuKeyboardService: PersistentMenuKeyboardService,
-    aiActionExecutor: AiActionExecutor
+    aiActionExecutor: AiActionExecutor,
+    miniAppGateway: MiniAppGateway
 ) {
     transition {
         name = "Start Money Manager Dialog"
@@ -139,27 +149,26 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
             context.userInfo = userInfoService.getOrCreate(user.toTelegramProfile())
             context.pendingPersistentAction = PERSISTENT_BUTTON_ACTIONS[update.message?.text]
             context.financeOperationType = null
-            update.message?.chatId?.let { persistentMenuKeyboardService.attach(it) }
+            if (!miniAppGateway.enabled) {
+                update.message?.chatId?.let { persistentMenuKeyboardService.attach(it) }
+            }
 
             val messageText = update.message?.text
-            if (messageText != null) {
-                val parts = messageText.split(" ")
-                if (parts.size == 2 && parts[1].startsWith(StartParameters.JOIN_PREFIX)) {
-                    val token = parts[1].removePrefix(StartParameters.JOIN_PREFIX)
-                    context.pendingInviteToken = token
-                    val group = groupService.getGroupByToken(token)
-                    context.pendingGroup = group
+            val token = inviteTokenOf(messageText)
+            if (token != null) {
+                context.pendingInviteToken = token
+                val group = groupService.getGroupByToken(token)
+                context.pendingGroup = group
 
-                    if (group != null) {
-                        context.pendingGroupOwnerInfo = userInfoService.getUserInfoByTelegramId(group.ownerId)
-                    }
-                } else if (parts.size == 2 && parts[1] == StartParameters.OPEN_FINANCE) {
-                    context.pendingPersistentAction = PersistentAction.OPEN_FINANCE
-                    val chatId = update.message?.chatId
-                    val messageId = update.message?.messageId
-                    if (chatId != null && messageId != null) {
-                        telegramFileService.deleteMessage(chatId, messageId)
-                    }
+                if (group != null) {
+                    context.pendingGroupOwnerInfo = userInfoService.getUserInfoByTelegramId(group.ownerId)
+                }
+            } else if (messageText?.split(" ")?.getOrNull(1) == StartParameters.OPEN_FINANCE) {
+                context.pendingPersistentAction = PersistentAction.OPEN_FINANCE
+                val chatId = update.message?.chatId
+                val messageId = update.message?.messageId
+                if (chatId != null && messageId != null) {
+                    telegramFileService.deleteMessage(chatId, messageId)
                 }
             }
         }
@@ -429,7 +438,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startMoneyMana
         }
 
         then {
-            to = MoneyManagerState.MENU
+            toHome(miniAppGateway)
         }
     }
 }
@@ -439,7 +448,8 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.joinGroupDialo
     userInfoService: UserInfoService,
     financeOperationService: FinanceOperationService,
     localizationService: LocalizationService,
-    onboardingService: OnboardingService
+    onboardingService: OnboardingService,
+    miniAppGateway: MiniAppGateway
 ) {
     transition {
         name = "Confirm join group"
@@ -450,25 +460,15 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.joinGroupDialo
         }
 
         action {
-            val userId = user.id
-            val token = context.pendingInviteToken
-            if (token != null) {
-                ensurePersonalGroupOnJoin(userId, userInfoService, onboardingService, localizationService)
-
-                val joinedGroup = groupService.joinGroup(userId, token)
-                context.currentGroup = joinedGroup
-
-                userInfoService.markOnboardingCompleted(userId)
-                val updatedUserInfo = userInfoService.getOrCreate(user.toTelegramProfile())
-                context.userInfo = updatedUserInfo
-
-                log.info("User joined group: groupId=${joinedGroup?.id}, activeGroupId=${updatedUserInfo.activeGroupId}")
+            val joinedGroup = context.pendingInviteToken?.let { token ->
+                joinPendingGroup(token, groupService, userInfoService, onboardingService, localizationService)
             }
             loadCurrentBalance(groupService, financeOperationService)
+            if (miniAppGateway.enabled) announceJoin(miniAppGateway, joinedGroup?.name)
         }
 
         then {
-            to = MoneyManagerState.MENU
+            toGatewayOrMenu(miniAppGateway)
         }
     }
 
@@ -488,9 +488,44 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.joinGroupDialo
         }
 
         then {
-            to = MoneyManagerState.MENU
+            if (miniAppGateway.enabled) {
+                to = MoneyManagerState.STARTED
+                noReply = true
+                trigger { sameDialog = true }
+            } else {
+                to = MoneyManagerState.MENU
+            }
         }
     }
+}
+
+private fun ActionContext<MoneyManagerState, MoneyManagerContext>.announceJoin(miniAppGateway: MiniAppGateway, groupName: String?) {
+    if (groupName == null) {
+        miniAppGateway.sendHint(chat.id, user.id)
+        return
+    }
+    miniAppGateway.sendJoined(chat.id, user.id, groupName)
+}
+
+private fun ActionContext<MoneyManagerState, MoneyManagerContext>.joinPendingGroup(
+    token: String,
+    groupService: GroupService,
+    userInfoService: UserInfoService,
+    onboardingService: OnboardingService,
+    localizationService: LocalizationService
+): MoneyGroup? {
+    val userId = user.id
+    ensurePersonalGroupOnJoin(userId, userInfoService, onboardingService, localizationService)
+
+    val joinedGroup = groupService.joinGroup(userId, token)
+    context.currentGroup = joinedGroup
+
+    userInfoService.markOnboardingCompleted(userId)
+    val updatedUserInfo = userInfoService.getOrCreate(user.toTelegramProfile())
+    context.userInfo = updatedUserInfo
+
+    log.info("User joined group: groupId=${joinedGroup?.id}, activeGroupId=${updatedUserInfo.activeGroupId}")
+    return joinedGroup
 }
 
 private fun ensurePersonalGroupOnJoin(

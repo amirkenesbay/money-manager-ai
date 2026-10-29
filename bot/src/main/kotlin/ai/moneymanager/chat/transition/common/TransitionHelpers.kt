@@ -3,6 +3,7 @@ package ai.moneymanager.chat.transition.common
 import ai.moneymanager.chat.state.MoneyManagerButtonType
 import ai.moneymanager.chat.state.MoneyManagerContext
 import ai.moneymanager.chat.state.MoneyManagerState
+import ai.moneymanager.domain.model.StartParameters
 import kz.rmr.chatmachinist.api.transition.Action
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType
@@ -139,4 +140,12 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.confirmFlow(
     } else {
         simpleTransition("Cancel $flowName", confirmState, MoneyManagerButtonType.CANCEL, cancelState)
     }
+}
+
+private const val START_ARGUMENT_COUNT = 2
+
+fun inviteTokenOf(startText: String?): String? {
+    val parts = startText?.split(" ") ?: return null
+    if (parts.size != START_ARGUMENT_COUNT || !parts[1].startsWith(StartParameters.JOIN_PREFIX)) return null
+    return parts[1].removePrefix(StartParameters.JOIN_PREFIX)
 }
