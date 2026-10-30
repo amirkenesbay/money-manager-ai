@@ -14,10 +14,15 @@ export function useOperationsFeed(groupId: string, query: OperationsQuery) {
   const loadFirstPage = useCallback((signal: AbortSignal) => fetchOperations(groupId, query, 0, signal), [groupId, query])
   const firstPage = useAsync(loadFirstPage)
   const [extra, setExtra] = useState<ExtraPages | null>(null)
+  const [shown, setShown] = useState<OperationsPage | null>(null)
 
   const base = firstPage.state.status === 'ready' ? firstPage.state.data : null
+  if (base !== null && base !== shown) setShown(base)
+  const refreshing = firstPage.state.status === 'loading' && shown !== null
   const current = extra !== null && extra.base === base ? extra : null
-  const items = base === null ? [] : [...base.items, ...(current?.pages.flatMap((page) => page.items) ?? [])]
+  const items = base === null
+    ? (refreshing && shown !== null ? shown.items : [])
+    : [...base.items, ...(current?.pages.flatMap((page) => page.items) ?? [])]
   const hasMore = base !== null && items.length < base.totalItems
 
   const loadMore = useCallback(async () => {
@@ -34,6 +39,7 @@ export function useOperationsFeed(groupId: string, query: OperationsQuery) {
 
   return {
     state: firstPage.state,
+    refreshing,
     reload: firstPage.reload,
     items,
     hasMore,

@@ -67,6 +67,17 @@ describe('OperationsScreen', () => {
     expect(lastQuery()).toMatchObject({ type: 'INCOME', categoryId: 'cat-3' })
   })
 
+  it('keeps the current list dimmed while another filter loads', async () => {
+    renderScreen()
+    await screen.findByText('Продукты')
+    vi.mocked(fetchOperations).mockReturnValue(new Promise(() => undefined))
+
+    await userEvent.click(screen.getByRole('radio', { name: strings.typeFilter('INCOME') }))
+
+    expect(screen.getByText('Продукты').closest('.feed')).toHaveAttribute('aria-busy', 'true')
+    expect(screen.queryByLabelText(strings.operationsLoading)).not.toBeInTheDocument()
+  })
+
   it('loads the next page and appends it to the list', async () => {
     vi.mocked(fetchOperations)
       .mockResolvedValueOnce(operationsPage(firstPage, PAGE_SIZE + 1))

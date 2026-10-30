@@ -102,12 +102,12 @@ function OperationsFeed({ me, group, query, premiumOffer, onResetFilters, onSele
 }) {
   const feed = useOperationsFeed(group.id, query)
 
-  if (feed.state.status === 'loading') return <SkeletonRows count={FEED_SKELETON_ROWS} label={strings.operationsLoading} />
+  if (feed.state.status === 'loading' && !feed.refreshing) return <SkeletonRows count={FEED_SKELETON_ROWS} label={strings.operationsLoading} />
   if (feed.state.status === 'error') {
     if (feed.state.code === 'PREMIUM_REQUIRED') return premiumOffer
     return <LoadError message={feed.state.message} onRetry={feed.reload} />
   }
-  if (feed.items.length === 0) {
+  if (feed.items.length === 0 && !feed.refreshing) {
     return (
       <StateView icon={strings.operationsEmptyIcon} title={strings.operationsEmptyTitle} body={strings.operationsEmptyHint}>
         <Button variant="secondary" size="small" onClick={onResetFilters}>{strings.resetFilters}</Button>
@@ -115,10 +115,10 @@ function OperationsFeed({ me, group, query, premiumOffer, onResetFilters, onSele
     )
   }
   return (
-    <section className="feed">
+    <section className="feed" aria-busy={feed.refreshing}>
       <OperationDays operations={feed.items} group={group} language={me.language} onSelect={onSelectOperation} />
       {feed.loadMoreFailed && <p className="error-text" role="alert">{strings.loadMoreFailed}</p>}
-      {feed.hasMore
+      {feed.refreshing ? null : feed.hasMore
         ? (
           <Button variant="secondary" size="small" disabled={feed.loadingMore} onClick={feed.loadMore}>
             {feed.loadingMore ? strings.loading : strings.loadMore}
