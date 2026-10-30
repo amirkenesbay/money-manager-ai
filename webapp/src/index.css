@@ -126,6 +126,13 @@ button {
   padding: 1.5rem var(--gutter) var(--gutter);
 }
 
+@media (max-height: 680px) {
+  .screen {
+    gap: 0.625rem;
+    padding-top: 1rem;
+  }
+}
+
 .title {
   font-family: var(--font-mono);
   font-size: var(--title);
