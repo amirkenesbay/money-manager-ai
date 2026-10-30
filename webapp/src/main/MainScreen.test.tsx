@@ -12,9 +12,11 @@ import { fetchBalance, fetchMonthSummary, fetchRecentOperations } from '../dashb
 import { activateGroup, createGroup, fetchGroups, fetchInvite, fetchMembers } from '../groups/groupsApi'
 import { fetchReminders } from '../reminders/remindersApi'
 import { createOperation, deleteOperation, fetchOperations } from '../operations/operationsApi'
+import { markHintSeen } from '../me/meApi'
 
 vi.mock('../groups/groupsApi', () => ({ fetchGroups: vi.fn(), activateGroup: vi.fn(), createGroup: vi.fn(), fetchMembers: vi.fn(), fetchInvite: vi.fn() }))
 vi.mock('../reminders/remindersApi', () => ({ fetchReminders: vi.fn() }))
+vi.mock('../me/meApi', async (importOriginal) => ({ ...await importOriginal<object>(), markHintSeen: vi.fn() }))
 vi.mock('../categories/categoriesApi', () => ({ fetchCategories: vi.fn() }))
 vi.mock('../dashboard/dashboardApi', () => ({
   RECENT_OPERATIONS_LIMIT: 10,
@@ -153,6 +155,41 @@ describe('MainScreen dashboard', () => {
     } finally {
       window.history.replaceState(null, '', '/')
     }
+  })
+
+  it('welcomes a newcomer once and starts voice from the last card', async () => {
+    vi.mocked(markHintSeen).mockResolvedValue(me())
+    render(<MainScreen me={me({ seenHints: [] })} activeGroupId={PERSONAL_GROUP_ID} onMeChanged={vi.fn()} />)
+
+    expect(await screen.findByRole('heading', { name: strings.welcomeVoiceTitle })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: strings.welcomeNext }))
+    await userEvent.click(screen.getByRole('button', { name: strings.welcomeNext }))
+    await userEvent.click(screen.getByRole('button', { name: strings.welcomeTryVoice }))
+
+    expect(markHintSeen).toHaveBeenCalledWith('WELCOME')
+    expect(screen.queryByRole('heading', { name: strings.welcomeVoiceTitle })).not.toBeInTheDocument()
+  })
+
+  it('keeps the welcome for later when the bot opens a form', async () => {
+    window.history.replaceState(null, '', '/?screen=add')
+    vi.mocked(fetchCategories).mockResolvedValue([category()])
+    try {
+      render(<MainScreen me={me({ seenHints: [] })} activeGroupId={PERSONAL_GROUP_ID} onMeChanged={vi.fn()} />)
+
+      expect(await screen.findByRole('textbox', { name: strings.amountLabel })).toBeInTheDocument()
+      expect(screen.queryByRole('heading', { name: strings.welcomeVoiceTitle })).not.toBeInTheDocument()
+    } finally {
+      window.history.replaceState(null, '', '/')
+    }
+  })
+
+  it('shows the welcome again from More', async () => {
+    renderDashboard()
+
+    await userEvent.click(await screen.findByRole('button', { name: strings.tabMore }))
+    await userEvent.click(await screen.findByRole('button', { name: strings.howToUse }))
+
+    expect(await screen.findByRole('heading', { name: strings.welcomeVoiceTitle })).toBeInTheDocument()
   })
 
   it('opens a recent operation and returns home with the back control', async () => {

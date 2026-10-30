@@ -22,6 +22,7 @@ class MeResponseFactory(
         language = localizationService.resolveLanguage(user.language, user.languageCode),
         timezone = user.timezone,
         activeGroupId = user.activeGroupId,
+        seenHints = user.seenHints,
         subscription = subscriptionOf(user),
     )
 

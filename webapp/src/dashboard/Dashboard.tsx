@@ -3,7 +3,7 @@ import { formatDayLabel, formatMoney, formatSignedMoney } from '../format'
 import { OperationList } from '../operations/OperationList'
 import { strings } from '../strings'
 import { Moment } from '../three/Moment'
-import { AlertIcon, ChevronDownIcon, ChevronRightIcon, KeyboardIcon, MicIcon } from '../ui/icons'
+import { AlertIcon, ArrowDownIcon, ChevronDownIcon, ChevronRightIcon, KeyboardIcon, MicIcon } from '../ui/icons'
 import { LoadError } from '../ui/LoadError'
 import { SkeletonCard, SkeletonRows } from '../ui/Skeleton'
 import { useCountUp } from '../ui/useCountUp'
@@ -151,7 +151,12 @@ function RecentOperations({ operations, currency, language, onOpenOperations, on
         {operations.length > 0 && <button type="button" className="link-button" onClick={onOpenOperations}>{strings.allOperations}</button>}
       </span>
       {operations.length === 0
-        ? <p className="recent-empty caption">{strings.recentOperationsEmpty}</p>
+        ? (
+          <>
+            <p className="recent-empty caption">{strings.recentOperationsEmpty}</p>
+            <span className="recent-empty-arrow"><ArrowDownIcon /></span>
+          </>
+        )
         : <OperationList operations={operations} currency={currency} language={language} note={(operation) => formatDayLabel(operation.operationDate, today, language)} onSelect={onSelectOperation} />}
     </section>
   )

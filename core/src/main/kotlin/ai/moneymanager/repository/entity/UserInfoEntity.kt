@@ -1,5 +1,6 @@
 package ai.moneymanager.repository.entity
 
+import ai.moneymanager.domain.model.AppHint
 import ai.moneymanager.domain.model.SubscriptionTier
 import ai.moneymanager.repository.entity.common.AuditInfo
 import org.bson.types.ObjectId
@@ -20,6 +21,7 @@ data class UserInfoEntity(
     val timezone: String? = null,
     val onboardingCompleted: Boolean = false,
     val miniAppIntroduced: Boolean = false,
+    val seenHints: Set<AppHint> = emptySet(),
     val subscriptionTier: SubscriptionTier = SubscriptionTier.FREE,
     val subscriptionExpiresAt: LocalDateTime? = null,
     val auditInfo: AuditInfo = AuditInfo()

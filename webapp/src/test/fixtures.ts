@@ -1,4 +1,4 @@
-import type { Balance, Category, Group, Limits, Me, MonthSummary, Operation, OperationsPage, Reminder } from '../api/types'
+import type { AppHint, Balance, Category, Group, Limits, Me, MonthSummary, Operation, OperationsPage, Reminder } from '../api/types'
 
 export const PERSONAL_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d0'
 export const FAMILY_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d1'
@@ -7,6 +7,8 @@ export const SUBSCRIBE_URL = 'https://t.me/tribute/app?startapp=test'
 const FREE_LIMITS: Limits = { aiRequestsPerDay: 10, categoriesPerType: 10, ownedSharedGroups: 3, activeNotifications: 3, historyDaysBack: 30 }
 const PAID_LIMITS: Limits = { aiRequestsPerDay: 100, categoriesPerType: 1000, ownedSharedGroups: null, activeNotifications: null, historyDaysBack: null }
 
+export const EVERY_HINT: AppHint[] = ['WELCOME', 'OPERATIONS', 'REPORTS', 'MORE', 'OPERATION_FORM', 'GROUP']
+
 export const me = (overrides: Partial<Me> = {}): Me => ({
   userId: 42,
   firstName: 'Амир',
@@ -14,6 +16,7 @@ export const me = (overrides: Partial<Me> = {}): Me => ({
   language: 'ru',
   timezone: null,
   activeGroupId: PERSONAL_GROUP_ID,
+  seenHints: EVERY_HINT,
   subscription: {
     tier: 'FREE',
     expiresAt: null,

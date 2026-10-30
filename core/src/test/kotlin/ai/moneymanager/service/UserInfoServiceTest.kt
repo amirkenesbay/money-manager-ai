@@ -1,6 +1,7 @@
 package ai.moneymanager.service
 
 import ai.moneymanager.domain.event.NewUserRegistered
+import ai.moneymanager.domain.model.AppHint
 import ai.moneymanager.domain.model.TelegramProfile
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.repository.UserInfoRepository
@@ -69,6 +70,17 @@ class UserInfoServiceTest {
         assertThat(repository.users).hasSize(1)
         assertThat(user.id).isEqualTo(repository.users.single().id)
         assertThat(notifiedUsers()).isEmpty()
+    }
+
+    @Test
+    fun `remembers each shown hint once`() {
+        repository.givenUser(telegramUserId = FORMER_OWNER_ID, username = RECYCLED_USERNAME)
+
+        service.markHintSeen(FORMER_OWNER_ID, AppHint.WELCOME)
+        val user = service.markHintSeen(FORMER_OWNER_ID, AppHint.WELCOME)
+
+        assertThat(user?.seenHints).containsExactly(AppHint.WELCOME)
+        assertThat(repository.users.single().seenHints).containsExactly(AppHint.WELCOME)
     }
 
     @Test

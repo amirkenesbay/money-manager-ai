@@ -1,6 +1,7 @@
 package ai.moneymanager.service
 
 import ai.moneymanager.domain.event.NewUserRegistered
+import ai.moneymanager.domain.model.AppHint
 import ai.moneymanager.domain.model.formatUserDisplayName
 import ai.moneymanager.domain.model.SubscriptionTier
 import ai.moneymanager.domain.model.TelegramProfile
@@ -64,6 +65,12 @@ class UserInfoService(
         userRepository.save(entity.copy(miniAppIntroduced = true))
     }
 
+    fun markHintSeen(telegramUserId: Long, hint: AppHint): UserInfo? {
+        val entity = userRepository.findFirstByTelegramUserIdOrderByIdAsc(telegramUserId) ?: return null
+        if (hint in entity.seenHints) return mapEntity(entity)
+        return mapEntity(userRepository.save(entity.copy(seenHints = entity.seenHints + hint)))
+    }
+
     fun findUserByUsernameOrTelegramId(identifier: String): UserInfo? {
         val entity = identifier.toLongOrNull()
             ?.let { userRepository.findFirstByTelegramUserIdOrderByIdAsc(it) }
@@ -105,6 +112,7 @@ class UserInfoService(
             timezone = it.timezone,
             onboardingCompleted = it.onboardingCompleted,
             miniAppIntroduced = it.miniAppIntroduced,
+            seenHints = it.seenHints,
             subscriptionTier = it.subscriptionTier,
             subscriptionExpiresAt = it.subscriptionExpiresAt
         )

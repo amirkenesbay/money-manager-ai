@@ -1,5 +1,6 @@
 package ai.moneymanager.web.me
 
+import ai.moneymanager.domain.model.AppHint
 import ai.moneymanager.domain.model.PREMIUM_MONTHLY_PRICE
 import ai.moneymanager.domain.model.PREMIUM_PRICE_CURRENCY
 import ai.moneymanager.domain.model.PREMIUM_SUBSCRIBE_LINK
@@ -31,6 +32,7 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDateTime
@@ -39,6 +41,7 @@ import java.time.ZoneId
 private const val ME_PATH = "/api/v1/me"
 private const val UNSUPPORTED_LANGUAGE = "de"
 private const val DEVICE_TIMEZONE = "Asia/Almaty"
+private const val HINTS_PATH = "$ME_PATH/hints"
 
 @WebMvcTest(controllers = [MeController::class])
 @ApiWebLayerSetup
@@ -167,6 +170,25 @@ class MeControllerTest {
             .andExpect(jsonPath("$.subscription.paidLimits.ownedSharedGroups").value(nullValue()))
             .andExpect(jsonPath("$.subscription.price.amount").value(PREMIUM_MONTHLY_PRICE.toPlainString()))
             .andExpect(jsonPath("$.subscription.price.currency").value(PREMIUM_PRICE_CURRENCY.name))
+    }
+
+    @Test
+    fun `remembers a shown hint so it does not repeat on another device`() {
+        givenCurrentUser(testUser())
+        `when`(userInfoService.markHintSeen(TEST_USER_ID, AppHint.WELCOME)).thenReturn(testUser().copy(seenHints = setOf(AppHint.WELCOME)))
+
+        mockMvc.perform(post(HINTS_PATH).withTelegramAuth().contentType(MediaType.APPLICATION_JSON).content("""{"hint":"WELCOME"}"""))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.seenHints", contains("WELCOME")))
+    }
+
+    @Test
+    fun `rejects an unknown hint`() {
+        givenCurrentUser(testUser())
+
+        mockMvc.perform(post(HINTS_PATH).withTelegramAuth().contentType(MediaType.APPLICATION_JSON).content("""{"hint":"SECRET"}"""))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
     }
 
     private fun patchLanguage(language: String) =

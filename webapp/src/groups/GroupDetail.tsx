@@ -19,6 +19,7 @@ import { CurrencySheet } from './CurrencySheet'
 import { groupMeta } from './groupMeta'
 import { deleteGroup, fetchInvite, fetchMembers } from './groupsApi'
 import { RenameSheet } from './RenameSheet'
+import { Hint } from '../onboarding/Hint'
 
 const SHARE_URL = 'https://t.me/share/url'
 const MEMBER_SKELETON_ROWS = 2
@@ -109,6 +110,7 @@ function SharedGroupPanels({ me, group, notify }: { me: Me; group: Group; notify
         {invite.state.status === 'loading' && <SkeletonRows count={1} />}
         {invite.state.status === 'error' && <LoadError message={invite.state.message} onRetry={invite.reload} />}
         {invite.state.status === 'ready' && <InviteActions url={invite.state.data.url} groupName={group.name} notify={notify} />}
+        <Hint hint="GROUP" title={strings.hintGroupTitle} body={strings.hintGroupBody} />
       </section>
     </>
   )

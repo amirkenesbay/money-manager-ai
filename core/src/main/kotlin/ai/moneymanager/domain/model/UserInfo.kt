@@ -16,6 +16,7 @@ data class UserInfo(
     val timezone: String? = null,
     val onboardingCompleted: Boolean = false,
     val miniAppIntroduced: Boolean = false,
+    val seenHints: Set<AppHint> = emptySet(),
     val subscriptionTier: SubscriptionTier = SubscriptionTier.FREE,
     val subscriptionExpiresAt: LocalDateTime? = null
 ) {

@@ -66,3 +66,7 @@ export const SendIcon = () => <Icon size={16}><path d="M22 2L11 13M22 2l-7 20-4-
 export const TrashIcon = () => <Icon size={16}><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></Icon>
 
 export const EditIcon = () => <Icon size={16}><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4" /></Icon>
+
+export const HelpIcon = () => <Icon size={18}><circle cx="12" cy="12" r="9" /><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17h.01" /></Icon>
+
+export const ArrowDownIcon = () => <Icon size={28} strokeWidth={2.2}><path d="M12 4v16M5 13l7 7 7-7" /></Icon>

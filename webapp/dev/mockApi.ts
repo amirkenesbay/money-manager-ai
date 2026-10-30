@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Plugin } from 'vite'
 import { AUTH_SCHEME } from '../src/api/auth.ts'
-import type { VoiceResult, AnalyticsReport, ApiErrorBody, ApiErrorCode, Balance, Category, CategoryReport, ComparisonReport, Currency, Group, Invite, Limits, Me, Member, MembersReport, MonthSummary, Operation, OperationsPage, Reminder, ReminderInput, SubscriptionTier } from '../src/api/types.ts'
+import type { AppHint, VoiceResult, AnalyticsReport, ApiErrorBody, ApiErrorCode, Balance, Category, CategoryReport, ComparisonReport, Currency, Group, Invite, Limits, Me, Member, MembersReport, MonthSummary, Operation, OperationsPage, Reminder, ReminderInput, SubscriptionTier } from '../src/api/types.ts'
 
 const API_PREFIX = '/api/v1'
 const SCENARIO_PARAM = 'mock'
@@ -37,7 +37,7 @@ const ok = (body: Body, delayMs?: number): MockResponse => ({ status: 200, body,
 const FREE_LIMITS: Limits = { aiRequestsPerDay: 10, categoriesPerType: 10, ownedSharedGroups: 3, activeNotifications: 3, historyDaysBack: FREE_HISTORY_DAYS }
 const PAID_LIMITS: Limits = { aiRequestsPerDay: 100, categoriesPerType: 1000, ownedSharedGroups: null, activeNotifications: null, historyDaysBack: null }
 
-const profile = { language: 'ru', timezone: null as string | null }
+const profile = { language: 'ru', timezone: null as string | null, seenHints: [] as AppHint[] }
 
 const me = (activeGroupId: string | null, tier: SubscriptionTier): Me => ({
   userId: 1,
@@ -46,6 +46,7 @@ const me = (activeGroupId: string | null, tier: SubscriptionTier): Me => ({
   language: profile.language,
   timezone: profile.timezone,
   activeGroupId,
+  seenHints: profile.seenHints,
   subscription: {
     tier,
     expiresAt: tier === 'PAID' ? PREMIUM_EXPIRES_AT : null,
@@ -448,6 +449,11 @@ function reminderRoute(reminderId: string | undefined, method: string, body: str
 function route(path: string, query: URLSearchParams, scenario: string, method: string, body: string): MockResponse | null {
   if (path === '/me') {
     if (method === 'PATCH') Object.assign(profile, JSON.parse(body))
+    return meScenarios[scenario]()
+  }
+  if (path === '/me/hints') {
+    const { hint } = JSON.parse(body) as { hint: AppHint }
+    if (!profile.seenHints.includes(hint)) profile.seenHints.push(hint)
     return meScenarios[scenario]()
   }
   if (path === '/groups') {

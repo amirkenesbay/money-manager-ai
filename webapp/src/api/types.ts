@@ -45,6 +45,8 @@ export interface Subscription {
   subscribeUrl: string
 }
 
+export type AppHint = 'WELCOME' | 'OPERATIONS' | 'REPORTS' | 'MORE' | 'OPERATION_FORM' | 'GROUP'
+
 export interface Me {
   userId: number
   firstName: string | null
@@ -52,6 +54,7 @@ export interface Me {
   language: string
   timezone: string | null
   activeGroupId: string | null
+  seenHints: AppHint[]
   subscription: Subscription
 }
 

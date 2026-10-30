@@ -17,6 +17,7 @@ import './OperationsScreen.css'
 import type { OperationsQuery } from './operationsApi'
 import { DEFAULT_PERIOD, type Period, PERIODS, periodRange } from './periods'
 import { useOperationsFeed } from './useOperationsFeed'
+import { Hint } from '../onboarding/Hint'
 
 const TYPE_FILTERS: (CategoryType | null)[] = [null, 'EXPENSE', 'INCOME']
 const ALL_CATEGORIES = ''
@@ -65,6 +66,7 @@ export function OperationsScreen({ me, group, onAddOperation, onSelectOperation 
         optionLabel={strings.typeFilter}
         onChange={selectType}
       />
+      <Hint hint="OPERATIONS" title={strings.hintOperationsTitle} body={strings.hintOperationsBody} />
       <div className="filter-chips">
         <ChipSelect
           label={strings.periodFilterLabel}

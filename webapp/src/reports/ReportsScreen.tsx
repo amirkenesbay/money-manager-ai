@@ -7,6 +7,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from '../ui/icons'
 import { Segmented } from '../ui/Segmented'
 import { AnalyticsView, CategoryView, ComparisonView, MembersView } from './reportViews'
 import './ReportsScreen.css'
+import { Hint } from '../onboarding/Hint'
 
 const REPORT_TABS: ReportTab[] = ['analytics', 'comparison', 'members', 'category']
 
@@ -30,7 +31,12 @@ export function ReportsScreen({ me, group, onAddOperation }: { me: Me; group: Gr
       <Segmented label={strings.reportTabsLabel} options={REPORT_TABS} value={tab} optionKey={(option) => option} optionLabel={strings.reportTab} onChange={setTab} />
       {tab === 'category'
         ? <p className="month-nav-title">{strings.categoryPeriod}</p>
-        : <MonthNav tab={tab} month={month} currentMonth={currentMonth} language={me.language} onChange={setMonth} />}
+        : (
+          <>
+            <MonthNav tab={tab} month={month} currentMonth={currentMonth} language={me.language} onChange={setMonth} />
+            <Hint hint="REPORTS" title={strings.hintReportsTitle} body={strings.hintReportsBody} />
+          </>
+        )}
       <ReportBody key={`${group.id}-${tab}-${month}`} tab={tab} context={context} />
     </>
   )

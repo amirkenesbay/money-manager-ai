@@ -9,18 +9,19 @@ import { isLanguage, LANGUAGE_NAMES } from '../i18n/languages'
 import { fetchReminders } from '../reminders/remindersApi'
 import { strings } from '../strings'
 import { Button } from '../ui/Button'
-import { BellIcon, CoinIcon, GlobeIcon, GridIcon, UsersIcon, WalletIcon } from '../ui/icons'
+import { BellIcon, CoinIcon, GlobeIcon, GridIcon, HelpIcon, UsersIcon, WalletIcon } from '../ui/icons'
 import { SettingsRow } from '../ui/SettingsRow'
 import { InitialBalanceSheet } from './InitialBalanceSheet'
 import { LanguageSheet } from './LanguageSheet'
 import type { Notify } from '../ui/useToast'
 import './more.css'
+import { Hint } from '../onboarding/Hint'
 
 export type Section = 'categories' | 'groups' | 'reminders' | 'premium'
 
 type SheetKind = 'language' | 'currency' | 'balance'
 
-export function MoreScreen({ me, group, groups, name, onMeChanged, onGroupUpdated, onOpenSection, notify }: {
+export function MoreScreen({ me, group, groups, name, onMeChanged, onGroupUpdated, onOpenSection, onShowWelcome, notify }: {
   me: Me
   group: Group
   groups: Group[]
@@ -28,6 +29,7 @@ export function MoreScreen({ me, group, groups, name, onMeChanged, onGroupUpdate
   onMeChanged: (me: Me) => void
   onGroupUpdated: (group: Group) => void
   onOpenSection: (section: Section) => void
+  onShowWelcome: () => void
   notify: Notify
 }) {
   const [sheet, setSheet] = useState<SheetKind | null>(null)
@@ -47,6 +49,7 @@ export function MoreScreen({ me, group, groups, name, onMeChanged, onGroupUpdate
   return (
     <>
       <h1 className="title">{strings.moreTitle}</h1>
+      <Hint hint="MORE" title={strings.hintMoreTitle} body={strings.hintMoreBody} />
       <section className="card profile-card">
         <span className="avatar profile-avatar" aria-hidden="true">{name.charAt(0)}</span>
         <span className="row-main">
@@ -68,6 +71,7 @@ export function MoreScreen({ me, group, groups, name, onMeChanged, onGroupUpdate
         <li><SettingsRow icon={<GlobeIcon />} label={strings.languageLabel} value={isLanguage(language) ? LANGUAGE_NAMES[language] : language} onClick={() => setSheet('language')} /></li>
         <li><SettingsRow icon={<CoinIcon />} label={strings.currencyLabel} value={currencyBadge(group.currency)} onClick={() => setSheet('currency')} /></li>
         <li><SettingsRow icon={<WalletIcon />} label={strings.initialBalanceLabel} value={formatMoney(group.initialBalance, group.currency, language)} onClick={() => setSheet('balance')} /></li>
+        <li><SettingsRow icon={<HelpIcon />} label={strings.howToUse} onClick={onShowWelcome} /></li>
       </ul>
 
       {sheet === 'language' && (

@@ -19,6 +19,7 @@ import { CalendarSheet } from './CalendarSheet'
 import { DeleteSheet } from './DeleteSheet'
 import './operation.css'
 import { MAX_COMMENT_LENGTH } from './limits'
+import { Hint } from '../onboarding/Hint'
 
 const OPERATION_TYPES: CategoryType[] = ['EXPENSE', 'INCOME']
 const QUICK_DAYS_AGO = [0, 1, 2]
@@ -149,6 +150,7 @@ function FormFields({ group, language, operation, categories, onSaved, onDeleted
           </button>
         </div>
         {customDate && <p className="caption">{formatDayLabel(date, new Date(), language)}</p>}
+        {!operation && <Hint hint="OPERATION_FORM" title={strings.hintFormTitle} body={strings.hintFormBody} />}
       </fieldset>
 
       <input

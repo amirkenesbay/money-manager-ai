@@ -7,6 +7,9 @@ import { Dashboard } from '../dashboard/Dashboard'
 import { activateGroup, fetchGroups } from '../groups/groupsApi'
 import { type GroupActions, GroupsScreen } from '../groups/GroupsScreen'
 import { MoreScreen, type Section } from '../more/MoreScreen'
+import { HintScope, HintsProvider } from '../onboarding/Hint'
+import { useHints } from '../onboarding/hintsContext'
+import { WelcomeSheet } from '../onboarding/WelcomeSheet'
 import { OperationDetail } from '../operation/OperationDetail'
 import { OperationForm, type SaveResult } from '../operation/OperationForm'
 import { operationSummary } from '../operation/operationSummary'
@@ -46,6 +49,7 @@ interface Navigation {
   addOperation: () => void
   selectOperation: (operation: Operation) => void
   openSection: (section: Section) => void
+  showWelcome: () => void
 }
 
 interface Workspace {
@@ -64,7 +68,11 @@ export function MainScreen({ me, activeGroupId, onMeChanged }: { me: Me; activeG
   if (groups.state.status === 'error') {
     return <main className="screen"><LoadError message={groups.state.message} onRetry={groups.reload} /></main>
   }
-  return <GroupScreens me={me} initialGroups={groups.state.data} initialGroupId={activeGroupId} onMeChanged={onMeChanged} />
+  return (
+    <HintsProvider me={me} onMeChanged={onMeChanged}>
+      <GroupScreens me={me} initialGroups={groups.state.data} initialGroupId={activeGroupId} onMeChanged={onMeChanged} />
+    </HintsProvider>
+  )
 }
 
 function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
@@ -79,6 +87,8 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
   const [tab, setTab] = useState<Tab>('home')
   const [overlay, setOverlay] = useState<Overlay | null>(launchOverlay)
   const [version, setVersion] = useState(0)
+  const hints = useHints()
+  const [welcomeOpen, setWelcomeOpen] = useState(() => !hints.isSeen('WELCOME') && launchScreen() === null)
   const toast = useToast()
   const group = groups.find((candidate) => candidate.id === groupId)
   const refresh = () => setVersion((value) => value + 1)
@@ -127,6 +137,13 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
     addOperation: () => open({ kind: 'form', operation: null }),
     selectOperation: (operation) => open({ kind: 'detail', operation }),
     openSection: (section) => open({ kind: 'section', section }),
+    showWelcome: () => setWelcomeOpen(true),
+  }
+
+  const finishWelcome = (tryVoice: boolean) => {
+    setWelcomeOpen(false)
+    if (!hints.isSeen('WELCOME')) hints.dismiss('WELCOME')
+    if (tryVoice) open({ kind: 'voice' })
   }
 
   const undo = async (operations: Operation[]) => {
@@ -195,7 +212,7 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
           />
         )}
         <div className="screen-section" style={overlay ? { display: 'none' } : undefined}>
-          <TabPanel active={tab === 'home' || !workspace}>
+          <TabPanel active={tab === 'home' || !workspace} hintsVisible={!welcomeOpen}>
             <Dashboard
               key={`${groupId}-${version}`}
               name={displayName(me)}
@@ -215,13 +232,14 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
             />
           </TabPanel>
           {workspace && SECONDARY_TABS.map((candidate) => (
-            <TabPanel key={`${candidate}-${groupId}-${version}`} active={tab === candidate}>
+            <TabPanel key={`${candidate}-${groupId}-${version}`} active={tab === candidate} hintsVisible={!overlay && !welcomeOpen}>
               <TabContent tab={candidate} workspace={workspace} navigation={navigation} />
             </TabPanel>
           ))}
           <TabBar active={tab} onSelect={switchTab} />
         </div>
       </main>
+      {welcomeOpen && group && !overlay && <WelcomeSheet group={group} onFinish={finishWelcome} />}
       {toast.current && <Toast toast={toast.current} onDone={toast.hide} />}
     </>
   )
@@ -268,8 +286,12 @@ function SectionScreen({ section, workspace, onBack }: { section: Section; works
   }
 }
 
-function TabPanel({ active, children }: { active: boolean; children: ReactNode }) {
-  return <div className="tab-panel" hidden={!active}>{children}</div>
+function TabPanel({ active, hintsVisible, children }: { active: boolean; hintsVisible: boolean; children: ReactNode }) {
+  return (
+    <div className="tab-panel" hidden={!active}>
+      <HintScope visible={active && hintsVisible}>{children}</HintScope>
+    </div>
+  )
 }
 
 function TabContent({ tab, workspace, navigation }: { tab: SecondaryTab; workspace: Workspace; navigation: Navigation }) {
@@ -289,6 +311,7 @@ function TabContent({ tab, workspace, navigation }: { tab: SecondaryTab; workspa
           onMeChanged={onMeChanged}
           onGroupUpdated={actions.updated}
           onOpenSection={navigation.openSection}
+          onShowWelcome={navigation.showWelcome}
           notify={notify}
         />
       )

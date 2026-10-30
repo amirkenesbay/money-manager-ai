@@ -11,6 +11,7 @@ import ai.moneymanager.web.error.ApiException
 import ai.moneymanager.web.error.badRequest
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -40,6 +41,10 @@ class MeController(
         val updated = request.timezone?.let { found(userInfoService.updateTimezone(userId, it)) } ?: withLanguage
         return meResponseFactory.create(updated)
     }
+
+    @PostMapping("/hints")
+    fun markHint(user: UserInfo, @RequestBody request: MarkHintRequest): MeResponse =
+        meResponseFactory.create(found(userInfoService.markHintSeen(checkNotNull(user.telegramUserId), request.hint)))
 
     private fun found(user: UserInfo?): UserInfo = user ?: throw ApiException(ApiErrorCode.NOT_FOUND)
 

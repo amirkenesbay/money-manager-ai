@@ -1,5 +1,6 @@
 package ai.moneymanager.web.me
 
+import ai.moneymanager.domain.model.AppHint
 import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.SubscriptionTier
 import org.bson.types.ObjectId
@@ -13,6 +14,7 @@ data class MeResponse(
     val language: String,
     val timezone: String?,
     val activeGroupId: ObjectId?,
+    val seenHints: Set<AppHint>,
     val subscription: SubscriptionResponse,
 )
 
@@ -37,6 +39,10 @@ data class LimitsResponse(
     val ownedSharedGroups: Int?,
     val activeNotifications: Int?,
     val historyDaysBack: Int?,
+)
+
+data class MarkHintRequest(
+    val hint: AppHint,
 )
 
 data class UpdateMeRequest(
