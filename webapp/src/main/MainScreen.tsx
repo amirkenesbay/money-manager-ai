@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { type ReactNode, useState } from 'react'
 import { serverMessage } from '../api/client'
 import type { Group, Me, Operation } from '../api/types'
 import { useAsync } from '../api/useAsync'
@@ -20,10 +20,16 @@ import { type LaunchScreen, launchScreen } from './launchScreen'
 import { strings } from '../strings'
 import { notifyOutcome } from '../telegram/haptics'
 import { LoadError } from '../ui/LoadError'
+import { withMotion } from '../ui/motion'
 import { SkeletonCard } from '../ui/Skeleton'
-import { type Tab, TabBar } from '../ui/TabBar'
+import { TabBar } from '../ui/TabBar'
+import { type Tab, TABS } from '../ui/tabs'
 import { Toast } from '../ui/Toast'
 import { type Notify, useToast } from '../ui/useToast'
+
+type SecondaryTab = Exclude<Tab, 'home'>
+
+const SECONDARY_TABS = TABS.filter((candidate): candidate is SecondaryTab => candidate !== 'home')
 
 type Overlay =
   | { kind: 'form'; operation: Operation | null }
@@ -77,6 +83,12 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
   const group = groups.find((candidate) => candidate.id === groupId)
   const refresh = () => setVersion((value) => value + 1)
   const summary = (operation: Operation) => group ? operationSummary(operation, group.currency, me.language) : undefined
+  const open = (next: Overlay) => withMotion('forward', () => setOverlay(next))
+  const goBack = (next: Overlay | null, after?: () => void) => withMotion('back', () => {
+    setOverlay(next)
+    after?.()
+  })
+  const switchTab = (next: Tab) => withMotion('fade', () => setTab(next))
 
   const activate = async (target: Group): Promise<boolean> => {
     setSwitchError(null)
@@ -112,9 +124,9 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
   }
 
   const navigation: Navigation = {
-    addOperation: () => setOverlay({ kind: 'form', operation: null }),
-    selectOperation: (operation) => setOverlay({ kind: 'detail', operation }),
-    openSection: (section) => setOverlay({ kind: 'section', section }),
+    addOperation: () => open({ kind: 'form', operation: null }),
+    selectOperation: (operation) => open({ kind: 'detail', operation }),
+    openSection: (section) => open({ kind: 'section', section }),
   }
 
   const undo = async (operations: Operation[]) => {
@@ -131,9 +143,10 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
   }
 
   const recorded = (operations: Operation[]) => {
-    refresh()
-    setOverlay(null)
-    setTab('home')
+    goBack(null, () => {
+      refresh()
+      setTab('home')
+    })
     const detail = operations.length === 1 ? summary(operations[0]) : strings.savedCount(operations.length)
     toast.show({ title: strings.savedToast, detail, celebrate: true, action: { label: strings.undo, onClick: () => void undo(operations) } })
   }
@@ -143,21 +156,16 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
       recorded([operation])
       return
     }
-    refresh()
-    setOverlay({ kind: 'detail', operation })
+    goBack({ kind: 'detail', operation }, refresh)
     toast.show({ title: strings.changedToast, detail: summary(operation) })
   }
 
   const deleted = (operation: Operation) => {
-    refresh()
-    setOverlay(null)
+    goBack(null, refresh)
     toast.show({ title: strings.deletedToast, detail: summary(operation) })
   }
 
-  const closeSection = () => {
-    setOverlay(null)
-    refresh()
-  }
+  const closeSection = () => goBack(null, refresh)
 
   const workspace: Workspace | null = group ? { me, group, groups, actions, notify: toast.show, onMeChanged } : null
 
@@ -169,10 +177,7 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
           <VoiceFlow
             me={me}
             group={group}
-            onClose={() => {
-              setOverlay(null)
-              refresh()
-            }}
+            onClose={closeSection}
             onManual={navigation.addOperation}
             onSaved={recorded}
           />
@@ -182,36 +187,39 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
             overlay={overlay}
             group={group}
             language={me.language}
-            onClose={() => setOverlay(null)}
-            onEdit={(operation) => setOverlay({ kind: 'form', operation })}
-            onOpenDetail={navigation.selectOperation}
+            onClose={() => goBack(null)}
+            onEdit={(operation) => open({ kind: 'form', operation })}
+            onBackToDetail={(operation) => goBack({ kind: 'detail', operation })}
             onSaved={saved}
             onDeleted={deleted}
           />
         )}
         <div className="screen-section" style={overlay ? { display: 'none' } : undefined}>
-          {tab === 'home' || !workspace
-            ? (
-              <Dashboard
-                key={`${groupId}-${version}`}
-                name={displayName(me)}
-                groups={groups}
-                groupId={groupId}
-                language={me.language}
-                switchError={switchError}
-                onSwitchGroup={(nextGroupId) => {
-                  const target = groups.find((candidate) => candidate.id === nextGroupId)
-                  if (target) void activate(target)
-                }}
-                onOpenOperations={() => setTab('operations')}
-                onOpenReports={() => setTab('reports')}
-                onAddOperation={navigation.addOperation}
-                onRecordVoice={() => setOverlay({ kind: 'voice' })}
-                onSelectOperation={navigation.selectOperation}
-              />
-            )
-            : <TabContent key={`${tab}-${groupId}-${version}`} tab={tab} workspace={workspace} navigation={navigation} />}
-          <TabBar active={tab} onSelect={setTab} />
+          <TabPanel active={tab === 'home' || !workspace}>
+            <Dashboard
+              key={`${groupId}-${version}`}
+              name={displayName(me)}
+              groups={groups}
+              groupId={groupId}
+              language={me.language}
+              switchError={switchError}
+              onSwitchGroup={(nextGroupId) => {
+                const target = groups.find((candidate) => candidate.id === nextGroupId)
+                if (target) void activate(target)
+              }}
+              onOpenOperations={() => switchTab('operations')}
+              onOpenReports={() => switchTab('reports')}
+              onAddOperation={navigation.addOperation}
+              onRecordVoice={() => open({ kind: 'voice' })}
+              onSelectOperation={navigation.selectOperation}
+            />
+          </TabPanel>
+          {workspace && SECONDARY_TABS.map((candidate) => (
+            <TabPanel key={`${candidate}-${groupId}-${version}`} active={tab === candidate}>
+              <TabContent tab={candidate} workspace={workspace} navigation={navigation} />
+            </TabPanel>
+          ))}
+          <TabBar active={tab} onSelect={switchTab} />
         </div>
       </main>
       {toast.current && <Toast toast={toast.current} onDone={toast.hide} />}
@@ -219,13 +227,13 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
   )
 }
 
-function OperationOverlay({ overlay, group, language, onClose, onEdit, onOpenDetail, onSaved, onDeleted }: {
+function OperationOverlay({ overlay, group, language, onClose, onEdit, onBackToDetail, onSaved, onDeleted }: {
   overlay: Extract<Overlay, { kind: 'form' | 'detail' }>
   group: Group
   language: string
   onClose: () => void
   onEdit: (operation: Operation) => void
-  onOpenDetail: (operation: Operation) => void
+  onBackToDetail: (operation: Operation) => void
   onSaved: (result: SaveResult) => void
   onDeleted: (operation: Operation) => void
 }) {
@@ -239,7 +247,7 @@ function OperationOverlay({ overlay, group, language, onClose, onEdit, onOpenDet
       group={group}
       language={language}
       operation={editing}
-      onBack={editing ? () => onOpenDetail(editing) : onClose}
+      onBack={editing ? () => onBackToDetail(editing) : onClose}
       onSaved={onSaved}
       onDeleted={onDeleted}
     />
@@ -260,7 +268,11 @@ function SectionScreen({ section, workspace, onBack }: { section: Section; works
   }
 }
 
-function TabContent({ tab, workspace, navigation }: { tab: Exclude<Tab, 'home'>; workspace: Workspace; navigation: Navigation }) {
+function TabPanel({ active, children }: { active: boolean; children: ReactNode }) {
+  return <div className="tab-panel" hidden={!active}>{children}</div>
+}
+
+function TabContent({ tab, workspace, navigation }: { tab: SecondaryTab; workspace: Workspace; navigation: Navigation }) {
   const { me, group, groups, actions, notify, onMeChanged } = workspace
   switch (tab) {
     case 'operations':

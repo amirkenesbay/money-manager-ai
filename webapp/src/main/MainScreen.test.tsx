@@ -35,6 +35,7 @@ vi.mock('../operations/operationsApi', () => ({
 const LANGUAGE = 'ru'
 const familyGroup = group({ id: FAMILY_GROUP_ID, name: 'Семья', type: 'SHARED', isActive: false, memberCount: 3 })
 
+const visible = (elements: HTMLElement[]) => elements.filter((element) => !element.closest('[hidden]'))
 const renderDashboard = () => render(<MainScreen me={me()} activeGroupId={PERSONAL_GROUP_ID} onMeChanged={vi.fn()} />)
 
 describe('MainScreen dashboard', () => {
@@ -69,8 +70,8 @@ describe('MainScreen dashboard', () => {
   it('lists recent operations with sign and day', async () => {
     renderDashboard()
 
-    expect(await screen.findByText(asRendered(formatSignedMoney('EXPENSE', '3500', 'KZT', LANGUAGE)))).toBeInTheDocument()
-    expect(screen.getByText(formatDayLabel('2026-10-12', new Date(), LANGUAGE))).toBeInTheDocument()
+    expect(visible(await screen.findAllByText(asRendered(formatSignedMoney('EXPENSE', '3500', 'KZT', LANGUAGE))))).toHaveLength(1)
+    expect(visible(screen.getAllByText(formatDayLabel('2026-10-12', new Date(), LANGUAGE)))).toHaveLength(1)
   })
 
   it('explains empty month and empty history', async () => {

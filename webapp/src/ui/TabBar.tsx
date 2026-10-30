@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react'
 import { strings } from '../strings'
 import { ChartIcon, GridIcon, HomeIcon, ListIcon } from './icons'
-
-export type Tab = 'home' | 'operations' | 'reports' | 'more'
+import { type Tab, TABS } from './tabs'
 
 const TAB_ICONS: Record<Tab, ReactNode> = {
   home: <HomeIcon />,
@@ -10,8 +9,6 @@ const TAB_ICONS: Record<Tab, ReactNode> = {
   reports: <ChartIcon />,
   more: <GridIcon />,
 }
-
-const TABS = Object.keys(TAB_ICONS) as Tab[]
 
 const tabLabel = (tab: Tab): string => {
   const labels: Record<Tab, string> = {
