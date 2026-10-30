@@ -8,21 +8,30 @@ import ai.moneymanager.chat.telegram.MiniAppGateway
 import ai.moneymanager.chat.transition.admin.isAdminActivation
 import ai.moneymanager.chat.transition.common.inviteTokenOf
 import ai.moneymanager.service.UserInfoService
+import kz.rmr.chatmachinist.api.transition.ChatBuilder
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.api.transition.ThenBuilder
 import kz.rmr.chatmachinist.model.ActionContext
 import kz.rmr.chatmachinist.model.EventType
 
+private const val GATEWAY_DIALOG_NAME = "Mini App Gateway Dialog"
 private val MESSAGE_EVENTS = listOf(EventType.TEXT, EventType.COMMAND, EventType.VOICE, EventType.PHOTO, EventType.DOCUMENT)
 private val PASS_THROUGH_BUTTONS = setOf(MoneyManagerButtonType.CONFIRM_JOIN)
 
-fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.miniAppGatewayTransitions(
+fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.miniAppGatewayDialog(
     gateway: MiniAppGateway,
     userInfoService: UserInfoService,
     adminService: AdminService
 ) {
     if (!gateway.enabled) return
-    redirectToMiniAppTransition(gateway, userInfoService, adminService)
+    dialog {
+        name = GATEWAY_DIALOG_NAME
+        redirectToMiniAppTransition(gateway, userInfoService, adminService)
+    }
+}
+
+fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.miniAppHintTransitions(gateway: MiniAppGateway) {
+    if (!gateway.enabled) return
     showMiniAppHintTransition(gateway)
 }
 

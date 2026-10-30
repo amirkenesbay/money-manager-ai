@@ -44,7 +44,8 @@ import ai.moneymanager.chat.telegram.PRO_MODE_BUTTON_TEXT
 import ai.moneymanager.chat.telegram.PersistentMenuKeyboardService
 import ai.moneymanager.chat.telegram.MiniAppGateway
 import ai.moneymanager.chat.transition.common.inviteTokenOf
-import ai.moneymanager.chat.transition.gateway.miniAppGatewayTransitions
+import ai.moneymanager.chat.transition.gateway.miniAppGatewayDialog
+import ai.moneymanager.chat.transition.gateway.miniAppHintTransitions
 import ai.moneymanager.chat.transition.gateway.toGatewayOrMenu
 import ai.moneymanager.chat.transition.gateway.toHome
 import kz.rmr.chatmachinist.model.ActionContext
@@ -78,10 +79,12 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
     onboardingService: OnboardingService,
     miniAppGateway: MiniAppGateway
 ) {
+    miniAppGatewayDialog(miniAppGateway, userInfoService, adminService)
+
     dialog {
         name = "Money Manager Dialog"
 
-        miniAppGatewayTransitions(miniAppGateway, userInfoService, adminService)
+        miniAppHintTransitions(miniAppGateway)
         startMoneyManagerDialogTransition(userInfoService, groupService, categoryService, financeOperationService, telegramFileService, persistentMenuKeyboardService, aiActionExecutor, miniAppGateway)
         joinGroupDialogTransitions(groupService, userInfoService, financeOperationService, localizationService, onboardingService, miniAppGateway)
         settingsDialogTransitions()
