@@ -77,8 +77,8 @@ const premiumRequired: MockResponse = {
 }
 
 let groups: Group[] = [
-  { id: PERSONAL_GROUP_ID, name: 'Личное', type: 'PERSONAL', currency: 'KZT', isOwner: true, isActive: true, memberCount: 1, initialBalance: '50000' },
-  { id: FAMILY_GROUP_ID, name: 'Семья', type: 'SHARED', currency: 'USD', isOwner: false, isActive: false, memberCount: 3, initialBalance: '0' },
+  { id: PERSONAL_GROUP_ID, name: 'Личное', type: 'PERSONAL', currency: 'KZT', isOwner: true, isActive: true, memberCount: 1, initialBalance: '50000', monthStartDay: 1 },
+  { id: FAMILY_GROUP_ID, name: 'Семья', type: 'SHARED', currency: 'USD', isOwner: false, isActive: false, memberCount: 3, initialBalance: '0', monthStartDay: 1 },
 ]
 
 const groupOf = (groupId: string): Group => groups.find((group) => group.id === groupId) ?? groups[0]
@@ -86,6 +86,14 @@ const groupOf = (groupId: string): Group => groups.find((group) => group.id === 
 const currencyOf = (groupId: string): Currency => groupOf(groupId).currency
 
 const currentMonth = (): string => new Date().toISOString().slice(0, 7)
+
+const isoDay = (date: Date): string => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+
+const periodOf = (groupId: string, month: string): { from: string; to: string } => {
+  const [year, monthNumber] = month.split('-').map(Number)
+  const startDay = groupOf(groupId).monthStartDay
+  return { from: isoDay(new Date(year, monthNumber - 1, startDay)), to: isoDay(new Date(year, monthNumber, startDay - 1)) }
+}
 
 const daysAgo = (days: number): string => new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10)
 
@@ -124,6 +132,7 @@ const summaryOf = (groupId: string): MonthSummary => {
   })
   return {
     month: currentMonth(),
+    ...periodOf(groupId, currentMonth()),
     currency: currencyOf(groupId),
     income: String(sum('INCOME')),
     expense: String(sum('EXPENSE')),
@@ -229,6 +238,7 @@ function analyticsReport(groupId: string, month: string): AnalyticsReport {
   const max = [...expenses].sort((a, b) => Number(b.amount) - Number(a.amount))[0]
   return {
     month,
+    ...periodOf(groupId, month),
     currency: currencyOf(groupId),
     income: String(sumOf(ops, 'INCOME')),
     expense: String(sumOf(ops, 'EXPENSE')),
@@ -245,6 +255,7 @@ function comparisonReport(groupId: string, month: string): ComparisonReport {
   const current = monthOperations(groupId, month)
   return {
     month,
+    ...periodOf(groupId, month),
     previousMonth: shiftMonth(month, -1),
     currency: currencyOf(groupId),
     income: { previous: String(sumOf(previous, 'INCOME')), current: String(sumOf(current, 'INCOME')) },
@@ -260,7 +271,7 @@ function membersReport(groupId: string, month: string): MembersReport {
   const expenseByMember = expense === 0 ? [] : shared
     ? [{ name: 'Dev', total: String(Math.round(expense * 0.6)) }, { name: 'Айгерим', total: String(Math.round(expense * 0.4)) }]
     : [{ name: 'Dev', total: String(expense) }]
-  return { month, currency: currencyOf(groupId), income: String(sumOf(ops, 'INCOME')), expense: String(expense), incomeByMember: [], expenseByMember }
+  return { month, ...periodOf(groupId, month), currency: currencyOf(groupId), income: String(sumOf(ops, 'INCOME')), expense: String(expense), incomeByMember: [], expenseByMember }
 }
 
 function categoryReport(groupId: string, categoryId: string): CategoryReport {
@@ -404,7 +415,7 @@ function createGroup(body: string, scenario: string): MockResponse {
   }
   createdGroups += 1
   const id = `${GROUP_ID_PREFIX}${String(createdGroups).padStart(GROUP_ID_DIGITS, '0')}`
-  const created: Group = { id, name, type: 'SHARED', currency: input.currency, isOwner: true, isActive: true, memberCount: 1, initialBalance: '0' }
+  const created: Group = { id, name, type: 'SHARED', currency: input.currency, isOwner: true, isActive: true, memberCount: 1, initialBalance: '0', monthStartDay: 1 }
   groups = [...groups, created]
   operations[id] = []
   activeGroupId = id

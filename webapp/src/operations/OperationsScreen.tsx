@@ -33,7 +33,7 @@ export function OperationsScreen({ me, group, onAddOperation, onSelectOperation 
   const [type, setType] = useState<CategoryType | null>(null)
   const [categoryId, setCategoryId] = useState<string | null>(null)
   const categories = useCategories(group.id)
-  const query = useMemo<OperationsQuery>(() => ({ ...periodRange(period, new Date()), type, categoryId }), [period, type, categoryId])
+  const query = useMemo<OperationsQuery>(() => ({ ...periodRange(period, new Date(), group.monthStartDay), type, categoryId }), [period, type, categoryId, group.monthStartDay])
   const historyLimited = me.subscription.limits.historyDaysBack !== null
   const premiumOffer = (
     <PremiumOffer historyDaysBack={me.subscription.limits.historyDaysBack} subscribeUrl={me.subscription.subscribeUrl} />

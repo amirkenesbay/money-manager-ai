@@ -73,6 +73,7 @@ export interface Group {
   isActive: boolean
   memberCount: number
   initialBalance: string
+  monthStartDay: number
 }
 
 export interface Balance {
@@ -111,6 +112,8 @@ export interface CategoryAmount {
 
 export interface MonthSummary {
   month: string
+  from: string
+  to: string
   currency: Currency
   income: string
   expense: string
@@ -140,6 +143,8 @@ export interface ExpensiveDay {
 
 export interface AnalyticsReport {
   month: string
+  from: string
+  to: string
   currency: Currency
   income: string
   expense: string
@@ -164,6 +169,8 @@ export interface CategoryComparison {
 
 export interface ComparisonReport {
   month: string
+  from: string
+  to: string
   previousMonth: string
   currency: Currency
   income: MonthPair
@@ -178,6 +185,8 @@ export interface MemberAmount {
 
 export interface MembersReport {
   month: string
+  from: string
+  to: string
   currency: Currency
   income: string
   expense: string

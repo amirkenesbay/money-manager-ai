@@ -2,6 +2,7 @@ package ai.moneymanager.service
 
 import ai.moneymanager.domain.model.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.periodStartingAt
 import ai.moneymanager.domain.model.report.AnalyticsReport
 import ai.moneymanager.domain.model.report.CategoryComparison
 import ai.moneymanager.domain.model.report.CategoryMonthData
@@ -89,7 +90,7 @@ class FinanceReportService(
             totalExpense = totalExpense,
             totalIncome = sumAmounts(operations.filterByType(CategoryType.INCOME)),
             operationCount = operations.size,
-            daysInMonth = monthStart.lengthOfMonth(),
+            daysInMonth = periodStartingAt(monthStart).days,
             topExpenses = buildTopExpenses(expenses, limit = 3),
             maxExpense = buildMaxExpense(expenses, language),
             mostExpensiveDay = buildMostExpensiveDay(expenses, language),
@@ -207,8 +208,8 @@ class FinanceReportService(
     }
 
     private fun findMonthOperations(groupId: ObjectId, monthStart: LocalDate): List<FinanceOperationEntity> {
-        val monthEnd = monthStart.withDayOfMonth(monthStart.lengthOfMonth())
-        return findOperations(groupId, monthStart, monthEnd)
+        val period = periodStartingAt(monthStart)
+        return findOperations(groupId, period.start, period.end)
     }
 
     private fun findOperations(

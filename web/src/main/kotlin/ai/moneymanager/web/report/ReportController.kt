@@ -2,6 +2,9 @@ package ai.moneymanager.web.report
 
 import ai.moneymanager.service.CATEGORY_REPORT_DEFAULT_MONTHS
 import ai.moneymanager.domain.model.MoneyGroup
+import ai.moneymanager.domain.model.MonthPeriod
+import ai.moneymanager.domain.model.currentMonthPeriod
+import ai.moneymanager.domain.model.monthPeriod
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.service.FinanceReportService
 import ai.moneymanager.service.UserInfoService
@@ -24,6 +27,7 @@ import java.time.YearMonth
 
 private const val MONTH_PATTERN = "yyyy-MM"
 private const val MAX_CATEGORY_MONTHS = 12
+private const val PREVIOUS_MONTH = 1L
 
 @RestController
 @RequestMapping("$API_V1_PREFIX/groups/{groupId}/reports")
@@ -43,8 +47,8 @@ class ReportController(
         @RequestParam(required = false) @DateTimeFormat(pattern = MONTH_PATTERN) month: YearMonth?,
     ): AnalyticsReportResponse {
         val scope = monthScope(user, groupId, month)
-        val report = financeReportService.buildAnalyticsReport(groupId, scope.month.atDay(1), user.language)
-        return reportResponseFactory.analytics(report, scope.month, scope.group.currency)
+        val report = financeReportService.buildAnalyticsReport(groupId, scope.period.start, user.language)
+        return reportResponseFactory.analytics(report, scope.period, scope.group.currency)
     }
 
     @GetMapping("/comparison")
@@ -53,9 +57,9 @@ class ReportController(
         @PathVariable groupId: ObjectId,
         @RequestParam(required = false) @DateTimeFormat(pattern = MONTH_PATTERN) month: YearMonth?,
     ): ComparisonReportResponse {
-        val scope = monthScope(user, groupId, month, ::previousMonthStart)
-        val report = financeReportService.buildComparisonReport(groupId, previousMonthStart(scope.month), user.language)
-        return reportResponseFactory.comparison(report, scope.month, scope.group.currency)
+        val scope = monthScope(user, groupId, month, PREVIOUS_MONTH)
+        val report = financeReportService.buildComparisonReport(groupId, scope.historyStart, user.language)
+        return reportResponseFactory.comparison(report, scope.period, scope.group.currency)
     }
 
     @GetMapping("/members")
@@ -66,8 +70,8 @@ class ReportController(
     ): MembersReportResponse {
         val scope = monthScope(user, groupId, month)
         val memberNames = userInfoService.displayNames(scope.group.memberIds)
-        val report = financeReportService.buildMembersReport(groupId, scope.month.atDay(1), memberNames, user.language)
-        return reportResponseFactory.members(report, scope.month, scope.group.currency)
+        val report = financeReportService.buildMembersReport(groupId, scope.period.start, memberNames, user.language)
+        return reportResponseFactory.members(report, scope.period, scope.group.currency)
     }
 
     @GetMapping("/category")
@@ -86,19 +90,13 @@ class ReportController(
         return reportResponseFactory.category(report, categoryId, group.currency)
     }
 
-    private fun monthScope(
-        user: UserInfo,
-        groupId: ObjectId,
-        month: YearMonth?,
-        periodStartOf: (YearMonth) -> LocalDate = { it.atDay(1) },
-    ): MonthScope {
+    private fun monthScope(user: UserInfo, groupId: ObjectId, month: YearMonth?, monthsBack: Long = 0): MonthScope {
         val group = groupAccessGuard.requireMember(user, groupId)
-        val reportMonth = month ?: YearMonth.now(clock)
-        historyAccessPolicy.requireWithinHistory(user, periodStartOf(reportMonth))
-        return MonthScope(group, reportMonth)
+        val period = month?.let { monthPeriod(it, group.monthStartDay) } ?: currentMonthPeriod(LocalDate.now(clock), group.monthStartDay)
+        val historyStart = monthPeriod(period.month.minusMonths(monthsBack), group.monthStartDay).start
+        historyAccessPolicy.requireWithinHistory(user, historyStart)
+        return MonthScope(group, period, historyStart)
     }
 }
 
-private data class MonthScope(val group: MoneyGroup, val month: YearMonth)
-
-private fun previousMonthStart(month: YearMonth): LocalDate = month.minusMonths(1).atDay(1)
+private data class MonthScope(val group: MoneyGroup, val period: MonthPeriod, val historyStart: LocalDate)

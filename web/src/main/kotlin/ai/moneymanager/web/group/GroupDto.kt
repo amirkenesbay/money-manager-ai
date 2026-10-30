@@ -14,6 +14,7 @@ data class GroupResponse(
     val isActive: Boolean,
     val memberCount: Int,
     val initialBalance: BigDecimal,
+    val monthStartDay: Int,
 )
 
 data class CreateGroupRequest(
@@ -24,6 +25,7 @@ data class CreateGroupRequest(
 data class UpdateGroupRequest(
     val name: String?,
     val currency: Currency?,
+    val monthStartDay: Int?,
 )
 
 data class InitialBalanceRequest(

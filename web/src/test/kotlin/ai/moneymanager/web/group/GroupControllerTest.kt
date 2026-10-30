@@ -140,6 +140,22 @@ class GroupControllerTest {
     }
 
     @Test
+    fun `lets the owner choose the day the month starts`() {
+        `when`(groupService.updateMonthStartDay(TEST_USER_ID, ownedGroup.id!!, 25)).thenReturn(ownedGroup.copy(monthStartDay = 25))
+
+        mockMvc.perform(patch("/api/v1/groups/${ownedGroup.id}").withTelegramAuth().json("""{"monthStartDay":25}"""))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.monthStartDay").value(25))
+    }
+
+    @Test
+    fun `rejects a month start day that some months do not have`() {
+        mockMvc.perform(patch("/api/v1/groups/${ownedGroup.id}").withTelegramAuth().json("""{"monthStartDay":31}"""))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.message").value("Начало месяца — число от 1 до 28."))
+    }
+
+    @Test
     fun `explains a rename into a name the owner already uses`() {
         mockMvc.perform(patch("/api/v1/groups/${ownedGroup.id}").withTelegramAuth().json("""{"name":"Личное"}"""))
             .andExpect(status().isConflict)

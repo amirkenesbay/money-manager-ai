@@ -43,6 +43,8 @@ data class CategoryAmountResponse(
 
 data class MonthSummaryResponse(
     val month: YearMonth,
+    val from: LocalDate,
+    val to: LocalDate,
     val currency: Currency,
     val income: BigDecimal,
     val expense: BigDecimal,

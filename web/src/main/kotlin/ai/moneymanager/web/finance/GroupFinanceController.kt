@@ -3,6 +3,7 @@ package ai.moneymanager.web.finance
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.OperationFilter
 import ai.moneymanager.domain.model.UserInfo
+import ai.moneymanager.domain.model.currentMonthPeriod
 import ai.moneymanager.service.FinanceHistoryService
 import ai.moneymanager.service.FinanceOperationService
 import ai.moneymanager.web.API_V1_PREFIX
@@ -19,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.time.Clock
 import java.time.LocalDate
-import java.time.YearMonth
 
 private const val FIRST_PAGE = 0
 private const val DEFAULT_PAGE_SIZE = 20
@@ -44,9 +44,9 @@ class GroupFinanceController(
     @GetMapping("/summary")
     fun currentMonthSummary(user: UserInfo, @PathVariable groupId: ObjectId): MonthSummaryResponse {
         val group = groupAccessGuard.requireMember(user, groupId)
-        val month = YearMonth.now(clock)
-        val report = financeHistoryService.buildHistoryReport(groupId, month.atDay(1), month.atEndOfMonth())
-        return financeResponseFactory.monthSummary(group, month, report)
+        val period = currentMonthPeriod(LocalDate.now(clock), group.monthStartDay)
+        val report = financeHistoryService.buildHistoryReport(groupId, period.start, period.end)
+        return financeResponseFactory.monthSummary(group, period, report)
     }
 
     @GetMapping("/operations")

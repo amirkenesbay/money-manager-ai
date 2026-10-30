@@ -1,5 +1,5 @@
 import type { Balance, Currency, Group, MonthSummary, Operation } from '../api/types'
-import { formatDayLabel, formatMoney, formatSignedMoney } from '../format'
+import { formatDayLabel, formatMoney, formatPeriod, formatSignedMoney } from '../format'
 import { OperationList } from '../operations/OperationList'
 import { strings } from '../strings'
 import { Moment } from '../three/Moment'
@@ -9,6 +9,7 @@ import { SkeletonCard, SkeletonRows } from '../ui/Skeleton'
 import { useCountUp } from '../ui/useCountUp'
 import './Dashboard.css'
 import { useDashboard } from './useDashboard'
+import { isCalendarMonth } from '../operations/periods'
 
 const RECENT_SKELETON_ROWS = 3
 
@@ -110,6 +111,7 @@ function BalanceCard({ balance, summary, language, onOpenReport }: {
       <p className={`amount balance-total ${Number(balance.total) < 0 ? 'negative' : ''}`}>
         {formatMoney(shownTotal, balance.currency, language)}
       </p>
+      {!isCalendarMonth(summary) && <p className="caption">{formatPeriod(summary.from, summary.to, language)}</p>}
       <MonthFlow summary={summary} language={language} />
       {overspent && (
         <p className="balance-warning negative">

@@ -3,6 +3,7 @@ package ai.moneymanager.web.group
 import ai.moneymanager.domain.model.GroupCreationResult
 import ai.moneymanager.domain.model.GroupType
 import ai.moneymanager.domain.model.MAX_GROUP_NAME_LENGTH
+import ai.moneymanager.domain.model.MONTH_START_DAYS
 import ai.moneymanager.domain.model.MoneyGroup
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.domain.model.buildInviteLink
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController
 private const val PERSONAL_GROUP_LOCKED_KEY = "${API_ERROR_KEY_PREFIX}personal_group_locked"
 private const val PERSONAL_GROUP_INVITE_KEY = "${API_ERROR_KEY_PREFIX}personal_group_invite"
 private const val NEGATIVE_BALANCE_KEY = "${API_ERROR_KEY_PREFIX}negative_balance"
+private const val MONTH_START_DAY_KEY = "${API_ERROR_KEY_PREFIX}month_start_day"
 
 @RestController
 @RequestMapping("$API_V1_PREFIX/groups")
@@ -69,7 +71,11 @@ class GroupController(
             val name = requireName(raw, MAX_GROUP_NAME_LENGTH)
             groupService.updateGroupName(userId, groupId, name) ?: throw duplicate(name)
         } ?: group
-        val updated = request.currency?.let { checkNotNull(groupService.updateCurrency(userId, groupId, it)) } ?: renamed
+        val withCurrency = request.currency?.let { checkNotNull(groupService.updateCurrency(userId, groupId, it)) } ?: renamed
+        val updated = request.monthStartDay?.let { day ->
+            if (day !in MONTH_START_DAYS) throw badRequest(MONTH_START_DAY_KEY)
+            checkNotNull(groupService.updateMonthStartDay(userId, groupId, day))
+        } ?: withCurrency
         return updated.toResponse(userId, user.activeGroupId)
     }
 
@@ -125,6 +131,7 @@ class GroupController(
             isActive = groupId == activeGroupId,
             memberCount = memberIds.size,
             initialBalance = initialBalance,
+            monthStartDay = monthStartDay,
         )
     }
 }

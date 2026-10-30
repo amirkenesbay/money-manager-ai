@@ -78,6 +78,12 @@ export function formatMonthShort(isoMonth: string, language: string): string {
   return new Intl.DateTimeFormat(language, { month: 'short' }).format(monthStart(isoMonth)).replace('.', '')
 }
 
+export function formatPeriod(from: string, to: string, language: string): string {
+  const day = new Intl.DateTimeFormat(language, { day: 'numeric', month: 'short' })
+  const short = (isoDate: string) => day.format(parseLocalDate(isoDate)).replace('.', '')
+  return `${short(from)} — ${short(to)}`
+}
+
 function monthStart(isoMonth: string): Date {
   return parseLocalDate(`${isoMonth}-01`)
 }

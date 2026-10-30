@@ -3,13 +3,14 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiRequestError } from '../api/client'
 import type { AnalyticsReport, CategoryReport, ComparisonReport, MembersReport } from '../api/types'
-import { formatMoney, shiftMonth, toIsoMonth } from '../format'
+import { formatMoney, formatPeriod, shiftMonth, toIsoMonth } from '../format'
 import { fetchCategories } from '../categories/categoriesApi'
 import { strings } from '../strings'
 import { category, FAMILY_GROUP_ID, group, me, PERSONAL_GROUP_ID } from '../test/fixtures'
 import { asRendered } from '../test/text'
 import { fetchAnalytics, fetchCategoryReport, fetchComparison, fetchMembers } from './reportsApi'
 import { ReportsScreen } from './ReportsScreen'
+import { currentPeriodMonth, monthRange } from '../operations/periods'
 
 vi.mock('./reportsApi', () => ({
   fetchAnalytics: vi.fn(),
@@ -22,10 +23,12 @@ vi.mock('../telegram/telegramEnv', () => ({ openExternalLink: vi.fn(), rawInitDa
 
 const LANGUAGE = 'ru'
 const CURRENT_MONTH = toIsoMonth(new Date())
+const CURRENT_RANGE = monthRange(CURRENT_MONTH, 1)
 const premiumRequired = new ApiRequestError('limit', 422, { code: 'PREMIUM_REQUIRED', message: 'limit', details: {} })
 
 const analytics = (overrides: Partial<AnalyticsReport> = {}): AnalyticsReport => ({
   month: CURRENT_MONTH,
+  ...CURRENT_RANGE,
   currency: 'KZT',
   income: '450000',
   expense: '48200',
@@ -43,6 +46,7 @@ const analytics = (overrides: Partial<AnalyticsReport> = {}): AnalyticsReport =>
 
 const comparison: ComparisonReport = {
   month: CURRENT_MONTH,
+  ...CURRENT_RANGE,
   previousMonth: shiftMonth(CURRENT_MONTH, -1),
   currency: 'KZT',
   income: { previous: '450000', current: '450000' },
@@ -52,6 +56,7 @@ const comparison: ComparisonReport = {
 
 const members: MembersReport = {
   month: CURRENT_MONTH,
+  ...CURRENT_RANGE,
   currency: 'KZT',
   income: '0',
   expense: '48200',
@@ -151,6 +156,13 @@ describe('ReportsScreen', () => {
     expect(await screen.findByText('−12%')).toBeInTheDocument()
     expect(screen.getByText('0%')).toBeInTheDocument()
     expect(fetchComparison).toHaveBeenCalledWith(PERSONAL_GROUP_ID, CURRENT_MONTH, expect.anything())
+  })
+
+  it('titles a month that starts on payday with its real dates', async () => {
+    renderReports(group({ monthStartDay: 25 }))
+
+    const range = monthRange(currentPeriodMonth(new Date(), 25), 25)
+    expect(await screen.findByText(formatPeriod(range.from, range.to, LANGUAGE))).toBeInTheDocument()
   })
 
   it('shows member spending and explains the personal group', async () => {

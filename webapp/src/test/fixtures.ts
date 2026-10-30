@@ -38,6 +38,7 @@ export const group = (overrides: Partial<Group> = {}): Group => ({
   isActive: true,
   memberCount: 1,
   initialBalance: '0',
+  monthStartDay: 1,
   ...overrides,
 })
 
@@ -52,6 +53,8 @@ export const balance = (overrides: Partial<Balance> = {}): Balance => ({
 
 export const summary = (overrides: Partial<MonthSummary> = {}): MonthSummary => ({
   month: '2026-10',
+  from: '2026-10-01',
+  to: '2026-10-31',
   currency: 'KZT',
   income: '300000',
   expense: '15000',

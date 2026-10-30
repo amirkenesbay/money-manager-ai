@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { strings } from './strings'
 import { asRendered } from './test/text'
-import { formatDayLabel, formatMoney, formatMonthShort, formatMonthTitle, formatSignedMoney, shiftMonth } from './format'
+import { formatDayLabel, formatMoney, formatMonthShort, formatMonthTitle, formatPeriod, formatSignedMoney, shiftMonth } from './format'
 
 const LANGUAGE = 'ru'
 
@@ -41,5 +41,11 @@ describe('format', () => {
   it('shifts months across the year boundary', () => {
     expect(shiftMonth('2026-01', -1)).toBe('2025-12')
     expect(shiftMonth('2026-12', 1)).toBe('2027-01')
+  })
+})
+
+describe('formatPeriod', () => {
+  it('shows a shifted month as a short date range', () => {
+    expect(formatPeriod('2026-10-25', '2026-11-24', 'ru')).toBe('25 окт — 24 нояб')
   })
 })

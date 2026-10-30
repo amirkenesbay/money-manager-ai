@@ -13,7 +13,8 @@ data class MoneyGroup(
     val memberIds: Set<Long>,
     val type: GroupType,
     val initialBalance: BigDecimal = BigDecimal.ZERO,
-    val currency: Currency = Currency.DEFAULT
+    val currency: Currency = Currency.DEFAULT,
+    val monthStartDay: Int = DEFAULT_MONTH_START_DAY
 )
 
 enum class GroupType {

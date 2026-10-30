@@ -1,6 +1,7 @@
 package ai.moneymanager.service
 
 import ai.moneymanager.domain.model.Currency
+import ai.moneymanager.domain.model.MONTH_START_DAYS
 import ai.moneymanager.domain.model.GroupCreationResult
 import ai.moneymanager.domain.model.GroupType
 import ai.moneymanager.domain.model.MoneyGroup
@@ -138,6 +139,13 @@ class GroupService(
         return mapToModel(savedGroup)
     }
 
+    fun updateMonthStartDay(userId: Long, groupId: ObjectId, day: Int): MoneyGroup? {
+        require(day in MONTH_START_DAYS) { "Month start day must be in $MONTH_START_DAYS" }
+        val groupEntity = groupRepository.findById(groupId).orElse(null) ?: return null
+        if (groupEntity.ownerId != userId) return null
+        return mapToModel(groupRepository.save(groupEntity.copy(monthStartDay = day)))
+    }
+
     fun deleteGroup(userId: Long, groupId: ObjectId): Boolean {
         val groupEntity = groupRepository.findById(groupId).orElse(null) ?: return false
 
@@ -227,7 +235,8 @@ class GroupService(
             memberIds = entity.memberIds,
             type = entity.type,
             initialBalance = entity.initialBalance,
-            currency = entity.currency
+            currency = entity.currency,
+            monthStartDay = entity.monthStartDay
         )
     }
 }

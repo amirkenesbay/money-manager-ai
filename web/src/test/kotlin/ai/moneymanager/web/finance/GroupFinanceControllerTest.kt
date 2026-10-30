@@ -50,6 +50,7 @@ import java.time.ZoneOffset
 private const val DEFAULT_PAGE_SIZE = 20
 private const val CREATOR_NAME = "Amir"
 private const val FIND_OPERATIONS = "findOperations"
+private const val SALARY_DAY = 25
 private val SUMMARY_TODAY: LocalDate = LocalDate.of(2026, 10, 15)
 private val SUMMARY_MONTH: YearMonth = YearMonth.from(SUMMARY_TODAY)
 
@@ -139,6 +140,21 @@ class GroupFinanceControllerTest {
             .andExpect(jsonPath("$.expenseByCategory[0].name").value("Продукты"))
             .andExpect(jsonPath("$.expenseByCategory[0].total").value("12000.50"))
             .andExpect(jsonPath("$.expenseByCategory[1].icon").value("🚕"))
+    }
+
+    @Test
+    fun `counts the month from the group start day`() {
+        `when`(groupService.getGroup(groupId)).thenReturn(testGroup(groupId).copy(monthStartDay = SALARY_DAY))
+        val from = LocalDate.of(2026, 9, SALARY_DAY)
+        val to = LocalDate.of(2026, 10, SALARY_DAY - 1)
+        val report = HistoryReport(from, to, emptyList(), emptyList(), emptyList(), BigDecimal.ZERO, BigDecimal.ZERO, isEmpty = true)
+        `when`(financeHistoryService.buildHistoryReport(groupId, from, to)).thenReturn(report)
+
+        mockMvc.perform(get("/api/v1/groups/$groupId/summary").withTelegramAuth())
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.month").value("2026-09"))
+            .andExpect(jsonPath("$.from").value(from.toString()))
+            .andExpect(jsonPath("$.to").value(to.toString()))
     }
 
     @Test

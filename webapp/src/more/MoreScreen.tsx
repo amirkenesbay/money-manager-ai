@@ -5,11 +5,12 @@ import { useCategories } from '../categories/useCategories'
 import { formatDate, formatMoney } from '../format'
 import { currencyBadge } from '../groups/currencies'
 import { CurrencySheet } from '../groups/CurrencySheet'
+import { MonthStartSheet } from '../groups/MonthStartSheet'
 import { isLanguage, LANGUAGE_NAMES } from '../i18n/languages'
 import { fetchReminders } from '../reminders/remindersApi'
 import { strings } from '../strings'
 import { Button } from '../ui/Button'
-import { BellIcon, CoinIcon, GlobeIcon, GridIcon, HelpIcon, UsersIcon, WalletIcon } from '../ui/icons'
+import { BellIcon, CalendarIcon, CoinIcon, GlobeIcon, GridIcon, HelpIcon, UsersIcon, WalletIcon } from '../ui/icons'
 import { SettingsRow } from '../ui/SettingsRow'
 import { InitialBalanceSheet } from './InitialBalanceSheet'
 import { LanguageSheet } from './LanguageSheet'
@@ -19,7 +20,7 @@ import { Hint } from '../onboarding/Hint'
 
 export type Section = 'categories' | 'groups' | 'reminders' | 'premium'
 
-type SheetKind = 'language' | 'currency' | 'balance'
+type SheetKind = 'language' | 'currency' | 'balance' | 'monthStart'
 
 export function MoreScreen({ me, group, groups, name, onMeChanged, onGroupUpdated, onOpenSection, onShowWelcome, notify }: {
   me: Me
@@ -70,6 +71,7 @@ export function MoreScreen({ me, group, groups, name, onMeChanged, onGroupUpdate
       <ul className="settings-list">
         <li><SettingsRow icon={<GlobeIcon />} label={strings.languageLabel} value={isLanguage(language) ? LANGUAGE_NAMES[language] : language} onClick={() => setSheet('language')} /></li>
         <li><SettingsRow icon={<CoinIcon />} label={strings.currencyLabel} value={currencyBadge(group.currency)} onClick={() => setSheet('currency')} /></li>
+        <li><SettingsRow icon={<CalendarIcon />} label={strings.monthStartLabel} value={strings.monthStartValue(group.monthStartDay)} onClick={() => setSheet('monthStart')} /></li>
         <li><SettingsRow icon={<WalletIcon />} label={strings.initialBalanceLabel} value={formatMoney(group.initialBalance, group.currency, language)} onClick={() => setSheet('balance')} /></li>
         <li><SettingsRow icon={<HelpIcon />} label={strings.howToUse} onClick={onShowWelcome} /></li>
       </ul>
@@ -86,6 +88,7 @@ export function MoreScreen({ me, group, groups, name, onMeChanged, onGroupUpdate
         />
       )}
       {sheet === 'currency' && <CurrencySheet group={group} onSaved={(next) => groupSaved(next, strings.currencyChangedToast)} onClose={() => setSheet(null)} />}
+      {sheet === 'monthStart' && <MonthStartSheet group={group} onSaved={(next) => groupSaved(next, strings.monthStartChangedToast)} onClose={() => setSheet(null)} />}
       {sheet === 'balance' && <InitialBalanceSheet group={group} onSaved={(next) => groupSaved(next, strings.initialBalanceSavedToast)} onClose={() => setSheet(null)} />}
     </>
   )

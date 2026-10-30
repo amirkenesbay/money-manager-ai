@@ -9,6 +9,8 @@ import java.time.YearMonth
 
 data class AnalyticsReportResponse(
     val month: YearMonth,
+    val from: LocalDate,
+    val to: LocalDate,
     val currency: Currency,
     val income: BigDecimal,
     val expense: BigDecimal,
@@ -33,6 +35,8 @@ data class ExpensiveDayResponse(
 
 data class ComparisonReportResponse(
     val month: YearMonth,
+    val from: LocalDate,
+    val to: LocalDate,
     val previousMonth: YearMonth,
     val currency: Currency,
     val income: MonthPair,
@@ -54,6 +58,8 @@ data class CategoryComparisonResponse(
 
 data class MembersReportResponse(
     val month: YearMonth,
+    val from: LocalDate,
+    val to: LocalDate,
     val currency: Currency,
     val income: BigDecimal,
     val expense: BigDecimal,

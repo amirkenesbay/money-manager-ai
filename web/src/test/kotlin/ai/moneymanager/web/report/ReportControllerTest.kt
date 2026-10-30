@@ -52,6 +52,7 @@ import java.time.LocalDateTime
 import java.time.YearMonth
 import java.time.ZoneOffset
 
+private const val SALARY_DAY = 25
 private val TODAY: LocalDate = LocalDate.of(2026, 10, 15)
 private val CURRENT_MONTH: YearMonth = YearMonth.from(TODAY)
 private const val REPORT_METHOD_PREFIX = "build"
@@ -119,6 +120,26 @@ class ReportControllerTest {
             .andExpect(jsonPath("$.topExpenses[0].name").value("Продукты"))
             .andExpect(jsonPath("$.maxExpense.date").value("2026-10-12"))
             .andExpect(jsonPath("$.mostExpensiveDay.total").value("9000"))
+    }
+
+    @Test
+    fun `analytics follows the group month and dates days after the turn of the calendar month`() {
+        `when`(groupService.getGroup(groupId)).thenReturn(group.copy(monthStartDay = SALARY_DAY))
+        `when`(financeReportService.buildAnalyticsReport(groupId, LocalDate.of(2026, 9, SALARY_DAY), null)).thenReturn(
+            AnalyticsReport(
+                monthName = "Сентябрь", year = 2026, totalExpense = BigDecimal("8000"), totalIncome = BigDecimal.ZERO,
+                operationCount = 1, daysInMonth = 30, topExpenses = emptyList(),
+                maxExpense = MaxExpense(BigDecimal("8000"), "🛒", "Продукты", 3, "окт"),
+                mostExpensiveDay = null, isEmpty = false,
+            )
+        )
+
+        mockMvc.perform(get("/api/v1/groups/$groupId/reports/analytics").withTelegramAuth())
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.month").value("2026-09"))
+            .andExpect(jsonPath("$.from").value("2026-09-25"))
+            .andExpect(jsonPath("$.to").value("2026-10-24"))
+            .andExpect(jsonPath("$.maxExpense.date").value("2026-10-03"))
     }
 
     @Test

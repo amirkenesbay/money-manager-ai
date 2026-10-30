@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Group, Me } from '../api/types'
-import { formatMonthName, formatMonthTitle, shiftMonth, toIsoMonth } from '../format'
+import { formatMonthName, formatMonthTitle, formatPeriod, shiftMonth } from '../format'
 import { strings } from '../strings'
 import type { ReportTab } from './reportTabs'
 import { ChevronLeftIcon, ChevronRightIcon } from '../ui/icons'
@@ -8,6 +8,7 @@ import { Segmented } from '../ui/Segmented'
 import { AnalyticsView, CategoryView, ComparisonView, MembersView } from './reportViews'
 import './ReportsScreen.css'
 import { Hint } from '../onboarding/Hint'
+import { currentPeriodMonth, isCalendarMonth, monthRange } from '../operations/periods'
 
 const REPORT_TABS: ReportTab[] = ['analytics', 'comparison', 'members', 'category']
 
@@ -20,7 +21,7 @@ export interface ReportContext {
 }
 
 export function ReportsScreen({ me, group, onAddOperation }: { me: Me; group: Group; onAddOperation: () => void }) {
-  const currentMonth = toIsoMonth(new Date())
+  const currentMonth = currentPeriodMonth(new Date(), group.monthStartDay)
   const [tab, setTab] = useState<ReportTab>('analytics')
   const [month, setMonth] = useState(currentMonth)
   const context: ReportContext = { me, group, month, onAddOperation, onBackToCurrentMonth: () => setMonth(currentMonth) }
@@ -33,7 +34,7 @@ export function ReportsScreen({ me, group, onAddOperation }: { me: Me; group: Gr
         ? <p className="month-nav-title">{strings.categoryPeriod}</p>
         : (
           <>
-            <MonthNav tab={tab} month={month} currentMonth={currentMonth} language={me.language} onChange={setMonth} />
+            <MonthNav tab={tab} month={month} currentMonth={currentMonth} startDay={group.monthStartDay} language={me.language} onChange={setMonth} />
             <Hint hint="REPORTS" title={strings.hintReportsTitle} body={strings.hintReportsBody} />
           </>
         )}
@@ -42,16 +43,17 @@ export function ReportsScreen({ me, group, onAddOperation }: { me: Me; group: Gr
   )
 }
 
-function MonthNav({ tab, month, currentMonth, language, onChange }: {
+function MonthNav({ tab, month, currentMonth, startDay, language, onChange }: {
   tab: ReportTab
   month: string
   currentMonth: string
+  startDay: number
   language: string
   onChange: (month: string) => void
 }) {
   const title = tab === 'comparison'
     ? strings.comparisonPeriod(formatMonthName(shiftMonth(month, -1), language), formatMonthName(month, language))
-    : formatMonthTitle(month, language)
+    : monthTitle(month, startDay, language)
   return (
     <div className="month-nav">
       <button type="button" className="round-button pressable month-nav-arrow" aria-label={strings.previousMonth} onClick={() => onChange(shiftMonth(month, -1))}>
@@ -63,6 +65,11 @@ function MonthNav({ tab, month, currentMonth, language, onChange }: {
       </button>
     </div>
   )
+}
+
+function monthTitle(month: string, startDay: number, language: string): string {
+  const range = monthRange(month, startDay)
+  return isCalendarMonth(range) ? formatMonthTitle(month, language) : formatPeriod(range.from, range.to, language)
 }
 
 function ReportBody({ tab, context }: { tab: ReportTab; context: ReportContext }) {

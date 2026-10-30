@@ -1,6 +1,7 @@
 package ai.moneymanager.web.report
 
 import ai.moneymanager.domain.model.Currency
+import ai.moneymanager.domain.model.MonthPeriod
 import ai.moneymanager.domain.model.report.AnalyticsReport
 import ai.moneymanager.domain.model.report.CategoryReport
 import ai.moneymanager.domain.model.report.CategoryTotal
@@ -10,25 +11,28 @@ import ai.moneymanager.domain.model.report.MembersReport
 import ai.moneymanager.web.finance.CategoryAmountResponse
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Component
-import java.time.YearMonth
 
 @Component
 class ReportResponseFactory {
-    fun analytics(report: AnalyticsReport, month: YearMonth, currency: Currency) = AnalyticsReportResponse(
-        month = month,
+    fun analytics(report: AnalyticsReport, period: MonthPeriod, currency: Currency) = AnalyticsReportResponse(
+        month = period.month,
+        from = period.start,
+        to = period.end,
         currency = currency,
         income = report.totalIncome,
         expense = report.totalExpense,
         operationCount = report.operationCount,
         daysInMonth = report.daysInMonth,
         topExpenses = report.topExpenses.map { it.toResponse() },
-        maxExpense = report.maxExpense?.let { MaxExpenseResponse(it.amount, it.icon, it.categoryName, month.atDay(it.day)) },
-        mostExpensiveDay = report.mostExpensiveDay?.let { ExpensiveDayResponse(month.atDay(it.day), it.total) },
+        maxExpense = report.maxExpense?.let { MaxExpenseResponse(it.amount, it.icon, it.categoryName, period.dateOf(it.day)) },
+        mostExpensiveDay = report.mostExpensiveDay?.let { ExpensiveDayResponse(period.dateOf(it.day), it.total) },
     )
 
-    fun comparison(report: ComparisonReport, month: YearMonth, currency: Currency) = ComparisonReportResponse(
-        month = month,
-        previousMonth = month.minusMonths(1),
+    fun comparison(report: ComparisonReport, period: MonthPeriod, currency: Currency) = ComparisonReportResponse(
+        month = period.month,
+        from = period.start,
+        to = period.end,
+        previousMonth = period.month.minusMonths(1),
         currency = currency,
         income = MonthPair(report.previousIncomeTotal, report.currentIncomeTotal),
         expense = MonthPair(report.previousExpenseTotal, report.currentExpenseTotal),
@@ -37,8 +41,10 @@ class ReportResponseFactory {
         },
     )
 
-    fun members(report: MembersReport, month: YearMonth, currency: Currency) = MembersReportResponse(
-        month = month,
+    fun members(report: MembersReport, period: MonthPeriod, currency: Currency) = MembersReportResponse(
+        month = period.month,
+        from = period.start,
+        to = period.end,
         currency = currency,
         income = report.totalIncome,
         expense = report.totalExpense,
