@@ -7,7 +7,7 @@ export const SUBSCRIBE_URL = 'https://t.me/tribute/app?startapp=test'
 const FREE_LIMITS: Limits = { aiRequestsPerDay: 10, categoriesPerType: 10, ownedSharedGroups: 3, activeNotifications: 3, historyDaysBack: 30 }
 const PAID_LIMITS: Limits = { aiRequestsPerDay: 100, categoriesPerType: 1000, ownedSharedGroups: null, activeNotifications: null, historyDaysBack: null }
 
-export const EVERY_HINT: AppHint[] = ['WELCOME', 'OPERATIONS', 'REPORTS', 'MORE', 'OPERATION_FORM', 'GROUP']
+export const EVERY_HINT: AppHint[] = ['WELCOME', 'OPERATIONS', 'REPORTS', 'MORE', 'OPERATION_FORM', 'GROUP', 'MANUAL_ENTRY']
 
 export const me = (overrides: Partial<Me> = {}): Me => ({
   userId: 42,

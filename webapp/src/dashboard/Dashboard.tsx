@@ -3,7 +3,7 @@ import { formatDayLabel, formatMoney, formatPeriod, formatSignedMoney } from '..
 import { OperationList } from '../operations/OperationList'
 import { strings } from '../strings'
 import { Moment } from '../three/Moment'
-import { AlertIcon, ArrowDownIcon, ChevronDownIcon, ChevronRightIcon, KeyboardIcon, MicIcon } from '../ui/icons'
+import { AlertIcon, ArrowDownIcon, ChevronDownIcon, ChevronRightIcon } from '../ui/icons'
 import { LoadError } from '../ui/LoadError'
 import { SkeletonCard, SkeletonRows } from '../ui/Skeleton'
 import { useCountUp } from '../ui/useCountUp'
@@ -13,7 +13,7 @@ import { isCalendarMonth } from '../operations/periods'
 
 const RECENT_SKELETON_ROWS = 3
 
-export function Dashboard({ name, groups, groupId, language, switchError, onSwitchGroup, onOpenOperations, onOpenReports, onAddOperation, onRecordVoice, onSelectOperation }: {
+export function Dashboard({ name, groups, groupId, language, switchError, onSwitchGroup, onOpenOperations, onOpenReports, onSelectOperation }: {
   name: string
   groups: Group[]
   groupId: string
@@ -22,8 +22,6 @@ export function Dashboard({ name, groups, groupId, language, switchError, onSwit
   onSwitchGroup: (groupId: string) => void
   onOpenOperations: () => void
   onOpenReports: () => void
-  onAddOperation: () => void
-  onRecordVoice: () => void
   onSelectOperation: (operation: Operation) => void
 }) {
   const dashboard = useDashboard(groupId)
@@ -53,7 +51,6 @@ export function Dashboard({ name, groups, groupId, language, switchError, onSwit
           />
         </>
       )}
-      <VoiceEntry firstTime={ready?.operations.items.length === 0} onRecord={onRecordVoice} onManual={onAddOperation} />
     </>
   )
 }
@@ -160,33 +157,6 @@ function RecentOperations({ operations, currency, language, onOpenOperations, on
           </>
         )
         : <OperationList operations={operations} currency={currency} language={language} note={(operation) => formatDayLabel(operation.operationDate, today, language)} onSelect={onSelectOperation} />}
-    </section>
-  )
-}
-
-function VoiceEntry({ firstTime, onRecord, onManual }: {
-  firstTime: boolean
-  onRecord: () => void
-  onManual: () => void
-}) {
-  return (
-    <section className="voice">
-      <span className="voice-text">
-        <span className="voice-title">{firstTime ? strings.voiceTitleFirst : strings.voiceTitle}</span>
-        <span className="caption">{strings.voiceExample}</span>
-      </span>
-      <div className="voice-controls">
-        <span aria-hidden="true" />
-        <span className="voice-ring">
-          <span className="voice-inner-ring">
-            <button type="button" className="voice-button pressable" aria-label={strings.recordVoice} onClick={onRecord}><MicIcon /></button>
-          </span>
-        </span>
-        <button type="button" className="manual-button" aria-label={strings.manualEntryLabel} onClick={onManual}>
-          <span className="manual-circle pressable"><KeyboardIcon /></span>
-          {strings.manualEntry}
-        </button>
-      </div>
     </section>
   )
 }

@@ -24,9 +24,8 @@ const PAGE_SIZE = 20
 const firstPage = Array.from({ length: PAGE_SIZE }, (_, index) => operation({ id: `op-${index}`, categoryName: `Покупка ${index}` }))
 const premiumRequired = new ApiRequestError('limit', 422, { code: 'PREMIUM_REQUIRED', message: 'limit', details: { historyDaysBack: 30 } })
 
-const onAddOperation = vi.fn()
 const onSelectOperation = vi.fn()
-const renderScreen = () => render(<OperationsScreen me={me()} group={group()} onAddOperation={onAddOperation} onSelectOperation={onSelectOperation} />)
+const renderScreen = () => render(<OperationsScreen me={me()} group={group()} onSelectOperation={onSelectOperation} />)
 const lastQuery = () => vi.mocked(fetchOperations).mock.lastCall?.[1]
 
 describe('OperationsScreen', () => {
@@ -157,13 +156,11 @@ describe('OperationsScreen', () => {
     expect(screen.getByRole('region', { name: '11 октября' })).toBeInTheDocument()
   })
 
-  it('opens the new operation form and the tapped operation', async () => {
+  it('opens the tapped operation', async () => {
     renderScreen()
 
-    await userEvent.click(screen.getByRole('button', { name: strings.addOperation }))
     await userEvent.click(await screen.findByRole('button', { name: /Продукты/ }))
 
-    expect(onAddOperation).toHaveBeenCalled()
     expect(onSelectOperation).toHaveBeenCalledWith(operation())
   })
 })

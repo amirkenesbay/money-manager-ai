@@ -53,6 +53,8 @@
   --screen-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --fade-duration: 180ms;
   --skeleton-delay: 300ms;
+  --mic-size: 4rem;
+  --fab-size: 3.5rem;
 
   color-scheme: light;
   font-family: var(--font-text);
@@ -559,7 +561,7 @@ button {
 }
 
 .screen.with-tab-bar {
-  padding-bottom: calc(var(--gutter) + 5.25rem);
+  padding-bottom: calc(var(--gutter) + 6.5rem);
 }
 
 .tab-bar {
@@ -591,9 +593,105 @@ button {
 }
 
 .tab[aria-current='page'] {
-  padding: 0 1rem;
   color: var(--accent);
   box-shadow: var(--inset-sm);
+}
+
+.tab-mic-slot {
+  position: relative;
+  width: var(--mic-size);
+  height: 3rem;
+}
+
+.tab-mic {
+  position: absolute;
+  left: 50%;
+  bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--mic-size);
+  height: var(--mic-size);
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: 0 0 0 0.375rem var(--bg), var(--raise-accent);
+  transform: translateX(-50%);
+}
+
+.tab-mic:active {
+  box-shadow: 0 0 0 0.375rem var(--bg), var(--accent-glint), var(--inset-sm);
+}
+
+.manual-fab {
+  position: fixed;
+  z-index: 5;
+  transition: left 320ms var(--screen-ease), top 320ms var(--screen-ease), opacity 280ms, translate 280ms var(--screen-ease);
+}
+
+.manual-fab.hidden {
+  opacity: 0;
+  translate: 0 5rem;
+  pointer-events: none;
+}
+
+.manual-fab.dragging {
+  transition: none;
+}
+
+.manual-fab-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--fab-size);
+  height: var(--fab-size);
+  border: none;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--accent);
+  box-shadow: var(--raise-lg);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  rotate: -6deg;
+  transition: rotate var(--appear), scale var(--appear), box-shadow var(--appear);
+}
+
+.manual-fab.left .manual-fab-button {
+  rotate: 6deg;
+}
+
+.manual-fab.dragging .manual-fab-button {
+  cursor: grabbing;
+  rotate: 0deg;
+  scale: 1.08;
+  animation: none;
+}
+
+.manual-fab-hint {
+  position: absolute;
+  bottom: calc(100% + 0.75rem);
+  right: 0;
+  width: min(15rem, calc(100vw - 2 * var(--gutter)));
+}
+
+.manual-fab.left .manual-fab-hint {
+  right: auto;
+  left: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .manual-fab:not(.dragging) .manual-fab-button {
+    animation: levitate 3.2s ease-in-out infinite;
+  }
+}
+
+@keyframes levitate {
+  50% {
+    translate: 0 -6px;
+  }
 }
 
 .bottom-bar {

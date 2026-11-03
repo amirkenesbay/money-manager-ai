@@ -25,7 +25,7 @@ export function HintScope({ visible, children }: { visible: boolean; children: R
   return <HintVisibilityContext.Provider value={visible}>{children}</HintVisibilityContext.Provider>
 }
 
-export function Hint({ hint, title, body }: { hint: AppHint; title: string; body: string }) {
+export function Hint({ hint, title, body, placement = 'below' }: { hint: AppHint; title: string; body: string; placement?: 'below' | 'above' }) {
   const { isSeen, dismiss } = useHints()
   const visible = useContext(HintVisibilityContext)
   const shown = visible && !isSeen(hint)
@@ -39,7 +39,7 @@ export function Hint({ hint, title, body }: { hint: AppHint; title: string; body
 
   if (!shown) return null
   return (
-    <aside className="coach" role="note" aria-label={title}>
+    <aside className={`coach ${placement}`} role="note" aria-label={title}>
       <strong className="coach-title">{title}</strong>
       <p className="coach-body">{body}</p>
       <button type="button" className="coach-ok" onClick={() => dismiss(hint)}>{strings.hintOk}</button>

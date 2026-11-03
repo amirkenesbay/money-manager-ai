@@ -25,10 +25,6 @@ export const MicIcon = () => (
   <Icon size={48} strokeWidth={1.8}><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></Icon>
 )
 
-export const KeyboardIcon = () => (
-  <Icon size={22} strokeWidth={1.8}><rect x="2" y="6" width="20" height="12" rx="2" /><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10" /></Icon>
-)
-
 export const HomeIcon = () => <Icon size={20} strokeWidth={1.9}><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" /></Icon>
 
 export const ListIcon = () => <Icon size={20} strokeWidth={1.9}><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></Icon>

@@ -110,7 +110,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
-  margin-top: auto;
 }
 
 .recent-head {
@@ -125,109 +124,6 @@
   border-radius: var(--radius-row);
   box-shadow: var(--inset-sm);
   line-height: 1.6;
-}
-
-.voice {
-  --voice-ring: clamp(7rem, calc(var(--app-height) * 0.18), 11.5rem);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.625rem;
-}
-
-.voice-text {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.125rem;
-  text-align: center;
-}
-
-.voice-title {
-  font-family: var(--font-mono);
-  font-size: 1.125rem;
-  font-weight: 700;
-}
-
-.voice-controls {
-  display: grid;
-  grid-template-columns: 4rem minmax(0, 1fr) 4rem;
-  align-items: center;
-  width: 100%;
-}
-
-.voice-ring {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  justify-self: center;
-  width: var(--voice-ring);
-  height: var(--voice-ring);
-  border-radius: 50%;
-  box-shadow: var(--raise-lg);
-}
-
-.voice-inner-ring {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: calc(var(--voice-ring) * 0.815);
-  height: calc(var(--voice-ring) * 0.815);
-  border-radius: 50%;
-  box-shadow: var(--inset-lg);
-}
-
-.voice-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: calc(var(--voice-ring) * 0.63);
-  height: calc(var(--voice-ring) * 0.63);
-  border: none;
-  border-radius: 50%;
-  background: var(--accent);
-  color: var(--on-accent);
-  box-shadow: var(--raise-accent);
-}
-
-.voice-button:active {
-  box-shadow: var(--accent-glint), var(--inset-sm);
-}
-
-.manual-button {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-self: end;
-  gap: 0.375rem;
-  padding: 0;
-  border: none;
-  background: none;
-  font-size: var(--text-xs);
-  font-weight: 700;
-}
-
-.manual-circle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--button-height);
-  height: var(--button-height);
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  background: var(--bg);
-  box-shadow: var(--raise-md);
-}
-
-.manual-button:active .manual-circle {
-  box-shadow: var(--inset-sm);
-}
-
-@media (max-height: 720px) {
-  .recent .rows > :nth-child(n + 3),
-  .voice-text .caption {
-    display: none;
-  }
 }
 
 .recent-empty-arrow {

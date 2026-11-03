@@ -25,6 +25,7 @@ import { notifyOutcome } from '../telegram/haptics'
 import { LoadError } from '../ui/LoadError'
 import { withMotion } from '../ui/motion'
 import { SkeletonCard } from '../ui/Skeleton'
+import { ManualFab } from '../ui/ManualFab'
 import { TabBar } from '../ui/TabBar'
 import { type Tab, TABS } from '../ui/tabs'
 import { Toast } from '../ui/Toast'
@@ -226,8 +227,6 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
               }}
               onOpenOperations={() => switchTab('operations')}
               onOpenReports={() => switchTab('reports')}
-              onAddOperation={navigation.addOperation}
-              onRecordVoice={() => open({ kind: 'voice' })}
               onSelectOperation={navigation.selectOperation}
             />
           </TabPanel>
@@ -236,7 +235,8 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
               <TabContent tab={candidate} workspace={workspace} navigation={navigation} />
             </TabPanel>
           ))}
-          <TabBar active={tab} onSelect={switchTab} />
+          <TabBar active={tab} onSelect={switchTab} onRecordVoice={() => open({ kind: 'voice' })} />
+          {!welcomeOpen && <ManualFab onOpen={navigation.addOperation} />}
         </div>
       </main>
       {welcomeOpen && group && !overlay && <WelcomeSheet group={group} onFinish={finishWelcome} />}
@@ -298,7 +298,7 @@ function TabContent({ tab, workspace, navigation }: { tab: SecondaryTab; workspa
   const { me, group, groups, actions, notify, onMeChanged } = workspace
   switch (tab) {
     case 'operations':
-      return <OperationsScreen me={me} group={group} onAddOperation={navigation.addOperation} onSelectOperation={navigation.selectOperation} />
+      return <OperationsScreen me={me} group={group} onSelectOperation={navigation.selectOperation} />
     case 'reports':
       return <ReportsScreen me={me} group={group} onAddOperation={navigation.addOperation} />
     default:

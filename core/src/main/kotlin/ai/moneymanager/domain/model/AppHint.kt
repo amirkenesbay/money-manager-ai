@@ -7,4 +7,5 @@ enum class AppHint {
     MORE,
     OPERATION_FORM,
     GROUP,
+    MANUAL_ENTRY,
 }

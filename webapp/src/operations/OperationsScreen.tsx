@@ -5,7 +5,7 @@ import { formatDayLabel, formatSignedMoney } from '../format'
 import { strings } from '../strings'
 import { Button } from '../ui/Button'
 import { ChipSelect } from '../ui/ChipSelect'
-import { CalendarIcon, PlusIcon } from '../ui/icons'
+import { CalendarIcon } from '../ui/icons'
 import { LoadError } from '../ui/LoadError'
 import { PremiumOffer } from '../ui/PremiumOffer'
 import { Segmented } from '../ui/Segmented'
@@ -23,10 +23,9 @@ const TYPE_FILTERS: (CategoryType | null)[] = [null, 'EXPENSE', 'INCOME']
 const ALL_CATEGORIES = ''
 const FEED_SKELETON_ROWS = 6
 
-export function OperationsScreen({ me, group, onAddOperation, onSelectOperation }: {
+export function OperationsScreen({ me, group, onSelectOperation }: {
   me: Me
   group: Group
-  onAddOperation: () => void
   onSelectOperation: (operation: Operation) => void
 }) {
   const [period, setPeriod] = useState<Period>(DEFAULT_PERIOD)
@@ -53,10 +52,7 @@ export function OperationsScreen({ me, group, onAddOperation, onSelectOperation 
 
   return (
     <>
-      <header className="screen-header-row">
-        <h1 className="title">{strings.operationsTitle}</h1>
-        <button type="button" className="round-button pressable" aria-label={strings.addOperation} onClick={onAddOperation}><PlusIcon /></button>
-      </header>
+      <h1 className="title">{strings.operationsTitle}</h1>
       {group.type === 'SHARED' && <p className="caption subtitle">{strings.sharedGroupSubtitle(group.name, group.memberCount)}</p>}
       <Segmented
         label={strings.typeFilterLabel}

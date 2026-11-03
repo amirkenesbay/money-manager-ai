@@ -45,7 +45,7 @@ export interface Subscription {
   subscribeUrl: string
 }
 
-export type AppHint = 'WELCOME' | 'OPERATIONS' | 'REPORTS' | 'MORE' | 'OPERATION_FORM' | 'GROUP'
+export type AppHint = 'WELCOME' | 'OPERATIONS' | 'REPORTS' | 'MORE' | 'OPERATION_FORM' | 'GROUP' | 'MANUAL_ENTRY'
 
 export interface Me {
   userId: number
