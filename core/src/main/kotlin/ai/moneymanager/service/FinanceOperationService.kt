@@ -13,6 +13,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.LocalDate
+import ai.moneymanager.domain.event.CategoryCorrected
 import ai.moneymanager.domain.event.OperationsChanged
 import org.springframework.context.ApplicationEventPublisher
 
@@ -82,9 +83,11 @@ class FinanceOperationService(
         return saved
     }
 
-    fun create(groupId: ObjectId, creatorId: Long, draft: OperationDraft): FinanceOperationEntity {
+    fun create(groupId: ObjectId, creatorId: Long, draft: OperationDraft, categoryCorrected: Boolean = false): FinanceOperationEntity {
         val categoryId = checkNotNull(draft.category.id)
-        return saveOperation(groupId, creatorId, draft.type, draft.amount, categoryId, draft.category.name, draft.category.icon, draft.operationDate, draft.description)
+        val saved = saveOperation(groupId, creatorId, draft.type, draft.amount, categoryId, draft.category.name, draft.category.icon, draft.operationDate, draft.description)
+        if (categoryCorrected) publishCorrection(saved)
+        return saved
     }
 
     fun replace(groupId: ObjectId, operationId: ObjectId, draft: OperationDraft): FinanceOperationEntity? =
@@ -142,6 +145,11 @@ class FinanceOperationService(
         val saved = financeOperationRepository.save(mutate(existing))
         log.info("Updated finance operation: id={}, groupId={}", operationId, groupId)
         eventPublisher.publishEvent(OperationsChanged(groupId))
+        if (existing.categoryId != saved.categoryId) publishCorrection(saved)
         return saved
+    }
+
+    private fun publishCorrection(saved: FinanceOperationEntity) {
+        eventPublisher.publishEvent(CategoryCorrected(saved.groupId, saved.description, saved.categoryId))
     }
 }

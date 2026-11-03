@@ -9,6 +9,7 @@ import ai.moneymanager.chat.telegram.AiFeedback
 import ai.moneymanager.service.AiPromptService
 import ai.moneymanager.service.AiRateLimitResult
 import ai.moneymanager.service.AiRateLimitService
+import ai.moneymanager.service.CategoryRuleService
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
@@ -37,6 +38,7 @@ class AiRequestHandler(
     private val commandParserService: CommandParserService,
     private val telegramFileService: TelegramFileService,
     private val categoryService: CategoryService,
+    private val categoryRuleService: CategoryRuleService,
     private val groupService: GroupService,
     private val aiPromptService: AiPromptService,
     private val localizationService: LocalizationService,
@@ -138,7 +140,7 @@ class AiRequestHandler(
         val categories: List<Category> = categoryService.getCategoriesByGroup(groupId)
         context.aiCategoriesCache = categories
         val currency = resolveCurrency(groupService, groupId)
-        return aiPromptService.groupContext(currency, categories)
+        return aiPromptService.groupContext(currency, categories, categoryRuleService.rules(groupId))
     }
 
     private fun showErrorStageIfNeeded(commands: List<BotCommand>, feedback: AiFeedback, language: String?) {

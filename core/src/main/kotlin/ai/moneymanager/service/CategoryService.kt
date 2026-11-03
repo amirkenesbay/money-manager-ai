@@ -114,7 +114,7 @@ class CategoryService(
     fun deleteCategory(actorId: Long, categoryId: ObjectId): Boolean {
         val entity = categoryRepository.findById(categoryId).orElse(null) ?: return false
         categoryRepository.delete(entity)
-        eventPublisher.publishEvent(CategoryDeleted(entity.groupId, actorId, entity.icon, entity.name))
+        eventPublisher.publishEvent(CategoryDeleted(entity.groupId, categoryId, actorId, entity.icon, entity.name))
         return true
     }
 

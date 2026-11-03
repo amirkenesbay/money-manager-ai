@@ -101,6 +101,16 @@ class OperationControllerTest {
     }
 
     @Test
+    fun `passes on that the user corrected the voice category so it is remembered`() {
+        val draft = OperationDraft(CategoryType.EXPENSE, BigDecimal("5000"), groceries, TODAY, "Magnum")
+        `when`(financeOperationService.create(groupId, TEST_USER_ID, draft, true)).thenReturn(saved(draft))
+
+        mockMvc.perform(post("/api/v1/groups/$groupId/operations").withTelegramAuth().json(body(description = "Magnum", categoryCorrected = true)))
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.id").value(operationId.toHexString()))
+    }
+
+    @Test
     fun `stores a blank comment as no comment`() {
         val draft = OperationDraft(CategoryType.EXPENSE, BigDecimal("5000"), groceries, TODAY, null)
         `when`(financeOperationService.create(groupId, TEST_USER_ID, draft)).thenReturn(saved(draft))
@@ -196,9 +206,11 @@ class OperationControllerTest {
         categoryId: ObjectId = groceries.id!!,
         date: LocalDate = TODAY,
         description: String? = null,
+        categoryCorrected: Boolean = false,
     ): String {
         val descriptionJson = description?.let { "\"$it\"" } ?: "null"
-        return """{"type":"$type","amount":$amount,"categoryId":"${categoryId.toHexString()}","operationDate":"$date","description":$descriptionJson}"""
+        val correctedJson = if (categoryCorrected) ",\"categoryCorrected\":true" else ""
+        return """{"type":"$type","amount":$amount,"categoryId":"${categoryId.toHexString()}","operationDate":"$date","description":$descriptionJson$correctedJson}"""
     }
 
     private fun saved(draft: OperationDraft) = FinanceOperationEntity(

@@ -1,6 +1,7 @@
 package ai.moneymanager.service
 
 import ai.moneymanager.domain.model.Category
+import ai.moneymanager.domain.model.CategoryRule
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.Currency
 import org.springframework.core.io.ClassPathResource
@@ -31,6 +32,11 @@ private const val CATEGORY_ITEMS_SEPARATOR = ", "
 private const val CATEGORY_LIST_OVERFLOW_SUFFIX = ", …"
 private const val MAX_CATEGORIES_IN_PROMPT = 50
 
+private const val REMEMBERED_PLACES_HEADER =
+    "Places the user has corrected before (when the description names one of these places, use its category):"
+private const val REMEMBERED_PLACE_TEMPLATE = "%s → %s"
+private const val MAX_REMEMBERED_PLACES_IN_PROMPT = 20
+
 @Service
 class AiPromptService {
     val systemPrompt: String by lazy { loadPrompt(SYSTEM_PROMPT_PATH) }
@@ -52,8 +58,19 @@ class AiPromptService {
 
     fun currencyPreamble(currency: Currency): String = CURRENCY_TEMPLATE.format(currency.name)
 
-    fun groupContext(currency: Currency, categories: List<Category>): String =
-        currencyPreamble(currency) + "\n" + categoryContextPreamble(categories)
+    fun groupContext(currency: Currency, categories: List<Category>, rules: List<CategoryRule> = emptyList()): String =
+        listOf(currencyPreamble(currency), categoryContextPreamble(categories), rememberedPlacesPreamble(categories, rules))
+            .filter { it.isNotEmpty() }
+            .joinToString("\n")
+
+    fun rememberedPlacesPreamble(categories: List<Category>, rules: List<CategoryRule>): String {
+        val namesById = categories.associate { it.id to it.name }
+        val lines = rules
+            .mapNotNull { rule -> namesById[rule.categoryId]?.let { REMEMBERED_PLACE_TEMPLATE.format(rule.merchantKey, it) } }
+            .take(MAX_REMEMBERED_PLACES_IN_PROMPT)
+        if (lines.isEmpty()) return ""
+        return (listOf(REMEMBERED_PLACES_HEADER) + lines).joinToString("\n")
+    }
 
     fun categoryContextPreamble(categories: List<Category>): String {
         if (categories.isEmpty()) {

@@ -1,5 +1,5 @@
 import { apiRequest } from '../api/client'
-import type { Category, CategoryType } from '../api/types'
+import type { Category, CategoryRule, CategoryType } from '../api/types'
 
 const categoriesPath = (groupId: string) => `/groups/${groupId}/categories`
 
@@ -22,3 +22,11 @@ export const setCategoryLimit = (groupId: string, categoryId: string, amount: st
 
 export const deleteCategory = (groupId: string, categoryId: string): Promise<void> =>
   apiRequest<void>(`${categoriesPath(groupId)}/${categoryId}`, { method: 'DELETE' })
+
+const rulesPath = (groupId: string) => `/groups/${groupId}/category-rules`
+
+export const fetchCategoryRules = (groupId: string, signal?: AbortSignal): Promise<CategoryRule[]> =>
+  apiRequest<CategoryRule[]>(rulesPath(groupId), {}, signal)
+
+export const forgetCategoryRule = (groupId: string, ruleId: string): Promise<void> =>
+  apiRequest<void>(`${rulesPath(groupId)}/${ruleId}`, { method: 'DELETE' })

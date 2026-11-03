@@ -29,6 +29,7 @@ data class OperationRequest(
     val categoryId: ObjectId,
     val operationDate: LocalDate,
     val description: String?,
+    val categoryCorrected: Boolean = false,
 )
 
 @RestController
@@ -44,7 +45,7 @@ class OperationController(
     fun create(user: UserInfo, @PathVariable groupId: ObjectId, @RequestBody request: OperationRequest): OperationResponse {
         groupAccessGuard.requireMember(user, groupId)
         val draft = operationDraftFactory.create(user, groupId, request)
-        return financeResponseFactory.operation(financeOperationService.create(groupId, checkNotNull(user.telegramUserId), draft))
+        return financeResponseFactory.operation(financeOperationService.create(groupId, checkNotNull(user.telegramUserId), draft, request.categoryCorrected))
     }
 
     @PutMapping("/{operationId}")

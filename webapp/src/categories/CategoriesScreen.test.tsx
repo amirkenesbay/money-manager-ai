@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiRequestError } from '../api/client'
 import { strings } from '../strings'
 import { category, group, me, PERSONAL_GROUP_ID } from '../test/fixtures'
-import { createCategory, deleteCategory, fetchCategories, updateCategory } from './categoriesApi'
+import { createCategory, deleteCategory, fetchCategories, fetchCategoryRules, forgetCategoryRule, updateCategory } from './categoriesApi'
 import { CategoriesScreen } from './CategoriesScreen'
 
 vi.mock('./categoriesApi', () => ({
@@ -12,6 +12,8 @@ vi.mock('./categoriesApi', () => ({
   createCategory: vi.fn(),
   updateCategory: vi.fn(),
   deleteCategory: vi.fn(),
+  fetchCategoryRules: vi.fn(),
+  forgetCategoryRule: vi.fn(),
 }))
 
 const FREE_LIMIT = 10
@@ -26,6 +28,25 @@ describe('CategoriesScreen', () => {
   beforeEach(() => {
     vi.resetAllMocks()
     vi.mocked(fetchCategories).mockResolvedValue([groceries, salary])
+    vi.mocked(fetchCategoryRules).mockResolvedValue([])
+  })
+
+  it('shows the places remembered for the chosen type and forgets one', async () => {
+    const user = userEvent.setup()
+    const magnum = { id: 'rule-1', place: 'магнум', categoryId: groceries.id, categoryName: groceries.name, categoryIcon: groceries.icon }
+    const bonus = { id: 'rule-2', place: 'премия', categoryId: salary.id, categoryName: salary.name, categoryIcon: salary.icon }
+    vi.mocked(fetchCategoryRules).mockResolvedValueOnce([magnum, bonus]).mockResolvedValue([bonus])
+    vi.mocked(forgetCategoryRule).mockResolvedValue(undefined)
+    renderScreen()
+
+    expect(await screen.findByText(strings.rememberedPlace('магнум'))).toBeInTheDocument()
+    expect(screen.queryByText(strings.rememberedPlace('премия'))).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: strings.forgetPlace('магнум') }))
+
+    expect(forgetCategoryRule).toHaveBeenCalledWith(PERSONAL_GROUP_ID, 'rule-1')
+    expect(notify).toHaveBeenCalledWith({ title: strings.placeForgottenToast })
+    expect(screen.queryByText(strings.rememberedPlace('магнум'))).not.toBeInTheDocument()
   })
 
   it('lists categories of the chosen type with the free counter', async () => {

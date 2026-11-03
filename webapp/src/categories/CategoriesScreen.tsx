@@ -12,6 +12,7 @@ import { Segmented } from '../ui/Segmented'
 import { SkeletonRows } from '../ui/Skeleton'
 import type { Notify } from '../ui/useToast'
 import { CategoryForm } from './CategoryForm'
+import { RememberedPlaces } from './RememberedPlaces'
 import { CATEGORY_TYPES } from './categoryTypes'
 import { useCategories } from './useCategories'
 import { useBudgets } from '../budgets/useBudgets'
@@ -131,6 +132,9 @@ export function CategoriesScreen({ me, group, notify, onBack }: {
             })}
           </ul>
         ))}
+      {categories.state.status === 'ready' && (
+        <RememberedPlaces groupId={group.id} type={type} categories={categories.state.data} notify={notify} />
+      )}
       {free && <p className="caption centered">{strings.categoriesFreeNote(limit)}</p>}
       <BottomBar>
         <Button onClick={add}>{strings.addCategory}</Button>

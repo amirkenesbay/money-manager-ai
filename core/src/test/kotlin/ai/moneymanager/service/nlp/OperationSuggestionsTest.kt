@@ -1,6 +1,7 @@
 package ai.moneymanager.service.nlp
 
 import ai.moneymanager.domain.model.Category
+import ai.moneymanager.domain.model.CategoryRule
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.domain.model.nlp.OperationSuggestion
@@ -44,6 +45,25 @@ class OperationSuggestionsTest {
         assertThat(suggestOperation(BotCommand.ShowBalance, categories, TODAY)).isNull()
     }
 
-    private fun expense(amount: Double = 2000.0, category: String? = "Такси", icon: String? = null, date: String? = null) =
-        BotCommand.AddExpense(amount, category, null, icon, date)
+    @Test
+    fun `uses the remembered category of a place over the one the AI picked`() {
+        val groceries = Category(ObjectId(), "Продукты", "🛒", CategoryType.EXPENSE, groupId)
+        val rules = listOf(CategoryRule(ObjectId(), "магнум", checkNotNull(groceries.id)))
+
+        val suggestion = suggestOperation(expense(category = "Кафе", description = "МАГНУМ!"), categories + groceries, TODAY, rules)
+
+        assertThat(suggestion).isEqualTo(OperationSuggestion.Ready(CategoryType.EXPENSE, 2000.0, groceries, "МАГНУМ!", TODAY))
+    }
+
+    @Test
+    fun `ignores a remembered category of the other operation type`() {
+        val rules = listOf(CategoryRule(ObjectId(), "магнум", checkNotNull(salary.id)))
+
+        val suggestion = suggestOperation(expense(category = "такси", description = "Магнум"), categories, TODAY, rules)
+
+        assertThat((suggestion as OperationSuggestion.Ready).category).isEqualTo(taxi)
+    }
+
+    private fun expense(amount: Double = 2000.0, category: String? = "Такси", icon: String? = null, date: String? = null, description: String? = null) =
+        BotCommand.AddExpense(amount, category, description, icon, date)
 }

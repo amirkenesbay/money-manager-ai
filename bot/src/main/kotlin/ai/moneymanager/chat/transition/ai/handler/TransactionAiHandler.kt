@@ -15,6 +15,7 @@ import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.domain.model.nlp.OperationSuggestion
 import ai.moneymanager.domain.text.matchesEntityName
 import ai.moneymanager.service.nlp.suggestOperation
+import ai.moneymanager.service.CategoryRuleService
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.FinanceOperationService
 import ai.moneymanager.service.GroupService
@@ -33,6 +34,7 @@ private const val NO_CATEGORY_ID_KEY = "ai.category.no_id"
 @Component
 class TransactionAiHandler(
     private val categoryService: CategoryService,
+    private val categoryRuleService: CategoryRuleService,
     private val financeOperationService: FinanceOperationService,
     private val groupService: GroupService,
     private val subscriptionLimitsService: SubscriptionLimitsService,
@@ -58,7 +60,7 @@ class TransactionAiHandler(
             ?: return AiPreparationResult.ImmediateResult(localizationService.t("ai.error.no_user", lang))
 
         val categories = context.aiCategoriesCache ?: categoryService.getCategoriesByGroup(groupId)
-        return when (val suggestion = suggestOperation(command, categories)) {
+        return when (val suggestion = suggestOperation(command, categories, rules = categoryRuleService.rules(groupId))) {
             null -> AiPreparationResult.ImmediateResult(localizationService.t("ai.error.unknown_command", lang))
             OperationSuggestion.AmountNotPositive ->
                 AiPreparationResult.ImmediateResult(localizationService.t("ai.transaction.amount_not_positive", lang))

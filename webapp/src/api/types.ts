@@ -291,3 +291,11 @@ export interface VoiceOperation {
 export interface VoiceResult {
   operations: VoiceOperation[]
 }
+
+export interface CategoryRule {
+  id: string
+  place: string
+  categoryId: string
+  categoryName: string
+  categoryIcon: string
+}

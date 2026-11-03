@@ -5,10 +5,11 @@ import { createOperation } from '../operations/operationsApi'
 
 export interface Draft extends VoiceOperation {
   key: string
+  categoryCorrected: boolean
 }
 
 export const toDrafts = (operations: VoiceOperation[]): Draft[] =>
-  operations.map((operation, index) => ({ ...operation, key: `draft-${index}` }))
+  operations.map((operation, index) => ({ ...operation, key: `draft-${index}`, categoryCorrected: false }))
 
 export const draftReady = (draft: Draft): boolean =>
   parseAmount(draft.amount) !== null && (draft.categoryId !== null || (draft.isNewCategory && draft.categoryName !== null))
@@ -19,7 +20,7 @@ export function withType(draft: Draft, type: CategoryType): Draft {
 }
 
 export const withCategory = (draft: Draft, category: Category): Draft =>
-  ({ ...draft, categoryId: category.id, categoryName: category.name, categoryIcon: category.icon, isNewCategory: false })
+  ({ ...draft, categoryId: category.id, categoryName: category.name, categoryIcon: category.icon, isNewCategory: false, categoryCorrected: true })
 
 const categoryKey = (type: CategoryType, name: string) => `${type}:${name.toLowerCase()}`
 
@@ -31,6 +32,7 @@ export async function saveDraft(groupId: string, draft: Draft, created: Map<stri
     categoryId,
     operationDate: draft.operationDate,
     description: draft.description,
+    categoryCorrected: draft.categoryCorrected,
   })
 }
 

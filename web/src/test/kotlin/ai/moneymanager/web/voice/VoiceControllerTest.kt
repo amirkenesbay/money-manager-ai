@@ -6,6 +6,7 @@ import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.service.AiPromptService
 import ai.moneymanager.service.AiRateLimitResult
 import ai.moneymanager.service.AiRateLimitService
+import ai.moneymanager.service.CategoryRuleService
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.UserInfoService
@@ -52,6 +53,9 @@ class VoiceControllerTest {
 
     @MockitoBean
     private lateinit var categoryService: CategoryService
+
+    @MockitoBean
+    private lateinit var categoryRuleService: CategoryRuleService
 
     @MockitoBean
     private lateinit var aiRateLimitService: AiRateLimitService

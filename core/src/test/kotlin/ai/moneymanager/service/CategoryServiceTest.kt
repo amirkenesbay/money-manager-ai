@@ -92,7 +92,7 @@ class CategoryServiceTest {
     fun `deletes a category and tells the group who did it`() {
         assertThat(service.deleteCategory(ACTOR_ID, taxi.id!!)).isTrue()
 
-        assertThat(publishedEvents).containsExactly(CategoryDeleted(groupId, ACTOR_ID, "🚕", "Такси"))
+        assertThat(publishedEvents).containsExactly(CategoryDeleted(groupId, taxi.id!!, ACTOR_ID, "🚕", "Такси"))
     }
 
     @Test

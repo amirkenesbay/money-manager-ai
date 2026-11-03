@@ -1,12 +1,14 @@
 package ai.moneymanager.service.nlp
 
 import ai.moneymanager.domain.model.Category
+import ai.moneymanager.domain.model.CategoryRule
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.domain.model.nlp.OperationSuggestion
 import ai.moneymanager.domain.text.extractLeadingNonLetters
 import ai.moneymanager.domain.text.matchesEntityName
+import ai.moneymanager.domain.text.merchantKey
 import ai.moneymanager.domain.text.resolveOperationDate
 import ai.moneymanager.domain.text.stripLeadingNonLetters
 import java.time.LocalDate
@@ -20,11 +22,19 @@ private data class OperationCommand(
     val operationDate: String?,
 )
 
-fun suggestOperation(command: BotCommand, categories: List<Category>, today: LocalDate = LocalDate.now()): OperationSuggestion? {
+fun suggestOperation(
+    command: BotCommand,
+    categories: List<Category>,
+    today: LocalDate = LocalDate.now(),
+    rules: List<CategoryRule> = emptyList(),
+): OperationSuggestion? {
     val operation = operationOf(command) ?: return null
     if (operation.amount <= 0) return OperationSuggestion.AmountNotPositive
     val description = operation.description?.trim()?.takeIf { it.isNotEmpty() }
     val date = resolveOperationDate(operation.operationDate, today)
+    learnedCategory(description, operation.type, categories, rules)?.let {
+        return OperationSuggestion.Ready(operation.type, operation.amount, it, description, date)
+    }
     val missing = OperationSuggestion.CategoryMissing(operation.type, operation.amount, description, date)
     val rawCategory = operation.category?.takeIf { it.isNotBlank() } ?: return missing
     val cleanCategory = stripLeadingNonLetters(rawCategory).takeIf { it.isNotBlank() } ?: return missing
@@ -37,6 +47,12 @@ fun suggestOperation(command: BotCommand, categories: List<Category>, today: Loc
         )
         else -> OperationSuggestion.AmbiguousCategory(operation.type, operation.amount, rawCategory, description, date)
     }
+}
+
+private fun learnedCategory(description: String?, type: CategoryType, categories: List<Category>, rules: List<CategoryRule>): Category? {
+    val key = merchantKey(description) ?: return null
+    val categoryId = rules.firstOrNull { it.merchantKey == key }?.categoryId ?: return null
+    return categories.firstOrNull { it.id == categoryId && it.type == type }
 }
 
 private fun operationOf(command: BotCommand): OperationCommand? = when (command) {

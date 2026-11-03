@@ -1,5 +1,6 @@
 package ai.moneymanager.service
 
+import ai.moneymanager.domain.event.CategoryCorrected
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.OperationDraft
@@ -22,7 +23,8 @@ class FinanceOperationServiceTest {
     private val operationId = ObjectId()
     private val taxi = Category(ObjectId(), "Такси", "🚕", CategoryType.EXPENSE, groupId)
     private val repository = mock(FinanceOperationRepository::class.java)
-    private val service = FinanceOperationService(repository) { }
+    private val publishedEvents = mutableListOf<Any>()
+    private val service = FinanceOperationService(repository) { publishedEvents.add(it) }
 
     private val existing = FinanceOperationEntity(
         id = operationId,
@@ -76,5 +78,41 @@ class FinanceOperationServiceTest {
         val draft = OperationDraft(CategoryType.EXPENSE, BigDecimal("1800"), taxi, LocalDate.of(2026, 10, 14), null)
 
         assertThat(service.replace(groupId, operationId, draft)).isNull()
+    }
+
+    @Test
+    fun `reports a corrected category when an edit moves the operation to another category`() {
+        `when`(repository.findByGroupIdAndIdIn(groupId, listOf(operationId))).thenReturn(listOf(existing))
+
+        service.updateCategory(groupId, operationId, checkNotNull(taxi.id), taxi.name, taxi.icon)
+
+        assertThat(publishedEvents).contains(CategoryCorrected(groupId, "Магнум", checkNotNull(taxi.id)))
+    }
+
+    @Test
+    fun `reports no correction when the category stays the same`() {
+        `when`(repository.findByGroupIdAndIdIn(groupId, listOf(operationId))).thenReturn(listOf(existing))
+
+        service.updateAmount(groupId, operationId, BigDecimal("4000"))
+
+        assertThat(publishedEvents).noneMatch { it is CategoryCorrected }
+    }
+
+    @Test
+    fun `reports a corrected category when the user changed the suggested one`() {
+        val draft = OperationDraft(CategoryType.EXPENSE, BigDecimal("1800"), taxi, LocalDate.of(2026, 10, 14), "Яндекс")
+
+        service.create(groupId, CREATOR_ID, draft, categoryCorrected = true)
+
+        assertThat(publishedEvents).contains(CategoryCorrected(groupId, "Яндекс", checkNotNull(taxi.id)))
+    }
+
+    @Test
+    fun `reports no correction when the suggestion was kept`() {
+        val draft = OperationDraft(CategoryType.EXPENSE, BigDecimal("1800"), taxi, LocalDate.of(2026, 10, 14), "Яндекс")
+
+        service.create(groupId, CREATOR_ID, draft)
+
+        assertThat(publishedEvents).noneMatch { it is CategoryCorrected }
     }
 }

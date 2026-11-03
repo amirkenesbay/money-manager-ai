@@ -66,7 +66,7 @@ describe('VoiceFlow', () => {
     await user.click(screen.getByRole('button', { name: strings.save }))
 
     expect(parseVoice).toHaveBeenCalledWith(PERSONAL_GROUP_ID, wav, expect.anything())
-    expect(createOperation).toHaveBeenCalledWith(PERSONAL_GROUP_ID, expect.objectContaining({ amount: '2000.0', categoryId: taxi.id }))
+    expect(createOperation).toHaveBeenCalledWith(PERSONAL_GROUP_ID, expect.objectContaining({ amount: '2000.0', categoryId: taxi.id, categoryCorrected: false }))
     expect(onSaved).toHaveBeenCalledWith([saved])
   })
 
@@ -87,7 +87,7 @@ describe('VoiceFlow', () => {
     expect(createOperation).toHaveBeenLastCalledWith(PERSONAL_GROUP_ID, expect.objectContaining({ amount: '700', categoryId: 'cat-cafe' }))
   })
 
-  it('asks to pick a category the phrase did not name', async () => {
+  it('asks to pick a category the phrase did not name and remembers the pick', async () => {
     vi.mocked(parseVoice).mockResolvedValue({ operations: [voiceOperation({ categoryId: null, categoryName: null, categoryIcon: null })] })
     vi.mocked(createOperation).mockResolvedValue(operation())
 
@@ -98,6 +98,8 @@ describe('VoiceFlow', () => {
     await user.click(await screen.findByRole('button', { name: /Такси/ }))
 
     expect(screen.getByRole('button', { name: strings.save })).toBeEnabled()
+    await user.click(screen.getByRole('button', { name: strings.save }))
+    expect(createOperation).toHaveBeenCalledWith(PERSONAL_GROUP_ID, expect.objectContaining({ categoryId: taxi.id, categoryCorrected: true }))
   })
 
   it('says it heard nothing without spending an AI request', async () => {

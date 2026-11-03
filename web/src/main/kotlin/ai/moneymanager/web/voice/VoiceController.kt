@@ -7,6 +7,7 @@ import ai.moneymanager.domain.model.nlp.OperationSuggestion
 import ai.moneymanager.service.AiPromptService
 import ai.moneymanager.service.AiRateLimitResult
 import ai.moneymanager.service.AiRateLimitService
+import ai.moneymanager.service.CategoryRuleService
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.nlp.CommandParserService
 import ai.moneymanager.service.nlp.WAV_MIME_TYPE
@@ -45,6 +46,7 @@ private const val SECONDS_IN_HOUR = 3600L
 class VoiceController(
     private val groupAccessGuard: GroupAccessGuard,
     private val categoryService: CategoryService,
+    private val categoryRuleService: CategoryRuleService,
     private val aiRateLimitService: AiRateLimitService,
     private val aiPromptService: AiPromptService,
     private val commandParserService: CommandParserService,
@@ -56,11 +58,12 @@ class VoiceController(
         requireWav(audio)
         requireAiQuota(user)
         val categories = categoryService.getCategoriesByGroup(groupId)
-        val commands = commandParserService.parseVoiceCommands(audio, aiPromptService.groupContext(group.currency, categories), WAV_MIME_TYPE)
+        val rules = categoryRuleService.rules(groupId)
+        val commands = commandParserService.parseVoiceCommands(audio, aiPromptService.groupContext(group.currency, categories, rules), WAV_MIME_TYPE)
         requireParsed(commands)
         val today = userCalendar.today(user)
         val operations = commands
-            .mapNotNull { suggestOperation(it, categories, today)?.toResponse() }
+            .mapNotNull { suggestOperation(it, categories, today, rules)?.toResponse() }
             .take(MAX_VOICE_OPERATIONS)
         return VoiceResponse(operations)
     }
