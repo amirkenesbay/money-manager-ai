@@ -20,10 +20,15 @@ export interface ReportContext {
   onBackToCurrentMonth: () => void
 }
 
-export function ReportsScreen({ me, group, onAddOperation }: { me: Me; group: Group; onAddOperation: () => void }) {
+export function ReportsScreen({ me, group, initialMonth = null, onAddOperation }: {
+  me: Me
+  group: Group
+  initialMonth?: string | null
+  onAddOperation: () => void
+}) {
   const currentMonth = currentPeriodMonth(new Date(), group.monthStartDay)
   const [tab, setTab] = useState<ReportTab>('analytics')
-  const [month, setMonth] = useState(currentMonth)
+  const [month, setMonth] = useState(() => (initialMonth !== null && initialMonth <= currentMonth ? initialMonth : currentMonth))
   const context: ReportContext = { me, group, month, onAddOperation, onBackToCurrentMonth: () => setMonth(currentMonth) }
 
   return (

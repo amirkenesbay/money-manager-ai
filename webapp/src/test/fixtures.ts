@@ -17,6 +17,7 @@ export const me = (overrides: Partial<Me> = {}): Me => ({
   timezone: null,
   activeGroupId: PERSONAL_GROUP_ID,
   seenHints: EVERY_HINT,
+  mutedDigests: [],
   subscription: {
     tier: 'FREE',
     expiresAt: null,

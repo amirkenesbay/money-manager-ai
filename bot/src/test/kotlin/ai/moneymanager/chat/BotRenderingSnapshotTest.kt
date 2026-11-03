@@ -2,14 +2,22 @@ package ai.moneymanager.chat
 
 import ai.moneymanager.chat.reply.ai.describe
 import ai.moneymanager.chat.reply.ai.describeBatchItem
+import ai.moneymanager.chat.reply.digest.DigestFormatter
 import ai.moneymanager.chat.reply.finance.FinanceHistoryFormatter
 import ai.moneymanager.chat.reply.finance.FinanceReportFormatter
+import ai.moneymanager.domain.model.Budget
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.Currency
+import ai.moneymanager.domain.model.Digest
+import ai.moneymanager.domain.model.DigestKind
+import ai.moneymanager.domain.model.DigestPeriod
 import ai.moneymanager.domain.model.FrequencyType
 import ai.moneymanager.domain.model.GroupType
 import ai.moneymanager.domain.model.MoneyGroup
+import ai.moneymanager.domain.model.MonthLeft
+import ai.moneymanager.domain.model.monthPeriod
+import ai.moneymanager.domain.model.report.CategoryTotal
 import ai.moneymanager.domain.model.nlp.AiPendingAction
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import ai.moneymanager.repository.entity.NotificationEntity
@@ -27,9 +35,11 @@ import java.nio.file.Path
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.YearMonth
 import java.time.ZoneOffset
 
 private const val RUSSIAN = "ru"
+private const val KAZAKH = "kk"
 private val SNAPSHOT_DIR: Path = Path.of("src/test/resources/snapshots/bot-rendering")
 private val JUNE_START: LocalDate = LocalDate.of(2026, 6, 1)
 private val JUNE_END: LocalDate = LocalDate.of(2026, 6, 30)
@@ -93,6 +103,27 @@ class BotRenderingSnapshotTest {
         val batchItems = listOf(addExpense(), actions.getValue("transaction-add-new-category") as AiPendingAction.TransactionAction)
             .joinToString("\n") { it.describeBatchItem(localization, Currency.KZT, RUSSIAN) }
         assertSnapshot("ai-batch-items", batchItems)
+    }
+
+    @Test
+    fun `digests`() {
+        val formatter = DigestFormatter(localization)
+        val family = MoneyGroup(groupId, "Семья & <друзья>", "abc123xyz", OWNER_ID, setOf(OWNER_ID, MEMBER_ID), GroupType.SHARED)
+        val top = listOf(CategoryTotal("🛒", "Продукты", BigDecimal("74000")), CategoryTotal("🚕", "Такси", BigDecimal("15200")), CategoryTotal("", "Кафе", BigDecimal("9800")))
+        val budgets = listOf(
+            Budget(groceries.copy(monthlyLimit = BigDecimal("90000")), BigDecimal("90000"), BigDecimal("74000"), monthPeriod(YearMonth.of(2026, 6), 1)),
+            Budget(taxi.copy(monthlyLimit = BigDecimal("14000")), BigDecimal("14000"), BigDecimal("15200"), monthPeriod(YearMonth.of(2026, 6), 1)),
+        )
+        val june = DigestPeriod(DigestKind.MONTH, JUNE_START, JUNE_END)
+        val month = Digest(june, family, BigDecimal("312400"), BigDecimal("450000"), 42, top, BigDecimal("339600"), budgets, null)
+        val week = Digest(DigestPeriod(DigestKind.WEEK, LocalDate.of(2026, 6, 8), LocalDate.of(2026, 6, 14)), family, BigDecimal("48300"), BigDecimal.ZERO, 9, top, null, emptyList(), MonthLeft(YearMonth.of(2026, 6), BigDecimal("137600"), 16))
+        val day = Digest(DigestPeriod(DigestKind.DAY, JUNE_END, JUNE_END), family, BigDecimal("10350"), BigDecimal.ZERO, 3, top, null, emptyList(), MonthLeft(YearMonth.of(2026, 6), BigDecimal("-5000"), 0))
+
+        assertSnapshot("digest-month-ru", formatter.format(month, RUSSIAN))
+        assertSnapshot("digest-month-overspent-en", formatter.format(month.copy(income = BigDecimal("300000"), previousSpent = null, budgets = emptyList()), ENGLISH))
+        assertSnapshot("digest-week-ru", formatter.format(week, RUSSIAN))
+        assertSnapshot("digest-day-ru", formatter.format(day, RUSSIAN))
+        assertSnapshot("digest-day-kk", formatter.format(day.copy(monthLeft = MonthLeft(YearMonth.of(2026, 6), BigDecimal("50000"), 5)), KAZAKH))
     }
 
     private fun addExpense() = AiPendingAction.TransactionAction.Add(

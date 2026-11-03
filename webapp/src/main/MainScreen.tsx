@@ -19,7 +19,7 @@ import { PremiumScreen } from '../premium/PremiumScreen'
 import { RemindersScreen } from '../reminders/RemindersScreen'
 import { ReportsScreen } from '../reports/ReportsScreen'
 import { VoiceFlow } from '../voice/VoiceFlow'
-import { type LaunchScreen, launchScreen } from './launchScreen'
+import { type LaunchScreen, launchMonth, launchScreen } from './launchScreen'
 import { strings } from '../strings'
 import { notifyOutcome } from '../telegram/haptics'
 import { LoadError } from '../ui/LoadError'
@@ -41,7 +41,7 @@ type Overlay =
   | { kind: 'section'; section: Section }
   | { kind: 'voice' }
 
-const LAUNCH_OVERLAYS: Record<LaunchScreen, Overlay> = {
+const LAUNCH_OVERLAYS: Record<Exclude<LaunchScreen, 'reports'>, Overlay> = {
   add: { kind: 'form', operation: null },
   categories: { kind: 'section', section: 'categories' },
 }
@@ -85,7 +85,7 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
   const [groups, setGroups] = useState(initialGroups)
   const [groupId, setGroupId] = useState(initialGroupId)
   const [switchError, setSwitchError] = useState<string | null>(null)
-  const [tab, setTab] = useState<Tab>('home')
+  const [tab, setTab] = useState<Tab>(() => (launchScreen() === 'reports' ? 'reports' : 'home'))
   const [overlay, setOverlay] = useState<Overlay | null>(launchOverlay)
   const [version, setVersion] = useState(0)
   const hints = useHints()
@@ -301,7 +301,7 @@ function TabContent({ tab, workspace, navigation }: { tab: SecondaryTab; workspa
     case 'operations':
       return <OperationsScreen me={me} group={group} onSelectOperation={navigation.selectOperation} />
     case 'reports':
-      return <ReportsScreen me={me} group={group} onAddOperation={navigation.addOperation} />
+      return <ReportsScreen me={me} group={group} initialMonth={launchMonth()} onAddOperation={() => navigation.addOperation()} />
     default:
       return (
         <MoreScreen
@@ -321,7 +321,7 @@ function TabContent({ tab, workspace, navigation }: { tab: SecondaryTab; workspa
 
 function launchOverlay(): Overlay | null {
   const screen = launchScreen()
-  return screen ? LAUNCH_OVERLAYS[screen] : null
+  return screen && screen !== 'reports' ? LAUNCH_OVERLAYS[screen] : null
 }
 
 function displayName(me: Me): string {

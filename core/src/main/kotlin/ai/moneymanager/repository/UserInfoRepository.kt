@@ -9,4 +9,5 @@ import org.springframework.stereotype.Repository
 interface UserInfoRepository : MongoRepository<UserInfoEntity, ObjectId> {
     fun findFirstByUsernameOrderByIdAsc(username: String): UserInfoEntity?
     fun findFirstByTelegramUserIdOrderByIdAsc(id: Long): UserInfoEntity?
+    fun findByActiveGroupIdIsNotNullAndTelegramUserIdIsNotNull(): List<UserInfoEntity>
 }

@@ -1,6 +1,7 @@
 package ai.moneymanager.web.me
 
 import ai.moneymanager.domain.model.AppHint
+import ai.moneymanager.domain.model.DigestKind
 import ai.moneymanager.domain.model.PREMIUM_MONTHLY_PRICE
 import ai.moneymanager.domain.model.PREMIUM_PRICE_CURRENCY
 import ai.moneymanager.domain.model.PREMIUM_SUBSCRIBE_LINK
@@ -42,6 +43,7 @@ private const val ME_PATH = "/api/v1/me"
 private const val UNSUPPORTED_LANGUAGE = "de"
 private const val DEVICE_TIMEZONE = "Asia/Almaty"
 private const val HINTS_PATH = "$ME_PATH/hints"
+private const val DIGESTS_PATH = "$ME_PATH/digests"
 
 @WebMvcTest(controllers = [MeController::class])
 @ApiWebLayerSetup
@@ -189,6 +191,16 @@ class MeControllerTest {
         mockMvc.perform(post(HINTS_PATH).withTelegramAuth().contentType(MediaType.APPLICATION_JSON).content("""{"hint":"SECRET"}"""))
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
+    }
+
+    @Test
+    fun `mutes a digest kind and shows it among the muted ones`() {
+        givenCurrentUser(testUser())
+        `when`(userInfoService.setDigestMuted(TEST_USER_ID, DigestKind.DAY, true)).thenReturn(testUser().copy(mutedDigests = setOf(DigestKind.DAY)))
+
+        mockMvc.perform(post(DIGESTS_PATH).withTelegramAuth().contentType(MediaType.APPLICATION_JSON).content("""{"kind":"DAY","muted":true}"""))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.mutedDigests", contains("DAY")))
     }
 
     private fun patchLanguage(language: String) =

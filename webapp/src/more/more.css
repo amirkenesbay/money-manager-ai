@@ -10,3 +10,21 @@
   height: 3rem;
   font-size: var(--text-lg);
 }
+
+.digest-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.digest-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.5rem;
+  padding: 0.5rem 0;
+}
+
+.digest-row + .digest-row {
+  border-top: 1px solid var(--line);
+}

@@ -243,6 +243,4 @@ class FinanceReportService(
         date.month.getDisplayName(TextStyle.FULL_STANDALONE, localeFor(language))
             .replaceFirstChar { it.uppercaseChar() }
 
-    private fun localeFor(language: String?): Locale =
-        Locale.of(language ?: LocalizationService.FALLBACK_LANGUAGE)
 }

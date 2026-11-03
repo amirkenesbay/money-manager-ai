@@ -1,4 +1,4 @@
-import type { CategoryType, Currency } from '../api/types'
+import type { CategoryType, Currency, DigestKind } from '../api/types'
 import type { Period } from '../operations/periods'
 import type { IntervalUnit, RepeatOption } from '../reminders/schedule'
 import type { ReportTab } from '../reports/reportTabs'
@@ -244,6 +244,11 @@ export const en: Strings = {
   premiumButton: 'Premium',
   manageSection: 'Manage',
   preferencesSection: 'Preferences',
+  digestsTitle: 'Summaries',
+  digestsHint: 'The bot sends a short recap of your active group. Times follow your time zone',
+  digestsOn: (count: number) => `${count} of 3`,
+  digestLabels: { DAY: 'Daily summary', WEEK: 'Weekly summary', MONTH: 'Monthly summary' } as Record<DigestKind, string>,
+  digestSchedules: { DAY: 'Every evening at 21:00 if you spent anything', WEEK: 'Sundays at 20:00', MONTH: 'First day of a new month at 10:00' } as Record<DigestKind, string>,
   remindersOn: (count: number) => `${count} on`,
   languageLabel: 'Language',
   languageSheetTitle: 'App language',

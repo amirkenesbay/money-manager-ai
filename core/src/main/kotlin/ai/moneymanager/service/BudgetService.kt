@@ -3,6 +3,7 @@ package ai.moneymanager.service
 import ai.moneymanager.domain.model.Budget
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.MoneyGroup
+import ai.moneymanager.domain.model.MonthPeriod
 import ai.moneymanager.domain.model.currentMonthPeriod
 import ai.moneymanager.repository.FinanceOperationRepository
 import org.springframework.stereotype.Service
@@ -16,11 +17,12 @@ class BudgetService(
     private val financeOperationRepository: FinanceOperationRepository,
     private val clock: Clock,
 ) {
-    fun budgets(group: MoneyGroup): List<Budget> {
+    fun budgets(group: MoneyGroup): List<Budget> = budgets(group, currentMonthPeriod(LocalDate.now(clock), group.monthStartDay))
+
+    fun budgets(group: MoneyGroup, period: MonthPeriod): List<Budget> {
         val groupId = checkNotNull(group.id)
         val categories = categoryService.getBudgetCategories(groupId)
         if (categories.isEmpty()) return emptyList()
-        val period = currentMonthPeriod(LocalDate.now(clock), group.monthStartDay)
         val spentByCategory = financeOperationRepository
             .findByGroupIdAndOperationDateBetweenOrderByOperationDateDesc(groupId, period.start, period.end)
             .filter { it.type == CategoryType.EXPENSE }

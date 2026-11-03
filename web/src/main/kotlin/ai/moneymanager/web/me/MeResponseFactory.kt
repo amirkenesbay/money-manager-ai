@@ -23,6 +23,7 @@ class MeResponseFactory(
         timezone = user.timezone,
         activeGroupId = user.activeGroupId,
         seenHints = user.seenHints,
+        mutedDigests = user.mutedDigests,
         subscription = subscriptionOf(user),
     )
 

@@ -1,4 +1,4 @@
-import type { CategoryType, Currency } from '../api/types'
+import type { CategoryType, Currency, DigestKind } from '../api/types'
 import type { Period } from '../operations/periods'
 import type { IntervalUnit, RepeatOption } from '../reminders/schedule'
 import type { ReportTab } from '../reports/reportTabs'
@@ -243,6 +243,11 @@ export const ru = {
   premiumButton: 'Premium',
   manageSection: 'Управление',
   preferencesSection: 'Предпочтения',
+  digestsTitle: 'Итоги',
+  digestsHint: 'Бот сам пришлёт короткий разбор по активной группе. Время — по твоему часовому поясу',
+  digestsOn: (count: number) => `${count} из 3`,
+  digestLabels: { DAY: 'Итоги дня', WEEK: 'Итоги недели', MONTH: 'Итоги месяца' } as Record<DigestKind, string>,
+  digestSchedules: { DAY: 'Каждый вечер в 21:00, если были траты', WEEK: 'По воскресеньям в 20:00', MONTH: 'В первый день нового месяца в 10:00' } as Record<DigestKind, string>,
   remindersOn: (count: number) => `${count} вкл`,
   languageLabel: 'Язык',
   languageSheetTitle: 'Язык интерфейса',

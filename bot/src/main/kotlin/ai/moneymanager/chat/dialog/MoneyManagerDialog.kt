@@ -52,6 +52,8 @@ import kz.rmr.chatmachinist.model.ActionContext
 import ai.moneymanager.chat.telegram.REPORT_BUTTON_TEXT
 import ai.moneymanager.chat.telegram.SETTINGS_BUTTON_TEXT
 import ai.moneymanager.service.UserInfoService
+import ai.moneymanager.chat.telegram.DigestNotifier
+import ai.moneymanager.chat.transition.digest.digestSettingsDialog
 import kz.rmr.chatmachinist.api.transition.ChatBuilder
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType
@@ -77,8 +79,10 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
     adminService: AdminService,
     subscriptionLimitsService: SubscriptionLimitsService,
     onboardingService: OnboardingService,
-    miniAppGateway: MiniAppGateway
+    miniAppGateway: MiniAppGateway,
+    digestNotifier: DigestNotifier,
 ) {
+    digestSettingsDialog(userInfoService, digestNotifier, telegramFileService, miniAppGateway)
     miniAppGatewayDialog(miniAppGateway, userInfoService, adminService)
 
     dialog {

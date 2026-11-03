@@ -6,6 +6,7 @@ private const val START_LINK_TEMPLATE = "https://t.me/%s?start=%s"
 object StartParameters {
     const val OPEN_FINANCE = "finance"
     const val JOIN_PREFIX = "join_"
+    const val DIGEST_MUTE_PREFIX = "digest_off_"
 }
 
 fun buildInviteLink(inviteToken: String): String =

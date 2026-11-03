@@ -46,6 +46,10 @@ class MeController(
     fun markHint(user: UserInfo, @RequestBody request: MarkHintRequest): MeResponse =
         meResponseFactory.create(found(userInfoService.markHintSeen(checkNotNull(user.telegramUserId), request.hint)))
 
+    @PostMapping("/digests")
+    fun setDigest(user: UserInfo, @RequestBody request: DigestSettingRequest): MeResponse =
+        meResponseFactory.create(found(userInfoService.setDigestMuted(checkNotNull(user.telegramUserId), request.kind, request.muted)))
+
     private fun found(user: UserInfo?): UserInfo = user ?: throw ApiException(ApiErrorCode.NOT_FOUND)
 
     private fun requireZone(timezone: String) {

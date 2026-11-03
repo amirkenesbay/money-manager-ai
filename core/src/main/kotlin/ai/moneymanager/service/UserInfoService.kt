@@ -2,6 +2,7 @@ package ai.moneymanager.service
 
 import ai.moneymanager.domain.event.NewUserRegistered
 import ai.moneymanager.domain.model.AppHint
+import ai.moneymanager.domain.model.DigestKind
 import ai.moneymanager.domain.model.formatUserDisplayName
 import ai.moneymanager.domain.model.SubscriptionTier
 import ai.moneymanager.domain.model.TelegramProfile
@@ -71,6 +72,16 @@ class UserInfoService(
         return mapEntity(userRepository.save(entity.copy(seenHints = entity.seenHints + hint)))
     }
 
+    fun setDigestMuted(telegramUserId: Long, kind: DigestKind, muted: Boolean): UserInfo? {
+        val entity = userRepository.findFirstByTelegramUserIdOrderByIdAsc(telegramUserId) ?: return null
+        val mutedDigests = if (muted) entity.mutedDigests + kind else entity.mutedDigests - kind
+        if (mutedDigests == entity.mutedDigests) return mapEntity(entity)
+        return mapEntity(userRepository.save(entity.copy(mutedDigests = mutedDigests)))
+    }
+
+    fun digestRecipients(): List<UserInfo> =
+        userRepository.findByActiveGroupIdIsNotNullAndTelegramUserIdIsNotNull().map { mapEntity(it) }
+
     fun findUserByUsernameOrTelegramId(identifier: String): UserInfo? {
         val entity = identifier.toLongOrNull()
             ?.let { userRepository.findFirstByTelegramUserIdOrderByIdAsc(it) }
@@ -113,6 +124,7 @@ class UserInfoService(
             onboardingCompleted = it.onboardingCompleted,
             miniAppIntroduced = it.miniAppIntroduced,
             seenHints = it.seenHints,
+            mutedDigests = it.mutedDigests,
             subscriptionTier = it.subscriptionTier,
             subscriptionExpiresAt = it.subscriptionExpiresAt
         )

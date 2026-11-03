@@ -18,6 +18,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
 import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo
+import java.time.YearMonth
 
 private const val HTTPS_PREFIX = "https://"
 private const val MISSING_URL_MESSAGE = "mini-app.url must be an https URL when mini-app.bot-gateway is on"
@@ -44,12 +45,13 @@ class MiniAppGateway(
     val enabled: Boolean
         get() = properties.botGateway
 
-    fun keyboard(textKey: String, language: String?, screen: MiniAppScreen): InlineKeyboardMarkup {
-        val button = InlineKeyboardButton(localizationService.t(textKey, language)).apply {
-            webApp = WebAppInfo(miniAppUrl(properties.url, screen))
+    fun keyboard(textKey: String, language: String?, screen: MiniAppScreen): InlineKeyboardMarkup =
+        InlineKeyboardMarkup(listOf(listOf(button(textKey, language, screen))))
+
+    fun button(textKey: String, language: String?, screen: MiniAppScreen, month: YearMonth? = null): InlineKeyboardButton =
+        InlineKeyboardButton(localizationService.t(textKey, language)).apply {
+            webApp = WebAppInfo(miniAppUrl(properties.url, screen, month))
         }
-        return InlineKeyboardMarkup(listOf(listOf(button)))
-    }
 
     fun sendHint(chatId: Long, telegramUserId: Long) {
         replyWithOpenButton(chatId, telegramUserId) { language -> localizationService.t(HINT_KEY, language) }

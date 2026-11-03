@@ -18,6 +18,7 @@ import ai.moneymanager.domain.model.report.CategoryTotal
 import ai.moneymanager.domain.model.report.HistoryReport
 import ai.moneymanager.service.FinanceHistoryService
 import ai.moneymanager.service.LocalizationService
+import ai.moneymanager.service.localeFor
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
@@ -139,6 +140,4 @@ class FinanceHistoryFormatter(
         append(blockquote(bold(localizationService.t("finance.history.balance", language, "$sign${formatAmount(balance, currency)}"))))
     }
 
-    private fun localeFor(language: String?): Locale =
-        Locale.of(language ?: LocalizationService.FALLBACK_LANGUAGE)
 }

@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Plugin } from 'vite'
 import { AUTH_SCHEME } from '../src/api/auth.ts'
-import type { AppHint, Budget, CategoryRule, VoiceResult, AnalyticsReport, ApiErrorBody, ApiErrorCode, Balance, Category, CategoryReport, ComparisonReport, Currency, Group, Invite, Limits, Me, Member, MembersReport, MonthSummary, Operation, OperationsPage, Reminder, ReminderInput, SubscriptionTier } from '../src/api/types.ts'
+import type { AppHint, Budget, CategoryRule, DigestKind, VoiceResult, AnalyticsReport, ApiErrorBody, ApiErrorCode, Balance, Category, CategoryReport, ComparisonReport, Currency, Group, Invite, Limits, Me, Member, MembersReport, MonthSummary, Operation, OperationsPage, Reminder, ReminderInput, SubscriptionTier } from '../src/api/types.ts'
 
 const API_PREFIX = '/api/v1'
 const SCENARIO_PARAM = 'mock'
@@ -37,7 +37,7 @@ const ok = (body: Body, delayMs?: number): MockResponse => ({ status: 200, body,
 const FREE_LIMITS: Limits = { aiRequestsPerDay: 10, categoriesPerType: 10, ownedSharedGroups: 3, activeNotifications: 3, historyDaysBack: FREE_HISTORY_DAYS, budgets: 3 }
 const PAID_LIMITS: Limits = { aiRequestsPerDay: 100, categoriesPerType: 1000, ownedSharedGroups: null, activeNotifications: null, historyDaysBack: null, budgets: null }
 
-const profile = { language: 'ru', timezone: null as string | null, seenHints: [] as AppHint[] }
+const profile = { language: 'ru', timezone: null as string | null, seenHints: [] as AppHint[], mutedDigests: [] as DigestKind[] }
 
 const me = (activeGroupId: string | null, tier: SubscriptionTier): Me => ({
   userId: 1,
@@ -47,6 +47,7 @@ const me = (activeGroupId: string | null, tier: SubscriptionTier): Me => ({
   timezone: profile.timezone,
   activeGroupId,
   seenHints: profile.seenHints,
+  mutedDigests: profile.mutedDigests,
   subscription: {
     tier,
     expiresAt: tier === 'PAID' ? PREMIUM_EXPIRES_AT : null,
@@ -519,6 +520,11 @@ function route(path: string, query: URLSearchParams, scenario: string, method: s
   if (path === '/me/hints') {
     const { hint } = JSON.parse(body) as { hint: AppHint }
     if (!profile.seenHints.includes(hint)) profile.seenHints.push(hint)
+    return meScenarios[scenario]()
+  }
+  if (path === '/me/digests') {
+    const { kind, muted } = JSON.parse(body) as { kind: DigestKind; muted: boolean }
+    profile.mutedDigests = muted ? [...new Set([...profile.mutedDigests, kind])] : profile.mutedDigests.filter((candidate) => candidate !== kind)
     return meScenarios[scenario]()
   }
   if (path === '/groups') {

@@ -5,6 +5,7 @@ import ai.moneymanager.testing.testLocalizationService
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
+import java.time.YearMonth
 import org.mockito.Mockito.mock
 
 private const val APP_URL = "https://app.example.com"
@@ -22,6 +23,11 @@ class MiniAppGatewayTest {
     @Test
     fun `passes the target screen as a query parameter`() {
         assertThat(miniAppUrl(APP_URL, MiniAppScreen.ADD_OPERATION)).isEqualTo("$APP_URL?screen=add")
+    }
+
+    @Test
+    fun `opens the report of a given month`() {
+        assertThat(miniAppUrl(APP_URL, MiniAppScreen.REPORTS, YearMonth.of(2026, 10))).isEqualTo("$APP_URL?screen=reports&month=2026-10")
     }
 
     @Test

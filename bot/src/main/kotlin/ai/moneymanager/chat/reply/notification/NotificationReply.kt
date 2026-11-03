@@ -14,6 +14,7 @@ import ai.moneymanager.chat.state.MoneyManagerState
 import ai.moneymanager.chat.state.QuickTemplates
 import ai.moneymanager.repository.entity.NotificationEntity
 import ai.moneymanager.service.LocalizationService
+import ai.moneymanager.service.localeFor
 import kz.rmr.chatmachinist.api.reply.RepliesBuilder
 import java.time.DayOfWeek
 import java.time.Month
@@ -770,8 +771,6 @@ private fun dowShort(dow: DayOfWeek, locale: Locale): String =
 private fun monthFull(month: Month, locale: Locale): String =
     month.getDisplayName(TextStyle.FULL_STANDALONE, locale).replaceFirstChar { it.uppercaseChar() }
 
-private fun localeFor(language: String?): Locale =
-    Locale.of(language ?: LocalizationService.FALLBACK_LANGUAGE)
 
 private fun MoneyManagerContext.consumeLimitBanner(localizationService: LocalizationService, lang: String?): String {
     val limit = notifLimitReached ?: return ""

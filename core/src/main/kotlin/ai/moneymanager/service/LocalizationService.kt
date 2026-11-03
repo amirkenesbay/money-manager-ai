@@ -25,3 +25,5 @@ class LocalizationService(
         private val DEFAULT_LOCALE = Locale.of(FALLBACK_LANGUAGE)
     }
 }
+
+fun localeFor(language: String?): Locale = Locale.of(language ?: LocalizationService.FALLBACK_LANGUAGE)

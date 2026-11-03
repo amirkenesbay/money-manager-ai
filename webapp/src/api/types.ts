@@ -47,6 +47,8 @@ export interface Subscription {
   subscribeUrl: string
 }
 
+export type DigestKind = 'DAY' | 'WEEK' | 'MONTH'
+
 export type AppHint = 'WELCOME' | 'OPERATIONS' | 'REPORTS' | 'MORE' | 'OPERATION_FORM' | 'GROUP' | 'MANUAL_ENTRY'
 
 export interface Me {
@@ -57,6 +59,7 @@ export interface Me {
   timezone: string | null
   activeGroupId: string | null
   seenHints: AppHint[]
+  mutedDigests: DigestKind[]
   subscription: Subscription
 }
 

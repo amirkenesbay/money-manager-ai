@@ -2,6 +2,7 @@ package ai.moneymanager.web.me
 
 import ai.moneymanager.domain.model.AppHint
 import ai.moneymanager.domain.model.Currency
+import ai.moneymanager.domain.model.DigestKind
 import ai.moneymanager.domain.model.SubscriptionTier
 import org.bson.types.ObjectId
 import java.math.BigDecimal
@@ -15,6 +16,7 @@ data class MeResponse(
     val timezone: String?,
     val activeGroupId: ObjectId?,
     val seenHints: Set<AppHint>,
+    val mutedDigests: Set<DigestKind>,
     val subscription: SubscriptionResponse,
 )
 
@@ -40,6 +42,11 @@ data class LimitsResponse(
     val activeNotifications: Int?,
     val historyDaysBack: Int?,
     val budgets: Int?,
+)
+
+data class DigestSettingRequest(
+    val kind: DigestKind,
+    val muted: Boolean,
 )
 
 data class MarkHintRequest(
