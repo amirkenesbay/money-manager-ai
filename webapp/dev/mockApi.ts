@@ -141,11 +141,18 @@ const summaryOf = (groupId: string): MonthSummary => {
     expenseByCategory: [...totals.entries()]
       .sort(([, a], [, b]) => b.total - a.total)
       .map(([name, { icon, total }]) => ({ icon, name, total: String(total) })),
+    dailyExpense: dailyExpenseOf(groupOperations),
   }
 }
 
+const dailyExpenseOf = (groupOperations: Operation[]): MonthSummary['dailyExpense'] => {
+  const totals = new Map<string, number>()
+  groupOperations.filter((op) => op.type === 'EXPENSE').forEach((op) => totals.set(op.operationDate, (totals.get(op.operationDate) ?? 0) + Number(op.amount)))
+  return [...totals].sort(([a], [b]) => a.localeCompare(b)).map(([date, total]) => ({ date, total: String(total) }))
+}
+
 const emptySummary = (groupId: string): MonthSummary =>
-  ({ ...summaryOf(groupId), income: '0', expense: '0', net: '0', operationCount: 0, expenseByCategory: [] })
+  ({ ...summaryOf(groupId), income: '0', expense: '0', net: '0', operationCount: 0, expenseByCategory: [], dailyExpense: [] })
 
 let activeGroupId = PERSONAL_GROUP_ID
 let flakyCalls = 0

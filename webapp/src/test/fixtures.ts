@@ -66,6 +66,10 @@ export const summary = (overrides: Partial<MonthSummary> = {}): MonthSummary => 
     { icon: '🎬', name: 'Кино', total: '700' },
     { icon: '☕', name: 'Кофе', total: '300' },
   ],
+  dailyExpense: [
+    { date: '2026-10-02', total: '12000' },
+    { date: '2026-10-05', total: '3000' },
+  ],
   ...overrides,
 })
 

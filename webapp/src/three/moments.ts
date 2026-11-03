@@ -8,7 +8,6 @@ export interface MomentInputs {
   ring: { values: number[]; selected: number | null; onSelect: (index: number) => void }
   crystal: Record<string, never>
   group: { initials: string[]; you: number }
-  wave: { level: number }
 }
 
 export type MomentKind = keyof MomentInputs

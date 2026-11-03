@@ -1,53 +1,48 @@
-import type { Balance, Currency, Group, MonthSummary, Operation } from '../api/types'
-import { formatDayLabel, formatMoney, formatPeriod, formatSignedMoney } from '../format'
-import { OperationList } from '../operations/OperationList'
+import type { Group, Operation } from '../api/types'
+import { BudgetsSummary } from '../budgets/BudgetsSummary'
+import { formatPeriod } from '../format'
+import { OperationDays } from '../operations/OperationDays'
 import { strings } from '../strings'
-import { Moment } from '../three/Moment'
-import { AlertIcon, ArrowDownIcon, ChevronDownIcon, ChevronRightIcon } from '../ui/icons'
+import { ArrowDownIcon, ChevronDownIcon } from '../ui/icons'
 import { LoadError } from '../ui/LoadError'
 import { SkeletonCard, SkeletonRows } from '../ui/Skeleton'
-import { useCountUp } from '../ui/useCountUp'
 import './Dashboard.css'
+import { HomeHero } from './HomeHero'
 import { useDashboard } from './useDashboard'
-import { isCalendarMonth } from '../operations/periods'
-import { BudgetsSummary } from '../budgets/BudgetsSummary'
 
 const RECENT_SKELETON_ROWS = 3
 
-export function Dashboard({ name, groups, groupId, language, switchError, onSwitchGroup, onOpenOperations, onOpenReports, onOpenBudgets, onSelectOperation }: {
-  name: string
+export function Dashboard({ groups, groupId, language, switchError, onSwitchGroup, onOpenOperations, onOpenBudgets, onAddIncome, onSelectOperation }: {
   groups: Group[]
   groupId: string
   language: string
   switchError: string | null
   onSwitchGroup: (groupId: string) => void
   onOpenOperations: () => void
-  onOpenReports: () => void
   onOpenBudgets: () => void
+  onAddIncome: () => void
   onSelectOperation: (operation: Operation) => void
 }) {
   const dashboard = useDashboard(groupId)
   const ready = dashboard.state.status === 'ready' ? dashboard.state.data : null
+  const group = groups.find((candidate) => candidate.id === groupId)
 
   return (
     <>
       <header className="home-header">
-        <span className="home-greeting">
-          <span className="hint">{strings.greetingLabel}</span>
-          <span className="title">{name}</span>
-        </span>
-        <GroupChip groups={groups} activeGroupId={groupId} onSwitch={onSwitchGroup} />
+        <GroupSwitch groups={groups} activeGroupId={groupId} onSwitch={onSwitchGroup} />
+        {ready && <span className="caption home-period">{formatPeriod(ready.summary.from, ready.summary.to, language)}</span>}
       </header>
       {switchError && <p className="error-text" role="alert">{switchError}</p>}
       {dashboard.state.status === 'loading' && <DashboardSkeleton />}
       {dashboard.state.status === 'error' && <LoadError message={dashboard.state.message} onRetry={dashboard.reload} />}
-      {ready && (
+      {ready && group && (
         <>
-          <BalanceCard balance={ready.balance} summary={ready.summary} language={language} onOpenReport={onOpenReports} />
+          <HomeHero balance={ready.balance} summary={ready.summary} language={language} onAddIncome={onAddIncome} />
           <BudgetsSummary groupId={groupId} currency={ready.balance.currency} language={language} onOpenAll={onOpenBudgets} />
           <RecentOperations
             operations={ready.operations.items}
-            currency={ready.balance.currency}
+            group={group}
             language={language}
             onOpenOperations={onOpenOperations}
             onSelectOperation={onSelectOperation}
@@ -58,28 +53,21 @@ export function Dashboard({ name, groups, groupId, language, switchError, onSwit
   )
 }
 
-function GroupChip({ groups, activeGroupId, onSwitch }: {
+function GroupSwitch({ groups, activeGroupId, onSwitch }: {
   groups: Group[]
   activeGroupId: string
   onSwitch: (groupId: string) => void
 }) {
   const active = groups.find((group) => group.id === activeGroupId)
-  const switchable = groups.length > 1
+  if (groups.length < 2) return <h1 className="home-group">{active?.name}</h1>
   return (
-    <span className={`chip group-chip ${switchable ? 'pressable' : ''}`}>
-      <span className="group-chip-text">
-        <span className="caption">{strings.groupLabel}</span>
-        <span className="row-title">{active?.name}</span>
-      </span>
-      {switchable && (
-        <>
-          <ChevronDownIcon />
-          <select aria-label={strings.groupLabel} value={activeGroupId} onChange={(event) => onSwitch(event.target.value)}>
-            {groups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
-          </select>
-        </>
-      )}
-    </span>
+    <label className="home-group home-group-switch">
+      <span>{active?.name}</span>
+      <ChevronDownIcon />
+      <select aria-label={strings.groupLabel} value={activeGroupId} onChange={(event) => onSwitch(event.target.value)}>
+        {groups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
+      </select>
+    </label>
   )
 }
 
@@ -92,60 +80,13 @@ function DashboardSkeleton() {
   )
 }
 
-function BalanceCard({ balance, summary, language, onOpenReport }: {
-  balance: Balance
-  summary: MonthSummary
-  language: string
-  onOpenReport: () => void
-}) {
-  const total = useCountUp(Number(balance.total))
-  const shownTotal = total === Number(balance.total) ? balance.total : String(Math.round(total))
-  const overspent = Number(summary.net) < 0
-  return (
-    <section className="well balance">
-      <Moment kind="wave" input={{ level: balanceLevel(balance, summary) }} className="balance-wave" fallback={null} />
-      <span className="balance-head">
-        <h2 className="balance-title">{strings.balanceTitle}</h2>
-        <button type="button" className="link-button" onClick={onOpenReport}>{strings.reportLink}<ChevronRightIcon /></button>
-      </span>
-      <p className={`amount balance-total ${Number(balance.total) < 0 ? 'negative' : ''}`}>
-        {formatMoney(shownTotal, balance.currency, language)}
-      </p>
-      {!isCalendarMonth(summary) && <p className="caption">{formatPeriod(summary.from, summary.to, language)}</p>}
-      <MonthFlow summary={summary} language={language} />
-      {overspent && (
-        <p className="balance-warning negative">
-          <AlertIcon />
-          {strings.monthOverspent(formatMoney(String(Math.abs(Number(summary.net))), summary.currency, language))}
-        </p>
-      )}
-    </section>
-  )
-}
-
-function balanceLevel(balance: Balance, summary: MonthSummary): number {
-  const total = Number(balance.total)
-  return total > 0 ? total / (total + Number(summary.expense)) : 0
-}
-
-function MonthFlow({ summary, language }: { summary: MonthSummary; language: string }) {
-  if (summary.operationCount === 0) return <p className="balance-flow caption">{strings.monthNoExpense}</p>
-  return (
-    <p className="balance-flow amount">
-      <span>{strings.monthExpense(formatSignedMoney('EXPENSE', summary.expense, summary.currency, language))}</span>
-      <span className="income">{strings.monthIncome(formatSignedMoney('INCOME', summary.income, summary.currency, language))}</span>
-    </p>
-  )
-}
-
-function RecentOperations({ operations, currency, language, onOpenOperations, onSelectOperation }: {
+function RecentOperations({ operations, group, language, onOpenOperations, onSelectOperation }: {
   operations: Operation[]
-  currency: Currency
+  group: Group
   language: string
   onOpenOperations: () => void
   onSelectOperation: (operation: Operation) => void
 }) {
-  const today = new Date()
   return (
     <section className="recent">
       <span className="recent-head">
@@ -159,7 +100,7 @@ function RecentOperations({ operations, currency, language, onOpenOperations, on
             <span className="recent-empty-arrow"><ArrowDownIcon /></span>
           </>
         )
-        : <OperationList operations={operations} currency={currency} language={language} note={(operation) => formatDayLabel(operation.operationDate, today, language)} onSelect={onSelectOperation} />}
+        : <OperationDays operations={operations} group={group} language={language} showDayTotal={false} onSelect={onSelectOperation} />}
     </section>
   )
 }

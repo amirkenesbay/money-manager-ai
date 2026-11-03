@@ -5,7 +5,6 @@ import { createGroup } from './group'
 import type { Model, ModelFactory } from './model'
 import { createOrb } from './orb'
 import { createRing } from './ring'
-import { createWave } from './wave'
 
 const FACTORIES: { [K in MomentKind]: ModelFactory<MomentInputs[K]> } = {
   orb: createOrb,
@@ -13,7 +12,6 @@ const FACTORIES: { [K in MomentKind]: ModelFactory<MomentInputs[K]> } = {
   ring: createRing,
   crystal: createCrystal,
   group: createGroup,
-  wave: createWave,
 }
 
 export function createModel<K extends MomentKind>(kind: K, read: () => MomentInputs[K]): Model {

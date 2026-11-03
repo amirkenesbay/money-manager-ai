@@ -1,6 +1,6 @@
 import { type ReactNode, useState } from 'react'
 import { serverMessage } from '../api/client'
-import type { Group, Me, Operation } from '../api/types'
+import type { CategoryType, Group, Me, Operation } from '../api/types'
 import { useAsync } from '../api/useAsync'
 import { CategoriesScreen } from '../categories/CategoriesScreen'
 import { Dashboard } from '../dashboard/Dashboard'
@@ -36,7 +36,7 @@ type SecondaryTab = Exclude<Tab, 'home'>
 const SECONDARY_TABS = TABS.filter((candidate): candidate is SecondaryTab => candidate !== 'home')
 
 type Overlay =
-  | { kind: 'form'; operation: Operation | null }
+  | { kind: 'form'; operation: Operation | null; type?: CategoryType }
   | { kind: 'detail'; operation: Operation }
   | { kind: 'section'; section: Section }
   | { kind: 'voice' }
@@ -47,7 +47,7 @@ const LAUNCH_OVERLAYS: Record<LaunchScreen, Overlay> = {
 }
 
 interface Navigation {
-  addOperation: () => void
+  addOperation: (type?: CategoryType) => void
   selectOperation: (operation: Operation) => void
   openSection: (section: Section) => void
   showWelcome: () => void
@@ -135,7 +135,7 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
   }
 
   const navigation: Navigation = {
-    addOperation: () => open({ kind: 'form', operation: null }),
+    addOperation: (type) => open({ kind: 'form', operation: null, type }),
     selectOperation: (operation) => open({ kind: 'detail', operation }),
     openSection: (section) => open({ kind: 'section', section }),
     showWelcome: () => setWelcomeOpen(true),
@@ -196,7 +196,7 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
             me={me}
             group={group}
             onClose={closeSection}
-            onManual={navigation.addOperation}
+            onManual={() => navigation.addOperation()}
             onSaved={recorded}
           />
         )}
@@ -216,7 +216,6 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
           <TabPanel active={tab === 'home' || !workspace} hintsVisible={!welcomeOpen}>
             <Dashboard
               key={`${groupId}-${version}`}
-              name={displayName(me)}
               groups={groups}
               groupId={groupId}
               language={me.language}
@@ -226,8 +225,8 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
                 if (target) void activate(target)
               }}
               onOpenOperations={() => switchTab('operations')}
-              onOpenReports={() => switchTab('reports')}
               onOpenBudgets={() => navigation.openSection('categories')}
+              onAddIncome={() => navigation.addOperation('INCOME')}
               onSelectOperation={navigation.selectOperation}
             />
           </TabPanel>
@@ -237,7 +236,7 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
             </TabPanel>
           ))}
           <TabBar active={tab} onSelect={switchTab} onRecordVoice={() => open({ kind: 'voice' })} />
-          {!welcomeOpen && <ManualFab onOpen={navigation.addOperation} />}
+          {!welcomeOpen && <ManualFab onOpen={() => navigation.addOperation()} />}
         </div>
       </main>
       {welcomeOpen && group && !overlay && <WelcomeSheet group={group} onFinish={finishWelcome} />}
@@ -266,6 +265,7 @@ function OperationOverlay({ overlay, group, language, onClose, onEdit, onBackToD
       group={group}
       language={language}
       operation={editing}
+      initialType={overlay.type}
       onBack={editing ? () => onBackToDetail(editing) : onClose}
       onSaved={onSaved}
       onDeleted={onDeleted}

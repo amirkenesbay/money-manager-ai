@@ -1,7 +1,6 @@
 import { type ReactNode, useMemo, useState } from 'react'
 import type { CategoryType, Group, Me, Operation } from '../api/types'
 import { useCategories } from '../categories/useCategories'
-import { formatDayLabel, formatSignedMoney } from '../format'
 import { strings } from '../strings'
 import { Button } from '../ui/Button'
 import { ChipSelect } from '../ui/ChipSelect'
@@ -11,8 +10,7 @@ import { PremiumOffer } from '../ui/PremiumOffer'
 import { Segmented } from '../ui/Segmented'
 import { SkeletonRows } from '../ui/Skeleton'
 import { StateView } from '../ui/StateView'
-import { groupByDay } from './groupByDay'
-import { OperationList } from './OperationList'
+import { OperationDays } from './OperationDays'
 import './OperationsScreen.css'
 import type { OperationsQuery } from './operationsApi'
 import { DEFAULT_PERIOD, type Period, PERIODS, periodRange } from './periods'
@@ -125,27 +123,4 @@ function OperationsFeed({ me, group, query, premiumOffer, onResetFilters, onSele
         : <p className="feed-end caption">{strings.operationsEnd}</p>}
     </section>
   )
-}
-
-function OperationDays({ operations, group, language, onSelect }: {
-  operations: Operation[]
-  group: Group
-  language: string
-  onSelect: (operation: Operation) => void
-}) {
-  const today = new Date()
-  const note = (operation: Operation) => {
-    const parts = group.type === 'SHARED' ? [operation.creatorName, operation.description] : [operation.description]
-    return parts.filter(Boolean).join(' · ')
-  }
-  return groupByDay(operations).map((day) => {
-    const label = formatDayLabel(day.date, today, language)
-    const net = formatSignedMoney(day.net < 0 ? 'EXPENSE' : 'INCOME', String(Math.abs(day.net)), group.currency, language)
-    return (
-      <section key={day.date} className="day" aria-label={label}>
-        <h2 className="day-header"><span>{label}</span><span>{net}</span></h2>
-        <OperationList operations={day.operations} currency={group.currency} language={language} note={note} onSelect={onSelect} />
-      </section>
-    )
-  })
 }

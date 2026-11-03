@@ -28,10 +28,11 @@ const CATEGORY_SKELETON_ROWS = 2
 
 export type SaveResult = { operation: Operation; created: boolean }
 
-export function OperationForm({ group, language, operation, onBack, onSaved, onDeleted }: {
+export function OperationForm({ group, language, operation, initialType = 'EXPENSE', onBack, onSaved, onDeleted }: {
   group: Group
   language: string
   operation: Operation | null
+  initialType?: CategoryType
   onBack: () => void
   onSaved: (result: SaveResult) => void
   onDeleted: (operation: Operation) => void
@@ -44,22 +45,23 @@ export function OperationForm({ group, language, operation, onBack, onSaved, onD
       {categories.state.status === 'loading' && <SkeletonRows count={CATEGORY_SKELETON_ROWS} />}
       {categories.state.status === 'error' && <LoadError message={categories.state.message} onRetry={categories.reload} />}
       {categories.state.status === 'ready' && (
-        <FormFields group={group} language={language} operation={operation} categories={categories.state.data} onSaved={onSaved} onDeleted={onDeleted} />
+        <FormFields group={group} language={language} operation={operation} initialType={initialType} categories={categories.state.data} onSaved={onSaved} onDeleted={onDeleted} />
       )}
     </>
   )
 }
 
-function FormFields({ group, language, operation, categories, onSaved, onDeleted }: {
+function FormFields({ group, language, operation, initialType, categories, onSaved, onDeleted }: {
   group: Group
   language: string
   operation: Operation | null
+  initialType: CategoryType
   categories: Category[]
   onSaved: (result: SaveResult) => void
   onDeleted: (operation: Operation) => void
 }) {
   const today = toIsoDate(new Date())
-  const [type, setType] = useState<CategoryType>(operation?.type ?? 'EXPENSE')
+  const [type, setType] = useState<CategoryType>(operation?.type ?? initialType)
   const [amountText, setAmountText] = useState(operation ? operation.amount : '')
   const [categoryId, setCategoryId] = useState<string | null>(operation?.categoryId ?? null)
   const [date, setDate] = useState(operation?.operationDate ?? today)

@@ -8,6 +8,7 @@ import ai.moneymanager.domain.model.SubscriptionTier
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import ai.moneymanager.domain.model.report.CategoryTotal
+import ai.moneymanager.domain.model.report.HistoryOperation
 import ai.moneymanager.domain.model.report.HistoryReport
 import ai.moneymanager.service.FinanceHistoryService
 import ai.moneymanager.service.FinanceOperationService
@@ -121,7 +122,12 @@ class GroupFinanceControllerTest {
         val report = HistoryReport(
             startDate = SUMMARY_MONTH.atDay(1),
             endDate = SUMMARY_MONTH.atEndOfMonth(),
-            operations = emptyList(),
+            operations = listOf(
+                historyOperation(CategoryType.EXPENSE, "3000", SUMMARY_MONTH.atDay(5)),
+                historyOperation(CategoryType.EXPENSE, "12000.50", SUMMARY_MONTH.atDay(2)),
+                historyOperation(CategoryType.INCOME, "450000", SUMMARY_MONTH.atDay(2)),
+                historyOperation(CategoryType.EXPENSE, "500", SUMMARY_MONTH.atDay(5)),
+            ),
             incomeByCategory = emptyList(),
             expenseByCategory = listOf(CategoryTotal("🛒", "Продукты", BigDecimal("12000.50")), CategoryTotal("🚕", "Такси", BigDecimal("3000"))),
             totalIncome = BigDecimal("450000"),
@@ -140,7 +146,15 @@ class GroupFinanceControllerTest {
             .andExpect(jsonPath("$.expenseByCategory[0].name").value("Продукты"))
             .andExpect(jsonPath("$.expenseByCategory[0].total").value("12000.50"))
             .andExpect(jsonPath("$.expenseByCategory[1].icon").value("🚕"))
+            .andExpect(jsonPath("$.dailyExpense.length()").value(2))
+            .andExpect(jsonPath("$.dailyExpense[0].date").value(SUMMARY_MONTH.atDay(2).toString()))
+            .andExpect(jsonPath("$.dailyExpense[0].total").value("12000.50"))
+            .andExpect(jsonPath("$.dailyExpense[1].date").value(SUMMARY_MONTH.atDay(5).toString()))
+            .andExpect(jsonPath("$.dailyExpense[1].total").value("3500"))
     }
+
+    private fun historyOperation(type: CategoryType, amount: String, date: LocalDate) =
+        HistoryOperation(null, type, BigDecimal(amount), "Продукты", "🛒", date, null, TEST_USER_ID)
 
     @Test
     fun `counts the month from the group start day`() {

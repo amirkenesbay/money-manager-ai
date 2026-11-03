@@ -17,6 +17,7 @@
   --chart-3: #4fa3a3;
   --chart-4: #8cc4c4;
   --chart-5: #bfdcdc;
+  --tint: rgba(30, 41, 56, 0.06);
 
   --raise-xs: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light);
   --raise-sm: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
@@ -82,6 +83,7 @@
   --chart-3: #2a9488;
   --chart-4: #1f6b63;
   --chart-5: #184a45;
+  --tint: rgba(255, 255, 255, 0.06);
 
   color-scheme: dark;
 }

@@ -51,4 +51,10 @@ data class MonthSummaryResponse(
     val net: BigDecimal,
     val operationCount: Int,
     val expenseByCategory: List<CategoryAmountResponse>,
+    val dailyExpense: List<DailyAmountResponse>,
+)
+
+data class DailyAmountResponse(
+    val date: LocalDate,
+    val total: BigDecimal,
 )

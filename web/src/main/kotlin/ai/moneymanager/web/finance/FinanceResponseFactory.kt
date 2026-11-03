@@ -1,5 +1,6 @@
 package ai.moneymanager.web.finance
 
+import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.domain.model.BalanceBreakdown
 import ai.moneymanager.domain.model.MoneyGroup
@@ -32,7 +33,15 @@ class FinanceResponseFactory(
         net = report.balance,
         operationCount = report.operations.size,
         expenseByCategory = report.expenseByCategory.map { CategoryAmountResponse(it.icon, it.name, it.total) },
+        dailyExpense = dailyExpense(report),
     )
+
+    private fun dailyExpense(report: HistoryReport): List<DailyAmountResponse> =
+        report.operations
+            .filter { it.type == CategoryType.EXPENSE }
+            .groupBy { it.operationDate }
+            .toSortedMap()
+            .map { (date, operations) -> DailyAmountResponse(date, operations.sumOf { it.amount }) }
 
     fun operationsPage(page: Page<FinanceOperationEntity>): OperationsPageResponse {
         val creatorNames = userInfoService.displayNames(page.content.map { it.creatorId }.toSet())

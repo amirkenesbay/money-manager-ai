@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiRequestError } from '../api/client'
 import { formatDayLabel, formatMoney, formatSignedMoney } from '../format'
 import { strings } from '../strings'
@@ -41,6 +41,14 @@ const visible = (elements: HTMLElement[]) => elements.filter((element) => !eleme
 const renderDashboard = () => render(<MainScreen me={me()} activeGroupId={PERSONAL_GROUP_ID} onMeChanged={vi.fn()} />)
 
 describe('MainScreen dashboard', () => {
+  beforeAll(() => {
+    Element.prototype.scrollTo = vi.fn()
+  })
+
+  afterEach(() => {
+    localStorage.clear()
+  })
+
   beforeEach(() => {
     vi.resetAllMocks()
     vi.mocked(fetchGroups).mockResolvedValue([group()])
@@ -53,12 +61,15 @@ describe('MainScreen dashboard', () => {
     vi.mocked(fetchReminders).mockResolvedValue([])
   })
 
-  it('shows the balance with the month expense and income', async () => {
+  it('shows the month spending, the income left and the balance', async () => {
     renderDashboard()
 
-    expect(await screen.findByText(asRendered(formatMoney('169999.5', 'KZT', LANGUAGE)))).toBeInTheDocument()
-    expect(screen.getByText(asRendered(strings.monthExpense(formatSignedMoney('EXPENSE', '15000', 'KZT', LANGUAGE))))).toBeInTheDocument()
-    expect(screen.getByText(asRendered(strings.monthIncome(formatSignedMoney('INCOME', '300000', 'KZT', LANGUAGE))))).toBeInTheDocument()
+    const spent = within(await screen.findByRole('group', { name: strings.homeSlideNames[0] }))
+    const balanceSlide = within(screen.getByRole('group', { name: strings.homeSlideNames[2] }))
+
+    expect(spent.getByText(asRendered(formatMoney('15000', 'KZT', LANGUAGE)))).toBeInTheDocument()
+    expect(spent.getByText(asRendered(strings.homeSpentMeta(formatMoney('300000', 'KZT', LANGUAGE), formatMoney('285000', 'KZT', LANGUAGE))))).toBeInTheDocument()
+    expect(balanceSlide.getByText(asRendered(formatMoney('169999.5', 'KZT', LANGUAGE)))).toBeInTheDocument()
   })
 
   it('warns when the month expenses exceed the income', async () => {
@@ -77,13 +88,33 @@ describe('MainScreen dashboard', () => {
   })
 
   it('explains empty month and empty history', async () => {
-    vi.mocked(fetchMonthSummary).mockResolvedValue(summary({ operationCount: 0, expenseByCategory: [] }))
+    vi.mocked(fetchMonthSummary).mockResolvedValue(summary({ income: '0', expense: '0', net: '0', operationCount: 0, expenseByCategory: [], dailyExpense: [] }))
     vi.mocked(fetchRecentOperations).mockResolvedValue(operationsPage([]))
 
     renderDashboard()
 
-    expect(await screen.findByText(strings.monthNoExpense)).toBeInTheDocument()
+    expect(await screen.findByText(strings.homeNoIncome)).toBeInTheDocument()
+    expect(screen.getByText(strings.homeSafeEmpty)).toBeInTheDocument()
     expect(screen.getByText(strings.recentOperationsEmpty)).toBeInTheDocument()
+  })
+
+  it('opens an income form from the daily allowance when there is no income yet', async () => {
+    vi.mocked(fetchMonthSummary).mockResolvedValue(summary({ income: '0', net: '-15000' }))
+    renderDashboard()
+
+    await userEvent.click(await screen.findByRole('button', { name: strings.homeAddIncome }))
+
+    expect(await screen.findByRole('radio', { name: strings.operationType('INCOME') })).toHaveAttribute('aria-checked', 'true')
+  })
+
+  it('remembers the summary slide the user picked', async () => {
+    const { unmount } = renderDashboard()
+
+    await userEvent.click(await screen.findByRole('button', { name: strings.homeSlideNames[2] }))
+    unmount()
+    renderDashboard()
+
+    expect(await screen.findByRole('button', { name: strings.homeSlideNames[2] })).toHaveAttribute('aria-current', 'true')
   })
 
   it('shows the group name without a picker when there is only one group', async () => {

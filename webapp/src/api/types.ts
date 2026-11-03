@@ -122,6 +122,12 @@ export interface MonthSummary {
   net: string
   operationCount: number
   expenseByCategory: CategoryAmount[]
+  dailyExpense: DailyAmount[]
+}
+
+export interface DailyAmount {
+  date: string
+  total: string
 }
 
 export interface Category {
