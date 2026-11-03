@@ -21,6 +21,8 @@ class SubscriptionLimitsService(
     private val freeMaxOwnedSharedGroups: Int,
     @Value("\${notification.max-active-free:3}")
     private val freeMaxActiveNotifications: Int,
+    @Value("\${budget.max-free:3}")
+    private val freeMaxBudgets: Int,
     private val clock: Clock
 ) {
     fun maxAiRequestsPerDay(hasPaidSubscription: Boolean): Int =
@@ -43,4 +45,7 @@ class SubscriptionLimitsService(
 
     fun maxActiveNotifications(hasPaidSubscription: Boolean): Int? =
         if (hasPaidSubscription) null else freeMaxActiveNotifications
+
+    fun maxBudgets(hasPaidSubscription: Boolean): Int? =
+        if (hasPaidSubscription) null else freeMaxBudgets
 }

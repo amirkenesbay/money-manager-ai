@@ -17,5 +17,8 @@ export const createCategory = (groupId: string, input: CategoryInput & { type: C
 export const updateCategory = (groupId: string, categoryId: string, input: CategoryInput): Promise<Category> =>
   apiRequest<Category>(`${categoriesPath(groupId)}/${categoryId}`, { method: 'PATCH', body: JSON.stringify(input) })
 
+export const setCategoryLimit = (groupId: string, categoryId: string, amount: string | null): Promise<Category> =>
+  apiRequest<Category>(`${categoriesPath(groupId)}/${categoryId}/limit`, { method: 'PUT', body: JSON.stringify({ amount }) })
+
 export const deleteCategory = (groupId: string, categoryId: string): Promise<void> =>
   apiRequest<void>(`${categoriesPath(groupId)}/${categoryId}`, { method: 'DELETE' })

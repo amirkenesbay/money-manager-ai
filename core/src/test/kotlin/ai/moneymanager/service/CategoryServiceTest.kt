@@ -2,6 +2,7 @@ package ai.moneymanager.service
 
 import ai.moneymanager.domain.event.CategoryDeleted
 import ai.moneymanager.domain.event.CategoryRenamed
+import ai.moneymanager.domain.model.BudgetLimitResult
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.CategoryUpdateResult
 import ai.moneymanager.repository.CategoryRepository
@@ -14,9 +15,12 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.any
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import java.math.BigDecimal
 import java.util.Optional
 
 private const val ACTOR_ID = 42L
+private const val FREE_BUDGETS = 3
+private val TAXI_LIMIT = BigDecimal("20000")
 
 class CategoryServiceTest {
     private val groupId = ObjectId()
@@ -39,6 +43,33 @@ class CategoryServiceTest {
 
         assertThat((result as CategoryUpdateResult.Updated).category.name).isEqualTo("Такси и каршеринг")
         assertThat(publishedEvents).containsExactly(CategoryRenamed(groupId, ACTOR_ID, "🚕", "Такси", "Такси и каршеринг"))
+    }
+
+    @Test
+    fun `sets a monthly limit on an expense category`() {
+        `when`(repository.findByGroupIdAndMonthlyLimitIsNotNull(groupId)).thenReturn(emptyList())
+
+        val result = service.setMonthlyLimit(taxi.id!!, TAXI_LIMIT, FREE_BUDGETS)
+
+        assertThat((result as BudgetLimitResult.Updated).category.monthlyLimit).isEqualTo(TAXI_LIMIT)
+    }
+
+    @Test
+    fun `stops a free user at the budget limit but lets them change an existing one`() {
+        val others = List(FREE_BUDGETS) { CategoryEntity(ObjectId(), "К$it", null, CategoryType.EXPENSE, groupId, BigDecimal.TEN) }
+        `when`(repository.findByGroupIdAndMonthlyLimitIsNotNull(groupId)).thenReturn(others)
+
+        assertThat(service.setMonthlyLimit(taxi.id!!, TAXI_LIMIT, FREE_BUDGETS)).isEqualTo(BudgetLimitResult.LimitReached(FREE_BUDGETS))
+        assertThat(service.setMonthlyLimit(taxi.id!!, null, FREE_BUDGETS)).isInstanceOf(BudgetLimitResult.Updated::class.java)
+        assertThat(service.setMonthlyLimit(taxi.id!!, TAXI_LIMIT, null)).isInstanceOf(BudgetLimitResult.Updated::class.java)
+    }
+
+    @Test
+    fun `keeps limits off income categories`() {
+        val salary = CategoryEntity(ObjectId(), "Зарплата", "💰", CategoryType.INCOME, groupId)
+        `when`(repository.findById(salary.id!!)).thenReturn(Optional.of(salary))
+
+        assertThat(service.setMonthlyLimit(salary.id!!, TAXI_LIMIT, FREE_BUDGETS)).isEqualTo(BudgetLimitResult.NotExpense)
     }
 
     @Test

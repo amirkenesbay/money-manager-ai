@@ -13,10 +13,13 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.LocalDate
+import ai.moneymanager.domain.event.OperationsChanged
+import org.springframework.context.ApplicationEventPublisher
 
 @Service
 class FinanceOperationService(
-    private val financeOperationRepository: FinanceOperationRepository
+    private val financeOperationRepository: FinanceOperationRepository,
+    private val eventPublisher: ApplicationEventPublisher
 ) {
     private val log = LoggerFactory.getLogger(FinanceOperationService::class.java)
 
@@ -75,6 +78,7 @@ class FinanceOperationService(
 
         val saved = financeOperationRepository.save(entity)
         log.info("Saved finance operation: type={}, amount={}, category={}, groupId={}", type, amount, categoryName, groupId)
+        eventPublisher.publishEvent(OperationsChanged(groupId))
         return saved
     }
 
@@ -125,6 +129,7 @@ class FinanceOperationService(
         val existing = getOperation(groupId, operationId) ?: return false
         financeOperationRepository.delete(existing)
         log.info("Deleted finance operation: id={}, groupId={}", operationId, groupId)
+        eventPublisher.publishEvent(OperationsChanged(groupId))
         return true
     }
 
@@ -136,6 +141,7 @@ class FinanceOperationService(
         val existing = getOperation(groupId, operationId) ?: return null
         val saved = financeOperationRepository.save(mutate(existing))
         log.info("Updated finance operation: id={}, groupId={}", operationId, groupId)
+        eventPublisher.publishEvent(OperationsChanged(groupId))
         return saved
     }
 }

@@ -22,7 +22,7 @@ class FinanceOperationServiceTest {
     private val operationId = ObjectId()
     private val taxi = Category(ObjectId(), "Такси", "🚕", CategoryType.EXPENSE, groupId)
     private val repository = mock(FinanceOperationRepository::class.java)
-    private val service = FinanceOperationService(repository)
+    private val service = FinanceOperationService(repository) { }
 
     private val existing = FinanceOperationEntity(
         id = operationId,

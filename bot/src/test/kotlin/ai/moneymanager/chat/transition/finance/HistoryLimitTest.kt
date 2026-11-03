@@ -25,6 +25,7 @@ class HistoryLimitTest {
         freeMaxHistoryDaysBack = FREE_HISTORY_DAYS,
         freeMaxOwnedSharedGroups = 3,
         freeMaxActiveNotifications = 3,
+        freeMaxBudgets = 3,
         clock = Clock.fixed(TODAY.atStartOfDay(ZoneOffset.UTC).toInstant(), ZoneOffset.UTC),
     )
 

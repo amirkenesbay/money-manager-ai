@@ -29,12 +29,22 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import ai.moneymanager.domain.model.BudgetLimitResult
+import ai.moneymanager.web.error.API_ERROR_KEY_PREFIX
+import ai.moneymanager.web.error.badRequest
+import org.springframework.web.bind.annotation.PutMapping
+import java.math.BigDecimal
 
 data class CategoryResponse(
     val id: ObjectId,
     val name: String,
     val icon: String,
     val type: CategoryType,
+    val monthlyLimit: BigDecimal?,
+)
+
+data class CategoryLimitRequest(
+    val amount: BigDecimal?,
 )
 
 data class CreateCategoryRequest(
@@ -47,6 +57,9 @@ data class UpdateCategoryRequest(
     val name: String?,
     val icon: String?,
 )
+
+private const val BUDGET_AMOUNT_KEY = "${API_ERROR_KEY_PREFIX}budget_amount"
+private const val BUDGET_INCOME_KEY = "${API_ERROR_KEY_PREFIX}budget_income"
 
 @RestController
 @RequestMapping("$API_V1_PREFIX/groups/{groupId}/categories")
@@ -99,6 +112,25 @@ class CategoryController(
         }
     }
 
+    @PutMapping("/{categoryId}/limit")
+    fun setLimit(
+        user: UserInfo,
+        @PathVariable groupId: ObjectId,
+        @PathVariable categoryId: ObjectId,
+        @RequestBody request: CategoryLimitRequest,
+    ): CategoryResponse {
+        groupAccessGuard.requireMember(user, groupId)
+        groupCategoryLookup.requireCategory(groupId, categoryId)
+        if (request.amount != null && request.amount.signum() <= 0) throw badRequest(BUDGET_AMOUNT_KEY)
+        val maxBudgets = subscriptionLimitsService.maxBudgets(user.hasActivePaidSubscription())
+        return when (val result = categoryService.setMonthlyLimit(categoryId, request.amount, maxBudgets)) {
+            is BudgetLimitResult.Updated -> result.category.toResponse()
+            is BudgetLimitResult.LimitReached -> throw limitReached(ApiErrorCode.BUDGET_LIMIT_REACHED, result.limit)
+            BudgetLimitResult.NotExpense -> throw badRequest(BUDGET_INCOME_KEY)
+            BudgetLimitResult.NotFound -> throw groupCategoryLookup.notFound()
+        }
+    }
+
     @DeleteMapping("/{categoryId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun delete(user: UserInfo, @PathVariable groupId: ObjectId, @PathVariable categoryId: ObjectId) {
@@ -114,5 +146,6 @@ class CategoryController(
         name = name,
         icon = icon ?: DEFAULT_CATEGORY_ICON,
         type = type,
+        monthlyLimit = monthlyLimit,
     )
 }

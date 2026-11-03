@@ -11,8 +11,12 @@ import { Segmented } from '../ui/Segmented'
 import { useConfirmClosing } from '../ui/useConfirmClosing'
 import { useNameInput } from '../ui/useNameInput'
 import { useSubmit } from '../ui/useSubmit'
-import { createCategory, deleteCategory, updateCategory } from './categoriesApi'
+import { createCategory, deleteCategory, setCategoryLimit, updateCategory } from './categoriesApi'
 import { CATEGORY_TYPES } from './categoryTypes'
+import { formatPeriod } from '../format'
+import { parseAmount } from '../operation/amount'
+import { currentPeriodMonth, monthRange } from '../operations/periods'
+import { AmountInput } from '../ui/AmountInput'
 
 const MAX_CATEGORY_NAME_LENGTH = 50
 
@@ -21,35 +25,51 @@ const ICON_PRESETS: Record<CategoryType, string[]> = {
   INCOME: ['💰', '💼', '🎁', '📈', '🏦', '💵', '🤝', '📦'],
 }
 
-export function CategoryForm({ group, type, category, onBack, onSaved, onDeleted, onLimit }: {
+export function CategoryForm({ group, language, type, category, onBack, onSaved, onDeleted, onLimit, onBudgetLimit }: {
   group: Group
+  language: string
   type: CategoryType
   category: Category | null
   onBack: () => void
   onSaved: (category: Category, created: boolean) => void
   onDeleted: (category: Category) => void
   onLimit: () => void
+  onBudgetLimit: () => void
 }) {
   const [formType, setFormType] = useState(category?.type ?? type)
   const [icon, setIcon] = useState(category?.icon ?? ICON_PRESETS[formType][0])
   const [deleteOpen, setDeleteOpen] = useState(false)
   const submit = useSubmit()
   const name = useNameInput(category?.name ?? '', submit.clearError)
+  const [limitText, setLimitText] = useState(category?.monthlyLimit ?? '')
   const shared = group.type === 'SHARED'
-  const dirty = name.value !== (category?.name ?? '') || (category !== null && icon !== category.icon)
+  const limit = parseAmount(limitText)
+  const limitInvalid = limitText.trim() !== '' && limit === null
+  const limitChanged = (limit ?? null) !== (category?.monthlyLimit ?? null)
+  const dirty = name.value !== (category?.name ?? '') || (category !== null && icon !== category.icon) || limitChanged
+  const range = monthRange(currentPeriodMonth(new Date(), group.monthStartDay), group.monthStartDay)
 
   useConfirmClosing(dirty)
 
   const save = async () => {
     const trimmed = name.require()
-    if (trimmed === null) return
+    if (trimmed === null || limitInvalid) return
     const input = { name: trimmed, icon }
     const result = await submit.run(
       () => (category ? updateCategory(group.id, category.id, input) : createCategory(group.id, { ...input, type: formType })),
       strings.saveFailed,
     )
-    if (result.ok) onSaved(result.value, category === null)
-    else if (result.error.code === 'CATEGORY_LIMIT_REACHED') onLimit()
+    if (!result.ok) {
+      if (result.error.code === 'CATEGORY_LIMIT_REACHED') onLimit()
+      return
+    }
+    if (formType !== 'EXPENSE' || !limitChanged) {
+      onSaved(result.value, category === null)
+      return
+    }
+    const limited = await submit.run(() => setCategoryLimit(group.id, result.value.id, limit), strings.saveFailed)
+    if (limited.ok) onSaved(limited.value, category === null)
+    else if (limited.error.code === 'BUDGET_LIMIT_REACHED') onBudgetLimit()
   }
 
   const nameError = name.missingError ?? (submit.error?.code === 'CATEGORY_DUPLICATE' ? submit.error.message : null)
@@ -70,6 +90,12 @@ export function CategoryForm({ group, type, category, onBack, onSaved, onDeleted
         onChange={name.change}
       />
       <EmojiPicker value={icon} presets={ICON_PRESETS[formType]} onChange={setIcon} />
+      {formType === 'EXPENSE' && (
+        <>
+          <AmountInput label={strings.budgetLimitLabel} value={limitText} currency={group.currency} invalid={limitInvalid} onChange={setLimitText} />
+          <p className="caption">{strings.budgetLimitHint(formatPeriod(range.from, range.to, language))}</p>
+        </>
+      )}
       {category && shared && <p className="hint-box caption">{strings.sharedChangeNotice}</p>}
       {category && <button type="button" className="link-button danger-link" onClick={() => setDeleteOpen(true)}>{strings.deleteCategory}</button>}
       {otherError && <p className="error-text" role="alert">{otherError}</p>}

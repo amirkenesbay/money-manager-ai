@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Category, CategoryType, Group, Me } from '../api/types'
+import type { Budget, Category, CategoryType, Currency, Group, Me } from '../api/types'
 import { strings } from '../strings'
 import { BottomBar } from '../ui/BottomBar'
 import { Button } from '../ui/Button'
@@ -14,10 +14,14 @@ import type { Notify } from '../ui/useToast'
 import { CategoryForm } from './CategoryForm'
 import { CATEGORY_TYPES } from './categoryTypes'
 import { useCategories } from './useCategories'
+import { useBudgets } from '../budgets/useBudgets'
+import { budgetColor } from '../budgets/budgetTone'
+import { Meter } from '../ui/Meter'
+import { formatMoney } from '../format'
 
 const SKELETON_ROWS = 5
 
-type Mode = { kind: 'list' } | { kind: 'form'; category: Category | null } | { kind: 'limit' }
+type Mode = { kind: 'list' } | { kind: 'form'; category: Category | null } | { kind: 'limit' } | { kind: 'budgetLimit' }
 
 export function CategoriesScreen({ me, group, notify, onBack }: {
   me: Me
@@ -26,6 +30,7 @@ export function CategoriesScreen({ me, group, notify, onBack }: {
   onBack: () => void
 }) {
   const categories = useCategories(group.id)
+  const budgets = useBudgets(group.id)
   const [type, setType] = useState<CategoryType>('EXPENSE')
   const [mode, setMode] = useState<Mode>({ kind: 'list' })
   const { subscription } = me
@@ -34,8 +39,11 @@ export function CategoriesScreen({ me, group, notify, onBack }: {
   const ofType = categories.state.status === 'ready' ? categories.state.data.filter((category) => category.type === type) : []
   const toList = () => setMode({ kind: 'list' })
 
+  const budgetOf = (categoryId: string) => (budgets.state.status === 'ready' ? budgets.state.data.find((budget) => budget.categoryId === categoryId) : undefined)
+
   const changed = (title: string, category: Category) => {
     categories.reload()
+    budgets.reload()
     toList()
     notify({ title, detail: `${category.icon} ${category.name}` })
   }
@@ -44,6 +52,7 @@ export function CategoriesScreen({ me, group, notify, onBack }: {
     return (
       <CategoryForm
         group={group}
+        language={me.language}
         type={type}
         category={mode.category}
         onBack={toList}
@@ -53,6 +62,23 @@ export function CategoriesScreen({ me, group, notify, onBack }: {
         }}
         onDeleted={(category) => changed(strings.categoryDeletedToast, category)}
         onLimit={() => setMode({ kind: 'limit' })}
+        onBudgetLimit={() => setMode({ kind: 'budgetLimit' })}
+      />
+    )
+  }
+  if (mode.kind === 'budgetLimit') {
+    const budgetLimit = subscription.limits.budgets ?? 0
+    return (
+      <LimitScreen
+        header={strings.categoriesTitle}
+        title={strings.budgetLimitTitle}
+        body={strings.budgetLimitBody(budgetLimit)}
+        meterLabel={strings.budgetLimitMeter}
+        used={budgetLimit}
+        limit={budgetLimit}
+        subscribeUrl={subscription.subscribeUrl}
+        backLabel={strings.backToCategories}
+        onBack={toList}
       />
     )
   }
@@ -88,15 +114,21 @@ export function CategoriesScreen({ me, group, notify, onBack }: {
         ? <EmptyCard icon={<GridIcon />} title={strings.categoriesEmptyTitle(type)} body={strings.categoriesEmptyHint(type)} />
         : (
           <ul className="rows">
-            {ofType.map((category) => (
-              <li key={category.id}>
-                <button type="button" className="row row-button pressable" onClick={() => setMode({ kind: 'form', category })}>
-                  <span className="icon-circle" aria-hidden="true">{category.icon}</span>
-                  <span className="row-main"><span className="row-title">{category.name}</span></span>
-                  <ChevronRightIcon />
-                </button>
-              </li>
-            ))}
+            {ofType.map((category) => {
+              const budget = budgetOf(category.id)
+              return (
+                <li key={category.id}>
+                  <button type="button" className="row row-button pressable" onClick={() => setMode({ kind: 'form', category })}>
+                    <span className="icon-circle" aria-hidden="true">{category.icon}</span>
+                    <span className="row-main">
+                      <span className="row-title">{category.name}</span>
+                      {budget && <CategoryBudget budget={budget} currency={group.currency} language={me.language} />}
+                    </span>
+                    <ChevronRightIcon />
+                  </button>
+                </li>
+              )
+            })}
           </ul>
         ))}
       {free && <p className="caption centered">{strings.categoriesFreeNote(limit)}</p>}
@@ -104,5 +136,14 @@ export function CategoriesScreen({ me, group, notify, onBack }: {
         <Button onClick={add}>{strings.addCategory}</Button>
       </BottomBar>
     </>
+  )
+}
+
+function CategoryBudget({ budget, currency, language }: { budget: Budget; currency: Currency; language: string }) {
+  return (
+    <span className="category-budget">
+      <Meter percent={budget.percent} color={budgetColor(budget.percent)} />
+      <span className="caption">{strings.budgetSpentOf(formatMoney(budget.spent, currency, language), formatMoney(budget.limit, currency, language))}</span>
+    </span>
   )
 }

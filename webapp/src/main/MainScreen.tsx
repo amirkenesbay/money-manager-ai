@@ -227,6 +227,7 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
               }}
               onOpenOperations={() => switchTab('operations')}
               onOpenReports={() => switchTab('reports')}
+              onOpenBudgets={() => navigation.openSection('categories')}
               onSelectOperation={navigation.selectOperation}
             />
           </TabPanel>

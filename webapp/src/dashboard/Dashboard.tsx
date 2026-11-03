@@ -10,10 +10,11 @@ import { useCountUp } from '../ui/useCountUp'
 import './Dashboard.css'
 import { useDashboard } from './useDashboard'
 import { isCalendarMonth } from '../operations/periods'
+import { BudgetsSummary } from '../budgets/BudgetsSummary'
 
 const RECENT_SKELETON_ROWS = 3
 
-export function Dashboard({ name, groups, groupId, language, switchError, onSwitchGroup, onOpenOperations, onOpenReports, onSelectOperation }: {
+export function Dashboard({ name, groups, groupId, language, switchError, onSwitchGroup, onOpenOperations, onOpenReports, onOpenBudgets, onSelectOperation }: {
   name: string
   groups: Group[]
   groupId: string
@@ -22,6 +23,7 @@ export function Dashboard({ name, groups, groupId, language, switchError, onSwit
   onSwitchGroup: (groupId: string) => void
   onOpenOperations: () => void
   onOpenReports: () => void
+  onOpenBudgets: () => void
   onSelectOperation: (operation: Operation) => void
 }) {
   const dashboard = useDashboard(groupId)
@@ -42,6 +44,7 @@ export function Dashboard({ name, groups, groupId, language, switchError, onSwit
       {ready && (
         <>
           <BalanceCard balance={ready.balance} summary={ready.summary} language={language} onOpenReport={onOpenReports} />
+          <BudgetsSummary groupId={groupId} currency={ready.balance.currency} language={language} onOpenAll={onOpenBudgets} />
           <RecentOperations
             operations={ready.operations.items}
             currency={ready.balance.currency}

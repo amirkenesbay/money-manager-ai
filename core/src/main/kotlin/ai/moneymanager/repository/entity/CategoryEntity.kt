@@ -5,6 +5,7 @@ import ai.moneymanager.repository.entity.common.AuditInfo
 import org.bson.types.ObjectId
 import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.mapping.Document
+import java.math.BigDecimal
 
 @Document(collection = "category")
 @CompoundIndex(def = "{'groupId': 1, 'name': 1, 'type': 1}", unique = true)
@@ -14,5 +15,6 @@ data class CategoryEntity(
     val icon: String? = null,
     val type: CategoryType,
     val groupId: ObjectId,
+    val monthlyLimit: BigDecimal? = null,
     val auditInfo: AuditInfo = AuditInfo()
 )

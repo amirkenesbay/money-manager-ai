@@ -45,5 +45,6 @@ class MeResponseFactory(
         ownedSharedGroups = subscriptionLimitsService.maxOwnedSharedGroups(paid),
         activeNotifications = subscriptionLimitsService.maxActiveNotifications(paid),
         historyDaysBack = subscriptionLimitsService.maxHistoryDaysBack(paid),
+        budgets = subscriptionLimitsService.maxBudgets(paid),
     )
 }

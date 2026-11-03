@@ -6,6 +6,7 @@ export type ApiErrorCode =
   | 'PREMIUM_REQUIRED'
   | 'CATEGORY_DUPLICATE'
   | 'CATEGORY_LIMIT_REACHED'
+  | 'BUDGET_LIMIT_REACHED'
   | 'GROUP_DUPLICATE'
   | 'GROUP_LIMIT_REACHED'
   | 'NOTIFICATION_LIMIT_REACHED'
@@ -28,6 +29,7 @@ export interface Limits {
   ownedSharedGroups: number | null
   activeNotifications: number | null
   historyDaysBack: number | null
+  budgets: number | null
 }
 
 export interface Price {
@@ -127,6 +129,19 @@ export interface Category {
   name: string
   icon: string
   type: CategoryType
+  monthlyLimit: string | null
+}
+
+export interface Budget {
+  categoryId: string
+  icon: string
+  name: string
+  limit: string
+  spent: string
+  remaining: string
+  percent: number
+  from: string
+  to: string
 }
 
 export interface MaxExpense {

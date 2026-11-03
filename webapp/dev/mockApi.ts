@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Plugin } from 'vite'
 import { AUTH_SCHEME } from '../src/api/auth.ts'
-import type { AppHint, VoiceResult, AnalyticsReport, ApiErrorBody, ApiErrorCode, Balance, Category, CategoryReport, ComparisonReport, Currency, Group, Invite, Limits, Me, Member, MembersReport, MonthSummary, Operation, OperationsPage, Reminder, ReminderInput, SubscriptionTier } from '../src/api/types.ts'
+import type { AppHint, Budget, VoiceResult, AnalyticsReport, ApiErrorBody, ApiErrorCode, Balance, Category, CategoryReport, ComparisonReport, Currency, Group, Invite, Limits, Me, Member, MembersReport, MonthSummary, Operation, OperationsPage, Reminder, ReminderInput, SubscriptionTier } from '../src/api/types.ts'
 
 const API_PREFIX = '/api/v1'
 const SCENARIO_PARAM = 'mock'
@@ -14,7 +14,7 @@ const PERSONAL_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d0'
 const FAMILY_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d1'
 const PREMIUM_EXPIRES_AT = '2026-12-31T00:00:00Z'
 const NO_CONTENT_STATUS = 204
-const GROUP_ROUTE = /^\/groups\/([0-9a-f]{24})(?:\/(balance|summary|operations|activate|categories|members|invite|initial-balance|voice|reports\/[a-z]+))?(?:\/([^/]+))?$/
+const GROUP_ROUTE = /^\/groups\/([0-9a-f]{24})(?:\/(balance|summary|operations|activate|categories|budgets|members|invite|initial-balance|voice|reports\/[a-z]+))?(?:\/([^/]+))?(?:\/(limit))?$/
 const REMINDER_ROUTE = /^\/notifications(?:\/([^/]+))?$/
 const GROUP_ID_PREFIX = '6650a1b2c3d4e5f6a7b8'
 const GROUP_ID_DIGITS = 4
@@ -29,13 +29,13 @@ const FREE_HISTORY_DAYS = 30
 const DEFAULT_PAGE_SIZE = 20
 const FILLER_OPERATIONS = 26
 
-type Body = Me | Group | Group[] | Balance | MonthSummary | Operation | OperationsPage | Category | Category[] | AnalyticsReport | ComparisonReport | MembersReport | CategoryReport | Member[] | Invite | Reminder | Reminder[] | VoiceResult | ApiErrorBody | null
+type Body = Budget[] | Me | Group | Group[] | Balance | MonthSummary | Operation | OperationsPage | Category | Category[] | AnalyticsReport | ComparisonReport | MembersReport | CategoryReport | Member[] | Invite | Reminder | Reminder[] | VoiceResult | ApiErrorBody | null
 type MockResponse = { status: number; body: Body; delayMs?: number }
 
 const ok = (body: Body, delayMs?: number): MockResponse => ({ status: 200, body, delayMs })
 
-const FREE_LIMITS: Limits = { aiRequestsPerDay: 10, categoriesPerType: 10, ownedSharedGroups: 3, activeNotifications: 3, historyDaysBack: FREE_HISTORY_DAYS }
-const PAID_LIMITS: Limits = { aiRequestsPerDay: 100, categoriesPerType: 1000, ownedSharedGroups: null, activeNotifications: null, historyDaysBack: null }
+const FREE_LIMITS: Limits = { aiRequestsPerDay: 10, categoriesPerType: 10, ownedSharedGroups: 3, activeNotifications: 3, historyDaysBack: FREE_HISTORY_DAYS, budgets: 3 }
+const PAID_LIMITS: Limits = { aiRequestsPerDay: 100, categoriesPerType: 1000, ownedSharedGroups: null, activeNotifications: null, historyDaysBack: null, budgets: null }
 
 const profile = { language: 'ru', timezone: null as string | null, seenHints: [] as AppHint[] }
 
@@ -163,18 +163,49 @@ const meScenarios: Record<string, () => MockResponse> = {
 }
 
 const categories: Record<string, Category[]> = {}
+const DEMO_LIMITS: Record<string, string> = { Продукты: '3000', Такси: '1400', Кафе: '50000' }
+const HUNDRED = 100
 let createdCategories = 0
 
 function categoriesOf(groupId: string): Category[] {
   if (!categories[groupId]) {
     const seen = new Map<string, Category>()
-    operations[groupId].forEach((op) => seen.set(op.categoryName, { id: op.categoryId, name: op.categoryName, icon: op.categoryIcon, type: op.type }))
+    operations[groupId].forEach((op) => seen.set(op.categoryName, { id: op.categoryId, name: op.categoryName, icon: op.categoryIcon, type: op.type, monthlyLimit: DEMO_LIMITS[op.categoryName] ?? null }))
     categories[groupId] = [...seen.values()]
   }
   return categories[groupId]
 }
 
 const freeTier = (scenario: string) => scenario !== 'premium'
+
+function budgetsOf(groupId: string): Budget[] {
+  const spentOf = (categoryId: string) => monthOperations(groupId, currentMonth())
+    .filter((op) => op.type === 'EXPENSE' && op.categoryId === categoryId)
+    .reduce((total, op) => total + Number(op.amount), 0)
+  return categoriesOf(groupId)
+    .filter((category) => category.monthlyLimit !== null)
+    .map((category) => {
+      const limit = Number(category.monthlyLimit)
+      const spent = spentOf(category.id)
+      return {
+        categoryId: category.id, icon: category.icon, name: category.name, limit: String(limit), spent: String(spent),
+        remaining: String(limit - spent), percent: Math.floor((spent * HUNDRED) / limit), ...periodOf(groupId, currentMonth()),
+      }
+    })
+    .sort((a, b) => b.percent - a.percent)
+}
+
+function setLimit(groupId: string, categoryId: string, body: string, scenario: string): MockResponse {
+  const list = categoriesOf(groupId)
+  const { amount } = JSON.parse(body) as { amount: string | null }
+  const limit = FREE_LIMITS.budgets ?? 0
+  const others = list.filter((category) => category.monthlyLimit !== null && category.id !== categoryId).length
+  if (amount !== null && freeTier(scenario) && others >= limit) {
+    return failure(LIMIT_STATUS, 'BUDGET_LIMIT_REACHED', `На Free — до ${limit} бюджетов.`, { limit })
+  }
+  categories[groupId] = list.map((category) => (category.id === categoryId ? { ...category, monthlyLimit: amount } : category))
+  return ok(categories[groupId].find((category) => category.id === categoryId) ?? null)
+}
 
 function mutateCategory(groupId: string, method: string, categoryId: string | undefined, body: string, scenario: string): MockResponse {
   const list = categoriesOf(groupId)
@@ -195,7 +226,7 @@ function mutateCategory(groupId: string, method: string, categoryId: string | un
       return failure(LIMIT_STATUS, 'CATEGORY_LIMIT_REACHED', `На Free — до ${limit} категорий каждого типа.`, { limit })
     }
     createdCategories += 1
-    const created: Category = { id: `cat-new-${createdCategories}`, name, icon: input.icon ?? '📌', type }
+    const created: Category = { id: `cat-new-${createdCategories}`, name, icon: input.icon ?? '📌', type, monthlyLimit: null }
     categories[groupId] = [...list, created]
     return { status: CREATED_STATUS, body: created }
   }
@@ -362,8 +393,10 @@ function voiceResult(groupId: string): VoiceResult {
 function groupRoute(path: string, query: URLSearchParams, scenario: string, method: string, body: string): MockResponse | null {
   const match = GROUP_ROUTE.exec(path)
   if (!match || !groups.some((group) => group.id === match[1])) return null
-  const [, groupId, resource, itemId] = match
+  const [, groupId, resource, itemId, action] = match
   if (resource === undefined) return mutateGroup(groupId, method, body)
+  if (resource === 'categories' && itemId && action === 'limit') return setLimit(groupId, decodeURIComponent(itemId), body, scenario)
+  if (resource === 'budgets') return ok(budgetsOf(groupId))
   if (resource === 'operations' && method !== 'GET') return mutateOperation(groupId, method, itemId, body)
   if (resource === 'categories' && method !== 'GET') return mutateCategory(groupId, method, itemId && decodeURIComponent(itemId), body, scenario)
   const empty = scenario === EMPTY_SCENARIO

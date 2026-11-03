@@ -12,6 +12,8 @@ import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
+import ai.moneymanager.domain.model.BudgetLimitResult
+import java.math.BigDecimal
 
 private data class DefaultCategorySeed(val nameKey: String, val icon: String, val type: CategoryType)
 
@@ -98,6 +100,17 @@ class CategoryService(
         return mapToModel(savedCategory)
     }
 
+    fun setMonthlyLimit(categoryId: ObjectId, limit: BigDecimal?, maxBudgets: Int?): BudgetLimitResult {
+        val entity = categoryRepository.findById(categoryId).orElse(null) ?: return BudgetLimitResult.NotFound
+        if (entity.type != CategoryType.EXPENSE) return BudgetLimitResult.NotExpense
+        val othersWithLimit = categoryRepository.findByGroupIdAndMonthlyLimitIsNotNull(entity.groupId).count { it.id != categoryId }
+        if (limit != null && maxBudgets != null && othersWithLimit >= maxBudgets) return BudgetLimitResult.LimitReached(maxBudgets)
+        return BudgetLimitResult.Updated(mapToModel(categoryRepository.save(entity.copy(monthlyLimit = limit))))
+    }
+
+    fun getBudgetCategories(groupId: ObjectId): List<Category> =
+        categoryRepository.findByGroupIdAndMonthlyLimitIsNotNull(groupId).map { mapToModel(it) }
+
     fun deleteCategory(actorId: Long, categoryId: ObjectId): Boolean {
         val entity = categoryRepository.findById(categoryId).orElse(null) ?: return false
         categoryRepository.delete(entity)
@@ -154,7 +167,8 @@ class CategoryService(
             name = entity.name,
             icon = entity.icon,
             type = entity.type,
-            groupId = entity.groupId
+            groupId = entity.groupId,
+            monthlyLimit = entity.monthlyLimit
         )
     }
 }

@@ -39,6 +39,7 @@ data class LimitsResponse(
     val ownedSharedGroups: Int?,
     val activeNotifications: Int?,
     val historyDaysBack: Int?,
+    val budgets: Int?,
 )
 
 data class MarkHintRequest(

@@ -1,5 +1,6 @@
 package ai.moneymanager.web.category
 
+import ai.moneymanager.domain.model.BudgetLimitResult
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryCreationResult
 import ai.moneymanager.domain.model.CategoryType
@@ -24,6 +25,7 @@ import org.bson.types.ObjectId
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.`when`
+import java.math.BigDecimal
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
 import org.springframework.context.annotation.Import
@@ -33,12 +35,14 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delet
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 private const val FREE_CATEGORIES_PER_TYPE = 10
 private const val CREATE_CATEGORY = "createCategory"
 private const val DELETE_CATEGORY = "deleteCategory"
+private const val FREE_BUDGETS = 3
 
 @WebMvcTest(controllers = [CategoryController::class])
 @ApiWebLayerSetup
@@ -69,6 +73,33 @@ class CategoryControllerTest {
         `when`(categoryService.getCategoriesByGroup(groupId)).thenReturn(listOf(groceries, salary))
         `when`(categoryService.getCategoriesByGroupAndType(groupId, CategoryType.INCOME)).thenReturn(listOf(salary))
         `when`(categoryService.getCategory(groceries.id!!)).thenReturn(groceries)
+    }
+
+    @Test
+    fun `puts a monthly limit on a category`() {
+        `when`(categoryService.setMonthlyLimit(groceries.id!!, BigDecimal("100000"), FREE_BUDGETS))
+            .thenReturn(BudgetLimitResult.Updated(groceries.copy(monthlyLimit = BigDecimal("100000"))))
+
+        mockMvc.perform(put("/api/v1/groups/$groupId/categories/${groceries.id}/limit").withTelegramAuth().json("""{"amount":"100000"}"""))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.monthlyLimit").value(100000))
+    }
+
+    @Test
+    fun `explains the free budget limit`() {
+        `when`(categoryService.setMonthlyLimit(groceries.id!!, BigDecimal("5000"), FREE_BUDGETS)).thenReturn(BudgetLimitResult.LimitReached(FREE_BUDGETS))
+
+        mockMvc.perform(put("/api/v1/groups/$groupId/categories/${groceries.id}/limit").withTelegramAuth().json("""{"amount":"5000"}"""))
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(jsonPath("$.code").value("BUDGET_LIMIT_REACHED"))
+            .andExpect(jsonPath("$.details.limit").value(FREE_BUDGETS))
+    }
+
+    @Test
+    fun `rejects a zero limit before touching the category`() {
+        mockMvc.perform(put("/api/v1/groups/$groupId/categories/${groceries.id}/limit").withTelegramAuth().json("""{"amount":"0"}"""))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.message").value("Лимит должен быть больше нуля."))
     }
 
     @Test

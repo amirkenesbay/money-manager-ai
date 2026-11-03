@@ -20,6 +20,7 @@ import { DeleteSheet } from './DeleteSheet'
 import './operation.css'
 import { MAX_COMMENT_LENGTH } from './limits'
 import { Hint } from '../onboarding/Hint'
+import { BudgetNote } from '../budgets/BudgetNote'
 
 const OPERATION_TYPES: CategoryType[] = ['EXPENSE', 'INCOME']
 const QUICK_DAYS_AGO = [0, 1, 2]
@@ -135,6 +136,9 @@ function FormFields({ group, language, operation, categories, onSaved, onDeleted
               ))}
             </div>
           )}
+        {type === 'EXPENSE' && selectedCategory && (
+          <BudgetNote groupId={group.id} category={selectedCategory} amount={amount} editing={operation} currency={group.currency} language={language} />
+        )}
       </fieldset>
 
       <fieldset className="field-group">

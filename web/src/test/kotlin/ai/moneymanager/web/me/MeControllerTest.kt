@@ -210,4 +210,5 @@ class MeControllerTest {
         .andExpect(jsonPath("$.subscription.limits.ownedSharedGroups").value(limits.maxOwnedSharedGroups(paid)))
         .andExpect(jsonPath("$.subscription.limits.activeNotifications").value(limits.maxActiveNotifications(paid)))
         .andExpect(jsonPath("$.subscription.limits.historyDaysBack").value(limits.maxHistoryDaysBack(paid)))
+        .andExpect(jsonPath("$.subscription.limits.budgets").value(limits.maxBudgets(paid)))
 }
