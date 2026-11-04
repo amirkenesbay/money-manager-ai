@@ -1,5 +1,5 @@
 import { useId, useState } from 'react'
-import type { Category, Group, Operation } from '../api/types'
+import type { Category, Group, Operation, Repeat } from '../api/types'
 import { CATEGORY_TYPES } from '../categories/categoryTypes'
 import { useCategories } from '../categories/useCategories'
 import { formatDayLabel, formatSignedMoney, toIsoDate } from '../format'
@@ -13,6 +13,8 @@ import { Segmented } from '../ui/Segmented'
 import { Sheet } from '../ui/Sheet'
 import { useSubmit } from '../ui/useSubmit'
 import { type Draft, draftReady, saveDraft, withCategory, withType } from './drafts'
+import { repeatChoiceLabel, REPEAT_CHOICES } from '../recurring/recurrence'
+import { startRepeating } from '../recurring/repeatOperation'
 import { MAX_COMMENT_LENGTH } from '../operation/limits'
 
 type Field = 'amount' | 'category' | 'date' | 'comment'
@@ -24,7 +26,7 @@ export function VoiceConfirm({ group, language, initialDrafts, onSayAgain, onClo
   initialDrafts: Draft[]
   onSayAgain: () => void
   onClose: () => void
-  onSaved: (operations: Operation[]) => void
+  onSaved: (operations: Operation[], note?: string) => void
 }) {
   const [drafts, setDrafts] = useState(initialDrafts)
   const [editing, setEditing] = useState<{ key: string; field: Field } | null>(null)
@@ -41,14 +43,17 @@ export function VoiceConfirm({ group, language, initialDrafts, onSayAgain, onClo
     const saved: Operation[] = []
     const created = new Map<string, Category>()
     const savedKeys = new Set<string>()
+    let note: string | undefined
     const result = await submit.run(async () => {
       for (const draft of drafts) {
-        saved.push(await saveDraft(group.id, draft, created))
+        const operation = await saveDraft(group.id, draft, created)
+        saved.push(operation)
         savedKeys.add(draft.key)
+        if (draft.repeat) note = await startRepeating(group.id, operation, draft.repeat)
       }
       return saved
     }, strings.saveFailed)
-    if (result.ok) onSaved(result.value)
+    if (result.ok) onSaved(result.value, note)
     else setDrafts((list) => list.filter((draft) => !savedKeys.has(draft.key)))
   }
 
@@ -139,6 +144,7 @@ function DraftCard({ draft, group, language, removable, onChange, onEdit, onRemo
         <FieldRow label={strings.categoryLabel} value={category} warning={!draftReady(draft) && draft.categoryId === null && !draft.isNewCategory} badge={draft.isNewCategory ? strings.newCategoryBadge : undefined} onClick={() => onEdit('category')} />
         <FieldRow label={strings.dateLabel} value={formatDayLabel(draft.operationDate, new Date(), language)} onClick={() => onEdit('date')} />
         <FieldRow label={strings.commentLabel} value={draft.description ?? strings.noComment} onClick={() => onEdit('comment')} />
+        <FieldRow label={strings.repeatLabel} value={repeatChoiceLabel(draft.repeat?.unit ?? null)} onClick={() => onChange({ ...draft, repeat: nextRepeat(draft.repeat) })} />
       </dl>
       {draft.isNewCategory && draft.categoryName && <p className="caption">{strings.newCategoryNote(draft.categoryName)}</p>}
     </section>
@@ -221,4 +227,9 @@ function TextSheet({ field, draft, onDone, onClose }: { field: 'amount' | 'comme
       <Button disabled={invalid} onClick={done}>{strings.done}</Button>
     </Sheet>
   )
+}
+
+function nextRepeat(repeat: Repeat | null | undefined): Repeat | null {
+  const next = REPEAT_CHOICES[(REPEAT_CHOICES.indexOf(repeat?.unit ?? null) + 1) % REPEAT_CHOICES.length]
+  return next === null ? null : { unit: next, interval: 1 }
 }

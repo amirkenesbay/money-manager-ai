@@ -53,7 +53,8 @@ import ai.moneymanager.chat.telegram.REPORT_BUTTON_TEXT
 import ai.moneymanager.chat.telegram.SETTINGS_BUTTON_TEXT
 import ai.moneymanager.service.UserInfoService
 import ai.moneymanager.chat.telegram.DigestNotifier
-import ai.moneymanager.chat.transition.digest.digestSettingsDialog
+import ai.moneymanager.chat.telegram.RecurringNotifier
+import ai.moneymanager.chat.transition.digest.startLinkDialog
 import kz.rmr.chatmachinist.api.transition.ChatBuilder
 import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.EventType
@@ -81,8 +82,9 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
     onboardingService: OnboardingService,
     miniAppGateway: MiniAppGateway,
     digestNotifier: DigestNotifier,
+    recurringNotifier: RecurringNotifier,
 ) {
-    digestSettingsDialog(userInfoService, digestNotifier, telegramFileService, miniAppGateway)
+    startLinkDialog(userInfoService, digestNotifier, recurringNotifier, telegramFileService, miniAppGateway)
     miniAppGatewayDialog(miniAppGateway, userInfoService, adminService)
 
     dialog {

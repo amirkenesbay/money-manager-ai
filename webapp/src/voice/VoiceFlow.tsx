@@ -59,7 +59,7 @@ export function VoiceFlow({ me, group, onClose, onManual, onSaved }: {
   group: Group
   onClose: () => void
   onManual: () => void
-  onSaved: (operations: Operation[]) => void
+  onSaved: (operations: Operation[], note?: string) => void
 }) {
   const [phase, setPhase] = useState<Phase>(() => (readExplained() ? { kind: 'recording' } : { kind: 'ask' }))
   const problem = (kind: Problem, wav: Blob | null = null, message: string | null = null) => setPhase({ kind: 'problem', problem: kind, wav, message })

@@ -9,7 +9,9 @@ data class AddExpenseArgs(
     val category: String? = null,
     val description: String? = null,
     val suggestedCategoryIcon: String? = null,
-    val operationDate: String? = null
+    val operationDate: String? = null,
+    val repeatUnit: String? = null,
+    val repeatInterval: Double? = null,
 )
 
 data class AddIncomeArgs(
@@ -17,7 +19,9 @@ data class AddIncomeArgs(
     val category: String? = null,
     val description: String? = null,
     val suggestedCategoryIcon: String? = null,
-    val operationDate: String? = null
+    val operationDate: String? = null,
+    val repeatUnit: String? = null,
+    val repeatInterval: Double? = null,
 )
 
 data class DeleteGroupArgs(

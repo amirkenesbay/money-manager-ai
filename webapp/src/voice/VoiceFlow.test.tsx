@@ -5,6 +5,7 @@ import { ApiRequestError } from '../api/client'
 import type { VoiceOperation } from '../api/types'
 import { createCategory, fetchCategories } from '../categories/categoriesApi'
 import { createOperation } from '../operations/operationsApi'
+import { createRecurring } from '../recurring/recurringApi'
 import { strings } from '../strings'
 import { category, group, me, operation, PERSONAL_GROUP_ID } from '../test/fixtures'
 import { type Recorder, startRecording } from './recorder'
@@ -19,6 +20,7 @@ vi.mock('./recorder', () => ({
 }))
 vi.mock('../categories/categoriesApi', () => ({ fetchCategories: vi.fn(), createCategory: vi.fn() }))
 vi.mock('../operations/operationsApi', () => ({ createOperation: vi.fn() }))
+vi.mock('../recurring/recurringApi', () => ({ createRecurring: vi.fn() }))
 vi.mock('../telegram/telegramEnv', () => ({ openExternalLink: vi.fn(), rawInitData: () => undefined }))
 
 const wav = new Blob(['RIFF'], { type: 'audio/wav' })
@@ -67,7 +69,22 @@ describe('VoiceFlow', () => {
 
     expect(parseVoice).toHaveBeenCalledWith(PERSONAL_GROUP_ID, wav, expect.anything())
     expect(createOperation).toHaveBeenCalledWith(PERSONAL_GROUP_ID, expect.objectContaining({ amount: '2000.0', categoryId: taxi.id, categoryCorrected: false }))
-    expect(onSaved).toHaveBeenCalledWith([saved])
+    expect(onSaved).toHaveBeenCalledWith([saved], undefined)
+  })
+
+  it('keeps a phrase that repeats as a recurring payment', async () => {
+    vi.mocked(parseVoice).mockResolvedValue({ operations: [voiceOperation({ repeat: { unit: 'MONTH', interval: 1 } })] })
+    const saved = operation({ id: 'voice-op', amount: '2000', categoryName: 'Такси' })
+    vi.mocked(createOperation).mockResolvedValue(saved)
+    vi.mocked(createRecurring).mockResolvedValue({} as Awaited<ReturnType<typeof createRecurring>>)
+
+    const user = await recordPhrase()
+
+    expect(await screen.findByRole('button', { name: `${strings.repeatLabel}: ${strings.scheduleEveryMonth}` })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: strings.save }))
+
+    expect(createRecurring).toHaveBeenCalledWith(PERSONAL_GROUP_ID, expect.objectContaining({ unit: 'MONTH', firstRecorded: true }))
+    expect(onSaved).toHaveBeenCalledWith([saved], strings.repeatSavedToast(strings.scheduleEveryMonth))
   })
 
   it('creates a suggested category once for several operations', async () => {

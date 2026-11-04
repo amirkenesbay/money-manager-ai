@@ -17,6 +17,7 @@ import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.NotificationService
 import ai.moneymanager.service.OnboardingService
 import ai.moneymanager.chat.telegram.DigestNotifier
+import ai.moneymanager.chat.telegram.RecurringNotifier
 import ai.moneymanager.chat.telegram.MiniAppGateway
 import ai.moneymanager.chat.telegram.PersistentMenuKeyboardService
 import ai.moneymanager.service.SubscriptionLimitsService
@@ -50,6 +51,7 @@ class MoneyManagerChatConfig(
     private val onboardingService: OnboardingService,
     private val miniAppGateway: MiniAppGateway,
     private val digestNotifier: DigestNotifier,
+    private val recurringNotifier: RecurringNotifier,
 ) {
     @Bean
     fun moneyManagerChat(): ChatBuilder<MoneyManagerState, MoneyManagerContext> =
@@ -71,7 +73,7 @@ class MoneyManagerChatConfig(
                 userInfoService, groupService, categoryService, telegramFileService,
                 financeOperationService, financeHistoryService, financeHistoryFormatter, financeReportFormatter, financeReportService,
                 notificationService, localizationService, aiActionExecutor, aiRequestHandler,
-                persistentMenuKeyboardService, adminService, subscriptionLimitsService, onboardingService, miniAppGateway, digestNotifier
+                persistentMenuKeyboardService, adminService, subscriptionLimitsService, onboardingService, miniAppGateway, digestNotifier, recurringNotifier
             )
         }
 }

@@ -4,8 +4,8 @@ export const PERSONAL_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d0'
 export const FAMILY_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d1'
 export const SUBSCRIBE_URL = 'https://t.me/tribute/app?startapp=test'
 
-const FREE_LIMITS: Limits = { aiRequestsPerDay: 10, categoriesPerType: 10, ownedSharedGroups: 3, activeNotifications: 3, historyDaysBack: 30, budgets: 3 }
-const PAID_LIMITS: Limits = { aiRequestsPerDay: 100, categoriesPerType: 1000, ownedSharedGroups: null, activeNotifications: null, historyDaysBack: null, budgets: null }
+const FREE_LIMITS: Limits = { aiRequestsPerDay: 10, categoriesPerType: 10, ownedSharedGroups: 3, activeNotifications: 3, historyDaysBack: 30, budgets: 3, recurringPayments: 3 }
+const PAID_LIMITS: Limits = { aiRequestsPerDay: 100, categoriesPerType: 1000, ownedSharedGroups: null, activeNotifications: null, historyDaysBack: null, budgets: null, recurringPayments: null }
 
 export const EVERY_HINT: AppHint[] = ['WELCOME', 'OPERATIONS', 'REPORTS', 'MORE', 'OPERATION_FORM', 'GROUP', 'MANUAL_ENTRY']
 
@@ -18,6 +18,7 @@ export const me = (overrides: Partial<Me> = {}): Me => ({
   activeGroupId: PERSONAL_GROUP_ID,
   seenHints: EVERY_HINT,
   mutedDigests: [],
+  recurringHeadsUp: true,
   subscription: {
     tier: 'FREE',
     expiresAt: null,

@@ -69,6 +69,8 @@ export const SearchIcon = () => <Icon size={18}><circle cx="11" cy="11" r="7" />
 
 export const CloseIcon = () => <Icon size={16} strokeWidth={2.2}><path d="M6 6l12 12M18 6L6 18" /></Icon>
 
+export const RepeatIcon = () => <Icon size={18}><path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3" /></Icon>
+
 export const PhoneIcon = () => <Icon size={18}><rect x="7" y="2" width="10" height="20" rx="2" /><path d="M11 18h2" /></Icon>
 
 export const ArrowDownIcon = () => <Icon size={28} strokeWidth={2.2}><path d="M12 4v16M5 13l7 7 7-7" /></Icon>

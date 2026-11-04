@@ -26,6 +26,7 @@ data class UserInfoEntity(
     val seenHints: Set<AppHint> = emptySet(),
     val mutedDigests: Set<DigestKind> = emptySet(),
     val groupNotices: Map<String, GroupNoticeLevel> = emptyMap(),
+    val recurringHeadsUp: Boolean = true,
     val subscriptionTier: SubscriptionTier = SubscriptionTier.FREE,
     val subscriptionExpiresAt: LocalDateTime? = null,
     val auditInfo: AuditInfo = AuditInfo()

@@ -24,6 +24,7 @@ class MeResponseFactory(
         activeGroupId = user.activeGroupId,
         seenHints = user.seenHints,
         mutedDigests = user.mutedDigests,
+        recurringHeadsUp = user.recurringHeadsUp,
         subscription = subscriptionOf(user),
     )
 
@@ -47,5 +48,6 @@ class MeResponseFactory(
         activeNotifications = subscriptionLimitsService.maxActiveNotifications(paid),
         historyDaysBack = subscriptionLimitsService.maxHistoryDaysBack(paid),
         budgets = subscriptionLimitsService.maxBudgets(paid),
+        recurringPayments = subscriptionLimitsService.maxRecurringPayments(paid),
     )
 }

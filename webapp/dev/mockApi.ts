@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Plugin } from 'vite'
 import { AUTH_SCHEME } from '../src/api/auth.ts'
-import type { AppHint, Budget, CategoryRule, DigestKind, GroupNoticeLevel, VoiceResult, AnalyticsReport, ApiErrorBody, ApiErrorCode, Balance, Category, CategoryReport, ComparisonReport, Currency, Group, Invite, Limits, Me, Member, MembersReport, MonthSummary, Operation, OperationsPage, Reminder, ReminderInput, SubscriptionTier } from '../src/api/types.ts'
+import type { AppHint, Budget, CategoryRule, DigestKind, GroupNoticeLevel, RecurringList, RecurringPayment, VoiceResult, AnalyticsReport, ApiErrorBody, ApiErrorCode, Balance, Category, CategoryReport, ComparisonReport, Currency, Group, Invite, Limits, Me, Member, MembersReport, MonthSummary, Operation, OperationsPage, Reminder, ReminderInput, SubscriptionTier } from '../src/api/types.ts'
 
 const API_PREFIX = '/api/v1'
 const SCENARIO_PARAM = 'mock'
@@ -14,7 +14,7 @@ const PERSONAL_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d0'
 const FAMILY_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d1'
 const PREMIUM_EXPIRES_AT = '2026-12-31T00:00:00Z'
 const NO_CONTENT_STATUS = 204
-const GROUP_ROUTE = /^\/groups\/([0-9a-f]{24})(?:\/(balance|summary|operations|activate|categories|category-rules|notices|tags|budgets|members|invite|initial-balance|voice|reports\/[a-z]+))?(?:\/([^/]+))?(?:\/(limit))?$/
+const GROUP_ROUTE = /^\/groups\/([0-9a-f]{24})(?:\/(balance|summary|operations|activate|categories|category-rules|notices|tags|recurring|budgets|members|invite|initial-balance|voice|reports\/[a-z]+))?(?:\/([^/]+))?(?:\/(limit))?$/
 const REMINDER_ROUTE = /^\/notifications(?:\/([^/]+))?$/
 const GROUP_ID_PREFIX = '6650a1b2c3d4e5f6a7b8'
 const GROUP_ID_DIGITS = 4
@@ -29,15 +29,15 @@ const FREE_HISTORY_DAYS = 30
 const DEFAULT_PAGE_SIZE = 20
 const FILLER_OPERATIONS = 26
 
-type Body = string[] | Budget[] | CategoryRule[] | Me | Group | Group[] | Balance | MonthSummary | Operation | OperationsPage | Category | Category[] | AnalyticsReport | ComparisonReport | MembersReport | CategoryReport | Member[] | Invite | Reminder | Reminder[] | VoiceResult | ApiErrorBody | null
+type Body = string[] | RecurringList | RecurringPayment | Budget[] | CategoryRule[] | Me | Group | Group[] | Balance | MonthSummary | Operation | OperationsPage | Category | Category[] | AnalyticsReport | ComparisonReport | MembersReport | CategoryReport | Member[] | Invite | Reminder | Reminder[] | VoiceResult | ApiErrorBody | null
 type MockResponse = { status: number; body: Body; delayMs?: number }
 
 const ok = (body: Body, delayMs?: number): MockResponse => ({ status: 200, body, delayMs })
 
-const FREE_LIMITS: Limits = { aiRequestsPerDay: 10, categoriesPerType: 10, ownedSharedGroups: 3, activeNotifications: 3, historyDaysBack: FREE_HISTORY_DAYS, budgets: 3 }
-const PAID_LIMITS: Limits = { aiRequestsPerDay: 100, categoriesPerType: 1000, ownedSharedGroups: null, activeNotifications: null, historyDaysBack: null, budgets: null }
+const FREE_LIMITS: Limits = { aiRequestsPerDay: 10, categoriesPerType: 10, ownedSharedGroups: 3, activeNotifications: 3, historyDaysBack: FREE_HISTORY_DAYS, budgets: 3, recurringPayments: 3 }
+const PAID_LIMITS: Limits = { aiRequestsPerDay: 100, categoriesPerType: 1000, ownedSharedGroups: null, activeNotifications: null, historyDaysBack: null, budgets: null, recurringPayments: null }
 
-const profile = { language: 'ru', timezone: null as string | null, seenHints: [] as AppHint[], mutedDigests: [] as DigestKind[] }
+const profile = { language: 'ru', timezone: null as string | null, seenHints: [] as AppHint[], mutedDigests: [] as DigestKind[], recurringHeadsUp: true }
 
 const me = (activeGroupId: string | null, tier: SubscriptionTier): Me => ({
   userId: 1,
@@ -48,6 +48,7 @@ const me = (activeGroupId: string | null, tier: SubscriptionTier): Me => ({
   activeGroupId,
   seenHints: profile.seenHints,
   mutedDigests: profile.mutedDigests,
+  recurringHeadsUp: profile.recurringHeadsUp,
   subscription: {
     tier,
     expiresAt: tier === 'PAID' ? PREMIUM_EXPIRES_AT : null,
@@ -419,6 +420,7 @@ function groupRoute(path: string, query: URLSearchParams, scenario: string, meth
   if (resource === 'categories' && itemId && action === 'limit') return setLimit(groupId, decodeURIComponent(itemId), body, scenario)
   if (resource === 'budgets') return ok(budgetsOf(groupId))
   if (resource === 'category-rules') return categoryRulesRoute(groupId, method, itemId)
+  if (resource === 'recurring') return recurringRoute(groupId, method, itemId, body)
   if (resource === 'tags') return ok(['отпуск', 'ремонт', 'подарки'])
   if (resource === 'notices') return ok(replaceGroup(groupId, { noticeLevel: (JSON.parse(body) as { level: GroupNoticeLevel }).level }))
   if (resource === 'operations' && method !== 'GET') return mutateOperation(groupId, method, itemId, body)
@@ -446,6 +448,39 @@ function groupRoute(path: string, query: URLSearchParams, scenario: string, meth
     default:
       return empty ? ok({ items: [], page: 0, size: DEFAULT_PAGE_SIZE, totalItems: 0 }) : operationsResponse(groupId, query, scenario)
   }
+}
+
+let recurringPayments: RecurringPayment[] = [
+  { id: 'rec-1', type: 'EXPENSE', amount: '3500', categoryId: 'Развлечения', categoryName: 'Развлечения', categoryIcon: '🎬', description: 'Netflix',
+    unit: 'MONTH', interval: 1, startDate: daysAgo(20), endDate: null, nextDate: daysAgo(-10), mode: 'AUTO', active: true, monthlyAmount: '3500.00' },
+  { id: 'rec-2', type: 'INCOME', amount: '450000', categoryId: 'Зарплата', categoryName: 'Зарплата', categoryIcon: '💰', description: null,
+    unit: 'MONTH', interval: 1, startDate: daysAgo(3), endDate: null, nextDate: daysAgo(-27), mode: 'REMIND', active: true, monthlyAmount: '450000.00' },
+  { id: 'rec-3', type: 'EXPENSE', amount: '24000', categoryId: 'Развлечения', categoryName: 'Развлечения', categoryIcon: '🎬', description: 'Яндекс Плюс',
+    unit: 'YEAR', interval: 1, startDate: daysAgo(100), endDate: null, nextDate: daysAgo(-265), mode: 'AUTO', active: false, monthlyAmount: '2000.00' },
+]
+
+function recurringRoute(groupId: string, method: string, paymentId: string | undefined, body: string): MockResponse {
+  if (method === 'DELETE') {
+    recurringPayments = recurringPayments.filter((payment) => payment.id !== paymentId)
+    return { status: NO_CONTENT_STATUS, body: null }
+  }
+  if (method === 'PATCH' && paymentId) {
+    recurringPayments = recurringPayments.map((payment) => (payment.id === paymentId ? { ...payment, active: (JSON.parse(body) as { active: boolean }).active } : payment))
+    return ok(recurringPayments.find((payment) => payment.id === paymentId) ?? null)
+  }
+  if (method === 'POST' || method === 'PUT') {
+    const input = JSON.parse(body) as Omit<RecurringPayment, 'id' | 'categoryName' | 'categoryIcon' | 'nextDate' | 'active' | 'monthlyAmount'>
+    const category = categoriesOf(groupId).find((candidate) => candidate.id === input.categoryId)
+    const payment: RecurringPayment = {
+      ...input, id: paymentId ?? `rec-${recurringPayments.length + 1}`, categoryName: category?.name ?? '', categoryIcon: category?.icon ?? '📌',
+      nextDate: input.startDate, active: true, monthlyAmount: input.amount,
+    }
+    recurringPayments = paymentId ? recurringPayments.map((existing) => (existing.id === paymentId ? payment : existing)) : [...recurringPayments, payment]
+    return ok(payment)
+  }
+  const active = recurringPayments.filter((payment) => payment.active)
+  const monthly = (type: RecurringPayment['type']) => String(active.filter((payment) => payment.type === type).reduce((total, payment) => total + Number(payment.monthlyAmount), 0))
+  return ok({ items: recurringPayments, monthlyExpense: monthly('EXPENSE'), monthlyIncome: monthly('INCOME') })
 }
 
 const forgottenRules = new Set<string>()

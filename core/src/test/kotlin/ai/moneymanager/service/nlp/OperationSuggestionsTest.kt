@@ -3,6 +3,8 @@ package ai.moneymanager.service.nlp
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryRule
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.Recurrence
+import ai.moneymanager.domain.model.RecurrenceUnit
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.domain.model.nlp.OperationSuggestion
 import org.assertj.core.api.Assertions.assertThat
@@ -62,6 +64,14 @@ class OperationSuggestionsTest {
         val suggestion = suggestOperation(expense(category = "такси", description = "Магнум"), categories, TODAY, rules)
 
         assertThat((suggestion as OperationSuggestion.Ready).category).isEqualTo(taxi)
+    }
+
+    @Test
+    fun `reads how often a payment repeats`() {
+        assertThat(repeatOf(BotCommand.AddExpense(3500.0, "Подписки", "Netflix", null, null, "month", null))).isEqualTo(Recurrence(RecurrenceUnit.MONTH))
+        assertThat(repeatOf(BotCommand.AddExpense(9000.0, "Связь", null, null, null, "MONTH", 3.0))).isEqualTo(Recurrence(RecurrenceUnit.MONTH, 3))
+        assertThat(repeatOf(expense())).isNull()
+        assertThat(repeatOf(BotCommand.AddExpense(1.0, null, null, null, null, "fortnight", null))).isNull()
     }
 
     private fun expense(amount: Double = 2000.0, category: String? = "Такси", icon: String? = null, date: String? = null, description: String? = null) =

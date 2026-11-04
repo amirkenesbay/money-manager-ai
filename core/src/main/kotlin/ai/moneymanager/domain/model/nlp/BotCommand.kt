@@ -14,7 +14,9 @@ sealed class BotCommand {
         val category: String?,
         val description: String?,
         val suggestedCategoryIcon: String?,
-        val operationDate: String?
+        val operationDate: String?,
+        val repeatUnit: String? = null,
+        val repeatInterval: Double? = null,
     ) : BotCommand()
 
     data class AddIncome(
@@ -22,7 +24,9 @@ sealed class BotCommand {
         val category: String?,
         val description: String?,
         val suggestedCategoryIcon: String?,
-        val operationDate: String?
+        val operationDate: String?,
+        val repeatUnit: String? = null,
+        val repeatInterval: Double? = null,
     ) : BotCommand()
 
     data class OutOfContext(

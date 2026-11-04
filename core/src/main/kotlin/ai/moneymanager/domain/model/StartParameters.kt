@@ -7,6 +7,8 @@ object StartParameters {
     const val OPEN_FINANCE = "finance"
     const val JOIN_PREFIX = "join_"
     const val DIGEST_MUTE_PREFIX = "digest_off_"
+    const val UNDO_OPERATION_PREFIX = "undo_"
+    const val RECORD_RECURRING_PREFIX = "pay_"
 }
 
 fun buildInviteLink(inviteToken: String): String =

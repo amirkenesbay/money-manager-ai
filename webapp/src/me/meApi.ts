@@ -3,7 +3,7 @@ import type { AppHint, DigestKind, Me } from '../api/types'
 
 export const fetchMe = (signal?: AbortSignal): Promise<Me> => apiRequest<Me>('/me', {}, signal)
 
-export const updateMe = (changes: { language?: string; timezone?: string }): Promise<Me> =>
+export const updateMe = (changes: { language?: string; timezone?: string; recurringHeadsUp?: boolean }): Promise<Me> =>
   apiRequest<Me>('/me', { method: 'PATCH', body: JSON.stringify(changes) })
 
 export const markHintSeen = (hint: AppHint): Promise<Me> =>

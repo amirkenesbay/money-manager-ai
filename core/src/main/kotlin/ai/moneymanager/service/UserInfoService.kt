@@ -86,6 +86,11 @@ class UserInfoService(
         return mapEntity(userRepository.save(entity.copy(groupNotices = entity.groupNotices + (groupId.toHexString() to level))))
     }
 
+    fun setRecurringHeadsUp(telegramUserId: Long, enabled: Boolean): UserInfo? {
+        val entity = userRepository.findFirstByTelegramUserIdOrderByIdAsc(telegramUserId) ?: return null
+        return mapEntity(userRepository.save(entity.copy(recurringHeadsUp = enabled)))
+    }
+
     fun digestRecipients(): List<UserInfo> =
         userRepository.findByActiveGroupIdIsNotNullAndTelegramUserIdIsNotNull().map { mapEntity(it) }
 
@@ -133,6 +138,7 @@ class UserInfoService(
             seenHints = it.seenHints,
             mutedDigests = it.mutedDigests,
             groupNotices = it.groupNotices,
+            recurringHeadsUp = it.recurringHeadsUp,
             subscriptionTier = it.subscriptionTier,
             subscriptionExpiresAt = it.subscriptionExpiresAt
         )

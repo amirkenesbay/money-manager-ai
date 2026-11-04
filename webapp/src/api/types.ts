@@ -7,6 +7,7 @@ export type ApiErrorCode =
   | 'CATEGORY_DUPLICATE'
   | 'CATEGORY_LIMIT_REACHED'
   | 'BUDGET_LIMIT_REACHED'
+  | 'RECURRING_LIMIT_REACHED'
   | 'GROUP_DUPLICATE'
   | 'GROUP_LIMIT_REACHED'
   | 'NOTIFICATION_LIMIT_REACHED'
@@ -30,6 +31,7 @@ export interface Limits {
   activeNotifications: number | null
   historyDaysBack: number | null
   budgets: number | null
+  recurringPayments: number | null
 }
 
 export interface Price {
@@ -60,6 +62,7 @@ export interface Me {
   activeGroupId: string | null
   seenHints: AppHint[]
   mutedDigests: DigestKind[]
+  recurringHeadsUp: boolean
   subscription: Subscription
 }
 
@@ -301,6 +304,7 @@ export interface VoiceOperation {
   isNewCategory: boolean
   operationDate: string
   description: string | null
+  repeat?: Repeat | null
 }
 
 export interface VoiceResult {
@@ -313,4 +317,35 @@ export interface CategoryRule {
   categoryId: string
   categoryName: string
   categoryIcon: string
+}
+
+export type RecurrenceUnit = 'DAY' | 'WEEK' | 'MONTH' | 'YEAR'
+
+export type RecurringMode = 'AUTO' | 'REMIND'
+
+export interface Repeat {
+  unit: RecurrenceUnit
+  interval: number
+}
+
+export interface RecurringPayment extends Repeat {
+  id: string
+  type: CategoryType
+  amount: string
+  categoryId: string
+  categoryName: string
+  categoryIcon: string
+  description: string | null
+  startDate: string
+  endDate: string | null
+  nextDate: string
+  mode: RecurringMode
+  active: boolean
+  monthlyAmount: string
+}
+
+export interface RecurringList {
+  items: RecurringPayment[]
+  monthlyExpense: string
+  monthlyIncome: string
 }

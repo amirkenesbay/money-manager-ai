@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { serverMessage } from '../api/client'
-import type { Category, CategoryType, Group, Operation } from '../api/types'
+import type { Category, CategoryType, Group, Operation, RecurrenceUnit } from '../api/types'
 import { useCategories } from '../categories/useCategories'
 import { currencySymbol, formatDayLabel, formatMoney, toIsoDate } from '../format'
 import { createOperation, type OperationInput, replaceOperation } from '../operations/operationsApi'
@@ -19,6 +19,9 @@ import { CalendarSheet } from './CalendarSheet'
 import { DeleteSheet } from './DeleteSheet'
 import './operation.css'
 import { MAX_COMMENT_LENGTH } from './limits'
+import { CategoryTiles } from './CategoryTiles'
+import { repeatChoiceLabel, REPEAT_CHOICES } from '../recurring/recurrence'
+import { startRepeating } from '../recurring/repeatOperation'
 import { TagsField } from './TagsField'
 import { tagsOf, withoutTags, withTags } from '../operations/tags'
 import { Hint } from '../onboarding/Hint'
@@ -28,7 +31,7 @@ const OPERATION_TYPES: CategoryType[] = ['EXPENSE', 'INCOME']
 const QUICK_DAYS_AGO = [0, 1, 2]
 const CATEGORY_SKELETON_ROWS = 2
 
-export type SaveResult = { operation: Operation; created: boolean }
+export type SaveResult = { operation: Operation; created: boolean; note?: string }
 
 export function OperationForm({ group, language, operation, initialType = 'EXPENSE', onBack, onSaved, onDeleted }: {
   group: Group
@@ -69,6 +72,7 @@ function FormFields({ group, language, operation, initialType, categories, onSav
   const [date, setDate] = useState(operation?.operationDate ?? today)
   const [comment, setComment] = useState(withoutTags(operation?.description ?? null))
   const [tags, setTags] = useState(tagsOf(operation?.description ?? null))
+  const [repeat, setRepeat] = useState<RecurrenceUnit | null>(null)
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -98,7 +102,8 @@ function FormFields({ group, language, operation, initialType, categories, onSav
     try {
       const saved = operation ? await replaceOperation(group.id, operation.id, input) : await createOperation(group.id, input)
       notifyOutcome('success')
-      onSaved({ operation: saved, created: operation === null })
+      const note = repeat === null ? undefined : await startRepeating(group.id, saved, { unit: repeat, interval: 1 })
+      onSaved({ operation: saved, created: operation === null, note })
     } catch (error) {
       notifyOutcome('error')
       setSaveError(serverMessage(error) ?? strings.saveFailed)
@@ -129,18 +134,7 @@ function FormFields({ group, language, operation, initialType, categories, onSav
 
       <fieldset className="field-group">
         <legend className="field-label">{strings.categoryLabel}</legend>
-        {typeCategories.length === 0
-          ? <p className="hint-box caption">{strings.noCategoriesOfType}</p>
-          : (
-            <div className="category-tiles">
-              {typeCategories.map((category) => (
-                <button key={category.id} type="button" className="category-tile" aria-pressed={category.id === selectedCategory?.id} onClick={() => setCategoryId(category.id)}>
-                  <span className="category-tile-icon" aria-hidden="true">{category.icon}</span>
-                  <span className="category-tile-name">{category.name}</span>
-                </button>
-              ))}
-            </div>
-          )}
+        <CategoryTiles categories={typeCategories} selectedId={selectedCategory?.id ?? null} onSelect={setCategoryId} />
         {type === 'EXPENSE' && selectedCategory && (
           <BudgetNote groupId={group.id} category={selectedCategory} amount={amount} editing={operation} currency={group.currency} language={language} />
         )}
@@ -171,6 +165,12 @@ function FormFields({ group, language, operation, initialType, categories, onSav
         onChange={(event) => setComment(event.target.value)}
       />
       <TagsField groupId={group.id} tags={tags} onChange={setTags} />
+      {!operation && (
+        <fieldset className="field-group">
+          <legend className="field-label">{strings.repeatLabel}</legend>
+          <Segmented variant="choices" label={strings.repeatLabel} options={REPEAT_CHOICES} value={repeat} optionKey={(option) => option ?? 'none'} optionLabel={repeatChoiceLabel} onChange={setRepeat} />
+        </fieldset>
+      )}
 
       {operation && (
         <button type="button" className="link-button danger-link" onClick={() => setDeleteOpen(true)}>{strings.deleteOperation}</button>

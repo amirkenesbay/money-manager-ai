@@ -34,11 +34,12 @@ class MeController(
     @PatchMapping
     fun update(user: UserInfo, @RequestBody request: UpdateMeRequest): MeResponse {
         val userId = checkNotNull(user.telegramUserId)
-        if (request.language == null && request.timezone == null) throw ApiException(ApiErrorCode.BAD_REQUEST)
+        if (request.language == null && request.timezone == null && request.recurringHeadsUp == null) throw ApiException(ApiErrorCode.BAD_REQUEST)
         request.language?.let { requireSupported(it) }
         request.timezone?.let { requireZone(it) }
         val withLanguage = request.language?.let { found(onboardingService.selectLanguage(userId, it)) } ?: user
-        val updated = request.timezone?.let { found(userInfoService.updateTimezone(userId, it)) } ?: withLanguage
+        val withTimezone = request.timezone?.let { found(userInfoService.updateTimezone(userId, it)) } ?: withLanguage
+        val updated = request.recurringHeadsUp?.let { found(userInfoService.setRecurringHeadsUp(userId, it)) } ?: withTimezone
         return meResponseFactory.create(updated)
     }
 

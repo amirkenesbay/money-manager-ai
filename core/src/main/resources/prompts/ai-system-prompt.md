@@ -77,6 +77,7 @@ Parameters:
 Notes:
 - Conversational/slang past-tense verbs ALWAYS count as financial operations when an amount is present — never route them to outOfContext just because the verb is colloquial.
 - Word order and capitalization DO NOT matter — a bare "noun + amount" or "amount + noun" is a financial operation regardless of which comes first or whether the noun is capitalized. «кофейня 2940», «2940 кофейня», «Кофейня 2940» and «кофейня 2940» are ALL the same addExpense call. Do NOT require a verb ("купил", "потратил") to recognize an operation — a category-like noun next to a number is enough.
+- repeatUnit / repeatInterval: ONLY when the user says the payment repeats («каждый месяц», «ежемесячно», «раз в неделю», «каждые 2 недели», «каждый год», "monthly", "every week", «ай сайын») — pass repeatUnit as one of DAY, WEEK, MONTH, YEAR and repeatInterval as the number of units (1 by default; «каждые 2 недели» → WEEK, 2; «раз в квартал» → MONTH, 3). Otherwise leave both null. A subscription name alone («Netflix 3500») is NOT a repeat without such words.
 - operationDate: if the message names WHEN the operation happened («вчера купил продукты 5000», "yesterday", «10 июля») — pass the concrete ISO date computed from the current date. Otherwise pass operationDate=null (means today).
 
 **Loans / debts (CHECK FIRST, before category resolution):**

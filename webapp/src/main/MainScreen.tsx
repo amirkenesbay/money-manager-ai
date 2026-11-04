@@ -17,6 +17,7 @@ import { deleteOperation } from '../operations/operationsApi'
 import { OperationsScreen } from '../operations/OperationsScreen'
 import { PremiumScreen } from '../premium/PremiumScreen'
 import { RemindersScreen } from '../reminders/RemindersScreen'
+import { RecurringScreen } from '../recurring/RecurringScreen'
 import { ReportsScreen } from '../reports/ReportsScreen'
 import { VoiceFlow } from '../voice/VoiceFlow'
 import { type LaunchScreen, launchMonth, launchScreen } from './launchScreen'
@@ -166,18 +167,18 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
     }
   }
 
-  const recorded = (operations: Operation[]) => {
+  const recorded = (operations: Operation[], note?: string) => {
     goBack(null, () => {
       refresh()
       setTab('home')
     })
-    const detail = operations.length === 1 ? summary(operations[0]) : strings.savedCount(operations.length)
+    const detail = note ?? (operations.length === 1 ? summary(operations[0]) : strings.savedCount(operations.length))
     toast.show({ title: strings.savedToast, detail, celebrate: true, action: { label: strings.undo, onClick: () => void undo(operations) } })
   }
 
-  const saved = ({ operation, created }: SaveResult) => {
+  const saved = ({ operation, created, note }: SaveResult) => {
     if (created) {
-      recorded([operation])
+      recorded([operation], note)
       return
     }
     goBack({ kind: 'detail', operation }, refresh)
@@ -288,6 +289,8 @@ function SectionScreen({ section, workspace, onBack }: { section: Section; works
       return <GroupsScreen me={me} groups={groups} actions={actions} notify={notify} onBack={onBack} />
     case 'reminders':
       return <RemindersScreen me={me} onMeChanged={onMeChanged} notify={notify} onBack={onBack} />
+    case 'recurring':
+      return <RecurringScreen me={me} group={group} onMeChanged={onMeChanged} notify={notify} onBack={onBack} />
     default:
       return <PremiumScreen me={me} onBack={onBack} />
   }

@@ -17,6 +17,7 @@ data class MeResponse(
     val activeGroupId: ObjectId?,
     val seenHints: Set<AppHint>,
     val mutedDigests: Set<DigestKind>,
+    val recurringHeadsUp: Boolean,
     val subscription: SubscriptionResponse,
 )
 
@@ -42,6 +43,7 @@ data class LimitsResponse(
     val activeNotifications: Int?,
     val historyDaysBack: Int?,
     val budgets: Int?,
+    val recurringPayments: Int?,
 )
 
 data class DigestSettingRequest(
@@ -54,6 +56,7 @@ data class MarkHintRequest(
 )
 
 data class UpdateMeRequest(
-    val language: String?,
-    val timezone: String?,
+    val language: String? = null,
+    val timezone: String? = null,
+    val recurringHeadsUp: Boolean? = null,
 )

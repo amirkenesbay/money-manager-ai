@@ -23,6 +23,8 @@ class SubscriptionLimitsService(
     private val freeMaxActiveNotifications: Int,
     @Value("\${budget.max-free:3}")
     private val freeMaxBudgets: Int,
+    @Value("\${recurring.max-free:3}")
+    private val freeMaxRecurringPayments: Int,
     private val clock: Clock
 ) {
     fun maxAiRequestsPerDay(hasPaidSubscription: Boolean): Int =
@@ -48,4 +50,7 @@ class SubscriptionLimitsService(
 
     fun maxBudgets(hasPaidSubscription: Boolean): Int? =
         if (hasPaidSubscription) null else freeMaxBudgets
+
+    fun maxRecurringPayments(hasPaidSubscription: Boolean): Int? =
+        if (hasPaidSubscription) null else freeMaxRecurringPayments
 }

@@ -3,7 +3,6 @@ package ai.moneymanager.chat.telegram
 import ai.moneymanager.chat.reply.digest.DigestFormatter
 import ai.moneymanager.domain.model.Digest
 import ai.moneymanager.domain.model.DigestKind
-import ai.moneymanager.domain.model.StartParameters
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.domain.model.dueDigestPeriod
 import ai.moneymanager.service.DigestService
@@ -22,21 +21,10 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import java.time.Clock
 import java.time.LocalDateTime
 import java.time.YearMonth
-import java.time.ZoneId
-import java.time.ZoneOffset
 
 private const val DIGEST_CHECK_INTERVAL_MS = 300_000L
 private const val REPORT_BUTTON_KEY = "mini_app.button.report"
 private const val OPEN_BUTTON_KEY = "mini_app.button.open"
-private const val START_LINK_TEMPLATE = "https://t.me/%s?start=%s"
-private const val START_COMMAND = "/start "
-
-fun digestMuteParameter(kind: DigestKind): String = StartParameters.DIGEST_MUTE_PREFIX + kind.name.lowercase()
-
-fun mutedDigestKind(messageText: String?): DigestKind? {
-    val parameter = messageText?.removePrefix(START_COMMAND)?.trim() ?: return null
-    return DigestKind.entries.firstOrNull { digestMuteParameter(it) == parameter }
-}
 
 @Service
 class DigestNotifier(
@@ -69,7 +57,7 @@ class DigestNotifier(
     private fun sendDueDigests(user: UserInfo) {
         val telegramUserId = checkNotNull(user.telegramUserId)
         val group = groupService.getGroup(checkNotNull(user.activeGroupId)) ?: return
-        val now = LocalDateTime.now(clock.withZone(zoneOf(user)))
+        val now = LocalDateTime.now(clock.withZone(user.zone))
         (DigestKind.entries - user.mutedDigests).forEach { kind ->
             val period = dueDigestPeriod(kind, now, group.monthStartDay) ?: return@forEach
             if (digestService.wasSent(telegramUserId, period)) return@forEach
@@ -87,7 +75,7 @@ class DigestNotifier(
     private fun keyboard(digest: Digest, language: String?): InlineKeyboardMarkup {
         val kind = digest.period.kind
         val mute = InlineKeyboardButton(digestFormatter.muteButton(kind, language)).apply {
-            url = START_LINK_TEMPLATE.format(botUsername, digestMuteParameter(kind))
+            url = startLink(botUsername, digestMuteParameter(kind))
         }
         val open = if (miniAppGateway.enabled) openButton(digest, language) else null
         return InlineKeyboardMarkup(listOfNotNull(open?.let { listOf(it) }, listOf(mute)))
@@ -99,7 +87,4 @@ class DigestNotifier(
         } else {
             miniAppGateway.button(OPEN_BUTTON_KEY, language, MiniAppScreen.HOME)
         }
-
-    private fun zoneOf(user: UserInfo): ZoneId =
-        runCatching { user.timezone?.let { ZoneId.of(it) } }.getOrNull() ?: ZoneOffset.UTC
 }

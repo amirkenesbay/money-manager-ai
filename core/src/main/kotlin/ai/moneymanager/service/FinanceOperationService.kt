@@ -158,6 +158,12 @@ class FinanceOperationService(
         it.copy(categoryId = categoryId, categoryName = categoryName, categoryIcon = categoryIcon)
     }
 
+    fun deleteOwnOperation(actorId: Long, operationId: ObjectId): FinanceOperationEntity? {
+        val operation = financeOperationRepository.findById(operationId).orElse(null) ?: return null
+        if (operation.creatorId != actorId) return null
+        return operation.takeIf { deleteOperation(actorId, it.groupId, operationId) }
+    }
+
     fun deleteOperation(actorId: Long, groupId: ObjectId, operationId: ObjectId): Boolean {
         val existing = getOperation(groupId, operationId) ?: return false
         financeOperationRepository.delete(existing)

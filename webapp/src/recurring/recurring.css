@@ -1,0 +1,18 @@
+.recurring-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.875rem;
+  margin: 0;
+  padding: 0 0.25rem;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.reminder-open .amount {
+  flex-shrink: 0;
+  font-size: var(--text-md);
+}
+
+.recurring-row .row-main > .caption {
+  white-space: normal;
+}

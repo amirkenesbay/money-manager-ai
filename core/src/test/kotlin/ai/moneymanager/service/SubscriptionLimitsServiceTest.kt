@@ -19,6 +19,7 @@ class SubscriptionLimitsServiceTest {
         freeMaxOwnedSharedGroups = 3,
         freeMaxActiveNotifications = 3,
         freeMaxBudgets = 3,
+        freeMaxRecurringPayments = 3,
         clock = Clock.fixed(TODAY.atStartOfDay(ZoneOffset.UTC).toInstant(), ZoneOffset.UTC),
     )
     private val earliestFreeDate = TODAY.minusDays(FREE_HISTORY_DAYS.toLong())

@@ -62,8 +62,8 @@ class CommandParserService(
 
         val createGroupMethod = botFunctionMethod(GeminiFunction.CREATE_GROUP, String::class.java)
         val deleteGroupMethod = botFunctionMethod(GeminiFunction.DELETE_GROUP, String::class.java)
-        val addExpenseMethod = botFunctionMethod(GeminiFunction.ADD_EXPENSE, Double::class.java, String::class.java, String::class.java, String::class.java, String::class.java)
-        val addIncomeMethod = botFunctionMethod(GeminiFunction.ADD_INCOME, Double::class.java, String::class.java, String::class.java, String::class.java, String::class.java)
+        val addExpenseMethod = botFunctionMethod(GeminiFunction.ADD_EXPENSE, Double::class.java, String::class.java, String::class.java, String::class.java, String::class.java, String::class.java, Double::class.javaObjectType)
+        val addIncomeMethod = botFunctionMethod(GeminiFunction.ADD_INCOME, Double::class.java, String::class.java, String::class.java, String::class.java, String::class.java, String::class.java, Double::class.javaObjectType)
         val outOfContextMethod = botFunctionMethod(GeminiFunction.OUT_OF_CONTEXT, String::class.java)
 
         val createCategoryMethod = botFunctionMethod(GeminiFunction.CREATE_CATEGORY, String::class.java, String::class.java, String::class.java)
@@ -228,7 +228,7 @@ class CommandParserService(
                     val dto = argsMapper.map<AddExpenseArgs>(args)
                     BotCommand.AddExpense(
                         dto.amount, dto.category, dto.description,
-                        dto.suggestedCategoryIcon, dto.operationDate.normalizedOrNull()
+                        dto.suggestedCategoryIcon, dto.operationDate.normalizedOrNull(), dto.repeatUnit, dto.repeatInterval,
                     )
                 }
 
@@ -236,7 +236,7 @@ class CommandParserService(
                     val dto = argsMapper.map<AddIncomeArgs>(args)
                     BotCommand.AddIncome(
                         dto.amount, dto.category, dto.description,
-                        dto.suggestedCategoryIcon, dto.operationDate.normalizedOrNull()
+                        dto.suggestedCategoryIcon, dto.operationDate.normalizedOrNull(), dto.repeatUnit, dto.repeatInterval,
                     )
                 }
 

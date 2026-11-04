@@ -1,6 +1,7 @@
 package ai.moneymanager.web.voice
 
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.Recurrence
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.domain.model.nlp.OperationSuggestion
@@ -11,6 +12,7 @@ import ai.moneymanager.service.CategoryRuleService
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.nlp.CommandParserService
 import ai.moneymanager.service.nlp.WAV_MIME_TYPE
+import ai.moneymanager.service.nlp.repeatOf
 import ai.moneymanager.service.nlp.suggestOperation
 import ai.moneymanager.web.API_V1_PREFIX
 import ai.moneymanager.web.access.GroupAccessGuard
@@ -63,7 +65,7 @@ class VoiceController(
         requireParsed(commands)
         val today = userCalendar.today(user)
         val operations = commands
-            .mapNotNull { suggestOperation(it, categories, today, rules)?.toResponse() }
+            .mapNotNull { command -> suggestOperation(command, categories, today, rules)?.toResponse()?.withRepeat(repeatOf(command)) }
             .take(MAX_VOICE_OPERATIONS)
         return VoiceResponse(operations)
     }
@@ -104,6 +106,9 @@ class VoiceController(
         is OperationSuggestion.CategoryMissing -> voiceOperation(type, amount, operationDate, description)
         OperationSuggestion.AmountNotPositive -> null
     }
+
+    private fun VoiceOperationResponse.withRepeat(repeat: Recurrence?) =
+        repeat?.let { copy(repeat = VoiceRepeatResponse(it.unit, it.interval)) } ?: this
 
     private fun voiceOperation(
         type: CategoryType,

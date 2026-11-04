@@ -2,6 +2,8 @@ package ai.moneymanager.domain.model
 
 import org.bson.types.ObjectId
 import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
 
 data class UserInfo(
     val id: ObjectId? = null,
@@ -19,6 +21,7 @@ data class UserInfo(
     val seenHints: Set<AppHint> = emptySet(),
     val mutedDigests: Set<DigestKind> = emptySet(),
     val groupNotices: Map<String, GroupNoticeLevel> = emptyMap(),
+    val recurringHeadsUp: Boolean = true,
     val subscriptionTier: SubscriptionTier = SubscriptionTier.FREE,
     val subscriptionExpiresAt: LocalDateTime? = null
 ) {
@@ -26,6 +29,9 @@ data class UserInfo(
         subscriptionTier == SubscriptionTier.PAID && subscriptionExpiresAt?.isAfter(now) == true
 
     fun noticeLevel(groupId: ObjectId): GroupNoticeLevel = groupNotices[groupId.toHexString()] ?: GroupNoticeLevel.ALL
+
+    val zone: ZoneId
+        get() = runCatching { timezone?.let { ZoneId.of(it) } }.getOrNull() ?: ZoneOffset.UTC
 }
 
 private const val USER_ID_LABEL = "ID"

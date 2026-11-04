@@ -5,6 +5,7 @@ import { ApiRequestError } from '../api/client'
 import { formatMoney, toIsoDate } from '../format'
 import { fetchCategories } from '../categories/categoriesApi'
 import { createOperation, fetchRecentTags, replaceOperation } from '../operations/operationsApi'
+import { createRecurring } from '../recurring/recurringApi'
 import { strings } from '../strings'
 import { category, group, operation, PERSONAL_GROUP_ID } from '../test/fixtures'
 import { asRendered } from '../test/text'
@@ -18,6 +19,7 @@ vi.mock('../operations/operationsApi', () => ({
 }))
 
 vi.mock('../categories/categoriesApi', () => ({ fetchCategories: vi.fn() }))
+vi.mock('../recurring/recurringApi', () => ({ createRecurring: vi.fn() }))
 
 const onSaved = vi.fn()
 const today = () => toIsoDate(new Date())
@@ -80,6 +82,21 @@ describe('OperationForm', () => {
     await userEvent.click(saveButton(strings.saveChanges))
 
     expect(replaceOperation).toHaveBeenCalledWith(PERSONAL_GROUP_ID, expect.any(String), expect.objectContaining({ description: 'Магнум #отпуск' }))
+  })
+
+  it('makes a new operation repeat every month', async () => {
+    const saved = operation({ id: 'op-new', amount: '3500', categoryId: 'cat-2', operationDate: today(), description: 'Netflix' })
+    vi.mocked(createOperation).mockResolvedValue(saved)
+    vi.mocked(createRecurring).mockResolvedValue({} as Awaited<ReturnType<typeof createRecurring>>)
+    renderForm()
+    await userEvent.type(await screen.findByRole('textbox', { name: strings.amountLabel }), '3500')
+    await userEvent.click(screen.getByRole('button', { name: /Такси/ }))
+    await userEvent.click(screen.getByRole('radio', { name: strings.scheduleEveryMonth }))
+
+    await userEvent.click(saveButton())
+
+    expect(createRecurring).toHaveBeenCalledWith(PERSONAL_GROUP_ID, expect.objectContaining({ unit: 'MONTH', interval: 1, startDate: today(), firstRecorded: true, mode: 'AUTO' }))
+    expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({ note: strings.repeatSavedToast(strings.scheduleEveryMonth) }))
   })
 
   it('offers only categories of the chosen type', async () => {

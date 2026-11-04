@@ -1,6 +1,7 @@
 package ai.moneymanager.web.voice
 
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.RecurrenceUnit
 import org.bson.types.ObjectId
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -18,4 +19,10 @@ data class VoiceOperationResponse(
     val isNewCategory: Boolean,
     val operationDate: LocalDate,
     val description: String?,
+    val repeat: VoiceRepeatResponse? = null,
+)
+
+data class VoiceRepeatResponse(
+    val unit: RecurrenceUnit,
+    val interval: Int,
 )
