@@ -81,6 +81,46 @@ class BudgetServiceTest {
         assertThat(claimed.map { it.second }).containsExactlyInAnyOrder(BudgetThreshold.NEAR, BudgetThreshold.OVER)
     }
 
+    @Test
+    fun `adds what was left last month to a rolling budget`() {
+        `when`(categoryService.getBudgetCategories(groupId)).thenReturn(listOf(taxi.copy(rollover = true)))
+        givenSpent(expense(18000))
+        givenSpentBefore(expense(15000))
+
+        val budget = budgetService.budgets(group).single()
+
+        assertThat(budget.carriedOver).isEqualByComparingTo("5000")
+        assertThat(budget.remaining).isEqualByComparingTo("7000")
+        assertThat(budget.percent).isEqualTo(72)
+    }
+
+    @Test
+    fun `takes last month overspending off a rolling budget`() {
+        `when`(categoryService.getBudgetCategories(groupId)).thenReturn(listOf(taxi.copy(rollover = true)))
+        givenSpent(expense(10000))
+        givenSpentBefore(expense(26000))
+
+        val budget = budgetService.budgets(group).single()
+
+        assertThat(budget.carriedOver).isEqualByComparingTo("-6000")
+        assertThat(budget.remaining).isEqualByComparingTo("4000")
+        assertThat(budget.percent).isEqualTo(71)
+    }
+
+    @Test
+    fun `treats a budget eaten up by last month as already over`() {
+        `when`(categoryService.getBudgetCategories(groupId)).thenReturn(listOf(taxi.copy(rollover = true)))
+        givenSpent(expense(1000))
+        givenSpentBefore(expense(45000))
+
+        assertThat(budgetService.budgets(group).single().percent).isEqualTo(BudgetThreshold.OVER.percent)
+    }
+
+    private fun givenSpentBefore(vararg spent: FinanceOperationEntity) {
+        `when`(operations.findByGroupIdAndOperationDateBetweenOrderByOperationDateDesc(groupId, PERIOD_START.minusMonths(1), PERIOD_START.minusDays(1)))
+            .thenReturn(spent.toList())
+    }
+
     private fun givenSpent(vararg spent: FinanceOperationEntity) {
         `when`(operations.findByGroupIdAndOperationDateBetweenOrderByOperationDateDesc(groupId, PERIOD_START, PERIOD_END)).thenReturn(spent.toList())
     }

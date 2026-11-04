@@ -139,7 +139,7 @@ class GroupActivityNotifier(
         val budget = alert.budget
         val category = formatIconPrefix(budget.category.icon) + budget.category.name
         val spent = formatAmount(budget.spent, group.currency)
-        val limit = formatAmount(budget.limit, group.currency)
+        val limit = formatAmount(budget.effectiveLimit, group.currency)
         return when (alert.threshold) {
             BudgetThreshold.NEAR -> localizationService.t(
                 BUDGET_NEAR_KEY, language, category, budget.percent, group.name, spent, limit,

@@ -1,5 +1,5 @@
 import type { Budget, Currency } from '../api/types'
-import { formatMoney } from '../format'
+import { formatMoney, formatSignedMoney } from '../format'
 import { strings } from '../strings'
 import { Meter } from '../ui/Meter'
 import { budgetColor, budgetTone } from './budgetTone'
@@ -22,6 +22,12 @@ export function BudgetRow({ budget, currency, language }: { budget: Budget; curr
         <span>{strings.budgetSpentOf(money(budget.spent), money(budget.limit))}</span>
         <span>{budget.percent}%</span>
       </span>
+      {Number(budget.carriedOver) !== 0 && <span className="budget-carried caption">{strings.budgetCarried(carried(budget, currency, language))}</span>}
     </div>
   )
+}
+
+function carried(budget: Budget, currency: Currency, language: string): string {
+  const amount = Number(budget.carriedOver)
+  return formatSignedMoney(amount > 0 ? 'INCOME' : 'EXPENSE', String(Math.abs(amount)), currency, language)
 }

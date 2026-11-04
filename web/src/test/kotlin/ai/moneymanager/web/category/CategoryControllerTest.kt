@@ -77,7 +77,7 @@ class CategoryControllerTest {
 
     @Test
     fun `puts a monthly limit on a category`() {
-        `when`(categoryService.setMonthlyLimit(groceries.id!!, BigDecimal("100000"), FREE_BUDGETS))
+        `when`(categoryService.setMonthlyLimit(groceries.id!!, BigDecimal("100000"), false, FREE_BUDGETS))
             .thenReturn(BudgetLimitResult.Updated(groceries.copy(monthlyLimit = BigDecimal("100000"))))
 
         mockMvc.perform(put("/api/v1/groups/$groupId/categories/${groceries.id}/limit").withTelegramAuth().json("""{"amount":"100000"}"""))
@@ -87,7 +87,7 @@ class CategoryControllerTest {
 
     @Test
     fun `explains the free budget limit`() {
-        `when`(categoryService.setMonthlyLimit(groceries.id!!, BigDecimal("5000"), FREE_BUDGETS)).thenReturn(BudgetLimitResult.LimitReached(FREE_BUDGETS))
+        `when`(categoryService.setMonthlyLimit(groceries.id!!, BigDecimal("5000"), false, FREE_BUDGETS)).thenReturn(BudgetLimitResult.LimitReached(FREE_BUDGETS))
 
         mockMvc.perform(put("/api/v1/groups/$groupId/categories/${groceries.id}/limit").withTelegramAuth().json("""{"amount":"5000"}"""))
             .andExpect(status().isUnprocessableContent)

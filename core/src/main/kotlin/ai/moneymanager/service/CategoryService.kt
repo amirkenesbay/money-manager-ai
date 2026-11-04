@@ -100,12 +100,12 @@ class CategoryService(
         return (updateCategory(actorId, categoryId, category.name, newIcon) as? CategoryUpdateResult.Updated)?.category
     }
 
-    fun setMonthlyLimit(categoryId: ObjectId, limit: BigDecimal?, maxBudgets: Int?): BudgetLimitResult {
+    fun setMonthlyLimit(categoryId: ObjectId, limit: BigDecimal?, rollover: Boolean, maxBudgets: Int?): BudgetLimitResult {
         val entity = categoryRepository.findById(categoryId).orElse(null) ?: return BudgetLimitResult.NotFound
         if (entity.type != CategoryType.EXPENSE) return BudgetLimitResult.NotExpense
         val othersWithLimit = categoryRepository.findByGroupIdAndMonthlyLimitIsNotNull(entity.groupId).count { it.id != categoryId }
         if (limit != null && maxBudgets != null && othersWithLimit >= maxBudgets) return BudgetLimitResult.LimitReached(maxBudgets)
-        return BudgetLimitResult.Updated(mapToModel(categoryRepository.save(entity.copy(monthlyLimit = limit))))
+        return BudgetLimitResult.Updated(mapToModel(categoryRepository.save(entity.copy(monthlyLimit = limit, rollover = rollover && limit != null))))
     }
 
     fun getBudgetCategories(groupId: ObjectId): List<Category> =
@@ -168,7 +168,8 @@ class CategoryService(
             icon = entity.icon,
             type = entity.type,
             groupId = entity.groupId,
-            monthlyLimit = entity.monthlyLimit
+            monthlyLimit = entity.monthlyLimit,
+            rollover = entity.rollover,
         )
     }
 }

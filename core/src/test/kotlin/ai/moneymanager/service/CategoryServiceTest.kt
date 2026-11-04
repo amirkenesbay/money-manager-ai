@@ -49,7 +49,7 @@ class CategoryServiceTest {
     fun `sets a monthly limit on an expense category`() {
         `when`(repository.findByGroupIdAndMonthlyLimitIsNotNull(groupId)).thenReturn(emptyList())
 
-        val result = service.setMonthlyLimit(taxi.id!!, TAXI_LIMIT, FREE_BUDGETS)
+        val result = service.setMonthlyLimit(taxi.id!!, TAXI_LIMIT, false, FREE_BUDGETS)
 
         assertThat((result as BudgetLimitResult.Updated).category.monthlyLimit).isEqualTo(TAXI_LIMIT)
     }
@@ -59,9 +59,9 @@ class CategoryServiceTest {
         val others = List(FREE_BUDGETS) { CategoryEntity(ObjectId(), "К$it", null, CategoryType.EXPENSE, groupId, BigDecimal.TEN) }
         `when`(repository.findByGroupIdAndMonthlyLimitIsNotNull(groupId)).thenReturn(others)
 
-        assertThat(service.setMonthlyLimit(taxi.id!!, TAXI_LIMIT, FREE_BUDGETS)).isEqualTo(BudgetLimitResult.LimitReached(FREE_BUDGETS))
-        assertThat(service.setMonthlyLimit(taxi.id!!, null, FREE_BUDGETS)).isInstanceOf(BudgetLimitResult.Updated::class.java)
-        assertThat(service.setMonthlyLimit(taxi.id!!, TAXI_LIMIT, null)).isInstanceOf(BudgetLimitResult.Updated::class.java)
+        assertThat(service.setMonthlyLimit(taxi.id!!, TAXI_LIMIT, false, FREE_BUDGETS)).isEqualTo(BudgetLimitResult.LimitReached(FREE_BUDGETS))
+        assertThat(service.setMonthlyLimit(taxi.id!!, null, false, FREE_BUDGETS)).isInstanceOf(BudgetLimitResult.Updated::class.java)
+        assertThat(service.setMonthlyLimit(taxi.id!!, TAXI_LIMIT, false, null)).isInstanceOf(BudgetLimitResult.Updated::class.java)
     }
 
     @Test
@@ -69,7 +69,7 @@ class CategoryServiceTest {
         val salary = CategoryEntity(ObjectId(), "Зарплата", "💰", CategoryType.INCOME, groupId)
         `when`(repository.findById(salary.id!!)).thenReturn(Optional.of(salary))
 
-        assertThat(service.setMonthlyLimit(salary.id!!, TAXI_LIMIT, FREE_BUDGETS)).isEqualTo(BudgetLimitResult.NotExpense)
+        assertThat(service.setMonthlyLimit(salary.id!!, TAXI_LIMIT, false, FREE_BUDGETS)).isEqualTo(BudgetLimitResult.NotExpense)
     }
 
     @Test

@@ -16,5 +16,6 @@ data class CategoryEntity(
     val type: CategoryType,
     val groupId: ObjectId,
     val monthlyLimit: BigDecimal? = null,
+    val rollover: Boolean = false,
     val auditInfo: AuditInfo = AuditInfo()
 )

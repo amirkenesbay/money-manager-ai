@@ -15,12 +15,20 @@ data class Budget(
     val limit: BigDecimal,
     val spent: BigDecimal,
     val period: MonthPeriod,
+    val carriedOver: BigDecimal = BigDecimal.ZERO,
 ) {
+    val effectiveLimit: BigDecimal
+        get() = limit + carriedOver
+
     val remaining: BigDecimal
-        get() = limit - spent
+        get() = effectiveLimit - spent
 
     val percent: Int
-        get() = spent.multiply(HUNDRED).divide(limit, 0, RoundingMode.DOWN).toInt()
+        get() = if (effectiveLimit.signum() > 0) {
+            spent.multiply(HUNDRED).divide(effectiveLimit, 0, RoundingMode.DOWN).toInt()
+        } else {
+            BudgetThreshold.OVER.percent
+        }
 
     val reachedThresholds: List<BudgetThreshold>
         get() = BudgetThreshold.entries.filter { percent >= it.percent }

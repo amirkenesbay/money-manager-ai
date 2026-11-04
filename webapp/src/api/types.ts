@@ -149,6 +149,7 @@ export interface Category {
   icon: string
   type: CategoryType
   monthlyLimit: string | null
+  rollover: boolean
 }
 
 export interface Budget {
@@ -156,6 +157,7 @@ export interface Budget {
   icon: string
   name: string
   limit: string
+  carriedOver: string
   spent: string
   remaining: string
   percent: number

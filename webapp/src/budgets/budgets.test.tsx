@@ -5,7 +5,7 @@ import { ApiRequestError } from '../api/client'
 import type { Budget } from '../api/types'
 import { CategoryForm } from '../categories/CategoryForm'
 import { createCategory, setCategoryLimit, updateCategory } from '../categories/categoriesApi'
-import { formatMoney } from '../format'
+import { formatMoney, formatSignedMoney } from '../format'
 import { strings } from '../strings'
 import { asRendered } from '../test/text'
 import { category, group } from '../test/fixtures'
@@ -19,7 +19,7 @@ vi.mock('../categories/categoriesApi', () => ({ createCategory: vi.fn(), updateC
 
 const LANGUAGE = 'ru'
 const budget = (overrides: Partial<Budget> = {}): Budget => ({
-  categoryId: 'cat-1', icon: '🛒', name: 'Продукты', limit: '100000', spent: '62000', remaining: '38000', percent: 62,
+  categoryId: 'cat-1', icon: '🛒', name: 'Продукты', limit: '100000', carriedOver: '0', spent: '62000', remaining: '38000', percent: 62,
   from: '2026-10-01', to: '2026-10-31', ...overrides,
 })
 const taxi = budget({ categoryId: 'cat-2', icon: '🚕', name: 'Такси', limit: '20000', spent: '17000', remaining: '3000', percent: 85 })
@@ -46,6 +46,13 @@ describe('BudgetsSummary', () => {
     expect(screen.getByText(asRendered(strings.budgetOver(formatMoney('1200', 'KZT', LANGUAGE))))).toBeInTheDocument()
     expect(screen.queryByText('🛒 Продукты')).not.toBeInTheDocument()
     expect(screen.getByText(strings.budgetsMoreFine(1))).toBeInTheDocument()
+  })
+
+  it('shows what a rolling budget brought from last month', async () => {
+    vi.mocked(fetchBudgets).mockResolvedValue([{ ...taxi, carriedOver: '5000' }])
+    renderSummary()
+
+    expect(await screen.findByText(asRendered(strings.budgetCarried(formatSignedMoney('INCOME', '5000', 'KZT', LANGUAGE))))).toBeInTheDocument()
   })
 
   it('folds into one line when every budget is fine', async () => {
@@ -98,9 +105,22 @@ describe('CategoryForm limit', () => {
     await userEvent.type(screen.getByRole('textbox', { name: strings.budgetLimitLabel }), '100 000')
     await userEvent.click(screen.getByRole('button', { name: strings.saveChanges }))
 
-    expect(setCategoryLimit).toHaveBeenCalledWith(group().id, 'cat-1', '100000')
+    expect(setCategoryLimit).toHaveBeenCalledWith(group().id, 'cat-1', '100000', false)
     expect(onSaved).toHaveBeenCalledWith(category({ monthlyLimit: '100000' }), false)
     expect(createCategory).not.toHaveBeenCalled()
+  })
+
+  it('rolls the rest of a limit over to the next month when asked', async () => {
+    vi.mocked(updateCategory).mockResolvedValue(category())
+    vi.mocked(setCategoryLimit).mockResolvedValue(category({ monthlyLimit: '90000', rollover: true }))
+    renderForm()
+
+    expect(screen.queryByRole('switch', { name: strings.budgetRolloverLabel })).not.toBeInTheDocument()
+    await userEvent.type(screen.getByRole('textbox', { name: strings.budgetLimitLabel }), '90000')
+    await userEvent.click(screen.getByRole('switch', { name: strings.budgetRolloverLabel }))
+    await userEvent.click(screen.getByRole('button', { name: strings.saveChanges }))
+
+    expect(setCategoryLimit).toHaveBeenCalledWith(group().id, 'cat-1', '90000', true)
   })
 
   it('shows the free budget limit instead of an error', async () => {

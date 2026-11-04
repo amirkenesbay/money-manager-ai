@@ -41,10 +41,12 @@ data class CategoryResponse(
     val icon: String,
     val type: CategoryType,
     val monthlyLimit: BigDecimal?,
+    val rollover: Boolean,
 )
 
 data class CategoryLimitRequest(
     val amount: BigDecimal?,
+    val rollover: Boolean = false,
 )
 
 data class CreateCategoryRequest(
@@ -123,7 +125,7 @@ class CategoryController(
         groupCategoryLookup.requireCategory(groupId, categoryId)
         if (request.amount != null && request.amount.signum() <= 0) throw badRequest(BUDGET_AMOUNT_KEY)
         val maxBudgets = subscriptionLimitsService.maxBudgets(user.hasActivePaidSubscription())
-        return when (val result = categoryService.setMonthlyLimit(categoryId, request.amount, maxBudgets)) {
+        return when (val result = categoryService.setMonthlyLimit(categoryId, request.amount, request.rollover, maxBudgets)) {
             is BudgetLimitResult.Updated -> result.category.toResponse()
             is BudgetLimitResult.LimitReached -> throw limitReached(ApiErrorCode.BUDGET_LIMIT_REACHED, result.limit)
             BudgetLimitResult.NotExpense -> throw badRequest(BUDGET_INCOME_KEY)
@@ -147,5 +149,6 @@ class CategoryController(
         icon = icon ?: DEFAULT_CATEGORY_ICON,
         type = type,
         monthlyLimit = monthlyLimit,
+        rollover = rollover,
     )
 }

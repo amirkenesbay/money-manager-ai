@@ -178,13 +178,15 @@ let createdCategories = 0
 function categoriesOf(groupId: string): Category[] {
   if (!categories[groupId]) {
     const seen = new Map<string, Category>()
-    operations[groupId].forEach((op) => seen.set(op.categoryName, { id: op.categoryId, name: op.categoryName, icon: op.categoryIcon, type: op.type, monthlyLimit: DEMO_LIMITS[op.categoryName] ?? null }))
+    operations[groupId].forEach((op) => seen.set(op.categoryName, { id: op.categoryId, name: op.categoryName, icon: op.categoryIcon, type: op.type, monthlyLimit: DEMO_LIMITS[op.categoryName] ?? null, rollover: op.categoryName === 'Продукты' }))
     categories[groupId] = [...seen.values()]
   }
   return categories[groupId]
 }
 
 const freeTier = (scenario: string) => scenario !== 'premium'
+
+const DEMO_CARRIED_OVER = 1500
 
 function budgetsOf(groupId: string): Budget[] {
   const spentOf = (categoryId: string) => monthOperations(groupId, currentMonth())
@@ -194,10 +196,11 @@ function budgetsOf(groupId: string): Budget[] {
     .filter((category) => category.monthlyLimit !== null)
     .map((category) => {
       const limit = Number(category.monthlyLimit)
+      const carriedOver = category.rollover ? DEMO_CARRIED_OVER : 0
       const spent = spentOf(category.id)
       return {
-        categoryId: category.id, icon: category.icon, name: category.name, limit: String(limit), spent: String(spent),
-        remaining: String(limit - spent), percent: Math.floor((spent * HUNDRED) / limit), ...periodOf(groupId, currentMonth()),
+        categoryId: category.id, icon: category.icon, name: category.name, limit: String(limit), carriedOver: String(carriedOver), spent: String(spent),
+        remaining: String(limit + carriedOver - spent), percent: Math.floor((spent * HUNDRED) / (limit + carriedOver)), ...periodOf(groupId, currentMonth()),
       }
     })
     .sort((a, b) => b.percent - a.percent)
@@ -205,13 +208,13 @@ function budgetsOf(groupId: string): Budget[] {
 
 function setLimit(groupId: string, categoryId: string, body: string, scenario: string): MockResponse {
   const list = categoriesOf(groupId)
-  const { amount } = JSON.parse(body) as { amount: string | null }
+  const { amount, rollover } = JSON.parse(body) as { amount: string | null; rollover: boolean }
   const limit = FREE_LIMITS.budgets ?? 0
   const others = list.filter((category) => category.monthlyLimit !== null && category.id !== categoryId).length
   if (amount !== null && freeTier(scenario) && others >= limit) {
     return failure(LIMIT_STATUS, 'BUDGET_LIMIT_REACHED', `На Free — до ${limit} бюджетов.`, { limit })
   }
-  categories[groupId] = list.map((category) => (category.id === categoryId ? { ...category, monthlyLimit: amount } : category))
+  categories[groupId] = list.map((category) => (category.id === categoryId ? { ...category, monthlyLimit: amount, rollover: amount !== null && rollover } : category))
   return ok(categories[groupId].find((category) => category.id === categoryId) ?? null)
 }
 
@@ -234,7 +237,7 @@ function mutateCategory(groupId: string, method: string, categoryId: string | un
       return failure(LIMIT_STATUS, 'CATEGORY_LIMIT_REACHED', `На Free — до ${limit} категорий каждого типа.`, { limit })
     }
     createdCategories += 1
-    const created: Category = { id: `cat-new-${createdCategories}`, name, icon: input.icon ?? '📌', type, monthlyLimit: null }
+    const created: Category = { id: `cat-new-${createdCategories}`, name, icon: input.icon ?? '📌', type, monthlyLimit: null, rollover: false }
     categories[groupId] = [...list, created]
     return { status: CREATED_STATUS, body: created }
   }

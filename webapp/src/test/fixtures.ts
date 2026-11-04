@@ -98,6 +98,7 @@ export const category = (overrides: Partial<Category> = {}): Category => ({
   icon: '🛒',
   type: 'EXPENSE',
   monthlyLimit: null,
+  rollover: false,
   ...overrides,
 })
 

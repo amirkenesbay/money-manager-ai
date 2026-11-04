@@ -12,7 +12,8 @@ data class Category(
     val icon: String? = null,
     val type: CategoryType,
     val groupId: ObjectId,
-    val monthlyLimit: BigDecimal? = null
+    val monthlyLimit: BigDecimal? = null,
+    val rollover: Boolean = false
 )
 
 enum class CategoryType {

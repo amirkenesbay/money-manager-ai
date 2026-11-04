@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { Switch } from '../ui/Switch'
+import './categories.css'
 import type { Category, CategoryType, Group } from '../api/types'
 import { strings } from '../strings'
 import { BottomBar } from '../ui/BottomBar'
@@ -45,7 +47,8 @@ export function CategoryForm({ group, language, type, category, onBack, onSaved,
   const shared = group.type === 'SHARED'
   const limit = parseAmount(limitText)
   const limitInvalid = limitText.trim() !== '' && limit === null
-  const limitChanged = (limit ?? null) !== (category?.monthlyLimit ?? null)
+  const [rollover, setRollover] = useState(category?.rollover ?? false)
+  const limitChanged = (limit ?? null) !== (category?.monthlyLimit ?? null) || (limit !== null && rollover !== (category?.rollover ?? false))
   const dirty = name.value !== (category?.name ?? '') || (category !== null && icon !== category.icon) || limitChanged
   const range = monthRange(currentPeriodMonth(new Date(), group.monthStartDay), group.monthStartDay)
 
@@ -67,7 +70,7 @@ export function CategoryForm({ group, language, type, category, onBack, onSaved,
       onSaved(result.value, category === null)
       return
     }
-    const limited = await submit.run(() => setCategoryLimit(group.id, result.value.id, limit), strings.saveFailed)
+    const limited = await submit.run(() => setCategoryLimit(group.id, result.value.id, limit, rollover), strings.saveFailed)
     if (limited.ok) onSaved(limited.value, category === null)
     else if (limited.error.code === 'BUDGET_LIMIT_REACHED') onBudgetLimit()
   }
@@ -94,6 +97,15 @@ export function CategoryForm({ group, language, type, category, onBack, onSaved,
         <>
           <AmountInput label={strings.budgetLimitLabel} value={limitText} currency={group.currency} invalid={limitInvalid} onChange={setLimitText} />
           <p className="caption">{strings.budgetLimitHint(formatPeriod(range.from, range.to, language))}</p>
+          {limit !== null && (
+            <div className="switch-row">
+              <span className="row-main">
+                <span className="row-title">{strings.budgetRolloverLabel}</span>
+                <span className="caption">{strings.budgetRolloverHint}</span>
+              </span>
+              <Switch checked={rollover} label={strings.budgetRolloverLabel} onChange={setRollover} />
+            </div>
+          )}
         </>
       )}
       {category && shared && <p className="hint-box caption">{strings.sharedChangeNotice}</p>}
