@@ -11,10 +11,11 @@ import { fetchReminders } from '../reminders/remindersApi'
 import { strings } from '../strings'
 import { useHomeScreen } from '../telegram/homeScreen'
 import { Button } from '../ui/Button'
-import { BellIcon, CalendarIcon, ChartIcon, CoinIcon, GlobeIcon, GridIcon, HelpIcon, PhoneIcon, RepeatIcon, UsersIcon, WalletIcon } from '../ui/icons'
+import { BellIcon, CalendarIcon, ChartIcon, DownloadIcon, CoinIcon, GlobeIcon, GridIcon, HelpIcon, PhoneIcon, RepeatIcon, UsersIcon, WalletIcon } from '../ui/icons'
 import { SettingsRow } from '../ui/SettingsRow'
 import { DIGEST_KINDS } from './digestKinds'
 import { DigestsSheet } from './DigestsSheet'
+import { ExportSheet } from './ExportSheet'
 import { InitialBalanceSheet } from './InitialBalanceSheet'
 import { LanguageSheet } from './LanguageSheet'
 import type { Notify } from '../ui/useToast'
@@ -23,7 +24,7 @@ import { Hint } from '../onboarding/Hint'
 
 export type Section = 'categories' | 'groups' | 'reminders' | 'recurring' | 'premium'
 
-type SheetKind = 'language' | 'currency' | 'balance' | 'monthStart' | 'digests'
+type SheetKind = 'language' | 'currency' | 'balance' | 'monthStart' | 'digests' | 'export'
 
 export function MoreScreen({ me, group, groups, name, onMeChanged, onGroupUpdated, onOpenSection, onShowWelcome, notify }: {
   me: Me
@@ -70,6 +71,7 @@ export function MoreScreen({ me, group, groups, name, onMeChanged, onGroupUpdate
         <li><SettingsRow icon={<GridIcon />} label={strings.categoriesTitle} value={categoryCount} onClick={() => onOpenSection('categories')} /></li>
         <li><SettingsRow icon={<BellIcon />} label={strings.remindersTitle} value={activeReminders} onClick={() => onOpenSection('reminders')} /></li>
         <li><SettingsRow icon={<RepeatIcon />} label={strings.recurringTitle} onClick={() => onOpenSection('recurring')} /></li>
+        <li><SettingsRow icon={<DownloadIcon />} label={strings.exportTitle} onClick={() => setSheet('export')} /></li>
         <li><SettingsRow icon={<ChartIcon />} label={strings.digestsTitle} value={strings.digestsOn(DIGEST_KINDS.length - me.mutedDigests.length)} onClick={() => setSheet('digests')} /></li>
       </ul>
 
@@ -90,6 +92,17 @@ export function MoreScreen({ me, group, groups, name, onMeChanged, onGroupUpdate
             setSheet(null)
             onMeChanged(next)
             notify({ title: strings.languageChangedToast })
+          }}
+          onClose={() => setSheet(null)}
+        />
+      )}
+      {sheet === 'export' && (
+        <ExportSheet
+          me={me}
+          group={group}
+          onSent={(count) => {
+            setSheet(null)
+            notify({ title: strings.exportSentToast, detail: strings.exportSentDetail(count) })
           }}
           onClose={() => setSheet(null)}
         />
