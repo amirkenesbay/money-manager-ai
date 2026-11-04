@@ -7,4 +7,5 @@ import org.springframework.data.domain.Pageable
 
 interface FinanceOperationRepositoryCustom {
     fun findPage(filter: OperationFilter, pageable: Pageable): Page<FinanceOperationEntity>
+    fun findAll(filter: OperationFilter): List<FinanceOperationEntity>
 }

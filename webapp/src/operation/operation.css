@@ -171,3 +171,48 @@
   font-size: var(--text-sm);
   font-weight: 700;
 }
+
+.tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 2.25rem;
+  padding: 0 0.875rem;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--bg);
+  box-shadow: var(--raise-xs);
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.tag-chip.selected {
+  color: var(--accent);
+  box-shadow: var(--inset-sm);
+}
+
+.tag-chip.add {
+  color: var(--accent);
+}
+
+.tag-input {
+  min-width: 8rem;
+  min-height: 2.25rem;
+  padding: 0 0.875rem;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--bg);
+  box-shadow: var(--inset-sm);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-sm);
+  outline: none;
+}

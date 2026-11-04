@@ -33,6 +33,13 @@ data class OperationsPageResponse(
     val page: Int,
     val size: Int,
     val totalItems: Long,
+    val totals: OperationTotalsResponse? = null,
+)
+
+data class OperationTotalsResponse(
+    val income: BigDecimal,
+    val expense: BigDecimal,
+    val count: Int,
 )
 
 data class CategoryAmountResponse(

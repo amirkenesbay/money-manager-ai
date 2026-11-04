@@ -1,10 +1,14 @@
-import { type ReactNode, useMemo, useState } from 'react'
-import type { CategoryType, Group, Me, Operation } from '../api/types'
+import { type ReactNode, useCallback, useMemo, useState } from 'react'
+import type { CategoryType, Group, Me, Operation, OperationTotals } from '../api/types'
+import { useAsync } from '../api/useAsync'
+import { formatSignedMoney } from '../format'
+import { fetchMembers } from '../groups/groupsApi'
 import { useCategories } from '../categories/useCategories'
 import { strings } from '../strings'
 import { Button } from '../ui/Button'
 import { ChipSelect } from '../ui/ChipSelect'
-import { CalendarIcon } from '../ui/icons'
+import { CalendarIcon, CloseIcon, SearchIcon, UserIcon } from '../ui/icons'
+import { useDebounced } from '../ui/useDebounced'
 import { LoadError } from '../ui/LoadError'
 import { PremiumOffer } from '../ui/PremiumOffer'
 import { Segmented } from '../ui/Segmented'
@@ -20,6 +24,8 @@ import { Hint } from '../onboarding/Hint'
 const TYPE_FILTERS: (CategoryType | null)[] = [null, 'EXPENSE', 'INCOME']
 const ALL_CATEGORIES = ''
 const FEED_SKELETON_ROWS = 6
+const ALL_MEMBERS = ''
+const SEARCH_DELAY_MS = 300
 
 export function OperationsScreen({ me, group, onSelectOperation }: {
   me: Me
@@ -29,8 +35,14 @@ export function OperationsScreen({ me, group, onSelectOperation }: {
   const [period, setPeriod] = useState<Period>(DEFAULT_PERIOD)
   const [type, setType] = useState<CategoryType | null>(null)
   const [categoryId, setCategoryId] = useState<string | null>(null)
+  const [creatorId, setCreatorId] = useState<number | null>(null)
+  const [searchText, setSearchText] = useState('')
+  const search = useDebounced(searchText.trim(), SEARCH_DELAY_MS)
   const categories = useCategories(group.id)
-  const query = useMemo<OperationsQuery>(() => ({ ...periodRange(period, new Date(), group.monthStartDay), type, categoryId }), [period, type, categoryId, group.monthStartDay])
+  const query = useMemo<OperationsQuery>(
+    () => ({ ...periodRange(period, new Date(), group.monthStartDay), type, categoryId, creatorId, search: search || null }),
+    [period, type, categoryId, creatorId, search, group.monthStartDay],
+  )
   const historyLimited = me.subscription.limits.historyDaysBack !== null
   const premiumOffer = (
     <PremiumOffer historyDaysBack={me.subscription.limits.historyDaysBack} subscribeUrl={me.subscription.subscribeUrl} />
@@ -43,6 +55,8 @@ export function OperationsScreen({ me, group, onSelectOperation }: {
   const resetFilters = () => {
     setPeriod(DEFAULT_PERIOD)
     selectType(null)
+    setCreatorId(null)
+    setSearchText('')
   }
   const visibleCategories = categories.state.status === 'ready'
     ? categories.state.data.filter((category) => type === null || category.type === type)
@@ -61,6 +75,7 @@ export function OperationsScreen({ me, group, onSelectOperation }: {
         onChange={selectType}
       />
       <Hint hint="OPERATIONS" title={strings.hintOperationsTitle} body={strings.hintOperationsBody} />
+      <SearchField value={searchText} onChange={setSearchText} />
       <div className="filter-chips">
         <ChipSelect
           label={strings.periodFilterLabel}
@@ -80,6 +95,7 @@ export function OperationsScreen({ me, group, onSelectOperation }: {
             onChange={(value) => setCategoryId(value || null)}
           />
         )}
+        {group.type === 'SHARED' && <MemberFilter groupId={group.id} value={creatorId} onChange={setCreatorId} />}
       </div>
       {period === 'allTime' && historyLimited
         ? premiumOffer
@@ -112,6 +128,7 @@ function OperationsFeed({ me, group, query, premiumOffer, onResetFilters, onSele
   }
   return (
     <section className="feed" aria-busy={feed.refreshing}>
+      {feed.totals && <SearchTotals totals={feed.totals} group={group} language={me.language} />}
       <OperationDays operations={feed.items} group={group} language={me.language} onSelect={onSelectOperation} />
       {feed.loadMoreFailed && <p className="error-text" role="alert">{strings.loadMoreFailed}</p>}
       {feed.refreshing ? null : feed.hasMore
@@ -122,5 +139,53 @@ function OperationsFeed({ me, group, query, premiumOffer, onResetFilters, onSele
         )
         : <p className="feed-end caption">{strings.operationsEnd}</p>}
     </section>
+  )
+}
+
+function SearchField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  return (
+    <label className="search-field">
+      <SearchIcon />
+      <input
+        type="search"
+        enterKeyHint="search"
+        aria-label={strings.operationsSearchLabel}
+        placeholder={strings.operationsSearchPlaceholder}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      {value && <button type="button" className="search-clear" aria-label={strings.clearSearch} onClick={() => onChange('')}><CloseIcon /></button>}
+    </label>
+  )
+}
+
+function MemberFilter({ groupId, value, onChange }: { groupId: string; value: number | null; onChange: (creatorId: number | null) => void }) {
+  const load = useCallback((signal: AbortSignal) => fetchMembers(groupId, signal), [groupId])
+  const members = useAsync(load)
+  if (members.state.status !== 'ready' || members.state.data.length < 2) return null
+  return (
+    <ChipSelect
+      label={strings.memberFilterLabel}
+      icon={<UserIcon />}
+      value={value === null ? ALL_MEMBERS : String(value)}
+      options={[
+        { value: ALL_MEMBERS, label: strings.allMembers },
+        ...members.state.data.map((member) => ({ value: String(member.userId), label: member.name })),
+      ]}
+      onChange={(next) => onChange(next ? Number(next) : null)}
+    />
+  )
+}
+
+function SearchTotals({ totals, group, language }: { totals: OperationTotals; group: Group; language: string }) {
+  const sums = [
+    Number(totals.expense) > 0 ? formatSignedMoney('EXPENSE', totals.expense, group.currency, language) : null,
+    Number(totals.income) > 0 ? formatSignedMoney('INCOME', totals.income, group.currency, language) : null,
+  ].filter(Boolean)
+  return (
+    <p className="search-totals">
+      <span>{strings.searchFound(totals.count)}</span>
+      {sums.map((sum) => <span key={sum} className="amount">{sum}</span>)}
+    </p>
   )
 }

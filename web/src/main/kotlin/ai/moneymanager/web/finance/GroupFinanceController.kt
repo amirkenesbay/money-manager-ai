@@ -24,6 +24,7 @@ import java.time.LocalDate
 private const val FIRST_PAGE = 0
 private const val DEFAULT_PAGE_SIZE = 20
 private const val MAX_PAGE_SIZE = 100
+private const val RECENT_TAGS_LIMIT = 8
 
 @RestController
 @RequestMapping("$API_V1_PREFIX/groups/{groupId}")
@@ -57,6 +58,8 @@ class GroupFinanceController(
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) to: LocalDate?,
         @RequestParam(required = false) type: CategoryType?,
         @RequestParam(required = false) categoryId: ObjectId?,
+        @RequestParam(required = false) creatorId: Long?,
+        @RequestParam(required = false) q: String?,
         @RequestParam(required = false) page: Int?,
         @RequestParam(required = false) size: Int?,
     ): OperationsPageResponse {
@@ -64,8 +67,15 @@ class GroupFinanceController(
         val pageNumber = page ?: FIRST_PAGE
         val pageSize = size ?: DEFAULT_PAGE_SIZE
         requireValidRequest(from, to, pageNumber, pageSize)
-        val filter = OperationFilter(groupId, historyStart(user, from), to, type, categoryId)
-        return financeResponseFactory.operationsPage(financeOperationService.findOperations(filter, pageNumber, pageSize))
+        val filter = OperationFilter(groupId, historyStart(user, from), to, type, categoryId, creatorId, q?.takeIf { it.isNotBlank() })
+        val totals = if (filter.isSearch || creatorId != null) financeOperationService.totals(filter) else null
+        return financeResponseFactory.operationsPage(financeOperationService.findOperations(filter, pageNumber, pageSize), totals)
+    }
+
+    @GetMapping("/tags")
+    fun recentTags(user: UserInfo, @PathVariable groupId: ObjectId): List<String> {
+        groupAccessGuard.requireMember(user, groupId)
+        return financeOperationService.recentTags(groupId, RECENT_TAGS_LIMIT)
     }
 
     private fun historyStart(user: UserInfo, requestedFrom: LocalDate?): LocalDate? {

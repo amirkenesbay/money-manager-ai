@@ -4,11 +4,15 @@ import ai.moneymanager.domain.model.BalanceBreakdown
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.OperationDraft
 import ai.moneymanager.domain.model.OperationFilter
+import ai.moneymanager.domain.model.OperationTotals
+import ai.moneymanager.domain.text.matchesSearch
+import ai.moneymanager.domain.text.tagsOf
 import ai.moneymanager.repository.FinanceOperationRepository
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -29,10 +33,8 @@ class FinanceOperationService(
 
     fun calculateBalance(groupId: ObjectId, initialBalance: BigDecimal): BalanceBreakdown {
         val ops = financeOperationRepository.findByGroupId(groupId)
-        val income = ops.filter { it.type == CategoryType.INCOME }
-            .fold(BigDecimal.ZERO) { acc, op -> acc + op.amount }
-        val expense = ops.filter { it.type == CategoryType.EXPENSE }
-            .fold(BigDecimal.ZERO) { acc, op -> acc + op.amount }
+        val income = sumOf(ops, CategoryType.INCOME)
+        val expense = sumOf(ops, CategoryType.EXPENSE)
         return BalanceBreakdown(
             initial = initialBalance,
             income = income,
@@ -41,8 +43,31 @@ class FinanceOperationService(
         )
     }
 
-    fun findOperations(filter: OperationFilter, page: Int, size: Int): Page<FinanceOperationEntity> =
-        financeOperationRepository.findPage(filter, PageRequest.of(page, size))
+    fun findOperations(filter: OperationFilter, page: Int, size: Int): Page<FinanceOperationEntity> {
+        val pageable = PageRequest.of(page, size)
+        if (!filter.isSearch) return financeOperationRepository.findPage(filter, pageable)
+        val matches = matching(filter)
+        val from = minOf(pageable.offset.toInt(), matches.size)
+        return PageImpl(matches.subList(from, minOf(from + size, matches.size)), pageable, matches.size.toLong())
+    }
+
+    fun totals(filter: OperationFilter): OperationTotals {
+        val matches = matching(filter)
+        return OperationTotals(sumOf(matches, CategoryType.INCOME), sumOf(matches, CategoryType.EXPENSE), matches.size)
+    }
+
+    fun recentTags(groupId: ObjectId, limit: Int): List<String> =
+        financeOperationRepository.findAll(OperationFilter(groupId)).asSequence()
+            .flatMap { tagsOf(it.description) }
+            .distinct()
+            .take(limit)
+            .toList()
+
+    private fun matching(filter: OperationFilter): List<FinanceOperationEntity> =
+        financeOperationRepository.findAll(filter).filter { operation -> filter.query?.let { matchesSearch(operation, it) } != false }
+
+    private fun sumOf(operations: List<FinanceOperationEntity>, type: CategoryType): BigDecimal =
+        operations.filter { it.type == type }.fold(BigDecimal.ZERO) { total, operation -> total + operation.amount }
 
     fun save(
         groupId: ObjectId,

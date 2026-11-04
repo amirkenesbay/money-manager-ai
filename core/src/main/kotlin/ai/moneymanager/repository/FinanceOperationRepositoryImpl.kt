@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository
 private const val GROUP_ID = "groupId"
 private const val TYPE = "type"
 private const val CATEGORY_ID = "categoryId"
+private const val CREATOR_ID = "creatorId"
 private const val OPERATION_DATE = "operationDate"
 private const val CREATED_AT = "auditInfo.createdAt"
 
@@ -29,12 +30,16 @@ class FinanceOperationRepositoryImpl(
         val items = mongoTemplate.find(pageQuery, FinanceOperationEntity::class.java)
         return PageImpl(items, pageable, total)
     }
+
+    override fun findAll(filter: OperationFilter): List<FinanceOperationEntity> =
+        mongoTemplate.find(operationsQuery(filter).with(NEWEST_FIRST), FinanceOperationEntity::class.java)
 }
 
 internal fun operationsQuery(filter: OperationFilter): Query {
     val criteria = Criteria.where(GROUP_ID).`is`(filter.groupId)
     filter.type?.let { criteria.and(TYPE).`is`(it) }
     filter.categoryId?.let { criteria.and(CATEGORY_ID).`is`(it) }
+    filter.creatorId?.let { criteria.and(CREATOR_ID).`is`(it) }
     if (filter.from != null || filter.to != null) {
         val operationDate = criteria.and(OPERATION_DATE)
         filter.from?.let { operationDate.gte(it) }

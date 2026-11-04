@@ -5,6 +5,7 @@ import ai.moneymanager.domain.model.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.domain.model.BalanceBreakdown
 import ai.moneymanager.domain.model.MoneyGroup
 import ai.moneymanager.domain.model.MonthPeriod
+import ai.moneymanager.domain.model.OperationTotals
 import ai.moneymanager.domain.model.report.HistoryReport
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import ai.moneymanager.service.UserInfoService
@@ -43,13 +44,14 @@ class FinanceResponseFactory(
             .toSortedMap()
             .map { (date, operations) -> DailyAmountResponse(date, operations.sumOf { it.amount }) }
 
-    fun operationsPage(page: Page<FinanceOperationEntity>): OperationsPageResponse {
+    fun operationsPage(page: Page<FinanceOperationEntity>, totals: OperationTotals? = null): OperationsPageResponse {
         val creatorNames = userInfoService.displayNames(page.content.map { it.creatorId }.toSet())
         return OperationsPageResponse(
             items = page.content.map { it.toResponse(creatorNames.getValue(it.creatorId)) },
             page = page.number,
             size = page.size,
             totalItems = page.totalElements,
+            totals = totals?.let { OperationTotalsResponse(it.income, it.expense, it.count) },
         )
     }
 

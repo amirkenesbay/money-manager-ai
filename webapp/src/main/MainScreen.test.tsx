@@ -32,6 +32,7 @@ vi.mock('../operations/operationsApi', () => ({
   createOperation: vi.fn(),
   replaceOperation: vi.fn(),
   deleteOperation: vi.fn(),
+  fetchRecentTags: () => Promise.resolve([]),
 }))
 
 const LANGUAGE = 'ru'
@@ -59,6 +60,7 @@ describe('MainScreen dashboard', () => {
     vi.mocked(fetchOperations).mockResolvedValue(operationsPage([operation()]))
     vi.mocked(fetchCategories).mockResolvedValue([])
     vi.mocked(fetchReminders).mockResolvedValue([])
+    vi.mocked(fetchMembers).mockResolvedValue([])
   })
 
   it('shows the month spending, the income left and the balance', async () => {

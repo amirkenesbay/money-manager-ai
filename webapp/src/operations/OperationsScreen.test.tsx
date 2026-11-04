@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiRequestError } from '../api/client'
@@ -8,6 +8,7 @@ import { asRendered } from '../test/text'
 import { openExternalLink } from '../telegram/telegramEnv'
 import { category, group, me, operation, operationsPage, PERSONAL_GROUP_ID, SUBSCRIBE_URL } from '../test/fixtures'
 import { fetchCategories } from '../categories/categoriesApi'
+import { fetchMembers } from '../groups/groupsApi'
 import { fetchOperations } from './operationsApi'
 import { OperationsScreen } from './OperationsScreen'
 import { periodRange } from './periods'
@@ -18,6 +19,7 @@ vi.mock('./operationsApi', () => ({
   fetchOperations: vi.fn(),
 }))
 vi.mock('../categories/categoriesApi', () => ({ fetchCategories: vi.fn() }))
+vi.mock('../groups/groupsApi', () => ({ fetchMembers: vi.fn() }))
 vi.mock('../telegram/telegramEnv', () => ({ openExternalLink: vi.fn(), rawInitData: () => undefined }))
 
 const PAGE_SIZE = 20
@@ -38,6 +40,39 @@ describe('OperationsScreen', () => {
       category({ id: 'cat-3', name: 'Зарплата', icon: '💰', type: 'INCOME' }),
     ])
   })
+  it('searches as the user types and shows what the matches add up to', async () => {
+    vi.mocked(fetchOperations).mockImplementation(async (_group, query) =>
+      query.search
+        ? { ...operationsPage([operation({ description: 'кофе #отпуск' })]), totals: { income: '0', expense: '3500', count: 1 } }
+        : operationsPage([operation()]))
+    renderScreen()
+
+    await userEvent.type(await screen.findByRole('searchbox', { name: strings.operationsSearchLabel }), '#отпуск')
+
+    await waitFor(() => expect(lastQuery()?.search).toBe('#отпуск'))
+    expect(await screen.findByText(strings.searchFound(1))).toBeInTheDocument()
+    expect(screen.getByText('#отпуск', { selector: '.tag' })).toBeInTheDocument()
+  })
+
+  it('clears the search in one tap', async () => {
+    renderScreen()
+    const search = await screen.findByRole('searchbox', { name: strings.operationsSearchLabel })
+    await userEvent.type(search, 'магнум')
+
+    await userEvent.click(screen.getByRole('button', { name: strings.clearSearch }))
+
+    expect(search).toHaveValue('')
+  })
+
+  it('filters a shared group by who recorded the operation', async () => {
+    vi.mocked(fetchMembers).mockResolvedValue([{ userId: 7, name: 'Аня', isOwner: true }, { userId: 8, name: 'Даня', isOwner: false }])
+    render(<OperationsScreen me={me()} group={group({ type: 'SHARED', memberCount: 2 })} onSelectOperation={onSelectOperation} />)
+
+    await userEvent.selectOptions(await screen.findByRole('combobox', { name: strings.memberFilterLabel }), '8')
+
+    await waitFor(() => expect(lastQuery()?.creatorId).toBe(8))
+  })
+
 
   it('starts with the last 30 days of all operation types', async () => {
     renderScreen()
@@ -45,7 +80,7 @@ describe('OperationsScreen', () => {
     expect(await screen.findByText('Продукты')).toBeInTheDocument()
     expect(fetchOperations).toHaveBeenCalledWith(
       PERSONAL_GROUP_ID,
-      { ...periodRange('last30Days', new Date()), type: null, categoryId: null },
+      { ...periodRange('last30Days', new Date()), type: null, categoryId: null, creatorId: null, search: null },
       0,
       expect.anything(),
     )

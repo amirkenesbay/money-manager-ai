@@ -1,5 +1,6 @@
 import type { Currency, Operation } from '../api/types'
 import { formatSignedMoney } from '../format'
+import { TaggedText } from './TaggedText'
 
 export function OperationList({ operations, currency, language, note, onSelect }: {
   operations: Operation[]
@@ -16,7 +17,7 @@ export function OperationList({ operations, currency, language, note, onSelect }
             <span className="icon-circle" aria-hidden="true">{operation.categoryIcon}</span>
             <span className="row-main">
               <span className="row-title">{operation.categoryName}</span>
-              <span className="caption">{note(operation)}</span>
+              <span className="caption"><TaggedText text={note(operation)} /></span>
             </span>
             <span className={`amount ${operation.type === 'INCOME' ? 'income' : ''}`}>
               {formatSignedMoney(operation.type, operation.amount, currency, language)}

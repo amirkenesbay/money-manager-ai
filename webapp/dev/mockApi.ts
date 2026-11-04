@@ -14,7 +14,7 @@ const PERSONAL_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d0'
 const FAMILY_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d1'
 const PREMIUM_EXPIRES_AT = '2026-12-31T00:00:00Z'
 const NO_CONTENT_STATUS = 204
-const GROUP_ROUTE = /^\/groups\/([0-9a-f]{24})(?:\/(balance|summary|operations|activate|categories|category-rules|notices|budgets|members|invite|initial-balance|voice|reports\/[a-z]+))?(?:\/([^/]+))?(?:\/(limit))?$/
+const GROUP_ROUTE = /^\/groups\/([0-9a-f]{24})(?:\/(balance|summary|operations|activate|categories|category-rules|notices|tags|budgets|members|invite|initial-balance|voice|reports\/[a-z]+))?(?:\/([^/]+))?(?:\/(limit))?$/
 const REMINDER_ROUTE = /^\/notifications(?:\/([^/]+))?$/
 const GROUP_ID_PREFIX = '6650a1b2c3d4e5f6a7b8'
 const GROUP_ID_DIGITS = 4
@@ -29,7 +29,7 @@ const FREE_HISTORY_DAYS = 30
 const DEFAULT_PAGE_SIZE = 20
 const FILLER_OPERATIONS = 26
 
-type Body = Budget[] | CategoryRule[] | Me | Group | Group[] | Balance | MonthSummary | Operation | OperationsPage | Category | Category[] | AnalyticsReport | ComparisonReport | MembersReport | CategoryReport | Member[] | Invite | Reminder | Reminder[] | VoiceResult | ApiErrorBody | null
+type Body = string[] | Budget[] | CategoryRule[] | Me | Group | Group[] | Balance | MonthSummary | Operation | OperationsPage | Category | Category[] | AnalyticsReport | ComparisonReport | MembersReport | CategoryReport | Member[] | Invite | Reminder | Reminder[] | VoiceResult | ApiErrorBody | null
 type MockResponse = { status: number; body: Body; delayMs?: number }
 
 const ok = (body: Body, delayMs?: number): MockResponse => ({ status: 200, body, delayMs })
@@ -103,7 +103,7 @@ const operation = (id: string, type: Operation['type'], amount: string, icon: st
 
 const operations: Record<string, Operation[]> = {
   [PERSONAL_GROUP_ID]: [
-    operation('p1', 'EXPENSE', '3500', '🛒', 'Продукты', 0, 'Магнум'),
+    operation('p1', 'EXPENSE', '3500', '🛒', 'Продукты', 0, 'Магнум #отпуск'),
     operation('p2', 'EXPENSE', '1200', '🚕', 'Такси', 1, null),
     operation('p3', 'INCOME', '450000', '💰', 'Зарплата', 3, null),
     operation('p4', 'EXPENSE', '18750.5', '🎬', 'Развлечения', 4, 'Концерт с очень длинным описанием, которое не должно ломать вёрстку'),
@@ -255,8 +255,18 @@ function operationsResponse(groupId: string, query: URLSearchParams, scenario: s
     (from === null || op.operationDate >= from) &&
     (to === null || op.operationDate <= to) &&
     (query.get('type') === null || op.type === query.get('type')) &&
-    (query.get('categoryId') === null || op.categoryId === query.get('categoryId')))
-  return ok({ items: matching.slice(page * size, (page + 1) * size), page, size, totalItems: matching.length })
+    (query.get('categoryId') === null || op.categoryId === query.get('categoryId')) &&
+    (query.get('creatorId') === null || String(op.creatorId) === query.get('creatorId')) &&
+    matchesSearch(op, query.get('q')))
+  const narrowed = query.get('q') !== null || query.get('creatorId') !== null
+  const totals = narrowed ? { income: String(sumOf(matching, 'INCOME')), expense: String(sumOf(matching, 'EXPENSE')), count: matching.length } : null
+  return ok({ items: matching.slice(page * size, (page + 1) * size), page, size, totalItems: matching.length, totals })
+}
+
+const matchesSearch = (op: Operation, search: string | null): boolean => {
+  if (search === null) return true
+  const needle = search.toLowerCase()
+  return [op.description ?? '', op.categoryName, op.amount].some((field) => field.toLowerCase().includes(needle))
 }
 
 const monthOperations = (groupId: string, month: string) => operations[groupId].filter((op) => op.operationDate.startsWith(month))
@@ -406,6 +416,7 @@ function groupRoute(path: string, query: URLSearchParams, scenario: string, meth
   if (resource === 'categories' && itemId && action === 'limit') return setLimit(groupId, decodeURIComponent(itemId), body, scenario)
   if (resource === 'budgets') return ok(budgetsOf(groupId))
   if (resource === 'category-rules') return categoryRulesRoute(groupId, method, itemId)
+  if (resource === 'tags') return ok(['отпуск', 'ремонт', 'подарки'])
   if (resource === 'notices') return ok(replaceGroup(groupId, { noticeLevel: (JSON.parse(body) as { level: GroupNoticeLevel }).level }))
   if (resource === 'operations' && method !== 'GET') return mutateOperation(groupId, method, itemId, body)
   if (resource === 'categories' && method !== 'GET') return mutateCategory(groupId, method, itemId && decodeURIComponent(itemId), body, scenario)

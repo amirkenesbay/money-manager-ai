@@ -110,6 +110,13 @@ export interface OperationsPage {
   page: number
   size: number
   totalItems: number
+  totals?: OperationTotals | null
+}
+
+export interface OperationTotals {
+  income: string
+  expense: string
+  count: number
 }
 
 export interface CategoryAmount {

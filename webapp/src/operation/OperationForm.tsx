@@ -19,6 +19,8 @@ import { CalendarSheet } from './CalendarSheet'
 import { DeleteSheet } from './DeleteSheet'
 import './operation.css'
 import { MAX_COMMENT_LENGTH } from './limits'
+import { TagsField } from './TagsField'
+import { tagsOf, withoutTags, withTags } from '../operations/tags'
 import { Hint } from '../onboarding/Hint'
 import { BudgetNote } from '../budgets/BudgetNote'
 
@@ -65,7 +67,8 @@ function FormFields({ group, language, operation, initialType, categories, onSav
   const [amountText, setAmountText] = useState(operation ? operation.amount : '')
   const [categoryId, setCategoryId] = useState<string | null>(operation?.categoryId ?? null)
   const [date, setDate] = useState(operation?.operationDate ?? today)
-  const [comment, setComment] = useState(operation?.description ?? '')
+  const [comment, setComment] = useState(withoutTags(operation?.description ?? null))
+  const [tags, setTags] = useState(tagsOf(operation?.description ?? null))
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -78,7 +81,7 @@ function FormFields({ group, language, operation, initialType, categories, onSav
   const huge = amount !== null && Number(amount) >= HUGE_AMOUNT
   const quickDates = QUICK_DAYS_AGO.map((daysAgo) => toIsoDate(daysBefore(daysAgo)))
   const customDate = !quickDates.includes(date)
-  const dirty = operation === null ? amountText.trim() !== '' || comment.trim() !== '' : true
+  const dirty = operation === null ? amountText.trim() !== '' || comment.trim() !== '' || tags.length > 0 : true
 
   useConfirmClosing(dirty)
 
@@ -89,7 +92,7 @@ function FormFields({ group, language, operation, initialType, categories, onSav
 
   const save = async () => {
     if (amount === null || selectedCategory === null) return
-    const input: OperationInput = { type, amount, categoryId: selectedCategory.id, operationDate: date, description: comment.trim() || null }
+    const input: OperationInput = { type, amount, categoryId: selectedCategory.id, operationDate: date, description: withTags(comment, tags) }
     setSaving(true)
     setSaveError(null)
     try {
@@ -163,10 +166,11 @@ function FormFields({ group, language, operation, initialType, categories, onSav
         className="text-field"
         aria-label={strings.commentLabel}
         placeholder={strings.commentPlaceholder}
-        maxLength={MAX_COMMENT_LENGTH}
+        maxLength={MAX_COMMENT_LENGTH - tagsLength(tags)}
         value={comment}
         onChange={(event) => setComment(event.target.value)}
       />
+      <TagsField groupId={group.id} tags={tags} onChange={setTags} />
 
       {operation && (
         <button type="button" className="link-button danger-link" onClick={() => setDeleteOpen(true)}>{strings.deleteOperation}</button>
@@ -192,4 +196,8 @@ function FormFields({ group, language, operation, initialType, categories, onSav
 function daysBefore(daysAgo: number): Date {
   const now = new Date()
   return new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo)
+}
+
+function tagsLength(tags: string[]): number {
+  return withTags('', tags)?.length ?? 0
 }

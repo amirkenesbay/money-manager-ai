@@ -4,6 +4,8 @@ import ai.moneymanager.domain.event.CategoryCorrected
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.OperationDraft
+import ai.moneymanager.domain.model.OperationFilter
+import ai.moneymanager.domain.model.OperationTotals
 import ai.moneymanager.repository.FinanceOperationRepository
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import org.assertj.core.api.Assertions.assertThat
@@ -114,5 +116,28 @@ class FinanceOperationServiceTest {
         service.create(groupId, CREATOR_ID, draft)
 
         assertThat(publishedEvents).noneMatch { it is CategoryCorrected }
+    }
+
+    @Test
+    fun `searches in memory, pages the matches and sums them`() {
+        val filter = OperationFilter(groupId, query = "магнум")
+        val other = existing.copy(id = ObjectId(), description = "Small")
+        val second = existing.copy(id = ObjectId(), amount = BigDecimal("1500"))
+        `when`(repository.findAll(filter)).thenReturn(listOf(existing, other, second))
+
+        val page = service.findOperations(filter, 1, 1)
+
+        assertThat(page.content).containsExactly(second)
+        assertThat(page.totalElements).isEqualTo(2)
+        assertThat(service.totals(filter)).isEqualTo(OperationTotals(BigDecimal.ZERO, BigDecimal("5000"), 2))
+    }
+
+    @Test
+    fun `lists recent tags of the group without repeats`() {
+        val newest = existing.copy(id = ObjectId(), description = "кофе #отпуск #море")
+        val older = existing.copy(id = ObjectId(), description = "отель #Отпуск #ремонт")
+        `when`(repository.findAll(OperationFilter(groupId))).thenReturn(listOf(newest, older))
+
+        assertThat(service.recentTags(groupId, 2)).containsExactly("отпуск", "море")
     }
 }

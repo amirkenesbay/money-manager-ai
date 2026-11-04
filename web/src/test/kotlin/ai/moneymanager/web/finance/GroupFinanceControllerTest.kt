@@ -4,6 +4,7 @@ import ai.moneymanager.domain.model.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.domain.model.BalanceBreakdown
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.OperationFilter
+import ai.moneymanager.domain.model.OperationTotals
 import ai.moneymanager.domain.model.SubscriptionTier
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.repository.entity.FinanceOperationEntity
@@ -193,6 +194,22 @@ class GroupFinanceControllerTest {
             .andExpect(jsonPath("$.page").value(0))
             .andExpect(jsonPath("$.size").value(DEFAULT_PAGE_SIZE))
             .andExpect(jsonPath("$.totalItems").value(43))
+    }
+
+    @Test
+    fun `searches by text and author and sums what it found`() {
+        val filter = OperationFilter(groupId, from = limits.earliestHistoryDate(false), creatorId = TEST_USER_ID, query = "#отпуск")
+        givenOperations(filter, emptyList())
+        `when`(financeOperationService.totals(filter)).thenReturn(OperationTotals(BigDecimal.ZERO, BigDecimal("12500"), 3))
+
+        mockMvc.perform(
+            get("/api/v1/groups/$groupId/operations").withTelegramAuth()
+                .param("q", "#отпуск")
+                .param("creatorId", TEST_USER_ID.toString())
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.totals.expense").value("12500"))
+            .andExpect(jsonPath("$.totals.count").value(3))
     }
 
     @Test

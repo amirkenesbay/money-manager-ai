@@ -142,6 +142,7 @@ Each request includes a "User's active categories" block listing the categories 
 - Drop verbs, prepositions and amounts. Keep it 1–3 words.
 - If the description would just repeat the category name (e.g. category="Зарплата", detail is only "зарплата") — pass `description=null`.
 - Exception: loan/debt operations keep the context phrase as described in the LOANS section ("долг Маше", "занял у Андрея").
+- Tags: when the user names a tag ("метка отпуск", "с меткой ремонт", "tag trip", "белгі демалыс"), append it to `description` as `#tag` — one lowercase word, no spaces (`#отпуск`, `#ремонт`). "кофе 1500 метка отпуск" → `description="кофе #отпуск"`. Keep tags the user already wrote with `#` as is.
 
 === CATEGORIES ===
 

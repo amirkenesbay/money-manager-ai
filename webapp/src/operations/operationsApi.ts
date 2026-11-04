@@ -9,6 +9,8 @@ const operationsPath = (groupId: string) => `/groups/${groupId}/operations`
 export interface OperationsQuery extends DateRange {
   type: CategoryType | null
   categoryId: string | null
+  creatorId?: number | null
+  search?: string | null
 }
 
 export const NO_FILTERS: OperationsQuery = { from: null, to: null, type: null, categoryId: null }
@@ -25,6 +27,8 @@ export function fetchOperations(
   if (query.to) params.set('to', query.to)
   if (query.type) params.set('type', query.type)
   if (query.categoryId) params.set('categoryId', query.categoryId)
+  if (query.creatorId) params.set('creatorId', String(query.creatorId))
+  if (query.search) params.set('q', query.search)
   return apiRequest<OperationsPage>(`${operationsPath(groupId)}?${params}`, {}, signal)
 }
 
@@ -45,3 +49,6 @@ export const replaceOperation = (groupId: string, operationId: string, input: Op
 
 export const deleteOperation = (groupId: string, operationId: string): Promise<void> =>
   apiRequest<void>(`${operationsPath(groupId)}/${operationId}`, { method: 'DELETE' })
+
+export const fetchRecentTags = (groupId: string, signal?: AbortSignal): Promise<string[]> =>
+  apiRequest<string[]>(`/groups/${groupId}/tags`, {}, signal)

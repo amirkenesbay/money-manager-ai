@@ -42,6 +42,7 @@ export function useOperationsFeed(groupId: string, query: OperationsQuery) {
     refreshing,
     reload: firstPage.reload,
     items,
+    totals: (base ?? shown)?.totals ?? null,
     hasMore,
     loadingMore: current?.loading ?? false,
     loadMoreFailed: current?.failed ?? false,

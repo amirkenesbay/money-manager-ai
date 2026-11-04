@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiRequestError } from '../api/client'
 import { formatMoney, toIsoDate } from '../format'
 import { fetchCategories } from '../categories/categoriesApi'
-import { createOperation, replaceOperation } from '../operations/operationsApi'
+import { createOperation, fetchRecentTags, replaceOperation } from '../operations/operationsApi'
 import { strings } from '../strings'
 import { category, group, operation, PERSONAL_GROUP_ID } from '../test/fixtures'
 import { asRendered } from '../test/text'
@@ -14,6 +14,7 @@ vi.mock('../operations/operationsApi', () => ({
   createOperation: vi.fn(),
   replaceOperation: vi.fn(),
   deleteOperation: vi.fn(),
+  fetchRecentTags: vi.fn(),
 }))
 
 vi.mock('../categories/categoriesApi', () => ({ fetchCategories: vi.fn() }))
@@ -32,6 +33,7 @@ const saveButton = (name = strings.save) => screen.getByRole('button', { name })
 describe('OperationForm', () => {
   beforeEach(() => {
     vi.resetAllMocks()
+    vi.mocked(fetchRecentTags).mockResolvedValue(['ремонт', 'отпуск'])
     vi.mocked(fetchCategories).mockResolvedValue([
       category(),
       category({ id: 'cat-2', name: 'Такси', icon: '🚕' }),
@@ -53,6 +55,31 @@ describe('OperationForm', () => {
       type: 'EXPENSE', amount: '5000', categoryId: 'cat-2', operationDate: daysAgo(1), description: 'до работы',
     })
     expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({ created: true }))
+  })
+
+  it('adds a typed tag and a recent one to the description', async () => {
+    renderForm()
+    await userEvent.type(await screen.findByRole('textbox', { name: strings.amountLabel }), '1500')
+    await userEvent.click(screen.getByRole('button', { name: /Такси/ }))
+    await userEvent.type(screen.getByRole('textbox', { name: strings.commentLabel }), 'кофе')
+    await userEvent.click(screen.getByRole('button', { name: strings.addTag }))
+    await userEvent.type(screen.getByRole('textbox', { name: strings.newTagLabel }), 'Новый год{Enter}')
+    await userEvent.click(await screen.findByRole('button', { name: strings.suggestTag('отпуск') }))
+
+    await userEvent.click(saveButton())
+
+    expect(createOperation).toHaveBeenCalledWith(PERSONAL_GROUP_ID, expect.objectContaining({ description: 'кофе #новый_год #отпуск' }))
+  })
+
+  it('shows the tags of an operation apart from its comment and lets the user remove one', async () => {
+    vi.mocked(replaceOperation).mockResolvedValue(operation())
+    renderForm(operation({ description: 'Магнум #отпуск #море' }))
+
+    expect(await screen.findByRole('textbox', { name: strings.commentLabel })).toHaveValue('Магнум')
+    await userEvent.click(screen.getByRole('button', { name: strings.removeTag('море') }))
+    await userEvent.click(saveButton(strings.saveChanges))
+
+    expect(replaceOperation).toHaveBeenCalledWith(PERSONAL_GROUP_ID, expect.any(String), expect.objectContaining({ description: 'Магнум #отпуск' }))
   })
 
   it('offers only categories of the chosen type', async () => {
