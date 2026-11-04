@@ -9,8 +9,9 @@ import { MonthStartSheet } from '../groups/MonthStartSheet'
 import { isLanguage, LANGUAGE_NAMES } from '../i18n/languages'
 import { fetchReminders } from '../reminders/remindersApi'
 import { strings } from '../strings'
+import { useHomeScreen } from '../telegram/homeScreen'
 import { Button } from '../ui/Button'
-import { BellIcon, CalendarIcon, ChartIcon, CoinIcon, GlobeIcon, GridIcon, HelpIcon, UsersIcon, WalletIcon } from '../ui/icons'
+import { BellIcon, CalendarIcon, ChartIcon, CoinIcon, GlobeIcon, GridIcon, HelpIcon, PhoneIcon, UsersIcon, WalletIcon } from '../ui/icons'
 import { SettingsRow } from '../ui/SettingsRow'
 import { DIGEST_KINDS } from './digestKinds'
 import { DigestsSheet } from './DigestsSheet'
@@ -36,6 +37,7 @@ export function MoreScreen({ me, group, groups, name, onMeChanged, onGroupUpdate
   notify: Notify
 }) {
   const [sheet, setSheet] = useState<SheetKind | null>(null)
+  const homeScreen = useHomeScreen()
   const categories = useCategories(group.id)
   const reminders = useAsync(fetchReminders)
   const { subscription, language } = me
@@ -76,6 +78,7 @@ export function MoreScreen({ me, group, groups, name, onMeChanged, onGroupUpdate
         <li><SettingsRow icon={<CoinIcon />} label={strings.currencyLabel} value={currencyBadge(group.currency)} onClick={() => setSheet('currency')} /></li>
         <li><SettingsRow icon={<CalendarIcon />} label={strings.monthStartLabel} value={strings.monthStartValue(group.monthStartDay)} onClick={() => setSheet('monthStart')} /></li>
         <li><SettingsRow icon={<WalletIcon />} label={strings.initialBalanceLabel} value={formatMoney(group.initialBalance, group.currency, language)} onClick={() => setSheet('balance')} /></li>
+        {homeScreen.state === 'available' && <li><SettingsRow icon={<PhoneIcon />} label={strings.homeScreenRow} onClick={homeScreen.add} /></li>}
         <li><SettingsRow icon={<HelpIcon />} label={strings.howToUse} onClick={onShowWelcome} /></li>
       </ul>
 

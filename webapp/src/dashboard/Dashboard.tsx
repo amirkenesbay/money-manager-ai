@@ -8,6 +8,7 @@ import { LoadError } from '../ui/LoadError'
 import { SkeletonCard, SkeletonRows } from '../ui/Skeleton'
 import './Dashboard.css'
 import { HomeHero } from './HomeHero'
+import { HomeScreenOffer } from './HomeScreenOffer'
 import { useDashboard } from './useDashboard'
 
 const RECENT_SKELETON_ROWS = 3
@@ -39,6 +40,7 @@ export function Dashboard({ groups, groupId, language, switchError, onSwitchGrou
       {ready && group && (
         <>
           <HomeHero balance={ready.balance} summary={ready.summary} language={language} onAddIncome={onAddIncome} />
+          <HomeScreenOffer />
           <BudgetsSummary groupId={groupId} currency={ready.balance.currency} language={language} onOpenAll={onOpenBudgets} />
           <RecentOperations
             operations={ready.operations.items}
