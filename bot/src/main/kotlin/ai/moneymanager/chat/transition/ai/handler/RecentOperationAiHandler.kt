@@ -55,8 +55,8 @@ class RecentOperationAiHandler(
         val lang = context.userInfo?.language
         if (action !is AiPendingAction.RecentOperationAction) return localizationService.t("ai.error.unknown_command", lang)
         return when (action) {
-            is AiPendingAction.RecentOperationAction.Delete -> executeDelete(action, lang)
-            is AiPendingAction.RecentOperationAction.Edit -> executeEdit(action, lang)
+            is AiPendingAction.RecentOperationAction.Delete -> executeDelete(action, context.actorId(), lang)
+            is AiPendingAction.RecentOperationAction.Edit -> executeEdit(action, context.actorId(), lang)
         }
     }
 
@@ -95,9 +95,9 @@ class RecentOperationAiHandler(
         )
     }
 
-    private fun executeDelete(action: AiPendingAction.RecentOperationAction.Delete, lang: String?): String {
+    private fun executeDelete(action: AiPendingAction.RecentOperationAction.Delete, actorId: Long, lang: String?): String {
         val operation = action.operation
-        val deleted = financeOperationService.deleteOperation(operation.groupId, operation.id!!)
+        val deleted = financeOperationService.deleteOperation(actorId, operation.groupId, operation.id!!)
         return if (deleted) {
             localizationService.t(
                 "ai.operation.delete.success",
@@ -111,16 +111,16 @@ class RecentOperationAiHandler(
         }
     }
 
-    private fun executeEdit(action: AiPendingAction.RecentOperationAction.Edit, lang: String?): String {
+    private fun executeEdit(action: AiPendingAction.RecentOperationAction.Edit, actorId: Long, lang: String?): String {
         val operation = action.operation
         val groupId = operation.groupId
         val operationId = operation.id!!
 
-        action.newAmount?.let { financeOperationService.updateAmount(groupId, operationId, it) }
+        action.newAmount?.let { financeOperationService.updateAmount(actorId, groupId, operationId, it) }
         action.newCategory?.let {
-            financeOperationService.updateCategory(groupId, operationId, it.id!!, it.name, it.icon)
+            financeOperationService.updateCategory(actorId, groupId, operationId, it.id!!, it.name, it.icon)
         }
-        action.newOperationDate?.let { financeOperationService.updateDate(groupId, operationId, it) }
+        action.newOperationDate?.let { financeOperationService.updateDate(actorId, groupId, operationId, it) }
 
         val updated = financeOperationService.getOperation(groupId, operationId) ?: operation
         return localizationService.t(

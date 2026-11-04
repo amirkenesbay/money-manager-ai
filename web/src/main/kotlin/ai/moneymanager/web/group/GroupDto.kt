@@ -1,6 +1,7 @@
 package ai.moneymanager.web.group
 
 import ai.moneymanager.domain.model.Currency
+import ai.moneymanager.domain.model.GroupNoticeLevel
 import ai.moneymanager.domain.model.GroupType
 import org.bson.types.ObjectId
 import java.math.BigDecimal
@@ -15,6 +16,11 @@ data class GroupResponse(
     val memberCount: Int,
     val initialBalance: BigDecimal,
     val monthStartDay: Int,
+    val noticeLevel: GroupNoticeLevel,
+)
+
+data class GroupNoticesRequest(
+    val level: GroupNoticeLevel,
 )
 
 data class CreateGroupRequest(

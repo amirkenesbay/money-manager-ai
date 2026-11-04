@@ -8,7 +8,7 @@ import { Moment } from '../three/Moment'
 import { MAX_GROUP_BALLS } from '../three/moments'
 import { Button } from '../ui/Button'
 import { ConfirmSheet } from '../ui/ConfirmSheet'
-import { CoinIcon, CopyIcon, EditIcon, SendIcon, TrashIcon } from '../ui/icons'
+import { BellIcon, CoinIcon, CopyIcon, EditIcon, SendIcon, TrashIcon } from '../ui/icons'
 import { LoadError } from '../ui/LoadError'
 import { ScreenHeader } from '../ui/ScreenHeader'
 import { SettingsRow } from '../ui/SettingsRow'
@@ -18,13 +18,14 @@ import { currencyBadge } from './currencies'
 import { CurrencySheet } from './CurrencySheet'
 import { groupMeta } from './groupMeta'
 import { deleteGroup, fetchInvite, fetchMembers } from './groupsApi'
+import { NoticesSheet } from './NoticesSheet'
 import { RenameSheet } from './RenameSheet'
 import { Hint } from '../onboarding/Hint'
 
 const SHARE_URL = 'https://t.me/share/url'
 const MEMBER_SKELETON_ROWS = 2
 
-type SheetKind = 'rename' | 'currency' | 'delete'
+type SheetKind = 'rename' | 'currency' | 'delete' | 'notices'
 
 export function GroupDetail({ me, group, onBack, onActivate, onUpdated, onDeleted, notify }: {
   me: Me
@@ -52,6 +53,11 @@ export function GroupDetail({ me, group, onBack, onActivate, onUpdated, onDelete
         ? <p className="hint-box caption">{strings.activeGroupNote}</p>
         : <Button variant="secondary" onClick={() => onActivate(group)}>{strings.makeActive}</Button>}
       {shared ? <SharedGroupPanels me={me} group={group} notify={notify} /> : <p className="hint-box caption">{strings.personalGroupNote}</p>}
+      {shared && (
+        <ul className="settings-list">
+          <li><SettingsRow icon={<BellIcon />} label={strings.groupNoticesLabel} value={strings.groupNoticeLevels[group.noticeLevel]} onClick={() => setSheet('notices')} /></li>
+        </ul>
+      )}
       {group.isOwner
         ? (
           <ul className="settings-list">
@@ -62,6 +68,7 @@ export function GroupDetail({ me, group, onBack, onActivate, onUpdated, onDelete
         )
         : <p className="caption centered">{strings.ownerOnlyHint}</p>}
       {sheet === 'rename' && <RenameSheet group={group} onSaved={(next) => updated(next, strings.groupRenamedToast)} onClose={() => setSheet(null)} />}
+      {sheet === 'notices' && <NoticesSheet group={group} onSaved={(next) => updated(next, strings.groupNoticesSavedToast)} onClose={() => setSheet(null)} />}
       {sheet === 'currency' && <CurrencySheet group={group} onSaved={(next) => updated(next, strings.currencyChangedToast)} onClose={() => setSheet(null)} />}
       {sheet === 'delete' && (
         <ConfirmSheet

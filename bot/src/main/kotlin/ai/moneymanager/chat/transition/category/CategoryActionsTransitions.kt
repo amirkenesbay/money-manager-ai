@@ -78,7 +78,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.categoryActionsTransit
             val newIcon = update.message.text?.trim() ?: return@action
             val categoryId = context.currentCategory?.id ?: return@action
 
-            val updatedCategory = categoryService.updateCategoryIcon(categoryId, newIcon)
+            val updatedCategory = categoryService.updateCategoryIcon(user.id, categoryId, newIcon)
             if (updatedCategory != null) {
                 context.currentCategory = updatedCategory
                 context.textInputResponse = true

@@ -79,7 +79,10 @@ export interface Group {
   memberCount: number
   initialBalance: string
   monthStartDay: number
+  noticeLevel: GroupNoticeLevel
 }
+
+export type GroupNoticeLevel = 'ALL' | 'IMPORTANT' | 'OFF'
 
 export interface Balance {
   currency: Currency

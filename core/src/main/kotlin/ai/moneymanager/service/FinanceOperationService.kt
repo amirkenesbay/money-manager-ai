@@ -14,7 +14,10 @@ import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.LocalDate
 import ai.moneymanager.domain.event.CategoryCorrected
+import ai.moneymanager.domain.event.OperationChange
+import ai.moneymanager.domain.event.OperationChanged
 import ai.moneymanager.domain.event.OperationsChanged
+import ai.moneymanager.domain.event.sameContentAs
 import org.springframework.context.ApplicationEventPublisher
 
 @Service
@@ -80,6 +83,7 @@ class FinanceOperationService(
         val saved = financeOperationRepository.save(entity)
         log.info("Saved finance operation: type={}, amount={}, category={}, groupId={}", type, amount, categoryName, groupId)
         eventPublisher.publishEvent(OperationsChanged(groupId))
+        eventPublisher.publishEvent(OperationChanged(groupId, creatorId, OperationChange.Added(saved)))
         return saved
     }
 
@@ -90,8 +94,8 @@ class FinanceOperationService(
         return saved
     }
 
-    fun replace(groupId: ObjectId, operationId: ObjectId, draft: OperationDraft): FinanceOperationEntity? =
-        updateOperation(groupId, operationId) {
+    fun replace(actorId: Long, groupId: ObjectId, operationId: ObjectId, draft: OperationDraft): FinanceOperationEntity? =
+        updateOperation(actorId, groupId, operationId) {
             it.copy(
                 type = draft.type,
                 amount = draft.amount,
@@ -106,37 +110,40 @@ class FinanceOperationService(
     fun getOperation(groupId: ObjectId, operationId: ObjectId): FinanceOperationEntity? =
         financeOperationRepository.findByGroupIdAndIdIn(groupId, listOf(operationId)).firstOrNull()
 
-    fun updateAmount(groupId: ObjectId, operationId: ObjectId, amount: BigDecimal): FinanceOperationEntity? =
-        updateOperation(groupId, operationId) { it.copy(amount = amount) }
+    fun updateAmount(actorId: Long, groupId: ObjectId, operationId: ObjectId, amount: BigDecimal): FinanceOperationEntity? =
+        updateOperation(actorId, groupId, operationId) { it.copy(amount = amount) }
 
-    fun updateType(groupId: ObjectId, operationId: ObjectId, type: CategoryType): FinanceOperationEntity? =
-        updateOperation(groupId, operationId) { it.copy(type = type) }
+    fun updateType(actorId: Long, groupId: ObjectId, operationId: ObjectId, type: CategoryType): FinanceOperationEntity? =
+        updateOperation(actorId, groupId, operationId) { it.copy(type = type) }
 
-    fun updateDate(groupId: ObjectId, operationId: ObjectId, date: LocalDate): FinanceOperationEntity? =
-        updateOperation(groupId, operationId) { it.copy(operationDate = date) }
+    fun updateDate(actorId: Long, groupId: ObjectId, operationId: ObjectId, date: LocalDate): FinanceOperationEntity? =
+        updateOperation(actorId, groupId, operationId) { it.copy(operationDate = date) }
 
-    fun updateDescription(groupId: ObjectId, operationId: ObjectId, description: String?): FinanceOperationEntity? =
-        updateOperation(groupId, operationId) { it.copy(description = description) }
+    fun updateDescription(actorId: Long, groupId: ObjectId, operationId: ObjectId, description: String?): FinanceOperationEntity? =
+        updateOperation(actorId, groupId, operationId) { it.copy(description = description) }
 
     fun updateCategory(
+        actorId: Long,
         groupId: ObjectId,
         operationId: ObjectId,
         categoryId: ObjectId,
         categoryName: String,
         categoryIcon: String?
-    ): FinanceOperationEntity? = updateOperation(groupId, operationId) {
+    ): FinanceOperationEntity? = updateOperation(actorId, groupId, operationId) {
         it.copy(categoryId = categoryId, categoryName = categoryName, categoryIcon = categoryIcon)
     }
 
-    fun deleteOperation(groupId: ObjectId, operationId: ObjectId): Boolean {
+    fun deleteOperation(actorId: Long, groupId: ObjectId, operationId: ObjectId): Boolean {
         val existing = getOperation(groupId, operationId) ?: return false
         financeOperationRepository.delete(existing)
         log.info("Deleted finance operation: id={}, groupId={}", operationId, groupId)
         eventPublisher.publishEvent(OperationsChanged(groupId))
+        eventPublisher.publishEvent(OperationChanged(groupId, actorId, OperationChange.Deleted(existing)))
         return true
     }
 
     private fun updateOperation(
+        actorId: Long,
         groupId: ObjectId,
         operationId: ObjectId,
         mutate: (FinanceOperationEntity) -> FinanceOperationEntity
@@ -145,6 +152,7 @@ class FinanceOperationService(
         val saved = financeOperationRepository.save(mutate(existing))
         log.info("Updated finance operation: id={}, groupId={}", operationId, groupId)
         eventPublisher.publishEvent(OperationsChanged(groupId))
+        if (!existing.sameContentAs(saved)) eventPublisher.publishEvent(OperationChanged(groupId, actorId, OperationChange.Edited(existing, saved)))
         if (existing.categoryId != saved.categoryId) publishCorrection(saved)
         return saved
     }

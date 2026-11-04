@@ -179,6 +179,7 @@ class TransactionAiHandler(
         maxCategoriesPerType: Int
     ): EnsureCategoryResult {
         val result = categoryService.createCategory(
+            actorId = action.creatorId,
             name = action.suggestedCategoryName,
             icon = action.suggestedCategoryIcon,
             type = action.type,

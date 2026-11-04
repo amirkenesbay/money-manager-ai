@@ -18,11 +18,14 @@ data class UserInfo(
     val miniAppIntroduced: Boolean = false,
     val seenHints: Set<AppHint> = emptySet(),
     val mutedDigests: Set<DigestKind> = emptySet(),
+    val groupNotices: Map<String, GroupNoticeLevel> = emptyMap(),
     val subscriptionTier: SubscriptionTier = SubscriptionTier.FREE,
     val subscriptionExpiresAt: LocalDateTime? = null
 ) {
     fun hasActivePaidSubscription(now: LocalDateTime = LocalDateTime.now()): Boolean =
         subscriptionTier == SubscriptionTier.PAID && subscriptionExpiresAt?.isAfter(now) == true
+
+    fun noticeLevel(groupId: ObjectId): GroupNoticeLevel = groupNotices[groupId.toHexString()] ?: GroupNoticeLevel.ALL
 }
 
 private const val USER_ID_LABEL = "ID"

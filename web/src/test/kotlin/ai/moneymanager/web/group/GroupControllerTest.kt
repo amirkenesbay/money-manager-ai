@@ -2,6 +2,7 @@ package ai.moneymanager.web.group
 
 import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.GroupCreationResult
+import ai.moneymanager.domain.model.GroupNoticeLevel
 import ai.moneymanager.domain.model.GroupType
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.domain.model.buildInviteLink
@@ -209,7 +210,7 @@ class GroupControllerTest {
 
     @Test
     fun `sets a starting balance but refuses a negative one`() {
-        `when`(groupService.setInitialBalance(familyGroup.id!!, BigDecimal("1200.50"))).thenReturn(familyGroup.copy(initialBalance = BigDecimal("1200.50")))
+        `when`(groupService.setInitialBalance(TEST_USER_ID, familyGroup.id!!, BigDecimal("1200.50"))).thenReturn(familyGroup.copy(initialBalance = BigDecimal("1200.50")))
 
         mockMvc.perform(put("/api/v1/groups/${familyGroup.id}/initial-balance").withTelegramAuth().json("""{"amount":"1200.50"}"""))
             .andExpect(status().isOk)
@@ -217,6 +218,16 @@ class GroupControllerTest {
         mockMvc.perform(put("/api/v1/groups/${familyGroup.id}/initial-balance").withTelegramAuth().json("""{"amount":"-5"}"""))
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.message").value("Начальный баланс не может быть отрицательным."))
+    }
+
+    @Test
+    fun `lets a member choose which group notices to get`() {
+        val muted = testUser().copy(groupNotices = mapOf(familyGroup.id!!.toHexString() to GroupNoticeLevel.IMPORTANT))
+        `when`(userInfoService.setGroupNoticeLevel(TEST_USER_ID, familyGroup.id!!, GroupNoticeLevel.IMPORTANT)).thenReturn(muted)
+
+        mockMvc.perform(put("/api/v1/groups/${familyGroup.id}/notices").withTelegramAuth().json("""{"level":"IMPORTANT"}"""))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.noticeLevel").value("IMPORTANT"))
     }
 
     private fun givenCurrentUser(user: UserInfo) {

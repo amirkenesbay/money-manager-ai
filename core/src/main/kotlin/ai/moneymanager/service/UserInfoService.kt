@@ -3,6 +3,8 @@ package ai.moneymanager.service
 import ai.moneymanager.domain.event.NewUserRegistered
 import ai.moneymanager.domain.model.AppHint
 import ai.moneymanager.domain.model.DigestKind
+import ai.moneymanager.domain.model.GroupNoticeLevel
+import org.bson.types.ObjectId
 import ai.moneymanager.domain.model.formatUserDisplayName
 import ai.moneymanager.domain.model.SubscriptionTier
 import ai.moneymanager.domain.model.TelegramProfile
@@ -79,6 +81,11 @@ class UserInfoService(
         return mapEntity(userRepository.save(entity.copy(mutedDigests = mutedDigests)))
     }
 
+    fun setGroupNoticeLevel(telegramUserId: Long, groupId: ObjectId, level: GroupNoticeLevel): UserInfo? {
+        val entity = userRepository.findFirstByTelegramUserIdOrderByIdAsc(telegramUserId) ?: return null
+        return mapEntity(userRepository.save(entity.copy(groupNotices = entity.groupNotices + (groupId.toHexString() to level))))
+    }
+
     fun digestRecipients(): List<UserInfo> =
         userRepository.findByActiveGroupIdIsNotNullAndTelegramUserIdIsNotNull().map { mapEntity(it) }
 
@@ -125,6 +132,7 @@ class UserInfoService(
             miniAppIntroduced = it.miniAppIntroduced,
             seenHints = it.seenHints,
             mutedDigests = it.mutedDigests,
+            groupNotices = it.groupNotices,
             subscriptionTier = it.subscriptionTier,
             subscriptionExpiresAt = it.subscriptionExpiresAt
         )

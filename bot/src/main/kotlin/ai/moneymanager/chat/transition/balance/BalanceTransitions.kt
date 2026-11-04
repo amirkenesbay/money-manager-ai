@@ -197,7 +197,7 @@ private fun ActionContext<MoneyManagerState, MoneyManagerContext>.finishOnboardi
     val userId = user.id
     val activeGroupId = groupService.getActiveGroup(userId)?.id
     if (activeGroupId != null) {
-        val updated = groupService.setInitialBalance(activeGroupId, amount)
+        val updated = groupService.setInitialBalance(userId, activeGroupId, amount)
         log.info("Onboarding: set initialBalance={} for groupId={}", amount, activeGroupId)
         context.currentGroup = updated
     } else {

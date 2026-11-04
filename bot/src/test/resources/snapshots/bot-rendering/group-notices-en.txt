@@ -1,0 +1,31 @@
+📝 <b>Семья &amp; &lt;друзья&gt;</b> · Аня
+➕ 🛒 Продукты <code>−3 500₸</code> · Магнум &amp; &lt;сыр&gt;
+✏️ 🛒 Продукты <code>−9 000₸</code> · в аэропорт <i>(was: Такси, −12 000₸, no description)</i>
+🗑 <s>🛒 Продукты <code>−800₸</code></s> · хлеб
+
+🏷 <b>Семья &amp; &lt;друзья&gt;</b> · Аня
+New category: ☕ Кафе &amp; &lt;бар&gt;
+
+🏷 <b>Семья &amp; &lt;друзья&gt;</b> · Аня
+Category 🚕 Такси → 🚖 Такси
+
+🏷 <b>Семья &amp; &lt;друзья&gt;</b> · Аня
+Category Кино was deleted. Past operations keep this name
+
+⚙️ <b>Семья &amp; &lt;друзья&gt;</b> · Аня
+The group has a new name. It was «Дом»
+
+⚙️ <b>Семья &amp; &lt;друзья&gt;</b> · Аня
+Group currency: KZT ₸ → USD $
+
+⚙️ <b>Семья &amp; &lt;друзья&gt;</b> · Аня
+Starting balance: 0₸ → 150 000₸
+
+⚙️ <b>Семья &amp; &lt;друзья&gt;</b> · Аня
+The month now starts on day 10 (was day 1)
+
+👋 <b>Семья &amp; &lt;друзья&gt;</b> · Аня
+Joined the group
+
+🗑 <b>Семья &amp; &lt;друзья&gt;</b> · Аня
+The group was deleted and is gone from your list

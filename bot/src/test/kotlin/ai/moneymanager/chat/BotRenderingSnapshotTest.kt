@@ -4,6 +4,10 @@ import ai.moneymanager.chat.reply.ai.describe
 import ai.moneymanager.chat.reply.ai.describeBatchItem
 import ai.moneymanager.chat.reply.digest.DigestFormatter
 import ai.moneymanager.chat.reply.finance.FinanceHistoryFormatter
+import ai.moneymanager.chat.reply.group.GroupNoticeFormatter
+import ai.moneymanager.chat.reply.group.NoticeTopic
+import ai.moneymanager.domain.event.GroupSettingChange
+import ai.moneymanager.domain.event.OperationChange
 import ai.moneymanager.chat.reply.finance.FinanceReportFormatter
 import ai.moneymanager.domain.model.Budget
 import ai.moneymanager.domain.model.Category
@@ -124,6 +128,34 @@ class BotRenderingSnapshotTest {
         assertSnapshot("digest-week-ru", formatter.format(week, RUSSIAN))
         assertSnapshot("digest-day-ru", formatter.format(day, RUSSIAN))
         assertSnapshot("digest-day-kk", formatter.format(day.copy(monthLeft = MonthLeft(YearMonth.of(2026, 6), BigDecimal("50000"), 5)), KAZAKH))
+    }
+
+    @Test
+    fun `group notices`() {
+        val formatter = GroupNoticeFormatter(localization)
+        val magnum = operations().first()
+        val taxiRide = operations()[1]
+        val changes = listOf(
+            OperationChange.Added(magnum),
+            OperationChange.Edited(taxiRide, taxiRide.copy(amount = BigDecimal("9000"), categoryId = groceries.id!!, categoryName = groceries.name, categoryIcon = groceries.icon, description = "в аэропорт")),
+            OperationChange.Deleted(operations()[2]),
+        )
+        val notices = listOf(
+            NoticeTopic.OPERATIONS to { language: String -> formatter.operations(changes, Currency.KZT, language) },
+            NoticeTopic.CATEGORIES to { language: String -> formatter.categoryCreated("☕", "Кафе & <бар>", language) },
+            NoticeTopic.CATEGORIES to { language: String -> formatter.categoryUpdated("🚕", "Такси", "🚖", "Такси", language) },
+            NoticeTopic.CATEGORIES to { language: String -> formatter.categoryDeleted(null, "Кино", language) },
+            NoticeTopic.GROUP to { language: String -> formatter.setting(GroupSettingChange.Renamed("Дом", "Семья"), Currency.KZT, language) },
+            NoticeTopic.GROUP to { language: String -> formatter.setting(GroupSettingChange.CurrencyChanged(Currency.KZT, Currency.USD), Currency.USD, language) },
+            NoticeTopic.GROUP to { language: String -> formatter.setting(GroupSettingChange.InitialBalanceChanged(BigDecimal.ZERO, BigDecimal("150000")), Currency.KZT, language) },
+            NoticeTopic.GROUP to { language: String -> formatter.setting(GroupSettingChange.MonthStartChanged(1, 10), Currency.KZT, language) },
+            NoticeTopic.MEMBERS to { language: String -> formatter.memberJoined(language) },
+            NoticeTopic.DELETED to { language: String -> formatter.groupDeleted(language) },
+        )
+        listOf(RUSSIAN, ENGLISH).forEach { language ->
+            val rendered = notices.joinToString("\n\n") { (topic, body) -> formatter.notice(topic, "Семья & <друзья>", "Аня", body(language), language) }
+            assertSnapshot("group-notices-$language", rendered)
+        }
     }
 
     private fun addExpense() = AiPendingAction.TransactionAction.Add(

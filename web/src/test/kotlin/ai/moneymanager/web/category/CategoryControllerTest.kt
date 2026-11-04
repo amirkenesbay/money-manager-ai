@@ -130,7 +130,7 @@ class CategoryControllerTest {
     @Test
     fun `creates a category with a trimmed name`() {
         val cafe = Category(ObjectId(), "Кафе", "☕", CategoryType.EXPENSE, groupId)
-        `when`(categoryService.createCategory("Кафе", "☕", CategoryType.EXPENSE, groupId, FREE_CATEGORIES_PER_TYPE))
+        `when`(categoryService.createCategory(TEST_USER_ID, "Кафе", "☕", CategoryType.EXPENSE, groupId, FREE_CATEGORIES_PER_TYPE))
             .thenReturn(CategoryCreationResult.Created(cafe))
 
         mockMvc.perform(post(categoriesPath).withTelegramAuth().json(createBody(name = "  Кафе  ")))
@@ -153,7 +153,7 @@ class CategoryControllerTest {
 
     @Test
     fun `explains a duplicate name`() {
-        `when`(categoryService.createCategory("Кафе", "☕", CategoryType.EXPENSE, groupId, FREE_CATEGORIES_PER_TYPE))
+        `when`(categoryService.createCategory(TEST_USER_ID, "Кафе", "☕", CategoryType.EXPENSE, groupId, FREE_CATEGORIES_PER_TYPE))
             .thenReturn(CategoryCreationResult.Duplicate)
 
         mockMvc.perform(post(categoriesPath).withTelegramAuth().json(createBody()))
@@ -164,7 +164,7 @@ class CategoryControllerTest {
 
     @Test
     fun `offers premium when the free limit is reached`() {
-        `when`(categoryService.createCategory("Кафе", "☕", CategoryType.EXPENSE, groupId, FREE_CATEGORIES_PER_TYPE))
+        `when`(categoryService.createCategory(TEST_USER_ID, "Кафе", "☕", CategoryType.EXPENSE, groupId, FREE_CATEGORIES_PER_TYPE))
             .thenReturn(CategoryCreationResult.LimitReached(FREE_CATEGORIES_PER_TYPE))
 
         mockMvc.perform(post(categoriesPath).withTelegramAuth().json(createBody()))

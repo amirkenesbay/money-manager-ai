@@ -1,4 +1,4 @@
-import type { CategoryType, Currency, DigestKind } from '../api/types'
+import type { CategoryType, Currency, DigestKind, GroupNoticeLevel } from '../api/types'
 import type { Period } from '../operations/periods'
 import type { IntervalUnit, RepeatOption } from '../reminders/schedule'
 import type { ReportTab } from '../reports/reportTabs'
@@ -248,6 +248,12 @@ export const ru = {
   digestsOn: (count: number) => `${count} из 3`,
   digestLabels: { DAY: 'Итоги дня', WEEK: 'Итоги недели', MONTH: 'Итоги месяца' } as Record<DigestKind, string>,
   digestSchedules: { DAY: 'Каждый вечер в 21:00, если были траты', WEEK: 'По воскресеньям в 20:00', MONTH: 'В первый день нового месяца в 10:00' } as Record<DigestKind, string>,
+  groupNoticesLabel: 'Уведомления',
+  groupNoticesTitle: 'Уведомления группы',
+  groupNoticesHint: 'Бот напишет, когда другие участники что-то поменяют. Операции приходят одной сводкой, когда человек закончит вносить',
+  groupNoticeLevels: { ALL: 'Все', IMPORTANT: 'Только важное', OFF: 'Выкл' } as Record<GroupNoticeLevel, string>,
+  groupNoticeDetails: { ALL: 'Операции, категории, бюджеты и настройки группы', IMPORTANT: 'Всё, кроме операций', OFF: 'Ничего не приходит' } as Record<GroupNoticeLevel, string>,
+  groupNoticesSavedToast: 'Уведомления обновлены',
   remindersOn: (count: number) => `${count} вкл`,
   languageLabel: 'Язык',
   languageSheetTitle: 'Язык интерфейса',

@@ -148,7 +148,7 @@ private fun createCategoryFromInput(
     if (activeGroupId != null) {
         val hasPaidSubscription = context.userInfo?.hasActivePaidSubscription() == true
         val maxPerType = subscriptionLimitsService.maxCategoriesPerType(hasPaidSubscription)
-        context.categoryCreationResult = categoryService.createCategory(name, icon, categoryType, activeGroupId, maxPerType)
+        context.categoryCreationResult = categoryService.createCategory(checkNotNull(context.userInfo?.telegramUserId), name, icon, categoryType, activeGroupId, maxPerType)
         (context.categoryCreationResult as? CategoryCreationResult.Created)?.let { context.currentCategory = it.category }
     } else {
         log.warn("Skipping category creation - activeGroupId is null! userInfo=${context.userInfo}")

@@ -160,7 +160,7 @@ class OperationControllerTest {
     @Test
     fun `replaces every field of an operation`() {
         val draft = OperationDraft(CategoryType.EXPENSE, BigDecimal("7000"), groceries, TODAY.minusDays(1), null)
-        `when`(financeOperationService.replace(groupId, operationId, draft)).thenReturn(saved(draft))
+        `when`(financeOperationService.replace(TEST_USER_ID, groupId, operationId, draft)).thenReturn(saved(draft))
 
         mockMvc.perform(put("/api/v1/groups/$groupId/operations/$operationId").withTelegramAuth().json(body(amount = "7000", date = TODAY.minusDays(1))))
             .andExpect(status().isOk)
@@ -177,7 +177,7 @@ class OperationControllerTest {
 
     @Test
     fun `deletes an operation`() {
-        `when`(financeOperationService.deleteOperation(groupId, operationId)).thenReturn(true)
+        `when`(financeOperationService.deleteOperation(TEST_USER_ID, groupId, operationId)).thenReturn(true)
 
         mockMvc.perform(delete("/api/v1/groups/$groupId/operations/$operationId").withTelegramAuth())
             .andExpect(status().isNoContent)

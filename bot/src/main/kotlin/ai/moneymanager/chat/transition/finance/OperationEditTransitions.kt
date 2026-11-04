@@ -190,7 +190,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.operationEditF
         action {
             val operation = context.selectedOperation ?: return@action
             val amount = update.message?.text?.replace(",", ".")?.toBigDecimalOrNull() ?: return@action
-            context.selectedOperation = financeOperationService.updateAmount(operation.groupId, operation.id!!, amount)
+            context.selectedOperation = financeOperationService.updateAmount(user.id, operation.groupId, operation.id!!, amount)
         }
         then { to = MoneyManagerState.OPERATION_ACTIONS }
     }
@@ -217,7 +217,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.operationEditF
             }
             action {
                 val operation = context.selectedOperation ?: return@action
-                context.selectedOperation = financeOperationService.updateType(operation.groupId, operation.id!!, type)
+                context.selectedOperation = financeOperationService.updateType(user.id, operation.groupId, operation.id!!, type)
             }
             then { to = MoneyManagerState.OPERATION_ACTIONS }
         }
@@ -234,7 +234,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.operationEditF
             val text = buttonText
             val category = context.categories.firstOrNull { categoryButtonText(it) == text } ?: return@action
             context.selectedOperation = financeOperationService.updateCategory(
-                operation.groupId, operation.id!!, category.id!!, category.name, category.icon
+                user.id, operation.groupId, operation.id!!, category.id!!, category.name, category.icon
             )
         }
         then { to = MoneyManagerState.OPERATION_ACTIONS }
@@ -293,7 +293,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.operationEditF
         action {
             val operation = context.selectedOperation ?: return@action
             context.selectedOperation = financeOperationService.updateDescription(
-                operation.groupId, operation.id!!, update.message?.text
+                user.id, operation.groupId, operation.id!!, update.message?.text
             )
         }
         then { to = MoneyManagerState.OPERATION_ACTIONS }
@@ -307,7 +307,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.operationEditF
         }
         action {
             val operation = context.selectedOperation ?: return@action
-            context.selectedOperation = financeOperationService.updateDescription(operation.groupId, operation.id!!, null)
+            context.selectedOperation = financeOperationService.updateDescription(user.id, operation.groupId, operation.id!!, null)
         }
         then { to = MoneyManagerState.OPERATION_ACTIONS }
     }
@@ -324,7 +324,7 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.operationDelet
         }
         action {
             val operation = context.selectedOperation ?: return@action
-            financeOperationService.deleteOperation(operation.groupId, operation.id!!)
+            financeOperationService.deleteOperation(user.id, operation.groupId, operation.id!!)
             context.operationsList = context.operationsList.filterNot { it.id == operation.id }
             context.clearOperationEdit()
         }
@@ -347,7 +347,7 @@ private fun updateOperationDate(
     date: LocalDate
 ) {
     val operation = context.selectedOperation ?: return
-    context.selectedOperation = financeOperationService.updateDate(operation.groupId, operation.id!!, date)
+    context.selectedOperation = financeOperationService.updateDate(checkNotNull(context.userInfo?.telegramUserId), operation.groupId, operation.id!!, date)
     context.operationEditError = false
 }
 

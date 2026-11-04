@@ -1,5 +1,10 @@
 package ai.moneymanager.service
 
+import ai.moneymanager.domain.event.GroupDeleted
+import ai.moneymanager.domain.event.GroupSettingChange
+import ai.moneymanager.domain.event.GroupSettingChanged
+import ai.moneymanager.domain.event.MemberJoined
+import org.springframework.context.ApplicationEventPublisher
 import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.MONTH_START_DAYS
 import ai.moneymanager.domain.model.GroupCreationResult
@@ -19,7 +24,8 @@ import java.security.SecureRandom
 class GroupService(
     private val groupRepository: MoneyGroupRepository,
     private val userRepository: UserInfoRepository,
-    private val categoryService: CategoryService
+    private val categoryService: CategoryService,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
     private val log = LoggerFactory.getLogger(GroupService::class.java)
 
@@ -65,6 +71,7 @@ class GroupService(
 
         val updatedGroup = groupEntity.copy(memberIds = groupEntity.memberIds + userId)
         val savedGroup = groupRepository.save(updatedGroup)
+        eventPublisher.publishEvent(MemberJoined(checkNotNull(savedGroup.id), userId))
 
         updateUserGroupInfo(userId) { entity ->
             entity.copy(
@@ -104,10 +111,13 @@ class GroupService(
         return getGroup(activeGroupId)
     }
 
-    fun setInitialBalance(groupId: ObjectId, amount: BigDecimal): MoneyGroup? {
+    fun setInitialBalance(actorId: Long, groupId: ObjectId, amount: BigDecimal): MoneyGroup? {
         val groupEntity = groupRepository.findById(groupId).orElse(null) ?: return null
         val saved = groupRepository.save(groupEntity.copy(initialBalance = amount))
         log.info("Initial balance set: groupId=$groupId, amount=$amount")
+        if (groupEntity.initialBalance.compareTo(amount) != 0) {
+            publishSetting(groupId, actorId, GroupSettingChange.InitialBalanceChanged(groupEntity.initialBalance, amount))
+        }
         return mapToModel(saved)
     }
 
@@ -124,6 +134,7 @@ class GroupService(
         }
 
         val savedGroup = groupRepository.save(groupEntity.copy(name = newName))
+        if (groupEntity.name != newName) publishSetting(groupId, userId, GroupSettingChange.Renamed(groupEntity.name, newName))
         return mapToModel(savedGroup)
     }
 
@@ -136,6 +147,7 @@ class GroupService(
 
         val savedGroup = groupRepository.save(groupEntity.copy(currency = currency))
         log.info("Currency updated: groupId=$groupId, currency=$currency")
+        if (groupEntity.currency != currency) publishSetting(groupId, userId, GroupSettingChange.CurrencyChanged(groupEntity.currency, currency))
         return mapToModel(savedGroup)
     }
 
@@ -143,7 +155,9 @@ class GroupService(
         require(day in MONTH_START_DAYS) { "Month start day must be in $MONTH_START_DAYS" }
         val groupEntity = groupRepository.findById(groupId).orElse(null) ?: return null
         if (groupEntity.ownerId != userId) return null
-        return mapToModel(groupRepository.save(groupEntity.copy(monthStartDay = day)))
+        val saved = groupRepository.save(groupEntity.copy(monthStartDay = day))
+        if (groupEntity.monthStartDay != day) publishSetting(groupId, userId, GroupSettingChange.MonthStartChanged(groupEntity.monthStartDay, day))
+        return mapToModel(saved)
     }
 
     fun deleteGroup(userId: Long, groupId: ObjectId): Boolean {
@@ -157,6 +171,7 @@ class GroupService(
         log.info("Deleted $deletedCategoriesCount categories for group $groupId")
 
         groupRepository.delete(groupEntity)
+        eventPublisher.publishEvent(GroupDeleted(groupId, userId, groupEntity.name, groupEntity.memberIds))
 
         groupEntity.memberIds.forEach { memberId ->
             updateUserGroupInfo(memberId) { entity ->
@@ -238,5 +253,9 @@ class GroupService(
             currency = entity.currency,
             monthStartDay = entity.monthStartDay
         )
+    }
+
+    private fun publishSetting(groupId: ObjectId, actorId: Long, change: GroupSettingChange) {
+        eventPublisher.publishEvent(GroupSettingChanged(groupId, actorId, change))
     }
 }

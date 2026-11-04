@@ -10,6 +10,8 @@ enum class MiniAppScreen(val parameter: String?) {
     ADD_OPERATION("add"),
     CATEGORIES("categories"),
     REPORTS("reports"),
+    OPERATIONS("operations"),
+    GROUPS("groups"),
 }
 
 fun miniAppUrl(baseUrl: String, screen: MiniAppScreen, month: YearMonth? = null): String {

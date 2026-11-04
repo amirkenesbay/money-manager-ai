@@ -63,7 +63,7 @@ class FinanceOperationServiceTest {
         `when`(repository.findByGroupIdAndIdIn(groupId, listOf(operationId))).thenReturn(listOf(existing))
         val draft = OperationDraft(CategoryType.EXPENSE, BigDecimal("1800"), taxi, LocalDate.of(2026, 10, 14), null)
 
-        val replaced = service.replace(groupId, operationId, draft)
+        val replaced = service.replace(CREATOR_ID, groupId, operationId, draft)
 
         assertThat(replaced?.id).isEqualTo(operationId)
         assertThat(replaced?.creatorId).isEqualTo(CREATOR_ID)
@@ -77,14 +77,14 @@ class FinanceOperationServiceTest {
         `when`(repository.findByGroupIdAndIdIn(groupId, listOf(operationId))).thenReturn(emptyList())
         val draft = OperationDraft(CategoryType.EXPENSE, BigDecimal("1800"), taxi, LocalDate.of(2026, 10, 14), null)
 
-        assertThat(service.replace(groupId, operationId, draft)).isNull()
+        assertThat(service.replace(CREATOR_ID, groupId, operationId, draft)).isNull()
     }
 
     @Test
     fun `reports a corrected category when an edit moves the operation to another category`() {
         `when`(repository.findByGroupIdAndIdIn(groupId, listOf(operationId))).thenReturn(listOf(existing))
 
-        service.updateCategory(groupId, operationId, checkNotNull(taxi.id), taxi.name, taxi.icon)
+        service.updateCategory(CREATOR_ID, groupId, operationId, checkNotNull(taxi.id), taxi.name, taxi.icon)
 
         assertThat(publishedEvents).contains(CategoryCorrected(groupId, "Магнум", checkNotNull(taxi.id)))
     }
@@ -93,7 +93,7 @@ class FinanceOperationServiceTest {
     fun `reports no correction when the category stays the same`() {
         `when`(repository.findByGroupIdAndIdIn(groupId, listOf(operationId))).thenReturn(listOf(existing))
 
-        service.updateAmount(groupId, operationId, BigDecimal("4000"))
+        service.updateAmount(CREATOR_ID, groupId, operationId, BigDecimal("4000"))
 
         assertThat(publishedEvents).noneMatch { it is CategoryCorrected }
     }

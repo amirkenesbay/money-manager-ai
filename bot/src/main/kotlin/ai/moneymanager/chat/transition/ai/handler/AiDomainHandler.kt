@@ -23,3 +23,5 @@ interface AiModeHint {
     val examples: List<String>
     val order: Int
 }
+
+fun MoneyManagerContext.actorId(): Long = checkNotNull(userInfo?.telegramUserId)

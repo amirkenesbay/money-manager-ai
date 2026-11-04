@@ -1,8 +1,24 @@
 package ai.moneymanager.chat.telegram
 
+import ai.moneymanager.chat.reply.common.formatAmount
 import ai.moneymanager.chat.reply.common.formatIconPrefix
+import ai.moneymanager.chat.reply.common.shortDateFormatter
+import ai.moneymanager.chat.reply.group.GroupNoticeFormatter
+import ai.moneymanager.chat.reply.group.NoticeTopic
+import ai.moneymanager.domain.event.CategoryCreated
 import ai.moneymanager.domain.event.CategoryDeleted
-import ai.moneymanager.domain.event.CategoryRenamed
+import ai.moneymanager.domain.event.CategoryUpdated
+import ai.moneymanager.domain.event.GroupDeleted
+import ai.moneymanager.domain.event.GroupSettingChanged
+import ai.moneymanager.domain.event.MemberJoined
+import ai.moneymanager.domain.event.OperationChanged
+import ai.moneymanager.domain.event.OperationsChanged
+import ai.moneymanager.domain.model.BudgetThreshold
+import ai.moneymanager.domain.model.GroupNoticeLevel
+import ai.moneymanager.domain.model.MoneyGroup
+import ai.moneymanager.domain.model.UserInfo
+import ai.moneymanager.service.BudgetAlert
+import ai.moneymanager.service.BudgetAlertService
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.UserInfoService
@@ -10,24 +26,30 @@ import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.event.EventListener
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.telegram.telegrambots.bots.DefaultAbsSender
 import org.telegram.telegrambots.bots.DefaultBotOptions
+import org.telegram.telegrambots.meta.api.methods.ParseMode
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
-import ai.moneymanager.chat.reply.common.formatAmount
-import ai.moneymanager.chat.reply.common.shortDateFormatter
-import ai.moneymanager.domain.event.OperationsChanged
-import ai.moneymanager.domain.model.BudgetThreshold
-import ai.moneymanager.domain.model.MoneyGroup
-import ai.moneymanager.service.BudgetAlert
-import ai.moneymanager.service.BudgetAlertService
 
-private const val CATEGORY_RENAMED_KEY = "group.category_notice.renamed"
-private const val CATEGORY_DELETED_KEY = "group.category_notice.deleted"
 private const val OPEN_CATEGORIES_BUTTON_KEY = "mini_app.button.categories"
 private const val OPEN_BUDGETS_BUTTON_KEY = "mini_app.button.budgets"
+private const val OPEN_OPERATIONS_BUTTON_KEY = "mini_app.button.operations"
+private const val OPEN_GROUPS_BUTTON_KEY = "mini_app.button.groups"
 private const val BUDGET_NEAR_KEY = "budget.notice.near"
 private const val BUDGET_OVER_KEY = "budget.notice.over"
+private const val OPERATION_FLUSH_INTERVAL_MS = 20_000L
+
+private data class NoticeButton(val textKey: String, val screen: MiniAppScreen)
+
+private val CATEGORIES_BUTTON = NoticeButton(OPEN_CATEGORIES_BUTTON_KEY, MiniAppScreen.CATEGORIES)
+private val BUDGETS_BUTTON = NoticeButton(OPEN_BUDGETS_BUTTON_KEY, MiniAppScreen.CATEGORIES)
+private val OPERATIONS_BUTTON = NoticeButton(OPEN_OPERATIONS_BUTTON_KEY, MiniAppScreen.OPERATIONS)
+private val GROUPS_BUTTON = NoticeButton(OPEN_GROUPS_BUTTON_KEY, MiniAppScreen.GROUPS)
+
+private val IMPORTANT_LEVELS = setOf(GroupNoticeLevel.ALL, GroupNoticeLevel.IMPORTANT)
+private val OPERATION_LEVELS = setOf(GroupNoticeLevel.ALL)
 
 @Service
 class GroupActivityNotifier(
@@ -36,25 +58,68 @@ class GroupActivityNotifier(
     private val userInfoService: UserInfoService,
     private val localizationService: LocalizationService,
     private val miniAppGateway: MiniAppGateway,
+    private val noticeFormatter: GroupNoticeFormatter,
+    private val operationBuffer: OperationNoticeBuffer,
     @Value("\${chat-machinist.bot.token}")
     botToken: String,
 ) : DefaultAbsSender(DefaultBotOptions(), botToken) {
     private val log = LoggerFactory.getLogger(this::class.java)
 
     @EventListener
-    fun onCategoryRenamed(event: CategoryRenamed) {
-        notifyOtherMembers(event.groupId, event.actorId) { language, groupName, actorName ->
-            localizationService.t(
-                CATEGORY_RENAMED_KEY, language, groupName,
-                formatIconPrefix(event.icon) + event.oldName, formatIconPrefix(event.icon) + event.newName, actorName
-            )
+    fun onCategoryCreated(event: CategoryCreated) {
+        notifyOthers(event.groupId, event.actorId, NoticeTopic.CATEGORIES, CATEGORIES_BUTTON) { _, language ->
+            noticeFormatter.categoryCreated(event.icon, event.name, language)
+        }
+    }
+
+    @EventListener
+    fun onCategoryUpdated(event: CategoryUpdated) {
+        notifyOthers(event.groupId, event.actorId, NoticeTopic.CATEGORIES, CATEGORIES_BUTTON) { _, language ->
+            noticeFormatter.categoryUpdated(event.oldIcon, event.oldName, event.newIcon, event.newName, language)
         }
     }
 
     @EventListener
     fun onCategoryDeleted(event: CategoryDeleted) {
-        notifyOtherMembers(event.groupId, event.actorId) { language, groupName, actorName ->
-            localizationService.t(CATEGORY_DELETED_KEY, language, groupName, formatIconPrefix(event.icon) + event.name, actorName)
+        notifyOthers(event.groupId, event.actorId, NoticeTopic.CATEGORIES, CATEGORIES_BUTTON) { _, language ->
+            noticeFormatter.categoryDeleted(event.icon, event.name, language)
+        }
+    }
+
+    @EventListener
+    fun onGroupSettingChanged(event: GroupSettingChanged) {
+        notifyOthers(event.groupId, event.actorId, NoticeTopic.GROUP, GROUPS_BUTTON) { group, language ->
+            noticeFormatter.setting(event.change, group.currency, language)
+        }
+    }
+
+    @EventListener
+    fun onMemberJoined(event: MemberJoined) {
+        notifyOthers(event.groupId, event.memberId, NoticeTopic.MEMBERS, GROUPS_BUTTON) { _, language ->
+            noticeFormatter.memberJoined(language)
+        }
+    }
+
+    @EventListener
+    fun onGroupDeleted(event: GroupDeleted) {
+        val actorName = actorName(event.actorId)
+        recipients(event.groupId, event.memberIds - event.actorId, IMPORTANT_LEVELS).forEach { member ->
+            val text = noticeFormatter.notice(NoticeTopic.DELETED, event.groupName, actorName, noticeFormatter.groupDeleted(member.language), member.language)
+            send(member, event.groupId, text, null)
+        }
+    }
+
+    @EventListener
+    fun onOperationChanged(event: OperationChanged) {
+        operationBuffer.add(event)
+    }
+
+    @Scheduled(fixedDelay = OPERATION_FLUSH_INTERVAL_MS)
+    fun flushOperationNotices() {
+        operationBuffer.drainReady().forEach { batch ->
+            notifyOthers(batch.groupId, batch.actorId, NoticeTopic.OPERATIONS, OPERATIONS_BUTTON, OPERATION_LEVELS) { group, language ->
+                noticeFormatter.operations(batch.changes, group.currency, language)
+            }
         }
     }
 
@@ -63,7 +128,9 @@ class GroupActivityNotifier(
         runCatching {
             val group = groupService.getGroup(event.groupId) ?: return
             budgetAlertService.claimNewAlerts(group).forEach { alert ->
-                notifyMembers(group, group.memberIds, OPEN_BUDGETS_BUTTON_KEY) { language -> budgetNotice(alert, group, language) }
+                recipients(event.groupId, group.memberIds, IMPORTANT_LEVELS).forEach { member ->
+                    send(member, event.groupId, budgetNotice(alert, group, member.language), BUDGETS_BUTTON, parseHtml = false)
+                }
             }
         }.onFailure { log.warn("Failed to check budgets of group {}: {}", event.groupId, it.message) }
     }
@@ -85,24 +152,36 @@ class GroupActivityNotifier(
         }
     }
 
-    private fun notifyOtherMembers(groupId: ObjectId, actorId: Long, text: (String?, String, String) -> String) {
-        val group = groupService.getGroup(groupId) ?: return
-        val actorName = userInfoService.displayNames(setOf(actorId)).getValue(actorId)
-        notifyMembers(group, group.memberIds - actorId, OPEN_CATEGORIES_BUTTON_KEY) { language -> text(language, group.name, actorName) }
-    }
-
-    private fun notifyMembers(group: MoneyGroup, recipients: Set<Long>, buttonKey: String, text: (String?) -> String) {
-        recipients.forEach { memberId ->
-            val language = userInfoService.getUserInfoByTelegramId(memberId)?.language
-            runCatching { execute(notice(memberId, language, buttonKey, text(language))) }
-                .onFailure { log.warn("Failed to notify member {} of group {}: {}", memberId, group.id, it.message) }
-        }
-    }
-
-    private fun notice(memberId: Long, language: String?, buttonKey: String, text: String): SendMessage =
-        SendMessage(memberId.toString(), text).apply {
-            if (miniAppGateway.enabled) {
-                replyMarkup = miniAppGateway.keyboard(buttonKey, language, MiniAppScreen.CATEGORIES)
+    private fun notifyOthers(
+        groupId: ObjectId,
+        actorId: Long,
+        topic: NoticeTopic,
+        button: NoticeButton,
+        levels: Set<GroupNoticeLevel> = IMPORTANT_LEVELS,
+        body: (MoneyGroup, String?) -> String,
+    ) {
+        runCatching {
+            val group = groupService.getGroup(groupId) ?: return
+            val actorName = actorName(actorId)
+            recipients(groupId, group.memberIds - actorId, levels).forEach { member ->
+                val text = noticeFormatter.notice(topic, group.name, actorName, body(group, member.language), member.language)
+                send(member, groupId, text, button)
             }
+        }.onFailure { log.warn("Failed to notify group {} about {}: {}", groupId, topic, it.message) }
+    }
+
+    private fun recipients(groupId: ObjectId, memberIds: Set<Long>, levels: Set<GroupNoticeLevel>): List<UserInfo> =
+        memberIds.mapNotNull { userInfoService.getUserInfoByTelegramId(it) }.filter { it.noticeLevel(groupId) in levels }
+
+    private fun actorName(actorId: Long): String = userInfoService.displayNames(setOf(actorId)).getValue(actorId)
+
+    private fun send(member: UserInfo, groupId: ObjectId, text: String, button: NoticeButton?, parseHtml: Boolean = true) {
+        val chatId = checkNotNull(member.telegramUserId).toString()
+        val message = SendMessage(chatId, text).apply {
+            if (parseHtml) parseMode = ParseMode.HTML
+            if (button != null && miniAppGateway.enabled) replyMarkup = miniAppGateway.keyboard(button.textKey, member.language, button.screen)
         }
+        runCatching { execute(message) }
+            .onFailure { log.warn("Failed to notify member {} of group {}: {}", chatId, groupId, it.message) }
+    }
 }

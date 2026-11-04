@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Plugin } from 'vite'
 import { AUTH_SCHEME } from '../src/api/auth.ts'
-import type { AppHint, Budget, CategoryRule, DigestKind, VoiceResult, AnalyticsReport, ApiErrorBody, ApiErrorCode, Balance, Category, CategoryReport, ComparisonReport, Currency, Group, Invite, Limits, Me, Member, MembersReport, MonthSummary, Operation, OperationsPage, Reminder, ReminderInput, SubscriptionTier } from '../src/api/types.ts'
+import type { AppHint, Budget, CategoryRule, DigestKind, GroupNoticeLevel, VoiceResult, AnalyticsReport, ApiErrorBody, ApiErrorCode, Balance, Category, CategoryReport, ComparisonReport, Currency, Group, Invite, Limits, Me, Member, MembersReport, MonthSummary, Operation, OperationsPage, Reminder, ReminderInput, SubscriptionTier } from '../src/api/types.ts'
 
 const API_PREFIX = '/api/v1'
 const SCENARIO_PARAM = 'mock'
@@ -14,7 +14,7 @@ const PERSONAL_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d0'
 const FAMILY_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d1'
 const PREMIUM_EXPIRES_AT = '2026-12-31T00:00:00Z'
 const NO_CONTENT_STATUS = 204
-const GROUP_ROUTE = /^\/groups\/([0-9a-f]{24})(?:\/(balance|summary|operations|activate|categories|category-rules|budgets|members|invite|initial-balance|voice|reports\/[a-z]+))?(?:\/([^/]+))?(?:\/(limit))?$/
+const GROUP_ROUTE = /^\/groups\/([0-9a-f]{24})(?:\/(balance|summary|operations|activate|categories|category-rules|notices|budgets|members|invite|initial-balance|voice|reports\/[a-z]+))?(?:\/([^/]+))?(?:\/(limit))?$/
 const REMINDER_ROUTE = /^\/notifications(?:\/([^/]+))?$/
 const GROUP_ID_PREFIX = '6650a1b2c3d4e5f6a7b8'
 const GROUP_ID_DIGITS = 4
@@ -78,8 +78,8 @@ const premiumRequired: MockResponse = {
 }
 
 let groups: Group[] = [
-  { id: PERSONAL_GROUP_ID, name: 'Личное', type: 'PERSONAL', currency: 'KZT', isOwner: true, isActive: true, memberCount: 1, initialBalance: '50000', monthStartDay: 1 },
-  { id: FAMILY_GROUP_ID, name: 'Семья', type: 'SHARED', currency: 'USD', isOwner: false, isActive: false, memberCount: 3, initialBalance: '0', monthStartDay: 1 },
+  { id: PERSONAL_GROUP_ID, name: 'Личное', type: 'PERSONAL', currency: 'KZT', isOwner: true, isActive: true, memberCount: 1, initialBalance: '50000', monthStartDay: 1, noticeLevel: 'ALL' },
+  { id: FAMILY_GROUP_ID, name: 'Семья', type: 'SHARED', currency: 'USD', isOwner: false, isActive: false, memberCount: 3, initialBalance: '0', monthStartDay: 1, noticeLevel: 'ALL' },
 ]
 
 const groupOf = (groupId: string): Group => groups.find((group) => group.id === groupId) ?? groups[0]
@@ -406,6 +406,7 @@ function groupRoute(path: string, query: URLSearchParams, scenario: string, meth
   if (resource === 'categories' && itemId && action === 'limit') return setLimit(groupId, decodeURIComponent(itemId), body, scenario)
   if (resource === 'budgets') return ok(budgetsOf(groupId))
   if (resource === 'category-rules') return categoryRulesRoute(groupId, method, itemId)
+  if (resource === 'notices') return ok(replaceGroup(groupId, { noticeLevel: (JSON.parse(body) as { level: GroupNoticeLevel }).level }))
   if (resource === 'operations' && method !== 'GET') return mutateOperation(groupId, method, itemId, body)
   if (resource === 'categories' && method !== 'GET') return mutateCategory(groupId, method, itemId && decodeURIComponent(itemId), body, scenario)
   const empty = scenario === EMPTY_SCENARIO
@@ -470,7 +471,7 @@ function createGroup(body: string, scenario: string): MockResponse {
   }
   createdGroups += 1
   const id = `${GROUP_ID_PREFIX}${String(createdGroups).padStart(GROUP_ID_DIGITS, '0')}`
-  const created: Group = { id, name, type: 'SHARED', currency: input.currency, isOwner: true, isActive: true, memberCount: 1, initialBalance: '0', monthStartDay: 1 }
+  const created: Group = { id, name, type: 'SHARED', currency: input.currency, isOwner: true, isActive: true, memberCount: 1, initialBalance: '0', monthStartDay: 1, noticeLevel: 'ALL' }
   groups = [...groups, created]
   operations[id] = []
   activeGroupId = id

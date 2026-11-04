@@ -1,5 +1,5 @@
 import { apiRequest } from '../api/client'
-import type { Currency, Group, Invite, Member } from '../api/types'
+import type { Currency, Group, GroupNoticeLevel, Invite, Member } from '../api/types'
 
 const groupPath = (groupId: string) => `/groups/${groupId}`
 
@@ -25,3 +25,6 @@ export const fetchInvite = (groupId: string, signal?: AbortSignal): Promise<Invi
 
 export const setInitialBalance = (groupId: string, amount: string): Promise<Group> =>
   apiRequest<Group>(`${groupPath(groupId)}/initial-balance`, { method: 'PUT', body: JSON.stringify({ amount }) })
+
+export const setGroupNotices = (groupId: string, level: GroupNoticeLevel): Promise<Group> =>
+  apiRequest<Group>(`/groups/${groupId}/notices`, { method: 'PUT', body: JSON.stringify({ level }) })

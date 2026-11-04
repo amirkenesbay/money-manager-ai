@@ -1,4 +1,4 @@
-import type { CategoryType, Currency, DigestKind } from '../api/types'
+import type { CategoryType, Currency, DigestKind, GroupNoticeLevel } from '../api/types'
 import type { Period } from '../operations/periods'
 import type { IntervalUnit, RepeatOption } from '../reminders/schedule'
 import type { ReportTab } from '../reports/reportTabs'
@@ -249,6 +249,12 @@ export const en: Strings = {
   digestsOn: (count: number) => `${count} of 3`,
   digestLabels: { DAY: 'Daily summary', WEEK: 'Weekly summary', MONTH: 'Monthly summary' } as Record<DigestKind, string>,
   digestSchedules: { DAY: 'Every evening at 21:00 if you spent anything', WEEK: 'Sundays at 20:00', MONTH: 'First day of a new month at 10:00' } as Record<DigestKind, string>,
+  groupNoticesLabel: 'Notifications',
+  groupNoticesTitle: 'Group notifications',
+  groupNoticesHint: 'The bot tells you when other members change something. Operations arrive as one summary once the person is done',
+  groupNoticeLevels: { ALL: 'All', IMPORTANT: 'Important only', OFF: 'Off' } as Record<GroupNoticeLevel, string>,
+  groupNoticeDetails: { ALL: 'Operations, categories, budgets and group settings', IMPORTANT: 'Everything except operations', OFF: 'Nothing arrives' } as Record<GroupNoticeLevel, string>,
+  groupNoticesSavedToast: 'Notifications updated',
   remindersOn: (count: number) => `${count} on`,
   languageLabel: 'Language',
   languageSheetTitle: 'App language',

@@ -1,4 +1,4 @@
-import type { CategoryType, Currency, DigestKind } from '../api/types'
+import type { CategoryType, Currency, DigestKind, GroupNoticeLevel } from '../api/types'
 import type { Period } from '../operations/periods'
 import type { IntervalUnit, RepeatOption } from '../reminders/schedule'
 import type { ReportTab } from '../reports/reportTabs'
@@ -243,6 +243,12 @@ export const kk: Strings = {
   digestsOn: (count: number) => `${count} / 3`,
   digestLabels: { DAY: 'Күн қорытындысы', WEEK: 'Апта қорытындысы', MONTH: 'Ай қорытындысы' } as Record<DigestKind, string>,
   digestSchedules: { DAY: 'Күн сайын кешкі 21:00-де, шығын болса', WEEK: 'Жексенбі сайын 20:00-де', MONTH: 'Жаңа айдың бірінші күні 10:00-де' } as Record<DigestKind, string>,
+  groupNoticesLabel: 'Хабарландырулар',
+  groupNoticesTitle: 'Топ хабарландырулары',
+  groupNoticesHint: 'Басқа қатысушылар бірдеңе өзгертсе, бот жазады. Операциялар адам енгізіп болғанда бір шолумен келеді',
+  groupNoticeLevels: { ALL: 'Барлығы', IMPORTANT: 'Тек маңыздысы', OFF: 'Өшірулі' } as Record<GroupNoticeLevel, string>,
+  groupNoticeDetails: { ALL: 'Операциялар, санаттар, бюджеттер және топ баптаулары', IMPORTANT: 'Операциялардан басқасының бәрі', OFF: 'Ештеңе келмейді' } as Record<GroupNoticeLevel, string>,
+  groupNoticesSavedToast: 'Хабарландырулар жаңартылды',
   remindersOn: (count: number) => `${count} қосулы`,
   languageLabel: 'Тіл',
   languageSheetTitle: 'Интерфейс тілі',

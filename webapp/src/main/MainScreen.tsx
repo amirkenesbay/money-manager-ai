@@ -41,9 +41,15 @@ type Overlay =
   | { kind: 'section'; section: Section }
   | { kind: 'voice' }
 
-const LAUNCH_OVERLAYS: Record<Exclude<LaunchScreen, 'reports'>, Overlay> = {
+const LAUNCH_TABS: Partial<Record<LaunchScreen, Tab>> = {
+  reports: 'reports',
+  operations: 'operations',
+}
+
+const LAUNCH_OVERLAYS: Partial<Record<LaunchScreen, Overlay>> = {
   add: { kind: 'form', operation: null },
   categories: { kind: 'section', section: 'categories' },
+  groups: { kind: 'section', section: 'groups' },
 }
 
 interface Navigation {
@@ -85,7 +91,7 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
   const [groups, setGroups] = useState(initialGroups)
   const [groupId, setGroupId] = useState(initialGroupId)
   const [switchError, setSwitchError] = useState<string | null>(null)
-  const [tab, setTab] = useState<Tab>(() => (launchScreen() === 'reports' ? 'reports' : 'home'))
+  const [tab, setTab] = useState<Tab>(launchTab)
   const [overlay, setOverlay] = useState<Overlay | null>(launchOverlay)
   const [version, setVersion] = useState(0)
   const hints = useHints()
@@ -321,7 +327,12 @@ function TabContent({ tab, workspace, navigation }: { tab: SecondaryTab; workspa
 
 function launchOverlay(): Overlay | null {
   const screen = launchScreen()
-  return screen && screen !== 'reports' ? LAUNCH_OVERLAYS[screen] : null
+  return (screen && LAUNCH_OVERLAYS[screen]) ?? null
+}
+
+function launchTab(): Tab {
+  const screen = launchScreen()
+  return (screen && LAUNCH_TABS[screen]) ?? 'home'
 }
 
 function displayName(me: Me): string {

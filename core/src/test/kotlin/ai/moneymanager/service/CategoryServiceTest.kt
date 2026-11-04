@@ -1,7 +1,7 @@
 package ai.moneymanager.service
 
 import ai.moneymanager.domain.event.CategoryDeleted
-import ai.moneymanager.domain.event.CategoryRenamed
+import ai.moneymanager.domain.event.CategoryUpdated
 import ai.moneymanager.domain.model.BudgetLimitResult
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.CategoryUpdateResult
@@ -42,7 +42,7 @@ class CategoryServiceTest {
         val result = service.updateCategory(ACTOR_ID, taxi.id!!, "Такси и каршеринг", "🚕")
 
         assertThat((result as CategoryUpdateResult.Updated).category.name).isEqualTo("Такси и каршеринг")
-        assertThat(publishedEvents).containsExactly(CategoryRenamed(groupId, ACTOR_ID, "🚕", "Такси", "Такси и каршеринг"))
+        assertThat(publishedEvents).containsExactly(CategoryUpdated(groupId, ACTOR_ID, "🚕", "Такси", "🚕", "Такси и каршеринг"))
     }
 
     @Test
@@ -81,11 +81,11 @@ class CategoryServiceTest {
     }
 
     @Test
-    fun `changes only the icon without a group notice`() {
+    fun `tells the group when only the icon changes`() {
         val result = service.updateCategory(ACTOR_ID, taxi.id!!, "Такси", "🚖")
 
         assertThat((result as CategoryUpdateResult.Updated).category.icon).isEqualTo("🚖")
-        assertThat(publishedEvents).isEmpty()
+        assertThat(publishedEvents).containsExactly(CategoryUpdated(groupId, ACTOR_ID, "🚕", "Такси", "🚖", "Такси"))
     }
 
     @Test

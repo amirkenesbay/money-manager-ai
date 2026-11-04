@@ -57,7 +57,7 @@ class OperationController(
     ): OperationResponse {
         groupAccessGuard.requireMember(user, groupId)
         val draft = operationDraftFactory.create(user, groupId, request)
-        val updated = financeOperationService.replace(groupId, operationId, draft) ?: throw operationNotFound()
+        val updated = financeOperationService.replace(checkNotNull(user.telegramUserId), groupId, operationId, draft) ?: throw operationNotFound()
         return financeResponseFactory.operation(updated)
     }
 
@@ -65,7 +65,7 @@ class OperationController(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun delete(user: UserInfo, @PathVariable groupId: ObjectId, @PathVariable operationId: ObjectId) {
         groupAccessGuard.requireMember(user, groupId)
-        if (!financeOperationService.deleteOperation(groupId, operationId)) throw operationNotFound()
+        if (!financeOperationService.deleteOperation(checkNotNull(user.telegramUserId), groupId, operationId)) throw operationNotFound()
     }
 
     private fun operationNotFound() = ApiException(ApiErrorCode.NOT_FOUND, OPERATION_NOT_FOUND_KEY)

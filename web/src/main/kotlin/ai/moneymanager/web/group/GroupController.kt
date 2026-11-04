@@ -47,7 +47,7 @@ class GroupController(
     @GetMapping
     fun groups(user: UserInfo): List<GroupResponse> {
         val userId = checkNotNull(user.telegramUserId)
-        return groupService.getUserGroups(userId).map { it.toResponse(userId, user.activeGroupId) }
+        return groupService.getUserGroups(userId).map { it.toResponse(user) }
     }
 
     @PostMapping
@@ -57,7 +57,7 @@ class GroupController(
         val name = requireName(request.name, MAX_GROUP_NAME_LENGTH)
         val maxOwned = subscriptionLimitsService.maxOwnedSharedGroups(user.hasActivePaidSubscription())
         return when (val result = groupService.createGroup(userId, name, request.currency, maxOwned)) {
-            is GroupCreationResult.Created -> result.group.toResponse(userId, result.group.id)
+            is GroupCreationResult.Created -> result.group.toResponse(user, result.group.id)
             GroupCreationResult.Duplicate -> throw duplicate(name)
             is GroupCreationResult.LimitReached -> throw limitReached(ApiErrorCode.GROUP_LIMIT_REACHED, result.limit)
         }
@@ -76,7 +76,7 @@ class GroupController(
             if (day !in MONTH_START_DAYS) throw badRequest(MONTH_START_DAY_KEY)
             checkNotNull(groupService.updateMonthStartDay(userId, groupId, day))
         } ?: withCurrency
-        return updated.toResponse(userId, user.activeGroupId)
+        return updated.toResponse(user)
     }
 
     @DeleteMapping("/{groupId}")
@@ -114,24 +114,32 @@ class GroupController(
     fun initialBalance(user: UserInfo, @PathVariable groupId: ObjectId, @RequestBody request: InitialBalanceRequest): GroupResponse {
         groupAccessGuard.requireMember(user, groupId)
         if (request.amount.signum() < 0) throw badRequest(NEGATIVE_BALANCE_KEY)
-        val updated = checkNotNull(groupService.setInitialBalance(groupId, request.amount))
-        return updated.toResponse(checkNotNull(user.telegramUserId), user.activeGroupId)
+        val updated = checkNotNull(groupService.setInitialBalance(checkNotNull(user.telegramUserId), groupId, request.amount))
+        return updated.toResponse(user)
+    }
+
+    @PutMapping("/{groupId}/notices")
+    fun notices(user: UserInfo, @PathVariable groupId: ObjectId, @RequestBody request: GroupNoticesRequest): GroupResponse {
+        val group = groupAccessGuard.requireMember(user, groupId)
+        val updated = checkNotNull(userInfoService.setGroupNoticeLevel(checkNotNull(user.telegramUserId), groupId, request.level))
+        return group.toResponse(updated)
     }
 
     private fun duplicate(name: String) = ApiException(ApiErrorCode.GROUP_DUPLICATE, messageArgs = listOf(name))
 
-    private fun MoneyGroup.toResponse(userId: Long, activeGroupId: ObjectId?): GroupResponse {
+    private fun MoneyGroup.toResponse(user: UserInfo, activeGroupId: ObjectId? = user.activeGroupId): GroupResponse {
         val groupId = checkNotNull(id)
         return GroupResponse(
             id = groupId,
             name = name,
             type = type,
             currency = currency,
-            isOwner = ownerId == userId,
+            isOwner = ownerId == user.telegramUserId,
             isActive = groupId == activeGroupId,
             memberCount = memberIds.size,
             initialBalance = initialBalance,
             monthStartDay = monthStartDay,
+            noticeLevel = user.noticeLevel(groupId),
         )
     }
 }

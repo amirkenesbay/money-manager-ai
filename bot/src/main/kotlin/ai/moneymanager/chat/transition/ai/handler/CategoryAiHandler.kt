@@ -58,9 +58,9 @@ class CategoryAiHandler(
         if (action !is AiPendingAction.CategoryAction) return localizationService.t("ai.error.unknown_command", lang)
         return when (action) {
             is AiPendingAction.CategoryAction.Create -> executeCreate(action, context, lang)
-            is AiPendingAction.CategoryAction.Delete -> executeDelete(action, actorOf(context), lang)
-            is AiPendingAction.CategoryAction.Rename -> executeRename(action, actorOf(context), lang)
-            is AiPendingAction.CategoryAction.ChangeIcon -> executeChangeIcon(action, lang)
+            is AiPendingAction.CategoryAction.Delete -> executeDelete(action, context.actorId(), lang)
+            is AiPendingAction.CategoryAction.Rename -> executeRename(action, context.actorId(), lang)
+            is AiPendingAction.CategoryAction.ChangeIcon -> executeChangeIcon(action, context.actorId(), lang)
             is AiPendingAction.CategoryAction.DeleteAll -> executeDeleteAll(action, lang)
         }
     }
@@ -151,7 +151,7 @@ class CategoryAiHandler(
         val hasPaidSubscription = context.userInfo?.hasActivePaidSubscription() == true
         val maxPerType = subscriptionLimitsService.maxCategoriesPerType(hasPaidSubscription)
 
-        return when (val result = categoryService.createCategory(action.name, action.icon, action.type, groupId, maxPerType)) {
+        return when (val result = categoryService.createCategory(context.actorId(), action.name, action.icon, action.type, groupId, maxPerType)) {
             is CategoryCreationResult.Duplicate -> localizationService.t(
                 "ai.category.create.duplicate", lang, escapeHtml(action.name), typeLabel(action.type, lang)
             )
@@ -167,8 +167,6 @@ class CategoryAiHandler(
             }
         }
     }
-
-    private fun actorOf(context: MoneyManagerContext): Long = checkNotNull(context.userInfo?.telegramUserId)
 
     private fun executeDelete(action: AiPendingAction.CategoryAction.Delete, actorId: Long, lang: String?): String {
         val categoryId = action.category.id
@@ -190,10 +188,10 @@ class CategoryAiHandler(
         return localizationService.t("ai.category.rename.success", lang, escapeHtml(action.category.name), escapeHtml(updated.name))
     }
 
-    private fun executeChangeIcon(action: AiPendingAction.CategoryAction.ChangeIcon, lang: String?): String {
+    private fun executeChangeIcon(action: AiPendingAction.CategoryAction.ChangeIcon, actorId: Long, lang: String?): String {
         val categoryId = action.category.id
             ?: return localizationService.t("ai.category.no_id", lang)
-        val updated = categoryService.updateCategoryIcon(categoryId, action.newIcon)
+        val updated = categoryService.updateCategoryIcon(actorId, categoryId, action.newIcon)
             ?: return localizationService.t("ai.category.change_icon.failed", lang, escapeHtml(action.category.name))
         return localizationService.t(
             "ai.category.change_icon.success",

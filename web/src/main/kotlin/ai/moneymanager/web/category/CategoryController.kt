@@ -87,7 +87,7 @@ class CategoryController(
         groupAccessGuard.requireMember(user, groupId)
         val name = requireName(request.name, MAX_CATEGORY_NAME_LENGTH)
         val maxPerType = subscriptionLimitsService.maxCategoriesPerType(user.hasActivePaidSubscription())
-        return when (val result = categoryService.createCategory(name, normalizeIcon(request.icon), request.type, groupId, maxPerType)) {
+        return when (val result = categoryService.createCategory(checkNotNull(user.telegramUserId), name, normalizeIcon(request.icon), request.type, groupId, maxPerType)) {
             is CategoryCreationResult.Created -> result.category.toResponse()
             CategoryCreationResult.Duplicate -> throw duplicate(name)
             is CategoryCreationResult.LimitReached -> throw limitReached(ApiErrorCode.CATEGORY_LIMIT_REACHED, result.limit)

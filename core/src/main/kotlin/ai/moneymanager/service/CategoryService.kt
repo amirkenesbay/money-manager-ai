@@ -1,7 +1,8 @@
 package ai.moneymanager.service
 
 import ai.moneymanager.domain.event.CategoryDeleted
-import ai.moneymanager.domain.event.CategoryRenamed
+import ai.moneymanager.domain.event.CategoryCreated
+import ai.moneymanager.domain.event.CategoryUpdated
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryCreationResult
 import ai.moneymanager.domain.model.CategoryType
@@ -38,7 +39,7 @@ class CategoryService(
 ) {
     private val log = LoggerFactory.getLogger(CategoryService::class.java)
 
-    fun createCategory(name: String, icon: String?, type: CategoryType, groupId: ObjectId, maxCategoriesPerType: Int): CategoryCreationResult {
+    fun createCategory(actorId: Long, name: String, icon: String?, type: CategoryType, groupId: ObjectId, maxCategoriesPerType: Int): CategoryCreationResult {
         val existingCategory = categoryRepository.findByGroupIdAndNameAndType(groupId, name, type)
         if (existingCategory != null) {
             return CategoryCreationResult.Duplicate
@@ -57,6 +58,7 @@ class CategoryService(
         )
 
         val savedCategory = categoryRepository.save(categoryEntity)
+        eventPublisher.publishEvent(CategoryCreated(groupId, actorId, savedCategory.icon, savedCategory.name))
         return CategoryCreationResult.Created(mapToModel(savedCategory))
     }
 
@@ -82,8 +84,8 @@ class CategoryService(
         if (namesake != null && namesake.id != categoryId) return CategoryUpdateResult.Duplicate
 
         val saved = categoryRepository.save(entity.copy(name = name, icon = icon))
-        if (entity.name != name) {
-            eventPublisher.publishEvent(CategoryRenamed(entity.groupId, actorId, saved.icon, entity.name, name))
+        if (entity.name != saved.name || entity.icon != saved.icon) {
+            eventPublisher.publishEvent(CategoryUpdated(entity.groupId, actorId, entity.icon, entity.name, saved.icon, saved.name))
         }
         return CategoryUpdateResult.Updated(mapToModel(saved))
     }
@@ -93,11 +95,9 @@ class CategoryService(
         return (updateCategory(actorId, categoryId, newName, category.icon) as? CategoryUpdateResult.Updated)?.category
     }
 
-    fun updateCategoryIcon(categoryId: ObjectId, newIcon: String?): Category? {
-        val categoryEntity = categoryRepository.findById(categoryId).orElse(null) ?: return null
-        val updatedCategory = categoryEntity.copy(icon = newIcon)
-        val savedCategory = categoryRepository.save(updatedCategory)
-        return mapToModel(savedCategory)
+    fun updateCategoryIcon(actorId: Long, categoryId: ObjectId, newIcon: String?): Category? {
+        val category = getCategory(categoryId) ?: return null
+        return (updateCategory(actorId, categoryId, category.name, newIcon) as? CategoryUpdateResult.Updated)?.category
     }
 
     fun setMonthlyLimit(categoryId: ObjectId, limit: BigDecimal?, maxBudgets: Int?): BudgetLimitResult {
