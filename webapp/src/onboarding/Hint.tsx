@@ -33,8 +33,8 @@ export function Hint({ hint, title, body, placement = 'below' }: { hint: AppHint
   useEffect(() => {
     if (!shown) return undefined
     const close = () => dismiss(hint)
-    document.addEventListener('pointerdown', close, { capture: true, once: true })
-    return () => document.removeEventListener('pointerdown', close, { capture: true })
+    document.addEventListener('click', close, { once: true })
+    return () => document.removeEventListener('click', close)
   }, [shown, hint, dismiss])
 
   if (!shown) return null

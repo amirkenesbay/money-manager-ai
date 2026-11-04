@@ -45,6 +45,21 @@ describe('Hint', () => {
     expect(screen.queryByRole('note')).not.toBeInTheDocument()
   })
 
+  it('lets the tap that closes it reach the button the user aimed at', async () => {
+    const onPress = vi.fn()
+    render(
+      <HintsProvider me={me({ seenHints: [] })} onMeChanged={vi.fn()}>
+        <Hint hint="REPORTS" title={strings.hintReportsTitle} body={strings.hintReportsBody} />
+        <button type="button" onClick={onPress}>{strings.addTag}</button>
+      </HintsProvider>,
+    )
+
+    await userEvent.click(screen.getByRole('button', { name: strings.addTag }))
+
+    expect(onPress).toHaveBeenCalledOnce()
+    expect(screen.queryByRole('note')).not.toBeInTheDocument()
+  })
+
   it('stays away when already seen', () => {
     renderHint({ seen: true })
 
