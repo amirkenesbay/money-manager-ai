@@ -116,7 +116,7 @@ export function VoiceFlow({ me, group, start = { kind: 'record' }, onClose, onMa
         />
       )
     case 'confirm':
-      return <VoiceConfirm group={group} language={me.language} initialDrafts={phase.drafts} onSayAgain={record} onClose={onClose} onSaved={onSaved} />
+      return <VoiceConfirm group={group} userId={me.userId} language={me.language} initialDrafts={phase.drafts} onSayAgain={record} onClose={onClose} onSaved={onSaved} />
     default:
       return (
         <VoiceProblem

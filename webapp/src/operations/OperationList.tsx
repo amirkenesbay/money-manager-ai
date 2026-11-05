@@ -1,11 +1,13 @@
 import type { Currency, Operation } from '../api/types'
 import { formatSignedMoney } from '../format'
 import { TaggedText } from './TaggedText'
+import { ImpactNote } from '../debts/ImpactNote'
 
-export function OperationList({ operations, currency, language, note, onSelect }: {
+export function OperationList({ operations, currency, language, userId, note, onSelect }: {
   operations: Operation[]
   currency: Currency
   language: string
+  userId?: number
   note: (operation: Operation) => string
   onSelect: (operation: Operation) => void
 }) {
@@ -19,8 +21,11 @@ export function OperationList({ operations, currency, language, note, onSelect }
               <span className="row-title">{operation.categoryName}</span>
               <span className="caption"><TaggedText text={note(operation)} /></span>
             </span>
-            <span className={`amount ${operation.type === 'INCOME' ? 'income' : ''}`}>
-              {formatSignedMoney(operation.type, operation.amount, currency, language)}
+            <span>
+              <span className={`amount ${operation.type === 'INCOME' ? 'income' : ''}`}>
+                {formatSignedMoney(operation.type, operation.amount, currency, language)}
+              </span>
+              {userId !== undefined && <ImpactNote operation={operation} userId={userId} currency={currency} language={language} />}
             </span>
           </button>
         </li>

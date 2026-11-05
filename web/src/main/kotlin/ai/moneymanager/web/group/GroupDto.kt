@@ -17,6 +17,7 @@ data class GroupResponse(
     val initialBalance: BigDecimal,
     val monthStartDay: Int,
     val noticeLevel: GroupNoticeLevel,
+    val splitExpenses: Boolean,
 )
 
 data class GroupNoticesRequest(
@@ -32,6 +33,7 @@ data class UpdateGroupRequest(
     val name: String?,
     val currency: Currency?,
     val monthStartDay: Int?,
+    val splitExpenses: Boolean? = null,
 )
 
 data class InitialBalanceRequest(

@@ -1,6 +1,7 @@
 package ai.moneymanager.web.voice
 
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.ExpenseShare
 import ai.moneymanager.domain.model.Recurrence
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.domain.model.nlp.BotCommand
@@ -9,6 +10,7 @@ import ai.moneymanager.service.CategoryRuleService
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.nlp.CommandParserService
 import ai.moneymanager.service.nlp.WAV_MIME_TYPE
+import ai.moneymanager.service.nlp.expenseShareOf
 import ai.moneymanager.service.nlp.repeatOf
 import ai.moneymanager.service.nlp.suggestOperation
 import ai.moneymanager.web.API_V1_PREFIX
@@ -57,8 +59,12 @@ class VoiceController(
         val commands = commandParserService.parseVoiceCommands(audio, aiRequestGuard.groupContext(user, group, categories, rules), WAV_MIME_TYPE)
         aiRequestGuard.requireParsed(commands)
         val today = userCalendar.today(user)
+        val members = aiRequestGuard.memberNames(group)
+        val speakerId = checkNotNull(user.telegramUserId)
         val operations = commands
-            .mapNotNull { command -> suggestOperation(command, categories, today, rules)?.toResponse()?.withRepeat(repeatOf(command)) }
+            .mapNotNull { command ->
+                suggestOperation(command, categories, today, rules)?.toResponse()?.withRepeat(repeatOf(command))?.withShare(expenseShareOf(command, speakerId, members))
+            }
             .take(MAX_VOICE_OPERATIONS)
         return VoiceResponse(operations, askAnswers.answerOf(user, group, commands))
     }
@@ -81,6 +87,9 @@ class VoiceController(
         is OperationSuggestion.CategoryMissing -> voiceOperation(type, amount, operationDate, description)
         OperationSuggestion.AmountNotPositive -> null
     }
+
+    private fun VoiceOperationResponse.withShare(share: ExpenseShare?) =
+        share?.let { copy(payerId = it.payerId, participantIds = it.participantIds) } ?: this
 
     private fun VoiceOperationResponse.withRepeat(repeat: Recurrence?) =
         repeat?.let { copy(repeat = VoiceRepeatResponse(it.unit, it.interval)) } ?: this

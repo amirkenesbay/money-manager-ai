@@ -4,14 +4,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiRequestError } from '../api/client'
 import { deleteOperation } from '../operations/operationsApi'
 import { strings } from '../strings'
-import { group, operation, PERSONAL_GROUP_ID } from '../test/fixtures'
+import { group, me, operation, PERSONAL_GROUP_ID } from '../test/fixtures'
 import { OperationDetail } from './OperationDetail'
 
 vi.mock('../operations/operationsApi', () => ({ deleteOperation: vi.fn() }))
 
 const onDeleted = vi.fn()
 const onEdit = vi.fn()
-const renderDetail = () => render(<OperationDetail group={group()} language="ru" operation={operation()} onBack={vi.fn()} onEdit={onEdit} onDeleted={onDeleted} />)
+const renderDetail = () => render(<OperationDetail group={group()} userId={me().userId} language="ru" operation={operation()} onBack={vi.fn()} onEdit={onEdit} onDeleted={onDeleted} />)
 
 describe('OperationDetail', () => {
   beforeEach(() => {

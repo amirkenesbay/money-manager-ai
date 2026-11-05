@@ -12,6 +12,8 @@ data class AddExpenseArgs(
     val operationDate: String? = null,
     val repeatUnit: String? = null,
     val repeatInterval: Double? = null,
+    val paidBy: String? = null,
+    val splitWith: String? = null,
 )
 
 data class AddIncomeArgs(

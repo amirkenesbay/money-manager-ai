@@ -14,8 +14,12 @@ data class MoneyGroup(
     val type: GroupType,
     val initialBalance: BigDecimal = BigDecimal.ZERO,
     val currency: Currency = Currency.DEFAULT,
-    val monthStartDay: Int = DEFAULT_MONTH_START_DAY
-)
+    val monthStartDay: Int = DEFAULT_MONTH_START_DAY,
+    val splitExpenses: Boolean = false,
+) {
+    val splitsExpenses: Boolean
+        get() = splitExpenses && type == GroupType.SHARED
+}
 
 enum class GroupType {
     PERSONAL,

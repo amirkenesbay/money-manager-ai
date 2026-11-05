@@ -76,7 +76,11 @@ class GroupController(
             if (day !in MONTH_START_DAYS) throw badRequest(MONTH_START_DAY_KEY)
             checkNotNull(groupService.updateMonthStartDay(userId, groupId, day))
         } ?: withCurrency
-        return updated.toResponse(user)
+        val split = request.splitExpenses?.let { enabled ->
+            if (group.type == GroupType.PERSONAL) throw badRequest(PERSONAL_GROUP_LOCKED_KEY)
+            checkNotNull(groupService.updateSplitExpenses(userId, groupId, enabled))
+        } ?: updated
+        return split.toResponse(user)
     }
 
     @DeleteMapping("/{groupId}")
@@ -140,6 +144,7 @@ class GroupController(
             initialBalance = initialBalance,
             monthStartDay = monthStartDay,
             noticeLevel = user.noticeLevel(groupId),
+            splitExpenses = splitsExpenses,
         )
     }
 }

@@ -6,8 +6,9 @@ import { formatMoney, toIsoDate } from '../format'
 import { fetchCategories } from '../categories/categoriesApi'
 import { createOperation, fetchRecentTags, replaceOperation } from '../operations/operationsApi'
 import { createRecurring } from '../recurring/recurringApi'
+import { fetchMembers } from '../groups/groupsApi'
 import { strings } from '../strings'
-import { category, group, operation, PERSONAL_GROUP_ID } from '../test/fixtures'
+import { category, group, me, operation, PERSONAL_GROUP_ID } from '../test/fixtures'
 import { asRendered } from '../test/text'
 import { OperationForm } from './OperationForm'
 
@@ -20,6 +21,7 @@ vi.mock('../operations/operationsApi', () => ({
 
 vi.mock('../categories/categoriesApi', () => ({ fetchCategories: vi.fn() }))
 vi.mock('../recurring/recurringApi', () => ({ createRecurring: vi.fn() }))
+vi.mock('../groups/groupsApi', () => ({ fetchMembers: vi.fn() }))
 
 const onSaved = vi.fn()
 const today = () => toIsoDate(new Date())
@@ -28,7 +30,7 @@ const daysAgo = (days: number) => {
   return toIsoDate(new Date(now.getFullYear(), now.getMonth(), now.getDate() - days))
 }
 const renderForm = (editing: ReturnType<typeof operation> | null = null) =>
-  render(<OperationForm group={group()} language="ru" operation={editing} onBack={vi.fn()} onSaved={onSaved} onDeleted={vi.fn()} />)
+  render(<OperationForm group={group()} userId={me().userId} language="ru" operation={editing} onBack={vi.fn()} onSaved={onSaved} onDeleted={vi.fn()} />)
 const amountInput = () => screen.getByRole('textbox', { name: strings.amountLabel })
 const saveButton = (name = strings.save) => screen.getByRole('button', { name })
 
@@ -57,6 +59,20 @@ describe('OperationForm', () => {
       type: 'EXPENSE', amount: '5000', categoryId: 'cat-2', operationDate: daysAgo(1), description: 'до работы',
     })
     expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({ created: true }))
+  })
+
+  it('records who paid and for whom in a group that splits expenses', async () => {
+    const me = 42
+    vi.mocked(fetchMembers).mockResolvedValue([{ userId: me, name: 'Dev', isOwner: true }, { userId: 43, name: 'Аня', isOwner: false }])
+    render(<OperationForm group={group({ id: 'family', type: 'SHARED', splitExpenses: true })} userId={me} language="ru" operation={null} onBack={vi.fn()} onSaved={onSaved} onDeleted={vi.fn()} />)
+    await userEvent.type(await screen.findByRole('textbox', { name: strings.amountLabel }), '3000')
+    await userEvent.click(await screen.findByRole('button', { name: new RegExp(strings.paidByLabel) }))
+    await userEvent.click(screen.getByRole('radio', { name: 'Аня' }))
+
+    expect(screen.getByRole('status')).toHaveTextContent(asRendered(strings.shareMine(formatMoney('1500', 'KZT', 'ru'))))
+    await userEvent.click(saveButton())
+
+    expect(createOperation).toHaveBeenCalledWith('family', expect.objectContaining({ payerId: 43, participantIds: [me, 43] }))
   })
 
   it('adds a typed tag and a recent one to the description', async () => {

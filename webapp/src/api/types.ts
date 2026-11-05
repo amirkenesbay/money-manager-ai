@@ -14,6 +14,7 @@ export type ApiErrorCode =
   | 'AI_LIMIT_REACHED'
   | 'AI_BUSY'
   | 'AI_UNAVAILABLE'
+  | 'REMINDER_TOO_SOON'
   | 'INTERNAL_ERROR'
 
 export interface ApiErrorBody {
@@ -83,6 +84,7 @@ export interface Group {
   initialBalance: string
   monthStartDay: number
   noticeLevel: GroupNoticeLevel
+  splitExpenses: boolean
 }
 
 export type GroupNoticeLevel = 'ALL' | 'IMPORTANT' | 'OFF'
@@ -106,6 +108,8 @@ export interface Operation {
   description: string | null
   creatorId: number
   creatorName: string
+  payerId?: number | null
+  participantIds?: number[] | null
 }
 
 export interface OperationsPage {
@@ -305,6 +309,52 @@ export interface VoiceOperation {
   operationDate: string
   description: string | null
   repeat?: Repeat | null
+  payerId?: number | null
+  participantIds?: number[] | null
+}
+
+export type DebtItemKind = 'EXPENSE' | 'SETTLEMENT' | 'OFFSET' | 'EARLIER'
+
+export interface DebtItem {
+  kind: DebtItemKind
+  amount: string
+  date: string | null
+  operationId: string | null
+  icon: string | null
+  title: string | null
+}
+
+export interface PersonalDebt {
+  userId: number
+  name: string
+  amount: string
+  items: DebtItem[]
+}
+
+export interface DebtTransfer {
+  fromId: number
+  fromName: string
+  toId: number
+  toName: string
+  amount: string
+}
+
+export interface Settlement {
+  id: string
+  fromId: number
+  fromName: string
+  toId: number
+  toName: string
+  amount: string
+  date: string
+  canUndo: boolean
+}
+
+export interface Debts {
+  balance: string
+  mine: PersonalDebt[]
+  others: DebtTransfer[]
+  history: Settlement[]
 }
 
 export interface VoiceResult {

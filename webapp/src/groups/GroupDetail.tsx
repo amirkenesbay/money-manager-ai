@@ -17,9 +17,11 @@ import type { Notify } from '../ui/useToast'
 import { currencyBadge } from './currencies'
 import { CurrencySheet } from './CurrencySheet'
 import { groupMeta } from './groupMeta'
-import { deleteGroup, fetchInvite, fetchMembers } from './groupsApi'
+import { deleteGroup, fetchInvite } from './groupsApi'
+import { useMembers } from './useMembers'
 import { NoticesSheet } from './NoticesSheet'
 import { RenameSheet } from './RenameSheet'
+import { SplitSwitch } from './SplitSwitch'
 import { Hint } from '../onboarding/Hint'
 
 const SHARE_URL = 'https://t.me/share/url'
@@ -63,6 +65,7 @@ export function GroupDetail({ me, group, onBack, onActivate, onUpdated, onDelete
           <ul className="settings-list">
             <li><SettingsRow icon={<EditIcon />} label={strings.renameGroup} onClick={() => setSheet('rename')} /></li>
             <li><SettingsRow icon={<CoinIcon />} label={strings.currencyLabel} value={currencyBadge(group.currency)} onClick={() => setSheet('currency')} /></li>
+            {shared && <li><SplitSwitch group={group} notify={notify} onUpdated={onUpdated} /></li>}
             {shared && <li><SettingsRow icon={<TrashIcon />} label={strings.deleteGroup} danger onClick={() => setSheet('delete')} /></li>}
           </ul>
         )
@@ -87,9 +90,8 @@ export function GroupDetail({ me, group, onBack, onActivate, onUpdated, onDelete
 }
 
 function SharedGroupPanels({ me, group, notify }: { me: Me; group: Group; notify: Notify }) {
-  const loadMembers = useCallback((signal: AbortSignal) => fetchMembers(group.id, signal), [group.id])
   const loadInvite = useCallback((signal: AbortSignal) => fetchInvite(group.id, signal), [group.id])
-  const members = useAsync(loadMembers)
+  const members = useMembers(group.id)
   const invite = useAsync(loadInvite)
 
   return (

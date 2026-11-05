@@ -37,4 +37,13 @@ class StartLinksTest {
         assertThat(recurringRecordRequest("/start pay_${ObjectId()}_yesterday")).isNull()
         assertThat(recurringRecordRequest("/start pay_")).isNull()
     }
+
+    @Test
+    fun `reads the debt to mark as paid back`() {
+        val groupId = ObjectId()
+
+        assertThat(debtPaidRequest("/start ${debtPaidParameter(groupId, 42L)}")).isEqualTo(DebtPaidRequest(groupId, 42L))
+        assertThat(debtPaidRequest("/start debt_${groupId}_someone")).isNull()
+        assertThat(debtPaidRequest("/start debt_nope_42")).isNull()
+    }
 }

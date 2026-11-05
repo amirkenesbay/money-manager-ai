@@ -39,6 +39,8 @@ export interface OperationInput {
   operationDate: string
   description: string | null
   categoryCorrected?: boolean
+  payerId?: number | null
+  participantIds?: number[] | null
 }
 
 export const createOperation = (groupId: string, input: OperationInput): Promise<Operation> =>

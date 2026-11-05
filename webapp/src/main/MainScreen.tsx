@@ -5,6 +5,7 @@ import { AskTopicsSheet } from '../ask/AskTopicsSheet'
 import { useAsync } from '../api/useAsync'
 import { CategoriesScreen } from '../categories/CategoriesScreen'
 import { Dashboard } from '../dashboard/Dashboard'
+import { DebtsScreen } from '../debts/DebtsScreen'
 import { activateGroup, fetchGroups } from '../groups/groupsApi'
 import { type GroupActions, GroupsScreen } from '../groups/GroupsScreen'
 import { MoreScreen, type Section } from '../more/MoreScreen'
@@ -52,6 +53,7 @@ const LAUNCH_OVERLAYS: Partial<Record<LaunchScreen, Overlay>> = {
   add: { kind: 'form', operation: null },
   categories: { kind: 'section', section: 'categories' },
   groups: { kind: 'section', section: 'groups' },
+  debts: { kind: 'section', section: 'debts' },
 }
 
 interface Navigation {
@@ -239,7 +241,7 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
           <OperationOverlay
             overlay={overlay}
             group={group}
-            language={me.language}
+            me={me}
             onClose={() => goBack(null)}
             onEdit={(operation) => open({ kind: 'form', operation })}
             onBackToDetail={(operation) => goBack({ kind: 'detail', operation })}
@@ -253,6 +255,7 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
               key={`${groupId}-${version}`}
               groups={groups}
               groupId={groupId}
+              userId={me.userId}
               language={me.language}
               switchError={switchError}
               onSwitchGroup={(nextGroupId) => {
@@ -261,6 +264,7 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
               }}
               onOpenOperations={() => switchTab('operations')}
               onOpenBudgets={() => navigation.openSection('categories')}
+              onOpenDebts={() => navigation.openSection('debts')}
               onAddIncome={() => navigation.addOperation('INCOME')}
               onSelectOperation={navigation.selectOperation}
               onAsk={navigation.ask}
@@ -284,10 +288,10 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
   )
 }
 
-function OperationOverlay({ overlay, group, language, onClose, onEdit, onBackToDetail, onSaved, onDeleted }: {
+function OperationOverlay({ overlay, group, me, onClose, onEdit, onBackToDetail, onSaved, onDeleted }: {
   overlay: Extract<Overlay, { kind: 'form' | 'detail' }>
   group: Group
-  language: string
+  me: Me
   onClose: () => void
   onEdit: (operation: Operation) => void
   onBackToDetail: (operation: Operation) => void
@@ -295,14 +299,15 @@ function OperationOverlay({ overlay, group, language, onClose, onEdit, onBackToD
   onDeleted: (operation: Operation) => void
 }) {
   if (overlay.kind === 'detail') {
-    return <OperationDetail group={group} language={language} operation={overlay.operation} onBack={onClose} onEdit={() => onEdit(overlay.operation)} onDeleted={onDeleted} />
+    return <OperationDetail group={group} userId={me.userId} language={me.language} operation={overlay.operation} onBack={onClose} onEdit={() => onEdit(overlay.operation)} onDeleted={onDeleted} />
   }
   const editing = overlay.operation
   return (
     <OperationForm
       key={editing?.id ?? 'new'}
       group={group}
-      language={language}
+      userId={me.userId}
+      language={me.language}
       operation={editing}
       initialType={overlay.type}
       onBack={editing ? () => onBackToDetail(editing) : onClose}
@@ -323,6 +328,8 @@ function SectionScreen({ section, workspace, onBack }: { section: Section; works
       return <RemindersScreen me={me} onMeChanged={onMeChanged} notify={notify} onBack={onBack} />
     case 'recurring':
       return <RecurringScreen me={me} group={group} onMeChanged={onMeChanged} notify={notify} onBack={onBack} />
+    case 'debts':
+      return <DebtsScreen me={me} group={group} notify={notify} onBack={onBack} />
     default:
       return <PremiumScreen me={me} onBack={onBack} />
   }

@@ -26,6 +26,8 @@ import { TagsField } from './TagsField'
 import { tagsOf, withoutTags, withTags } from '../operations/tags'
 import { Hint } from '../onboarding/Hint'
 import { BudgetNote } from '../budgets/BudgetNote'
+import { ExpenseSplit } from '../debts/ExpenseSplit'
+import { type Share, shareOf } from '../debts/share'
 
 const OPERATION_TYPES: CategoryType[] = ['EXPENSE', 'INCOME']
 const QUICK_DAYS_AGO = [0, 1, 2]
@@ -33,8 +35,9 @@ const CATEGORY_SKELETON_ROWS = 2
 
 export type SaveResult = { operation: Operation; created: boolean; note?: string }
 
-export function OperationForm({ group, language, operation, initialType = 'EXPENSE', onBack, onSaved, onDeleted }: {
+export function OperationForm({ group, userId, language, operation, initialType = 'EXPENSE', onBack, onSaved, onDeleted }: {
   group: Group
+  userId: number
   language: string
   operation: Operation | null
   initialType?: CategoryType
@@ -50,14 +53,15 @@ export function OperationForm({ group, language, operation, initialType = 'EXPEN
       {categories.state.status === 'loading' && <SkeletonRows count={CATEGORY_SKELETON_ROWS} />}
       {categories.state.status === 'error' && <LoadError message={categories.state.message} onRetry={categories.reload} />}
       {categories.state.status === 'ready' && (
-        <FormFields group={group} language={language} operation={operation} initialType={initialType} categories={categories.state.data} onSaved={onSaved} onDeleted={onDeleted} />
+        <FormFields group={group} userId={userId} language={language} operation={operation} initialType={initialType} categories={categories.state.data} onSaved={onSaved} onDeleted={onDeleted} />
       )}
     </>
   )
 }
 
-function FormFields({ group, language, operation, initialType, categories, onSaved, onDeleted }: {
+function FormFields({ group, userId, language, operation, initialType, categories, onSaved, onDeleted }: {
   group: Group
+  userId: number
   language: string
   operation: Operation | null
   initialType: CategoryType
@@ -73,6 +77,7 @@ function FormFields({ group, language, operation, initialType, categories, onSav
   const [comment, setComment] = useState(withoutTags(operation?.description ?? null))
   const [tags, setTags] = useState(tagsOf(operation?.description ?? null))
   const [repeat, setRepeat] = useState<RecurrenceUnit | null>(null)
+  const [share, setShare] = useState<Share | null>(() => (operation ? shareOf(operation) : null))
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -85,6 +90,7 @@ function FormFields({ group, language, operation, initialType, categories, onSav
   const huge = amount !== null && Number(amount) >= HUGE_AMOUNT
   const quickDates = QUICK_DAYS_AGO.map((daysAgo) => toIsoDate(daysBefore(daysAgo)))
   const customDate = !quickDates.includes(date)
+  const splitting = group.splitExpenses && type === 'EXPENSE'
   const dirty = operation === null ? amountText.trim() !== '' || comment.trim() !== '' || tags.length > 0 : true
 
   useConfirmClosing(dirty)
@@ -96,7 +102,8 @@ function FormFields({ group, language, operation, initialType, categories, onSav
 
   const save = async () => {
     if (amount === null || selectedCategory === null) return
-    const input: OperationInput = { type, amount, categoryId: selectedCategory.id, operationDate: date, description: withTags(comment, tags) }
+    const split = splitting && share ? { payerId: share.payerId, participantIds: share.participantIds } : {}
+    const input: OperationInput = { type, amount, categoryId: selectedCategory.id, operationDate: date, description: withTags(comment, tags), ...split }
     setSaving(true)
     setSaveError(null)
     try {
@@ -139,6 +146,10 @@ function FormFields({ group, language, operation, initialType, categories, onSav
           <BudgetNote groupId={group.id} category={selectedCategory} amount={amount} editing={operation} currency={group.currency} language={language} />
         )}
       </fieldset>
+
+      {splitting && (
+        <ExpenseSplit groupId={group.id} userId={userId} amount={amount === null ? null : Number(amount)} currency={group.currency} language={language} share={share} onChange={setShare} />
+      )}
 
       <fieldset className="field-group">
         <legend className="field-label">{strings.dateLabel}</legend>

@@ -6,10 +6,13 @@ import { BottomBar } from '../ui/BottomBar'
 import { Button } from '../ui/Button'
 import { ScreenHeader } from '../ui/ScreenHeader'
 import { DeleteSheet } from './DeleteSheet'
+import { ShareDetail } from '../debts/ShareDetail'
+import { shareOf } from '../debts/share'
 import './operation.css'
 
-export function OperationDetail({ group, language, operation, onBack, onEdit, onDeleted }: {
+export function OperationDetail({ group, userId, language, operation, onBack, onEdit, onDeleted }: {
   group: Group
+  userId: number
   language: string
   operation: Operation
   onBack: () => void
@@ -18,6 +21,7 @@ export function OperationDetail({ group, language, operation, onBack, onEdit, on
 }) {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const income = operation.type === 'INCOME'
+  const share = shareOf(operation)
   const fields = [
     [strings.dateLabel, formatDayLabel(operation.operationDate, new Date(), language)],
     [strings.commentLabel, operation.description ?? strings.noComment],
@@ -40,6 +44,7 @@ export function OperationDetail({ group, language, operation, onBack, onEdit, on
           </div>
         ))}
       </dl>
+      {share && <ShareDetail groupId={group.id} userId={userId} amount={Number(operation.amount)} share={share} currency={group.currency} language={language} />}
       <BottomBar>
         <Button variant="secondary" className="button-danger" onClick={() => setDeleteOpen(true)}>{strings.delete}</Button>
         <Button onClick={onEdit}>{strings.edit}</Button>

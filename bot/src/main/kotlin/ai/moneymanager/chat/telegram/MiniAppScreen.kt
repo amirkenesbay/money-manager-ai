@@ -13,6 +13,7 @@ enum class MiniAppScreen(val parameter: String?) {
     OPERATIONS("operations"),
     GROUPS("groups"),
     ASK("ask"),
+    DEBTS("debts"),
 }
 
 fun miniAppUrl(baseUrl: String, screen: MiniAppScreen, month: YearMonth? = null): String {

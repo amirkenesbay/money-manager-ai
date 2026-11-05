@@ -1,5 +1,6 @@
 import type { Group, Operation } from '../api/types'
 import { BudgetsSummary } from '../budgets/BudgetsSummary'
+import { DebtsSummary } from '../debts/DebtsSummary'
 import { Hint } from '../onboarding/Hint'
 import { formatPeriod } from '../format'
 import { OperationDays } from '../operations/OperationDays'
@@ -15,14 +16,16 @@ import { useDashboard } from './useDashboard'
 const RECENT_SKELETON_ROWS = 3
 const ASK_HINT_OPERATIONS = 5
 
-export function Dashboard({ groups, groupId, language, switchError, onSwitchGroup, onOpenOperations, onOpenBudgets, onAddIncome, onSelectOperation, onAsk }: {
+export function Dashboard({ groups, groupId, userId, language, switchError, onSwitchGroup, onOpenOperations, onOpenBudgets, onOpenDebts, onAddIncome, onSelectOperation, onAsk }: {
   groups: Group[]
   groupId: string
+  userId: number
   language: string
   switchError: string | null
   onSwitchGroup: (groupId: string) => void
   onOpenOperations: () => void
   onOpenBudgets: () => void
+  onOpenDebts: () => void
   onAddIncome: () => void
   onSelectOperation: (operation: Operation) => void
   onAsk: (question: string) => void
@@ -43,12 +46,14 @@ export function Dashboard({ groups, groupId, language, switchError, onSwitchGrou
       {ready && group && (
         <>
           <HomeHero balance={ready.balance} summary={ready.summary} language={language} onAddIncome={onAddIncome} />
+          {group.splitExpenses && <DebtsSummary groupId={groupId} currency={ready.balance.currency} language={language} onOpen={onOpenDebts} />}
           <HomeScreenOffer />
           {ready.summary.operationCount >= ASK_HINT_OPERATIONS && <Hint hint="ASK" title={strings.hintAskTitle} body={strings.hintAskBody} />}
           <BudgetsSummary groupId={groupId} currency={ready.balance.currency} language={language} onOpenAll={onOpenBudgets} onAsk={onAsk} />
           <RecentOperations
             operations={ready.operations.items}
             group={group}
+            userId={userId}
             language={language}
             onOpenOperations={onOpenOperations}
             onSelectOperation={onSelectOperation}
@@ -86,9 +91,10 @@ function DashboardSkeleton() {
   )
 }
 
-function RecentOperations({ operations, group, language, onOpenOperations, onSelectOperation }: {
+function RecentOperations({ operations, group, userId, language, onOpenOperations, onSelectOperation }: {
   operations: Operation[]
   group: Group
+  userId: number
   language: string
   onOpenOperations: () => void
   onSelectOperation: (operation: Operation) => void
@@ -106,7 +112,7 @@ function RecentOperations({ operations, group, language, onOpenOperations, onSel
             <span className="recent-empty-arrow"><ArrowDownIcon /></span>
           </>
         )
-        : <OperationDays operations={operations} group={group} language={language} showDayTotal={false} onSelect={onSelectOperation} />}
+        : <OperationDays operations={operations} group={group} language={language} userId={userId} showDayTotal={false} onSelect={onSelectOperation} />}
     </section>
   )
 }

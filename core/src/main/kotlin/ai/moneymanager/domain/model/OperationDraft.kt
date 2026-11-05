@@ -9,4 +9,5 @@ data class OperationDraft(
     val category: Category,
     val operationDate: LocalDate,
     val description: String?,
+    val share: ExpenseShare? = null,
 )

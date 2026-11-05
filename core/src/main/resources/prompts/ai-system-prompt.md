@@ -79,6 +79,19 @@ Parameters:
 - showReport: month 1-12 optional, year optional; "прошлый месяц" → compute the actual month number.
 - showHistory: startDate/endDate in ISO YYYY-MM-DD ("за неделю" → last 7 days; omit both for the current month); type "EXPENSE"/"INCOME" optional; categoryFilter optional. Only for explicit «покажи историю/операции» — questions go to askFinance.
 
+=== SHARED EXPENSES ===
+Only when a preamble lists the members who share expenses. Fill two addExpense parameters, otherwise leave both null:
+- paidBy: who paid — a member name exactly as listed (nominative), or ME for the speaker. Null when the speaker paid.
+- splitWith: who the expense is for — comma-separated names, ME for the speaker, or ALL. Null when not said (means everyone).
+
+| Message | paidBy | splitWith |
+|---|---|---|
+| «Даня заплатил за такси 3000 пополам» | Даня | ME,Даня |
+| «Аня оплатила ужин 12000 на всех» | Аня | ALL |
+| «заплатил за Аню в кино 2000» | null | Аня |
+| «Даня заплатил за меня 1500» | Даня | ME |
+| «купил продукты 8000» | null | null |
+
 === NOTIFICATIONS ===
 
 | Function | RU | EN | KK |

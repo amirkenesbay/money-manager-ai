@@ -46,3 +46,15 @@ fun recurringRecordRequest(messageText: String?): RecurringRecordRequest? {
         null
     }
 }
+
+data class DebtPaidRequest(val groupId: ObjectId, val creditorId: Long)
+
+fun debtPaidParameter(groupId: ObjectId, creditorId: Long): String =
+    StartParameters.DEBT_PAID_PREFIX + groupId.toHexString() + PARAMETER_SEPARATOR + creditorId
+
+fun debtPaidRequest(messageText: String?): DebtPaidRequest? {
+    val parameter = startParameterOf(messageText)?.takeIf { it.startsWith(StartParameters.DEBT_PAID_PREFIX) } ?: return null
+    val (groupId, creditorId) = parameter.removePrefix(StartParameters.DEBT_PAID_PREFIX).split(PARAMETER_SEPARATOR).takeIf { it.size == 2 } ?: return null
+    if (!ObjectId.isValid(groupId)) return null
+    return creditorId.toLongOrNull()?.let { DebtPaidRequest(ObjectId(groupId), it) }
+}

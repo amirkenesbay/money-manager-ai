@@ -52,6 +52,7 @@ import kz.rmr.chatmachinist.model.ActionContext
 import ai.moneymanager.chat.telegram.REPORT_BUTTON_TEXT
 import ai.moneymanager.chat.telegram.SETTINGS_BUTTON_TEXT
 import ai.moneymanager.service.UserInfoService
+import ai.moneymanager.chat.telegram.DebtNotifier
 import ai.moneymanager.chat.telegram.DigestNotifier
 import ai.moneymanager.chat.telegram.RecurringNotifier
 import ai.moneymanager.chat.transition.digest.startLinkDialog
@@ -83,8 +84,9 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
     miniAppGateway: MiniAppGateway,
     digestNotifier: DigestNotifier,
     recurringNotifier: RecurringNotifier,
+    debtNotifier: DebtNotifier,
 ) {
-    startLinkDialog(userInfoService, digestNotifier, recurringNotifier, telegramFileService, miniAppGateway)
+    startLinkDialog(userInfoService, digestNotifier, recurringNotifier, debtNotifier, telegramFileService, miniAppGateway)
     miniAppGatewayDialog(miniAppGateway, userInfoService, adminService)
 
     dialog {

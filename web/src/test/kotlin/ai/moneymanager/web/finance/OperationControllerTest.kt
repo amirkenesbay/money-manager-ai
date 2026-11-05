@@ -2,6 +2,7 @@ package ai.moneymanager.web.finance
 
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.ExpenseShare
 import ai.moneymanager.domain.model.OperationDraft
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import ai.moneymanager.service.CategoryService
@@ -43,6 +44,9 @@ import java.time.ZoneOffset
 
 private val TODAY: LocalDate = LocalDate.of(2026, 10, 15)
 private const val CREATOR_NAME = "Amir"
+
+private const val PARTNER_ID = TEST_USER_ID + 1
+private const val STRANGER_ID = TEST_USER_ID + 99
 
 @WebMvcTest(controllers = [OperationController::class])
 @ApiWebLayerSetup
@@ -118,6 +122,23 @@ class OperationControllerTest {
         mockMvc.perform(post("/api/v1/groups/$groupId/operations").withTelegramAuth().json(body(description = "   ")))
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.description").doesNotExist())
+    }
+
+    @Test
+    fun `passes on who paid and for whom`() {
+        `when`(groupService.getGroup(groupId)).thenReturn(testGroup(groupId, members = setOf(TEST_USER_ID, PARTNER_ID)))
+        val draft = OperationDraft(CategoryType.EXPENSE, BigDecimal("5000"), groceries, TODAY, null, ExpenseShare(PARTNER_ID, setOf(TEST_USER_ID, PARTNER_ID)))
+        `when`(financeOperationService.create(groupId, TEST_USER_ID, draft)).thenReturn(saved(draft).copy(payerId = PARTNER_ID, participantIds = setOf(TEST_USER_ID, PARTNER_ID)))
+
+        mockMvc.perform(post("/api/v1/groups/$groupId/operations").withTelegramAuth().json(body(share = shareJson(PARTNER_ID, TEST_USER_ID, PARTNER_ID))))
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.payerId").value(PARTNER_ID))
+            .andExpect(jsonPath("$.participantIds.length()").value(2))
+    }
+
+    @Test
+    fun `rejects a share with someone outside the group`() {
+        expectRejected(body(share = shareJson(TEST_USER_ID, STRANGER_ID)), "Выбери участников группы.")
     }
 
     @Test
@@ -207,11 +228,15 @@ class OperationControllerTest {
         date: LocalDate = TODAY,
         description: String? = null,
         categoryCorrected: Boolean = false,
+        share: String = "",
     ): String {
         val descriptionJson = description?.let { "\"$it\"" } ?: "null"
         val correctedJson = if (categoryCorrected) ",\"categoryCorrected\":true" else ""
-        return """{"type":"$type","amount":$amount,"categoryId":"${categoryId.toHexString()}","operationDate":"$date","description":$descriptionJson$correctedJson}"""
+        return """{"type":"$type","amount":$amount,"categoryId":"${categoryId.toHexString()}","operationDate":"$date","description":$descriptionJson$correctedJson$share}"""
     }
+
+    private fun shareJson(payerId: Long, vararg participantIds: Long) =
+        ",\"payerId\":$payerId,\"participantIds\":[${participantIds.joinToString(",")}]"
 
     private fun saved(draft: OperationDraft) = FinanceOperationEntity(
         id = operationId,

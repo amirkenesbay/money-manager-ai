@@ -33,6 +33,8 @@ export async function saveDraft(groupId: string, draft: Draft, created: Map<stri
     operationDate: draft.operationDate,
     description: draft.description,
     categoryCorrected: draft.categoryCorrected,
+    payerId: draft.payerId,
+    participantIds: draft.participantIds,
   })
 }
 

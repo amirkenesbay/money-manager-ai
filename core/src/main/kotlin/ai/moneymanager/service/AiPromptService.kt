@@ -39,8 +39,13 @@ private const val REMEMBERED_PLACES_HEADER =
 private const val REMEMBERED_PLACE_TEMPLATE = "%s → %s"
 private const val MAX_REMEMBERED_PLACES_IN_PROMPT = 20
 
+private const val SHARED_MEMBERS_TEMPLATE = "Members who share expenses in this group (the speaker is ME = %s): %s"
+private const val MEMBER_SEPARATOR = ", "
+
 private const val PREVIOUS_QUESTION_TEMPLATE =
     "Previous question of this user (a short follow-up like «а в сентябре?» repeats it with only the mentioned parameter changed): %s"
+
+data class SharedMembers(val speaker: String, val names: List<String>)
 
 @Service
 class AiPromptService {
@@ -68,12 +73,14 @@ class AiPromptService {
         categories: List<Category>,
         rules: List<CategoryRule> = emptyList(),
         previousQuestion: FinanceQuestion? = null,
+        sharedMembers: SharedMembers? = null,
     ): String =
         listOf(
             currencyPreamble(currency),
             categoryContextPreamble(categories),
             rememberedPlacesPreamble(categories, rules),
             previousQuestion?.let { PREVIOUS_QUESTION_TEMPLATE.format(askFinanceCallOf(it)) }.orEmpty(),
+            sharedMembers?.let { SHARED_MEMBERS_TEMPLATE.format(it.speaker, it.names.joinToString(MEMBER_SEPARATOR)) }.orEmpty(),
         )
             .filter { it.isNotEmpty() }
             .joinToString("\n")

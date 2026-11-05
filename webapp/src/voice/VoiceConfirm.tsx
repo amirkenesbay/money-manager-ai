@@ -1,3 +1,5 @@
+import { ExpenseSplit } from '../debts/ExpenseSplit'
+import { shareOf } from '../debts/share'
 import { useId, useState } from 'react'
 import type { Category, Group, Operation, Repeat } from '../api/types'
 import { CATEGORY_TYPES } from '../categories/categoryTypes'
@@ -20,8 +22,9 @@ import { MAX_COMMENT_LENGTH } from '../operation/limits'
 type Field = 'amount' | 'category' | 'date' | 'comment'
 
 
-export function VoiceConfirm({ group, language, initialDrafts, onSayAgain, onClose, onSaved }: {
+export function VoiceConfirm({ group, userId, language, initialDrafts, onSayAgain, onClose, onSaved }: {
   group: Group
+  userId: number
   language: string
   initialDrafts: Draft[]
   onSayAgain: () => void
@@ -66,6 +69,7 @@ export function VoiceConfirm({ group, language, initialDrafts, onSayAgain, onClo
             <DraftCard
               draft={draft}
               group={group}
+              userId={userId}
               language={language}
               removable={drafts.length > 1}
               onChange={update}
@@ -120,9 +124,10 @@ export function VoiceConfirm({ group, language, initialDrafts, onSayAgain, onClo
   )
 }
 
-function DraftCard({ draft, group, language, removable, onChange, onEdit, onRemove }: {
+function DraftCard({ draft, group, userId, language, removable, onChange, onEdit, onRemove }: {
   draft: Draft
   group: Group
+  userId: number
   language: string
   removable: boolean
   onChange: (draft: Draft) => void
@@ -146,6 +151,17 @@ function DraftCard({ draft, group, language, removable, onChange, onEdit, onRemo
         <FieldRow label={strings.commentLabel} value={draft.description ?? strings.noComment} onClick={() => onEdit('comment')} />
         <FieldRow label={strings.repeatLabel} value={repeatChoiceLabel(draft.repeat?.unit ?? null)} onClick={() => onChange({ ...draft, repeat: nextRepeat(draft.repeat) })} />
       </dl>
+      {group.splitExpenses && draft.type === 'EXPENSE' && (
+        <ExpenseSplit
+          groupId={group.id}
+          userId={userId}
+          amount={Number(draft.amount)}
+          currency={group.currency}
+          language={language}
+          share={shareOf(draft)}
+          onChange={(share) => onChange({ ...draft, payerId: share.payerId, participantIds: share.participantIds })}
+        />
+      )}
       {draft.isNewCategory && draft.categoryName && <p className="caption">{strings.newCategoryNote(draft.categoryName)}</p>}
     </section>
   )

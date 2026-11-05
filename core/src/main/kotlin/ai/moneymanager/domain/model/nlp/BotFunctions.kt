@@ -6,7 +6,7 @@ object BotFunctions {
     }
 
     @JvmStatic
-    fun addExpense(amount: Double, category: String?, description: String?, suggestedCategoryIcon: String?, operationDate: String?, repeatUnit: String?, repeatInterval: Double?) {
+    fun addExpense(amount: Double, category: String?, description: String?, suggestedCategoryIcon: String?, operationDate: String?, repeatUnit: String?, repeatInterval: Double?, paidBy: String?, splitWith: String?) {
     }
 
     @JvmStatic

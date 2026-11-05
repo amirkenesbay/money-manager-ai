@@ -21,5 +21,6 @@ data class MoneyGroupEntity(
     val initialBalance: BigDecimal = BigDecimal.ZERO,
     val currency: Currency = Currency.DEFAULT,
     val monthStartDay: Int = DEFAULT_MONTH_START_DAY,
+    val splitExpenses: Boolean = false,
     val auditInfo: AuditInfo = AuditInfo()
 )

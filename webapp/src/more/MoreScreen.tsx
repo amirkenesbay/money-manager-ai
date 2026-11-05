@@ -22,7 +22,7 @@ import type { Notify } from '../ui/useToast'
 import './more.css'
 import { Hint } from '../onboarding/Hint'
 
-export type Section = 'categories' | 'groups' | 'reminders' | 'recurring' | 'premium'
+export type Section = 'categories' | 'groups' | 'reminders' | 'recurring' | 'premium' | 'debts'
 
 type SheetKind = 'language' | 'currency' | 'balance' | 'monthStart' | 'digests' | 'export'
 

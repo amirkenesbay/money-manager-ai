@@ -1,0 +1,167 @@
+.split-field {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.split-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+  min-height: var(--touch);
+  padding: 0.625rem 0.875rem;
+  border: none;
+  border-radius: var(--radius-row);
+  background: var(--bg);
+  box-shadow: var(--raise-sm);
+  color: var(--text);
+  text-align: left;
+}
+
+.split-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--accent);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.split-outcome {
+  margin: 0.5rem 0.25rem 0;
+}
+
+.split-quick {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.split-options {
+  display: flex;
+  flex-direction: column;
+}
+
+.split-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 3.25rem;
+  padding: 0 0.25rem;
+  border: none;
+  border-top: 1px solid var(--line);
+  background: none;
+  color: var(--text);
+  font-size: var(--text-lg);
+  text-align: left;
+}
+
+.split-option:first-child {
+  border-top: none;
+}
+
+.split-option[aria-checked='true'] {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.split-option[aria-checked='true']::after {
+  content: '✓';
+}
+
+.debt-status {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.debt-status .amount {
+  font-size: var(--amount-hero);
+}
+
+.debt-owed {
+  color: var(--accent);
+}
+
+.debt-mine {
+  color: var(--warning);
+}
+
+.debt-person {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.5rem;
+  border: none;
+  background: none;
+  color: var(--text);
+  text-align: left;
+  width: 100%;
+}
+
+.debt-person-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  min-height: var(--touch);
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  text-align: left;
+}
+
+.debt-more {
+  margin-top: 1rem;
+}
+
+.debt-more summary {
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+}
+
+.debt-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.debt-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.debt-item-amount {
+  font-family: var(--font-mono);
+}
+
+.row-impact {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-align: right;
+}
+
+.row-impact.owed {
+  color: var(--accent);
+}
+
+.row-impact.mine {
+  color: var(--warning);
+}
+
+.row-impact.none {
+  color: var(--muted);
+}

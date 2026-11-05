@@ -1,8 +1,7 @@
-import { type ReactNode, useCallback, useMemo, useState } from 'react'
+import { type ReactNode, useMemo, useState } from 'react'
 import type { CategoryType, Group, Me, Operation, OperationTotals } from '../api/types'
-import { useAsync } from '../api/useAsync'
 import { formatSignedMoney } from '../format'
-import { fetchMembers } from '../groups/groupsApi'
+import { useMembers } from '../groups/useMembers'
 import { useCategories } from '../categories/useCategories'
 import { strings } from '../strings'
 import { Button } from '../ui/Button'
@@ -130,7 +129,7 @@ function OperationsFeed({ me, group, query, premiumOffer, onResetFilters, onSele
   return (
     <section className="feed" aria-busy={feed.refreshing}>
       {feed.totals && <SearchTotals totals={feed.totals} group={group} language={me.language} />}
-      <OperationDays operations={feed.items} group={group} language={me.language} onSelect={onSelectOperation} />
+      <OperationDays operations={feed.items} group={group} language={me.language} userId={me.userId} onSelect={onSelectOperation} />
       {feed.loadMoreFailed && <p className="error-text" role="alert">{strings.loadMoreFailed}</p>}
       {feed.refreshing ? null : feed.hasMore
         ? (
@@ -161,8 +160,7 @@ function SearchField({ value, onChange }: { value: string; onChange: (value: str
 }
 
 function MemberFilter({ groupId, value, onChange }: { groupId: string; value: number | null; onChange: (creatorId: number | null) => void }) {
-  const load = useCallback((signal: AbortSignal) => fetchMembers(groupId, signal), [groupId])
-  const members = useAsync(load)
+  const members = useMembers(groupId)
   if (members.state.status !== 'ready' || members.state.data.length < 2) return null
   return (
     <ChipSelect

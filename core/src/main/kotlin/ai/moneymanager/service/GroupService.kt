@@ -160,6 +160,12 @@ class GroupService(
         return mapToModel(saved)
     }
 
+    fun updateSplitExpenses(userId: Long, groupId: ObjectId, enabled: Boolean): MoneyGroup? {
+        val groupEntity = groupRepository.findById(groupId).orElse(null) ?: return null
+        if (groupEntity.ownerId != userId || groupEntity.type != GroupType.SHARED) return null
+        return mapToModel(groupRepository.save(groupEntity.copy(splitExpenses = enabled)))
+    }
+
     fun deleteGroup(userId: Long, groupId: ObjectId): Boolean {
         val groupEntity = groupRepository.findById(groupId).orElse(null) ?: return false
 
@@ -251,7 +257,8 @@ class GroupService(
             type = entity.type,
             initialBalance = entity.initialBalance,
             currency = entity.currency,
-            monthStartDay = entity.monthStartDay
+            monthStartDay = entity.monthStartDay,
+            splitExpenses = entity.splitExpenses,
         )
     }
 

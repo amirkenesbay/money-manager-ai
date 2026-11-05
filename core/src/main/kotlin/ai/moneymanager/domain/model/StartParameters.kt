@@ -9,6 +9,7 @@ object StartParameters {
     const val DIGEST_MUTE_PREFIX = "digest_off_"
     const val UNDO_OPERATION_PREFIX = "undo_"
     const val RECORD_RECURRING_PREFIX = "pay_"
+    const val DEBT_PAID_PREFIX = "debt_"
 }
 
 fun buildInviteLink(inviteToken: String): String =

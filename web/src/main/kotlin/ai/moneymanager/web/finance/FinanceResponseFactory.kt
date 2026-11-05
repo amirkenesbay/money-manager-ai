@@ -69,5 +69,7 @@ class FinanceResponseFactory(
         description = description,
         creatorId = creatorId,
         creatorName = creatorName,
+        payerId = payerId,
+        participantIds = participantIds,
     )
 }

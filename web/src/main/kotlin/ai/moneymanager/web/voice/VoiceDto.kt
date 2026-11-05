@@ -22,6 +22,8 @@ data class VoiceOperationResponse(
     val operationDate: LocalDate,
     val description: String?,
     val repeat: VoiceRepeatResponse? = null,
+    val payerId: Long? = null,
+    val participantIds: Set<Long>? = null,
 )
 
 data class VoiceRepeatResponse(

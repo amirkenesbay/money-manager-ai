@@ -30,6 +30,8 @@ data class OperationRequest(
     val operationDate: LocalDate,
     val description: String?,
     val categoryCorrected: Boolean = false,
+    val payerId: Long? = null,
+    val participantIds: Set<Long>? = null,
 )
 
 @RestController
@@ -43,8 +45,8 @@ class OperationController(
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     fun create(user: UserInfo, @PathVariable groupId: ObjectId, @RequestBody request: OperationRequest): OperationResponse {
-        groupAccessGuard.requireMember(user, groupId)
-        val draft = operationDraftFactory.create(user, groupId, request)
+        val group = groupAccessGuard.requireMember(user, groupId)
+        val draft = operationDraftFactory.create(user, group, request)
         return financeResponseFactory.operation(financeOperationService.create(groupId, checkNotNull(user.telegramUserId), draft, request.categoryCorrected))
     }
 
@@ -55,8 +57,8 @@ class OperationController(
         @PathVariable operationId: ObjectId,
         @RequestBody request: OperationRequest,
     ): OperationResponse {
-        groupAccessGuard.requireMember(user, groupId)
-        val draft = operationDraftFactory.create(user, groupId, request)
+        val group = groupAccessGuard.requireMember(user, groupId)
+        val draft = operationDraftFactory.create(user, group, request)
         val updated = financeOperationService.replace(checkNotNull(user.telegramUserId), groupId, operationId, draft) ?: throw operationNotFound()
         return financeResponseFactory.operation(updated)
     }

@@ -1,5 +1,6 @@
 package ai.moneymanager.service.nlp
 
+import ai.moneymanager.domain.text.geminiValue
 import ai.moneymanager.config.GeminiProperties
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.domain.model.nlp.BotFunctions
@@ -64,7 +65,7 @@ class CommandParserService(
 
         val createGroupMethod = botFunctionMethod(GeminiFunction.CREATE_GROUP, String::class.java)
         val deleteGroupMethod = botFunctionMethod(GeminiFunction.DELETE_GROUP, String::class.java)
-        val addExpenseMethod = botFunctionMethod(GeminiFunction.ADD_EXPENSE, Double::class.java, String::class.java, String::class.java, String::class.java, String::class.java, String::class.java, Double::class.javaObjectType)
+        val addExpenseMethod = botFunctionMethod(GeminiFunction.ADD_EXPENSE, Double::class.java, String::class.java, String::class.java, String::class.java, String::class.java, String::class.java, Double::class.javaObjectType, String::class.java, String::class.java)
         val addIncomeMethod = botFunctionMethod(GeminiFunction.ADD_INCOME, Double::class.java, String::class.java, String::class.java, String::class.java, String::class.java, String::class.java, Double::class.javaObjectType)
         val outOfContextMethod = botFunctionMethod(GeminiFunction.OUT_OF_CONTEXT, String::class.java)
 
@@ -237,7 +238,7 @@ class CommandParserService(
                     val dto = argsMapper.map<AddExpenseArgs>(args)
                     BotCommand.AddExpense(
                         dto.amount, dto.category, dto.description,
-                        dto.suggestedCategoryIcon, dto.operationDate.normalizedOrNull(), dto.repeatUnit, dto.repeatInterval,
+                        dto.suggestedCategoryIcon, dto.operationDate.geminiValue(), dto.repeatUnit, dto.repeatInterval, dto.paidBy, dto.splitWith,
                     )
                 }
 
@@ -245,7 +246,7 @@ class CommandParserService(
                     val dto = argsMapper.map<AddIncomeArgs>(args)
                     BotCommand.AddIncome(
                         dto.amount, dto.category, dto.description,
-                        dto.suggestedCategoryIcon, dto.operationDate.normalizedOrNull(), dto.repeatUnit, dto.repeatInterval,
+                        dto.suggestedCategoryIcon, dto.operationDate.geminiValue(), dto.repeatUnit, dto.repeatInterval,
                     )
                 }
 
@@ -256,13 +257,13 @@ class CommandParserService(
                     BotCommand.CreateCategory(
                         requireText(dto.name, FIELD_CATEGORY_NAME),
                         requireText(dto.type, FIELD_CATEGORY_TYPE),
-                        dto.icon.normalizedOrNull()
+                        dto.icon.geminiValue()
                     )
                 }
 
                 GeminiFunction.DELETE_CATEGORY -> {
                     val dto = argsMapper.map<DeleteCategoryArgs>(args)
-                    BotCommand.DeleteCategory(requireText(dto.name, FIELD_CATEGORY_NAME), dto.type.normalizedOrNull())
+                    BotCommand.DeleteCategory(requireText(dto.name, FIELD_CATEGORY_NAME), dto.type.geminiValue())
                 }
 
                 GeminiFunction.RENAME_CATEGORY -> {
@@ -270,7 +271,7 @@ class CommandParserService(
                     BotCommand.RenameCategory(
                         requireText(dto.oldName, FIELD_CATEGORY_NAME),
                         requireText(dto.newName, FIELD_CATEGORY_NAME),
-                        dto.type.normalizedOrNull()
+                        dto.type.geminiValue()
                     )
                 }
 
@@ -279,14 +280,14 @@ class CommandParserService(
                     BotCommand.ChangeCategoryIcon(
                         requireText(dto.name, FIELD_CATEGORY_NAME),
                         requireText(dto.newIcon, FIELD_CATEGORY_ICON),
-                        dto.type.normalizedOrNull()
+                        dto.type.geminiValue()
                     )
                 }
 
                 GeminiFunction.DELETE_ALL_CATEGORIES -> BotCommand.DeleteAllCategories
 
                 GeminiFunction.LIST_CATEGORIES ->
-                    BotCommand.ListCategories(argsMapper.map<ListCategoriesArgs>(args).type.normalizedOrNull())
+                    BotCommand.ListCategories(argsMapper.map<ListCategoriesArgs>(args).type.geminiValue())
 
                 GeminiFunction.LIST_GROUPS -> BotCommand.ListGroups
 
@@ -303,10 +304,10 @@ class CommandParserService(
                 GeminiFunction.SHOW_HISTORY -> {
                     val dto = argsMapper.map<ShowHistoryArgs>(args)
                     BotCommand.ShowHistory(
-                        dto.startDate.normalizedOrNull(),
-                        dto.endDate.normalizedOrNull(),
-                        dto.type.normalizedOrNull(),
-                        dto.categoryFilter.normalizedOrNull()
+                        dto.startDate.geminiValue(),
+                        dto.endDate.geminiValue(),
+                        dto.type.geminiValue(),
+                        dto.categoryFilter.geminiValue()
                     )
                 }
 
@@ -325,15 +326,15 @@ class CommandParserService(
                     BotCommand.DeleteNotification(requireText(argsMapper.map<DeleteNotificationArgs>(args).name, FIELD_NOTIFICATION_NAME))
 
                 GeminiFunction.DELETE_LAST_OPERATION ->
-                    BotCommand.DeleteLastOperation(argsMapper.map<DeleteLastOperationArgs>(args).type.normalizedOrNull())
+                    BotCommand.DeleteLastOperation(argsMapper.map<DeleteLastOperationArgs>(args).type.geminiValue())
 
                 GeminiFunction.EDIT_LAST_OPERATION -> {
                     val dto = argsMapper.map<EditLastOperationArgs>(args)
                     BotCommand.EditLastOperation(
-                        dto.type.normalizedOrNull(),
+                        dto.type.geminiValue(),
                         dto.newAmount,
-                        dto.newCategory.normalizedOrNull(),
-                        dto.newOperationDate.normalizedOrNull()
+                        dto.newCategory.geminiValue(),
+                        dto.newOperationDate.geminiValue()
                     )
                 }
 
@@ -349,8 +350,6 @@ class CommandParserService(
         require(value.isNotBlank()) { "$field is blank" }
         return value.trim()
     }
-
-    private fun String?.normalizedOrNull(): String? = this?.trim()?.takeIf { it.isNotEmpty() }
 
     companion object {
         private const val HTTP_TOO_MANY_REQUESTS = 429

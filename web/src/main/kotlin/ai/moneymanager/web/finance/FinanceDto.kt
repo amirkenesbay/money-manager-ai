@@ -26,6 +26,8 @@ data class OperationResponse(
     val description: String?,
     val creatorId: Long,
     val creatorName: String,
+    val payerId: Long? = null,
+    val participantIds: Set<Long>? = null,
 )
 
 data class OperationsPageResponse(

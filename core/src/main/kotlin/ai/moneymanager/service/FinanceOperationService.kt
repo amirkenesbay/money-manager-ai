@@ -2,12 +2,15 @@ package ai.moneymanager.service
 
 import ai.moneymanager.domain.model.BalanceBreakdown
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.ExpenseShare
+import ai.moneymanager.domain.model.GroupType
 import ai.moneymanager.domain.model.OperationDraft
 import ai.moneymanager.domain.model.OperationFilter
 import ai.moneymanager.domain.model.OperationTotals
 import ai.moneymanager.domain.text.matchesSearch
 import ai.moneymanager.domain.text.tagsOf
 import ai.moneymanager.repository.FinanceOperationRepository
+import ai.moneymanager.repository.MoneyGroupRepository
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
@@ -27,7 +30,8 @@ import org.springframework.context.ApplicationEventPublisher
 @Service
 class FinanceOperationService(
     private val financeOperationRepository: FinanceOperationRepository,
-    private val eventPublisher: ApplicationEventPublisher
+    private val moneyGroupRepository: MoneyGroupRepository,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
     private val log = LoggerFactory.getLogger(FinanceOperationService::class.java)
 
@@ -80,7 +84,7 @@ class FinanceOperationService(
         operationDate: LocalDate,
         description: String?
     ): FinanceOperationEntity =
-        saveOperation(groupId, creatorId, type, BigDecimal.valueOf(amount), categoryId, categoryName, categoryIcon, operationDate, description)
+        saveOperation(groupId, creatorId, type, BigDecimal.valueOf(amount), categoryId, categoryName, categoryIcon, operationDate, description, null)
 
     private fun saveOperation(
         groupId: ObjectId,
@@ -91,8 +95,10 @@ class FinanceOperationService(
         categoryName: String,
         categoryIcon: String?,
         operationDate: LocalDate,
-        description: String?
+        description: String?,
+        requestedShare: ExpenseShare?,
     ): FinanceOperationEntity {
+        val share = shareOf(groupId, type, requestedShare, creatorId)
         val entity = FinanceOperationEntity(
             groupId = groupId,
             creatorId = creatorId,
@@ -102,7 +108,9 @@ class FinanceOperationService(
             categoryName = categoryName,
             categoryIcon = categoryIcon,
             operationDate = operationDate,
-            description = description
+            description = description,
+            payerId = share?.payerId,
+            participantIds = share?.participantIds,
         )
 
         val saved = financeOperationRepository.save(entity)
@@ -114,13 +122,14 @@ class FinanceOperationService(
 
     fun create(groupId: ObjectId, creatorId: Long, draft: OperationDraft, categoryCorrected: Boolean = false): FinanceOperationEntity {
         val categoryId = checkNotNull(draft.category.id)
-        val saved = saveOperation(groupId, creatorId, draft.type, draft.amount, categoryId, draft.category.name, draft.category.icon, draft.operationDate, draft.description)
+        val saved = saveOperation(groupId, creatorId, draft.type, draft.amount, categoryId, draft.category.name, draft.category.icon, draft.operationDate, draft.description, draft.share)
         if (categoryCorrected) publishCorrection(saved)
         return saved
     }
 
     fun replace(actorId: Long, groupId: ObjectId, operationId: ObjectId, draft: OperationDraft): FinanceOperationEntity? =
         updateOperation(actorId, groupId, operationId) {
+            val share = shareOf(groupId, draft.type, draft.share ?: it.share, it.creatorId)
             it.copy(
                 type = draft.type,
                 amount = draft.amount,
@@ -129,8 +138,17 @@ class FinanceOperationService(
                 categoryIcon = draft.category.icon,
                 operationDate = draft.operationDate,
                 description = draft.description,
+                payerId = share?.payerId,
+                participantIds = share?.participantIds,
             )
         }
+
+    private fun shareOf(groupId: ObjectId, type: CategoryType, requested: ExpenseShare?, defaultPayerId: Long): ExpenseShare? {
+        if (type != CategoryType.EXPENSE) return null
+        val group = moneyGroupRepository.findById(groupId).orElse(null) ?: return null
+        if (!group.splitExpenses || group.type != GroupType.SHARED) return null
+        return requested?.takeIf { it.fitsMembers(group.memberIds) } ?: ExpenseShare(defaultPayerId, group.memberIds)
+    }
 
     fun getOperation(groupId: ObjectId, operationId: ObjectId): FinanceOperationEntity? =
         financeOperationRepository.findByGroupIdAndIdIn(groupId, listOf(operationId)).firstOrNull()

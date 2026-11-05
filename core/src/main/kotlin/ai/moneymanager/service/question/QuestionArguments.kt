@@ -1,5 +1,6 @@
 package ai.moneymanager.service.question
 
+import ai.moneymanager.domain.text.geminiValue
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.nlp.arguments.AskFinanceArgs
 import ai.moneymanager.domain.model.question.FinanceIntent
@@ -25,9 +26,9 @@ fun financeQuestionOf(args: AskFinanceArgs): FinanceQuestion? {
         categories = args.categories?.split(LIST_SEPARATOR)?.map { it.trim() }?.filter { it.isNotEmpty() }.orEmpty(),
         period = periodOf(args.period, args.month, args.from, args.to),
         comparePeriod = periodOf(args.comparePeriod, args.compareMonth, null, null),
-        member = args.member.cleaned(),
-        place = args.place.cleaned(),
-        tag = args.tag.cleaned(),
+        member = args.member.geminiValue(),
+        place = args.place.geminiValue(),
+        tag = args.tag.geminiValue(),
         minAmount = args.minAmount?.takeIf { it > 0 }?.let { BigDecimal.valueOf(it) },
         limit = args.limit?.toInt()?.takeIf { it > 0 },
         amount = args.amount?.takeIf { it > 0 }?.let { BigDecimal.valueOf(it) },
@@ -51,7 +52,6 @@ private fun <T> String?.parsedOrNull(parse: (String) -> T): T? =
         }
     }
 
-private fun String?.cleaned(): String? = this?.trim()?.takeIf { it.isNotEmpty() && !it.equals("null", ignoreCase = true) }
 
 fun askFinanceCallOf(question: FinanceQuestion): String {
     val arguments = listOf("intent" to question.intent.name, "operationType" to question.type?.name) +

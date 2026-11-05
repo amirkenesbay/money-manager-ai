@@ -2,6 +2,8 @@ package ai.moneymanager.web.finance
 
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.ExpenseShare
+import ai.moneymanager.domain.model.MoneyGroup
 import ai.moneymanager.domain.model.OperationDraft
 import ai.moneymanager.domain.model.Recurrence
 import ai.moneymanager.domain.model.RecurringDraft
@@ -22,17 +24,25 @@ private const val DESCRIPTION_TOO_LONG_KEY = "${API_ERROR_KEY_PREFIX}description
 private const val CATEGORY_TYPE_MISMATCH_KEY = "${API_ERROR_KEY_PREFIX}category_type_mismatch"
 private const val INVALID_INTERVAL_KEY = "${API_ERROR_KEY_PREFIX}invalid_interval"
 private const val END_BEFORE_START_KEY = "${API_ERROR_KEY_PREFIX}end_before_start"
+private const val INVALID_SHARE_KEY = "${API_ERROR_KEY_PREFIX}invalid_share"
 
 @Component
 class OperationDraftFactory(
     private val groupCategoryLookup: GroupCategoryLookup,
     private val userCalendar: UserCalendar,
 ) {
-    fun create(user: UserInfo, groupId: ObjectId, request: OperationRequest): OperationDraft {
+    fun create(user: UserInfo, group: MoneyGroup, request: OperationRequest): OperationDraft {
         requirePositive(request.amount)
         if (request.operationDate.isAfter(userCalendar.today(user))) throw badRequest(FUTURE_DATE_KEY)
-        val category = requireCategory(groupId, request.categoryId, request.type)
-        return OperationDraft(request.type, request.amount, category, request.operationDate, descriptionOf(request.description))
+        val category = requireCategory(checkNotNull(group.id), request.categoryId, request.type)
+        return OperationDraft(request.type, request.amount, category, request.operationDate, descriptionOf(request.description), shareOf(group, request))
+    }
+
+    private fun shareOf(group: MoneyGroup, request: OperationRequest): ExpenseShare? {
+        val payerId = request.payerId ?: return null
+        val share = runCatching { ExpenseShare(payerId, request.participantIds.orEmpty()) }.getOrNull()
+        if (share == null || !share.fitsMembers(group.memberIds)) throw badRequest(INVALID_SHARE_KEY)
+        return share
     }
 
     fun recurring(groupId: ObjectId, request: RecurringRequest): RecurringDraft {

@@ -19,6 +19,8 @@ sealed class BotCommand {
         val operationDate: String?,
         val repeatUnit: String? = null,
         val repeatInterval: Double? = null,
+        val paidBy: String? = null,
+        val splitWith: String? = null,
     ) : BotCommand()
 
     data class AddIncome(

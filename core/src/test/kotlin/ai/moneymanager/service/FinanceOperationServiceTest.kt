@@ -3,11 +3,15 @@ package ai.moneymanager.service
 import ai.moneymanager.domain.event.CategoryCorrected
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.ExpenseShare
+import ai.moneymanager.domain.model.GroupType
 import ai.moneymanager.domain.model.OperationDraft
 import ai.moneymanager.domain.model.OperationFilter
 import ai.moneymanager.domain.model.OperationTotals
+import ai.moneymanager.repository.MoneyGroupRepository
 import ai.moneymanager.repository.FinanceOperationRepository
 import ai.moneymanager.repository.entity.FinanceOperationEntity
+import ai.moneymanager.repository.entity.MoneyGroupEntity
 import org.assertj.core.api.Assertions.assertThat
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.BeforeEach
@@ -17,8 +21,11 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.util.Optional
 
 private const val CREATOR_ID = 42L
+private const val PARTNER_ID = 43L
+private const val STRANGER_ID = 99L
 
 class FinanceOperationServiceTest {
     private val groupId = ObjectId()
@@ -26,7 +33,8 @@ class FinanceOperationServiceTest {
     private val taxi = Category(ObjectId(), "Такси", "🚕", CategoryType.EXPENSE, groupId)
     private val repository = mock(FinanceOperationRepository::class.java)
     private val publishedEvents = mutableListOf<Any>()
-    private val service = FinanceOperationService(repository) { publishedEvents.add(it) }
+    private val groupRepository = mock(MoneyGroupRepository::class.java)
+    private val service = FinanceOperationService(repository, groupRepository) { publishedEvents.add(it) }
 
     private val existing = FinanceOperationEntity(
         id = operationId,
@@ -58,6 +66,37 @@ class FinanceOperationServiceTest {
         assertThat(created.categoryName).isEqualTo("Такси")
         assertThat(created.categoryIcon).isEqualTo("🚕")
         assertThat(created.amount).isEqualByComparingTo("1800")
+    }
+
+    @Test
+    fun `splits a new expense equally between all members when the group shares expenses`() {
+        `when`(groupRepository.findById(groupId)).thenReturn(Optional.of(splitGroup(splitExpenses = true)))
+
+        val created = service.create(groupId, CREATOR_ID, OperationDraft(CategoryType.EXPENSE, BigDecimal("3000"), taxi, LocalDate.of(2026, 11, 4), null))
+
+        assertThat(created.share).isEqualTo(ExpenseShare(CREATOR_ID, setOf(CREATOR_ID, PARTNER_ID)))
+    }
+
+    @Test
+    fun `keeps the chosen payer and people but drops a share of strangers`() {
+        `when`(groupRepository.findById(groupId)).thenReturn(Optional.of(splitGroup(splitExpenses = true)))
+        val chosen = ExpenseShare(PARTNER_ID, setOf(CREATOR_ID))
+        val stranger = ExpenseShare(STRANGER_ID, setOf(CREATOR_ID))
+
+        val kept = service.create(groupId, CREATOR_ID, OperationDraft(CategoryType.EXPENSE, BigDecimal("3000"), taxi, LocalDate.of(2026, 11, 4), null, chosen))
+        val dropped = service.create(groupId, CREATOR_ID, OperationDraft(CategoryType.EXPENSE, BigDecimal("3000"), taxi, LocalDate.of(2026, 11, 4), null, stranger))
+
+        assertThat(kept.share).isEqualTo(chosen)
+        assertThat(dropped.share).isEqualTo(ExpenseShare(CREATOR_ID, setOf(CREATOR_ID, PARTNER_ID)))
+    }
+
+    @Test
+    fun `does not split when the group does not share expenses`() {
+        `when`(groupRepository.findById(groupId)).thenReturn(Optional.of(splitGroup(splitExpenses = false)))
+
+        val created = service.create(groupId, CREATOR_ID, OperationDraft(CategoryType.EXPENSE, BigDecimal("3000"), taxi, LocalDate.of(2026, 11, 4), null))
+
+        assertThat(created.share).isNull()
     }
 
     @Test
@@ -140,4 +179,9 @@ class FinanceOperationServiceTest {
 
         assertThat(service.recentTags(groupId, 2)).containsExactly("отпуск", "море")
     }
+
+    private fun splitGroup(splitExpenses: Boolean) = MoneyGroupEntity(
+        id = groupId, name = "Алматы", inviteToken = "TOKEN", ownerId = CREATOR_ID,
+        memberIds = setOf(CREATOR_ID, PARTNER_ID), type = GroupType.SHARED, splitExpenses = splitExpenses,
+    )
 }

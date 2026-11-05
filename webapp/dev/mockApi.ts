@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Plugin } from 'vite'
 import { AUTH_SCHEME } from '../src/api/auth.ts'
-import type { AnswerCard, AskSuggestions, AppHint, Budget, CategoryRule, DigestKind, GroupNoticeLevel, RecurringList, RecurringPayment, VoiceResult, AnalyticsReport, ApiErrorBody, ApiErrorCode, Balance, Category, CategoryReport, ComparisonReport, Currency, Group, Invite, Limits, Me, Member, MembersReport, MonthSummary, Operation, OperationsPage, Reminder, ReminderInput, SubscriptionTier } from '../src/api/types.ts'
+import type { AnswerCard, AskSuggestions, Debts, Settlement, AppHint, Budget, CategoryRule, DigestKind, GroupNoticeLevel, RecurringList, RecurringPayment, VoiceResult, AnalyticsReport, ApiErrorBody, ApiErrorCode, Balance, Category, CategoryReport, ComparisonReport, Currency, Group, Invite, Limits, Me, Member, MembersReport, MonthSummary, Operation, OperationsPage, Reminder, ReminderInput, SubscriptionTier } from '../src/api/types.ts'
 
 const API_PREFIX = '/api/v1'
 const SCENARIO_PARAM = 'mock'
@@ -16,7 +16,7 @@ const PREMIUM_EXPIRES_AT = '2026-12-31T00:00:00Z'
 const NO_CONTENT_STATUS = 204
 const QUESTION_SCENARIO = 'question'
 const UNKNOWN_QUESTION = /погод|weather|ауа райы/i
-const GROUP_ROUTE = /^\/groups\/([0-9a-f]{24})(?:\/(balance|summary|operations|activate|categories|category-rules|notices|tags|recurring|export|budgets|members|invite|initial-balance|voice|ask|reports\/[a-z]+))?(?:\/([^/]+))?(?:\/(limit))?$/
+const GROUP_ROUTE = /^\/groups\/([0-9a-f]{24})(?:\/(balance|summary|operations|activate|categories|category-rules|notices|tags|recurring|export|budgets|members|invite|initial-balance|voice|ask|debts|reports\/[a-z]+))?(?:\/([^/]+))?(?:\/(limit))?$/
 const REMINDER_ROUTE = /^\/notifications(?:\/([^/]+))?$/
 const GROUP_ID_PREFIX = '6650a1b2c3d4e5f6a7b8'
 const GROUP_ID_DIGITS = 4
@@ -31,7 +31,7 @@ const FREE_HISTORY_DAYS = 30
 const DEFAULT_PAGE_SIZE = 20
 const FILLER_OPERATIONS = 26
 
-type Body = { count: number } | string[] | AnswerCard | AskSuggestions | RecurringList | RecurringPayment | Budget[] | CategoryRule[] | Me | Group | Group[] | Balance | MonthSummary | Operation | OperationsPage | Category | Category[] | AnalyticsReport | ComparisonReport | MembersReport | CategoryReport | Member[] | Invite | Reminder | Reminder[] | VoiceResult | ApiErrorBody | null
+type Body = { count: number } | string[] | AnswerCard | AskSuggestions | Debts | Settlement | RecurringList | RecurringPayment | Budget[] | CategoryRule[] | Me | Group | Group[] | Balance | MonthSummary | Operation | OperationsPage | Category | Category[] | AnalyticsReport | ComparisonReport | MembersReport | CategoryReport | Member[] | Invite | Reminder | Reminder[] | VoiceResult | ApiErrorBody | null
 type MockResponse = { status: number; body: Body; delayMs?: number }
 
 const ok = (body: Body, delayMs?: number): MockResponse => ({ status: 200, body, delayMs })
@@ -81,8 +81,8 @@ const premiumRequired: MockResponse = {
 }
 
 let groups: Group[] = [
-  { id: PERSONAL_GROUP_ID, name: 'Личное', type: 'PERSONAL', currency: 'KZT', isOwner: true, isActive: true, memberCount: 1, initialBalance: '50000', monthStartDay: 1, noticeLevel: 'ALL' },
-  { id: FAMILY_GROUP_ID, name: 'Семья', type: 'SHARED', currency: 'USD', isOwner: false, isActive: false, memberCount: 3, initialBalance: '0', monthStartDay: 1, noticeLevel: 'ALL' },
+  { id: PERSONAL_GROUP_ID, name: 'Личное', type: 'PERSONAL', currency: 'KZT', isOwner: true, isActive: true, memberCount: 1, initialBalance: '50000', monthStartDay: 1, noticeLevel: 'ALL', splitExpenses: false },
+  { id: FAMILY_GROUP_ID, name: 'Семья', type: 'SHARED', currency: 'USD', isOwner: false, isActive: false, memberCount: 3, initialBalance: '0', monthStartDay: 1, noticeLevel: 'ALL', splitExpenses: true },
 ]
 
 const groupOf = (groupId: string): Group => groups.find((group) => group.id === groupId) ?? groups[0]
@@ -115,8 +115,10 @@ const operations: Record<string, Operation[]> = {
       operation(`p-old-${index}`, 'EXPENSE', String(500 + index * 100), '☕', 'Кофе', 7 + index, null)),
   ],
   [FAMILY_GROUP_ID]: [
-    operation('f1', 'EXPENSE', '2500', '🏠', 'Аренда', 2, null),
+    { ...operation('f1', 'EXPENSE', '2500', '🏠', 'Аренда', 2, null), payerId: 7, participantIds: [1, 7, 8] },
     operation('f2', 'INCOME', '3200', '💰', 'Зарплата', 5, null),
+    { ...operation('f3', 'EXPENSE', '90', '🍔', 'Кафе', 1, 'Ужин'), payerId: 1, participantIds: [1, 7, 8] },
+    { ...operation('f4', 'EXPENSE', '30', '🚕', 'Такси', 0, null), payerId: 8, participantIds: [1, 8] },
   ],
 }
 
@@ -368,13 +370,16 @@ interface OperationInput {
   categoryId: string
   operationDate: string
   description: string | null
+  payerId?: number | null
+  participantIds?: number[] | null
 }
 
 let createdOperations = 0
 
 function toOperation(groupId: string, id: string, input: OperationInput): Operation {
   const category = categoriesOf(groupId).find((candidate) => candidate.id === input.categoryId)
-  return { id, ...input, categoryName: category?.name ?? input.categoryId, categoryIcon: category?.icon ?? '📌', creatorId: 1, creatorName: 'Dev' }
+  const split = groupOf(groupId).splitExpenses && input.type === 'EXPENSE' && input.payerId == null ? { payerId: 1, participantIds: MEMBERS.map((member) => member.userId) } : {}
+  return { id, ...input, ...split, categoryName: category?.name ?? input.categoryId, categoryIcon: category?.icon ?? '📌', creatorId: 1, creatorName: 'Dev' }
 }
 
 function mutateOperation(groupId: string, method: string, operationId: string | undefined, body: string): MockResponse {
@@ -403,6 +408,45 @@ const MEMBERS: Member[] = [
 ]
 
 let createdGroups = 0
+
+let debts: Debts = {
+  balance: '15',
+  mine: [
+    { userId: 7, name: 'Айгерим', amount: '30', items: [
+      { kind: 'EXPENSE', amount: '30', date: daysAgo(1), operationId: 'f3', icon: '🍔', title: 'Ужин' },
+    ] },
+    { userId: 8, name: 'Данияр', amount: '-15', items: [
+      { kind: 'EXPENSE', amount: '-15', date: daysAgo(0), operationId: 'f4', icon: '🚕', title: 'Такси' },
+    ] },
+  ],
+  others: [{ fromId: 8, fromName: 'Данияр', toId: 7, toName: 'Айгерим', amount: '20' }],
+  history: [],
+}
+const remindedDebtors = new Set<number>()
+
+function debtsRoute(method: string, itemId: string | undefined, action: string | undefined, body: string): MockResponse {
+  if (method === 'GET') return ok(debts)
+  if (itemId === 'reminders') {
+    const { userId } = JSON.parse(body) as { userId: number }
+    if (remindedDebtors.has(userId)) return failure(429, 'REMINDER_TOO_SOON', 'Уже напомнили сегодня.')
+    remindedDebtors.add(userId)
+    return { status: NO_CONTENT_STATUS, body: null }
+  }
+  if (method === 'DELETE' && action) {
+    debts = { ...debts, history: debts.history.filter((settlement) => settlement.id !== action) }
+    return { status: NO_CONTENT_STATUS, body: null }
+  }
+  const input = JSON.parse(body) as { fromId: number; toId: number; amount: string }
+  const otherId = input.fromId === 1 ? input.toId : input.fromId
+  const name = (id: number) => MEMBERS.find((member) => member.userId === id)?.name ?? ''
+  const settlement: Settlement = { id: `s-${debts.history.length + 1}`, ...input, fromName: name(input.fromId), toName: name(input.toId), date: daysAgo(0), canUndo: true }
+  const signed = input.fromId === 1 ? Number(input.amount) : -Number(input.amount)
+  const mine = debts.mine
+    .map((debt) => (debt.userId === otherId ? { ...debt, amount: String(Number(debt.amount) + signed) } : debt))
+    .filter((debt) => Number(debt.amount) !== 0)
+  debts = { ...debts, mine, balance: String(mine.reduce((total, debt) => total + Number(debt.amount), 0)), history: [settlement, ...debts.history] }
+  return { status: 201, body: settlement }
+}
 
 function voiceResult(groupId: string): VoiceResult {
   const known = categoriesOf(groupId).find((category) => category.type === 'EXPENSE')
@@ -467,6 +511,7 @@ function groupRoute(path: string, query: URLSearchParams, scenario: string, meth
   if (resource === 'export') return ok({ count: operations[groupId].length })
   if (resource === 'recurring') return recurringRoute(groupId, method, itemId, body)
   if (resource === 'ask') return askRoute(method, itemId, body)
+  if (resource === 'debts') return debtsRoute(method, itemId, action, body)
   if (resource === 'tags') return ok(['отпуск', 'ремонт', 'подарки'])
   if (resource === 'notices') return ok(replaceGroup(groupId, { noticeLevel: (JSON.parse(body) as { level: GroupNoticeLevel }).level }))
   if (resource === 'operations' && method !== 'GET') return mutateOperation(groupId, method, itemId, body)
@@ -566,7 +611,7 @@ function createGroup(body: string, scenario: string): MockResponse {
   }
   createdGroups += 1
   const id = `${GROUP_ID_PREFIX}${String(createdGroups).padStart(GROUP_ID_DIGITS, '0')}`
-  const created: Group = { id, name, type: 'SHARED', currency: input.currency, isOwner: true, isActive: true, memberCount: 1, initialBalance: '0', monthStartDay: 1, noticeLevel: 'ALL' }
+  const created: Group = { id, name, type: 'SHARED', currency: input.currency, isOwner: true, isActive: true, memberCount: 1, initialBalance: '0', monthStartDay: 1, noticeLevel: 'ALL', splitExpenses: false }
   groups = [...groups, created]
   operations[id] = []
   activeGroupId = id

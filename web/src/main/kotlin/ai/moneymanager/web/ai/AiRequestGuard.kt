@@ -8,6 +8,8 @@ import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.service.AiPromptService
 import ai.moneymanager.service.AiRateLimitResult
 import ai.moneymanager.service.AiRateLimitService
+import ai.moneymanager.service.SharedMembers
+import ai.moneymanager.service.UserInfoService
 import ai.moneymanager.service.question.AskService
 import ai.moneymanager.web.error.ApiErrorCode
 import ai.moneymanager.web.error.ApiException
@@ -23,6 +25,7 @@ class AiRequestGuard(
     private val aiRateLimitService: AiRateLimitService,
     private val aiPromptService: AiPromptService,
     private val askService: AskService,
+    private val userInfoService: UserInfoService,
 ) {
     fun requireQuota(user: UserInfo) {
         val result = aiRateLimitService.tryConsume(checkNotNull(user.telegramUserId), user.hasActivePaidSubscription())
@@ -43,5 +46,13 @@ class AiRequestGuard(
     }
 
     fun groupContext(user: UserInfo, group: MoneyGroup, categories: List<Category>, rules: List<CategoryRule>): String =
-        aiPromptService.groupContext(group.currency, categories, rules, askService.previousQuestion(user))
+        aiPromptService.groupContext(group.currency, categories, rules, askService.previousQuestion(user), sharedMembersOf(user, group))
+
+    fun memberNames(group: MoneyGroup): Map<Long, String> =
+        if (group.splitsExpenses) userInfoService.displayNames(group.memberIds) else emptyMap()
+
+    private fun sharedMembersOf(user: UserInfo, group: MoneyGroup): SharedMembers? {
+        val names = memberNames(group).takeIf { it.isNotEmpty() } ?: return null
+        return SharedMembers(names.getValue(checkNotNull(user.telegramUserId)), names.values.toList())
+    }
 }
