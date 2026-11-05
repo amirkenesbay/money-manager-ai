@@ -234,6 +234,10 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
             onClose={closeSection}
             onManual={() => navigation.addOperation()}
             onSaved={recorded}
+            onLoanSaved={(title, detail) => {
+              goBack(null, refresh)
+              toast.show({ title, detail })
+            }}
             onOpenLink={openLink}
           />
         )}

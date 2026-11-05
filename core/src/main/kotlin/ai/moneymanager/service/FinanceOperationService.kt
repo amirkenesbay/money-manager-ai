@@ -10,6 +10,7 @@ import ai.moneymanager.domain.model.OperationTotals
 import ai.moneymanager.domain.text.matchesSearch
 import ai.moneymanager.domain.text.tagsOf
 import ai.moneymanager.repository.FinanceOperationRepository
+import ai.moneymanager.repository.LoanRepository
 import ai.moneymanager.repository.MoneyGroupRepository
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import org.bson.types.ObjectId
@@ -31,6 +32,7 @@ import org.springframework.context.ApplicationEventPublisher
 class FinanceOperationService(
     private val financeOperationRepository: FinanceOperationRepository,
     private val moneyGroupRepository: MoneyGroupRepository,
+    private val loanRepository: LoanRepository,
     private val eventPublisher: ApplicationEventPublisher,
 ) {
     private val log = LoggerFactory.getLogger(FinanceOperationService::class.java)
@@ -39,11 +41,13 @@ class FinanceOperationService(
         val ops = financeOperationRepository.findByGroupId(groupId)
         val income = sumOf(ops, CategoryType.INCOME)
         val expense = sumOf(ops, CategoryType.EXPENSE)
+        val loans = loanRepository.findByGroupId(groupId).fold(BigDecimal.ZERO) { total, loan -> total + loan.cashEffect }
         return BalanceBreakdown(
             initial = initialBalance,
             income = income,
             expense = expense,
-            total = initialBalance + income - expense
+            total = initialBalance + income - expense + loans,
+            loans = loans,
         )
     }
 

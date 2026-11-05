@@ -46,4 +46,13 @@ class StartLinksTest {
         assertThat(debtPaidRequest("/start debt_${groupId}_someone")).isNull()
         assertThat(debtPaidRequest("/start debt_nope_42")).isNull()
     }
+
+    @Test
+    fun `reads the loan to close or postpone from a due reminder`() {
+        val loanId = ObjectId()
+
+        assertThat(repaidLoanId("/start ${loanRepaidParameter(loanId)}")).isEqualTo(loanId)
+        assertThat(postponedLoanId("/start ${loanLaterParameter(loanId)}")).isEqualTo(loanId)
+        assertThat(repaidLoanId("/start ${loanLaterParameter(loanId)}")).isNull()
+    }
 }

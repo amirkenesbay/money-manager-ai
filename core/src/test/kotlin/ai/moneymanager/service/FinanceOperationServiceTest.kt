@@ -12,6 +12,7 @@ import ai.moneymanager.repository.MoneyGroupRepository
 import ai.moneymanager.repository.FinanceOperationRepository
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import ai.moneymanager.repository.entity.MoneyGroupEntity
+import ai.moneymanager.testing.testFinanceOperationService
 import org.assertj.core.api.Assertions.assertThat
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.BeforeEach
@@ -34,7 +35,7 @@ class FinanceOperationServiceTest {
     private val repository = mock(FinanceOperationRepository::class.java)
     private val publishedEvents = mutableListOf<Any>()
     private val groupRepository = mock(MoneyGroupRepository::class.java)
-    private val service = FinanceOperationService(repository, groupRepository) { publishedEvents.add(it) }
+    private val service = testFinanceOperationService(repository, groupRepository) { publishedEvents.add(it) }
 
     private val existing = FinanceOperationEntity(
         id = operationId,

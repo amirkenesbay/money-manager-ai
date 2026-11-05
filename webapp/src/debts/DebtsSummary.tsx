@@ -6,10 +6,17 @@ import { ChevronRightIcon } from '../ui/icons'
 import { useDebts } from './useDebts'
 import './debts.css'
 
-export function DebtsSummary({ groupId, currency, language, onOpen }: { groupId: string; currency: Currency; language: string; onOpen: () => void }) {
+export function DebtsSummary({ groupId, currency, language, showSettled, onOpen }: {
+  groupId: string
+  currency: Currency
+  language: string
+  showSettled: boolean
+  onOpen: () => void
+}) {
   const debts = useDebts(groupId)
   if (debts.state.status !== 'ready') return null
   const balance = Number(debts.state.data.balance)
+  if (balance === 0 && !showSettled && debts.state.data.loans.length === 0) return null
   if (balance === 0) {
     return (
       <button type="button" className="budget-calm pressable" onClick={onOpen}>

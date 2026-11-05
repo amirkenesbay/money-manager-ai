@@ -10,6 +10,9 @@ import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.UserInfoService
 import ai.moneymanager.service.debt.DebtService
 import ai.moneymanager.service.debt.ReminderResult
+import ai.moneymanager.service.loan.LoanService
+import ai.moneymanager.domain.model.loan.LoanDirection
+import ai.moneymanager.repository.entity.LoanEntity
 import ai.moneymanager.testing.TEST_USER_ID
 import ai.moneymanager.testing.testGroup
 import ai.moneymanager.testing.testUser
@@ -60,6 +63,9 @@ class DebtControllerTest {
     @MockitoBean
     private lateinit var debtService: DebtService
 
+    @MockitoBean
+    private lateinit var loanService: LoanService
+
     private val groupId = ObjectId()
     private val group = testGroup(groupId, members = setOf(TEST_USER_ID, ANYA, DANYA))
 
@@ -82,9 +88,16 @@ class DebtControllerTest {
             )
         )
 
+        `when`(loanService.loans(groupId, TEST_USER_ID)).thenReturn(listOf(
+            LoanEntity(id = ObjectId(), groupId = groupId, creatorId = TEST_USER_ID, direction = LoanDirection.BORROWED, person = "Мама", amount = BigDecimal("3500"), lentOn = LocalDate.of(2026, 11, 1)),
+        ))
+
         mockMvc.perform(get("/api/v1/groups/$groupId/debts").withTelegramAuth())
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.balance").value("8500"))
+            .andExpect(jsonPath("$.owedToMe").value("12000"))
+            .andExpect(jsonPath("$.iOwe").value("3500"))
+            .andExpect(jsonPath("$.loans[0].person").value("Мама"))
             .andExpect(jsonPath("$.mine[0].name").value("Аня"))
             .andExpect(jsonPath("$.mine[0].items[0].title").value("Кафе"))
             .andExpect(jsonPath("$.others[0].toName").value("Даня"))

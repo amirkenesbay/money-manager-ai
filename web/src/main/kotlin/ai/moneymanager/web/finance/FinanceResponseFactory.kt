@@ -22,6 +22,7 @@ class FinanceResponseFactory(
         income = breakdown.income,
         expense = breakdown.expense,
         total = breakdown.total,
+        loans = breakdown.loans,
     )
 
     fun monthSummary(group: MoneyGroup, period: MonthPeriod, report: HistoryReport) = MonthSummaryResponse(

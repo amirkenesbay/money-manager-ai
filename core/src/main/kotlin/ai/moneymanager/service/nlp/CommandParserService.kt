@@ -7,6 +7,8 @@ import ai.moneymanager.domain.model.nlp.BotFunctions
 import ai.moneymanager.domain.model.nlp.arguments.AddExpenseArgs
 import ai.moneymanager.service.AiPromptService
 import ai.moneymanager.domain.model.nlp.arguments.AddIncomeArgs
+import ai.moneymanager.domain.model.nlp.arguments.AddLoanArgs
+import ai.moneymanager.domain.model.nlp.arguments.RepayLoanArgs
 import ai.moneymanager.domain.model.nlp.arguments.AskFinanceArgs
 import ai.moneymanager.service.question.financeQuestionOf
 import ai.moneymanager.domain.model.nlp.arguments.ChangeCategoryIconArgs
@@ -98,6 +100,9 @@ class CommandParserService(
             Double::class.javaObjectType, Double::class.javaObjectType, Double::class.javaObjectType,
         )
 
+        val addLoanMethod = botFunctionMethod(GeminiFunction.ADD_LOAN, String::class.java, String::class.java, Double::class.java, String::class.java, String::class.java)
+        val repayLoanMethod = botFunctionMethod(GeminiFunction.REPAY_LOAN, String::class.java, String::class.java, Double::class.javaObjectType)
+
         val systemContent = Content.fromParts(Part.fromText(aiPromptService.systemPrompt))
 
         config = GenerateContentConfig.builder()
@@ -109,7 +114,7 @@ class CommandParserService(
                         changeCategoryIconMethod, deleteAllCategoriesMethod, listCategoriesMethod,
                         listGroupsMethod, switchGroupMethod, showBalanceMethod, showReportMethod, showHistoryMethod,
                         listNotificationsMethod, createNotificationMethod, deleteNotificationMethod,
-                        deleteLastOperationMethod, editLastOperationMethod, askFinanceMethod
+                        deleteLastOperationMethod, editLastOperationMethod, askFinanceMethod, addLoanMethod, repayLoanMethod
                     )
                     .build()
             )
@@ -340,6 +345,12 @@ class CommandParserService(
 
                 GeminiFunction.ASK_FINANCE ->
                     financeQuestionOf(argsMapper.map<AskFinanceArgs>(args))?.let { BotCommand.AskFinance(it) } ?: BotCommand.OutOfContext(originalMessage)
+
+                GeminiFunction.ADD_LOAN ->
+                    addLoanOf(argsMapper.map<AddLoanArgs>(args)) ?: BotCommand.OutOfContext(originalMessage)
+
+                GeminiFunction.REPAY_LOAN ->
+                    repayLoanOf(argsMapper.map<RepayLoanArgs>(args)) ?: BotCommand.OutOfContext(originalMessage)
             }
         } catch (e: Exception) {
             BotCommand.ParseError("Invalid function args for ${functionCall.name().orElse(UNKNOWN_FUNCTION_NAME)}: ${e.message}")

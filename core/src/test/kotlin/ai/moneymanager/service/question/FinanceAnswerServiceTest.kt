@@ -7,13 +7,13 @@ import ai.moneymanager.domain.model.question.FinanceIntent
 import ai.moneymanager.domain.model.question.FinanceQuestion
 import ai.moneymanager.domain.model.question.PeriodPreset
 import ai.moneymanager.domain.model.question.PeriodSpec
-import ai.moneymanager.repository.MoneyGroupRepository
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import ai.moneymanager.service.BudgetService
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.FinanceOperationService
 import ai.moneymanager.service.RecurringPaymentService
 import ai.moneymanager.service.UserInfoService
+import ai.moneymanager.testing.testFinanceOperationService
 import ai.moneymanager.testing.InMemoryOperationRepository
 import ai.moneymanager.testing.TEST_USER_ID
 import ai.moneymanager.testing.testGroup
@@ -46,7 +46,7 @@ class FinanceAnswerServiceTest {
     private val clock = Clock.fixed(TODAY.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
     private val service = FinanceAnswerService(
         repository, categoryService, BudgetService(categoryService, repository, clock), mock(RecurringPaymentService::class.java),
-        FinanceOperationService(repository, mock(MoneyGroupRepository::class.java)) { }, userInfoService, testLocalizationService(),
+        testFinanceOperationService(repository), userInfoService, testLocalizationService(),
     )
 
     @BeforeEach

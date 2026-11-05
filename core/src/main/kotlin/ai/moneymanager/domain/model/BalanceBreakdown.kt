@@ -6,5 +6,6 @@ data class BalanceBreakdown(
     val initial: BigDecimal,
     val income: BigDecimal,
     val expense: BigDecimal,
-    val total: BigDecimal
+    val total: BigDecimal,
+    val loans: BigDecimal = BigDecimal.ZERO,
 )

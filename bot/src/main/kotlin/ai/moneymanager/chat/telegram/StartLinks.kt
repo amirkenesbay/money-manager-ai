@@ -24,10 +24,20 @@ fun mutedDigestKind(messageText: String?): DigestKind? {
 
 fun undoOperationParameter(operationId: ObjectId): String = StartParameters.UNDO_OPERATION_PREFIX + operationId.toHexString()
 
-fun undoOperationId(messageText: String?): ObjectId? =
+fun undoOperationId(messageText: String?): ObjectId? = idAfter(StartParameters.UNDO_OPERATION_PREFIX, messageText)
+
+fun loanRepaidParameter(loanId: ObjectId): String = StartParameters.LOAN_REPAID_PREFIX + loanId.toHexString()
+
+fun loanLaterParameter(loanId: ObjectId): String = StartParameters.LOAN_LATER_PREFIX + loanId.toHexString()
+
+fun repaidLoanId(messageText: String?): ObjectId? = idAfter(StartParameters.LOAN_REPAID_PREFIX, messageText)
+
+fun postponedLoanId(messageText: String?): ObjectId? = idAfter(StartParameters.LOAN_LATER_PREFIX, messageText)
+
+private fun idAfter(prefix: String, messageText: String?): ObjectId? =
     startParameterOf(messageText)
-        ?.takeIf { it.startsWith(StartParameters.UNDO_OPERATION_PREFIX) }
-        ?.removePrefix(StartParameters.UNDO_OPERATION_PREFIX)
+        ?.takeIf { it.startsWith(prefix) }
+        ?.removePrefix(prefix)
         ?.takeIf { ObjectId.isValid(it) }
         ?.let { ObjectId(it) }
 

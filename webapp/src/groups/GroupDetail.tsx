@@ -1,9 +1,9 @@
+import { shareToTelegram } from '../telegram/share'
 import { useCallback, useState } from 'react'
 import type { Group, Me, Member } from '../api/types'
 import { useAsync } from '../api/useAsync'
 import { initialOf } from '../format'
 import { strings } from '../strings'
-import { openExternalLink } from '../telegram/telegramEnv'
 import { Moment } from '../three/Moment'
 import { MAX_GROUP_BALLS } from '../three/moments'
 import { Button } from '../ui/Button'
@@ -24,7 +24,6 @@ import { RenameSheet } from './RenameSheet'
 import { SplitSwitch } from './SplitSwitch'
 import { Hint } from '../onboarding/Hint'
 
-const SHARE_URL = 'https://t.me/share/url'
 const MEMBER_SKELETON_ROWS = 2
 
 type SheetKind = 'rename' | 'currency' | 'delete' | 'notices'
@@ -149,7 +148,7 @@ function InviteActions({ url, groupName, notify }: { url: string; groupName: str
     }
   }
 
-  const share = () => openExternalLink(`${SHARE_URL}?${new URLSearchParams({ url, text: strings.shareText(groupName) })}`)
+  const share = () => shareToTelegram(strings.shareText(groupName), url)
 
   return (
     <>

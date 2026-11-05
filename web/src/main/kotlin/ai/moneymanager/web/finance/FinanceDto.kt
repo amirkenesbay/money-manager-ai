@@ -13,6 +13,7 @@ data class BalanceResponse(
     val income: BigDecimal,
     val expense: BigDecimal,
     val total: BigDecimal,
+    val loans: BigDecimal,
 )
 
 data class OperationResponse(

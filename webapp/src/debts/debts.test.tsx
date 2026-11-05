@@ -12,9 +12,12 @@ import { DebtsScreen } from './DebtsScreen'
 import { DebtsSummary } from './DebtsSummary'
 import { impactOf, partsOf } from './share'
 import { SplitField } from './SplitField'
+import { createLoan, fetchLoanPeople, repayLoan } from './loansApi'
+import type { Loan } from '../api/types'
 
 vi.mock('./debtsApi', () => ({ fetchDebts: vi.fn(), recordSettlement: vi.fn(), remindDebtor: vi.fn(), undoSettlement: vi.fn() }))
 vi.mock('../groups/groupsApi', () => ({ fetchMembers: vi.fn() }))
+vi.mock('./loansApi', () => ({ fetchLoanPeople: vi.fn(), createLoan: vi.fn(), repayLoan: vi.fn(), undoRepayment: vi.fn(), deleteLoan: vi.fn() }))
 
 const ME = me().userId
 const ANYA = ME + 1
@@ -28,6 +31,9 @@ const shared = group({ id: 'family', type: 'SHARED', splitExpenses: true })
 const money = (amount: string) => formatMoney(amount, shared.currency, me().language)
 const debts = (overrides: Partial<Debts> = {}): Debts => ({
   balance: '8500',
+  owedToMe: '12000',
+  iOwe: '3500',
+  loans: [],
   mine: [
     { userId: ANYA, name: 'Аня', amount: '12000', items: [{ kind: 'EXPENSE', amount: '12000', date: '2026-11-02', operationId: 'op-1', icon: '🍔', title: 'Кафе' }] },
     { userId: DANYA, name: 'Даня', amount: '-3500', items: [{ kind: 'OFFSET', amount: '-3500', date: null, operationId: null, icon: null, title: null }] },
@@ -78,7 +84,7 @@ describe('debts', () => {
   })
 
   it('shows what I am owed on the home screen', async () => {
-    render(<DebtsSummary groupId={shared.id} currency={shared.currency} language="ru" onOpen={vi.fn()} />)
+    render(<DebtsSummary groupId={shared.id} currency={shared.currency} language="ru" showSettled onOpen={vi.fn()} />)
 
     expect(await screen.findByText(strings.debtsOwedToMe)).toBeInTheDocument()
     expect(screen.getByText(asRendered(money('8500')))).toBeInTheDocument()
@@ -86,7 +92,7 @@ describe('debts', () => {
 
   it('says there are no debts when everyone is even', async () => {
     vi.mocked(fetchDebts).mockResolvedValue(debts({ balance: '0', mine: [] }))
-    render(<DebtsSummary groupId={shared.id} currency={shared.currency} language="ru" onOpen={vi.fn()} />)
+    render(<DebtsSummary groupId={shared.id} currency={shared.currency} language="ru" showSettled onOpen={vi.fn()} />)
 
     expect(await screen.findByText(strings.debtsNone)).toBeInTheDocument()
   })
@@ -108,7 +114,8 @@ describe('debts', () => {
     vi.mocked(undoSettlement).mockResolvedValue(undefined)
     render(<DebtsScreen me={me()} group={shared} notify={notify} onBack={vi.fn()} />)
 
-    await userEvent.click(await screen.findByRole('button', { name: strings.debtPaid }))
+    await userEvent.click(await screen.findByRole('tab', { name: new RegExp(strings.debtsTabMine) }))
+    await userEvent.click(screen.getByRole('button', { name: strings.debtPaid }))
     const amount = screen.getByRole('textbox', { name: strings.debtAmountTitle })
     await userEvent.clear(amount)
     await userEvent.type(amount, '2000')
@@ -126,5 +133,62 @@ describe('debts', () => {
     render(<DebtsScreen me={me()} group={shared} notify={notify} onBack={vi.fn()} />)
 
     expect(await screen.findByRole('heading', { name: strings.debtsNone })).toBeInTheDocument()
+  })
+})
+
+describe('personal loans', () => {
+  const notify = vi.fn()
+  const loan = (overrides: Partial<Loan> = {}): Loan => ({
+    id: 'loan-1', direction: 'LENT', person: 'Ерлан', amount: '20000', repaid: '5000', remaining: '15000', lentOn: '2026-11-01',
+    dueDate: '2020-01-01', note: 'на ремонт', repayments: [{ id: 'rep-1', amount: '5000', date: '2026-11-03' }], open: true, ...overrides,
+  })
+
+  beforeEach(() => {
+    vi.resetAllMocks()
+    vi.mocked(fetchMembers).mockResolvedValue(MEMBERS)
+    vi.mocked(fetchLoanPeople).mockResolvedValue(['Ерлан', 'Мама'])
+    vi.mocked(fetchDebts).mockResolvedValue(debts({
+      mine: [],
+      owedToMe: '15000',
+      iOwe: '50000',
+      loans: [loan(), loan({ id: 'loan-2', direction: 'BORROWED', person: 'Мама', amount: '50000', repaid: '0', remaining: '50000', dueDate: null, repayments: [] })],
+    }))
+  })
+
+  it('splits loans into what I am owed and what I owe, overdue ones marked', async () => {
+    render(<DebtsScreen me={me()} group={shared} notify={notify} onBack={vi.fn()} />)
+
+    expect(await screen.findByRole('button', { name: /Ерлан/ })).toHaveTextContent(/просрочено/)
+    expect(screen.queryByRole('button', { name: /Мама/ })).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('tab', { name: new RegExp(strings.debtsTabMine) }))
+
+    expect(screen.getByRole('button', { name: /Мама/ })).toBeInTheDocument()
+  })
+
+  it('takes everything back from a loan and says it is closed', async () => {
+    vi.mocked(repayLoan).mockResolvedValue(loan({ repaid: '20000', remaining: '0', open: false, repayments: [{ id: 'rep-2', amount: '15000', date: '2026-11-05' }] }))
+    render(<DebtsScreen me={me()} group={shared} notify={notify} onBack={vi.fn()} />)
+
+    await userEvent.click(await screen.findByRole('button', { name: /Ерлан/ }))
+    await userEvent.click(screen.getByRole('button', { name: strings.loanRepay }))
+    await userEvent.click(screen.getByRole('button', { name: new RegExp(strings.loanAll('').trim()) }))
+    await userEvent.click(screen.getByRole('button', { name: strings.save }))
+
+    expect(repayLoan).toHaveBeenCalledWith(shared.id, 'loan-1', '15000')
+    expect(notify).toHaveBeenCalledWith(expect.objectContaining({ title: strings.loanClosed }))
+  })
+
+  it('records a new loan to a person picked from earlier ones', async () => {
+    vi.mocked(createLoan).mockResolvedValue(loan({ id: 'loan-3', person: 'Мама', amount: '7000' }))
+    render(<DebtsScreen me={me()} group={shared} notify={notify} onBack={vi.fn()} />)
+
+    await userEvent.click(await screen.findByRole('button', { name: strings.loanAdd }))
+    await userEvent.type(screen.getByRole('textbox', { name: strings.amountLabel }), '7000')
+    await userEvent.click(await screen.findByRole('button', { name: 'Мама' }))
+    await userEvent.click(screen.getByRole('button', { name: strings.loanWeek }))
+    await userEvent.click(screen.getByRole('button', { name: strings.save }))
+
+    expect(createLoan).toHaveBeenCalledWith(shared.id, expect.objectContaining({ direction: 'LENT', person: 'Мама', amount: '7000', dueDate: expect.any(String) }))
+    expect(notify).toHaveBeenCalledWith(expect.objectContaining({ title: strings.loanSaved }))
   })
 })

@@ -1,6 +1,7 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ApiRequestError, serverErrorCode, serverMessage } from '../api/client'
-import type { AnswerCard, AnswerLink, Group, Me, Operation, VoiceResult } from '../api/types'
+import type { AnswerCard, AnswerLink, Group, Me, Operation, VoiceLoan, VoiceResult } from '../api/types'
+import { LoanConfirm } from '../debts/LoanConfirm'
 import { askQuestion } from '../ask/askApi'
 import { AnswerView } from '../ask/AnswerView'
 import { hintItems } from '../ask/hintItems'
@@ -45,17 +46,19 @@ type Phase =
   | Request
   | { kind: 'confirm'; drafts: Draft[] }
   | { kind: 'answer'; card: AnswerCard }
+  | { kind: 'loan'; loan: VoiceLoan }
   | { kind: 'problem'; problem: Problem; retry: Request | null; message: string | null }
 
 export type VoiceStart = { kind: 'record' } | { kind: 'question'; text: string }
 
-export function VoiceFlow({ me, group, start = { kind: 'record' }, onClose, onManual, onSaved, onOpenLink }: {
+export function VoiceFlow({ me, group, start = { kind: 'record' }, onClose, onManual, onSaved, onLoanSaved, onOpenLink }: {
   me: Me
   group: Group
   start?: VoiceStart
   onClose: () => void
   onManual: () => void
   onSaved: (operations: Operation[], note?: string) => void
+  onLoanSaved: (title: string, detail: string) => void
   onOpenLink: (link: AnswerLink) => void
 }) {
   const [phase, setPhase] = useState<Phase>(() => initialPhase(start))
@@ -103,6 +106,8 @@ export function VoiceFlow({ me, group, start = { kind: 'record' }, onClose, onMa
           onCancel={onClose}
         />
       )
+    case 'loan':
+      return <LoanConfirm group={group} language={me.language} loan={phase.loan} onSayAgain={record} onClose={onClose} onSaved={onLoanSaved} />
     case 'answer':
       return (
         <AnswerView
@@ -287,6 +292,7 @@ function ThinkingScreen({ groupId, request, onDone, onFailed, onCancel }: {
 function voiceOutcome(result: VoiceResult): Phase | null {
   const drafts = toDrafts(result.operations)
   if (drafts.length > 0) return { kind: 'confirm', drafts }
+  if (result.loan) return { kind: 'loan', loan: result.loan }
   return result.answer ? { kind: 'answer', card: result.answer } : null
 }
 

@@ -88,3 +88,17 @@ data class AskFinanceArgs(
     val limit: Double? = null,
     val amount: Double? = null,
 )
+
+data class AddLoanArgs(
+    val direction: String,
+    val person: String,
+    val amount: Double,
+    val dueDate: String? = null,
+    val note: String? = null,
+)
+
+data class RepayLoanArgs(
+    val direction: String,
+    val person: String,
+    val amount: Double? = null,
+)

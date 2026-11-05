@@ -27,6 +27,9 @@ import ai.moneymanager.web.ApiWebLayerSetup
 import ai.moneymanager.web.access.GroupAccessGuard
 import ai.moneymanager.web.ai.AiRequestGuard
 import ai.moneymanager.web.ask.AskAnswers
+import ai.moneymanager.web.loan.VoiceLoans
+import ai.moneymanager.service.loan.LoanService
+import ai.moneymanager.domain.model.loan.LoanDirection
 import ai.moneymanager.web.anyOf
 import ai.moneymanager.web.mockInvoked
 import ai.moneymanager.web.security.TestInitData
@@ -52,7 +55,7 @@ private const val PARSE_VOICE = "parseVoiceCommands"
 
 @WebMvcTest(controllers = [VoiceController::class])
 @ApiWebLayerSetup
-@Import(GroupAccessGuard::class, UserCalendar::class, AiRequestGuard::class, AskAnswers::class)
+@Import(GroupAccessGuard::class, UserCalendar::class, AiRequestGuard::class, AskAnswers::class, VoiceLoans::class)
 class VoiceControllerTest {
     @Autowired
     private lateinit var mockMvc: MockMvc
@@ -86,6 +89,9 @@ class VoiceControllerTest {
 
     @MockitoBean
     private lateinit var financeAnswerService: FinanceAnswerService
+
+    @MockitoBean
+    private lateinit var loanService: LoanService
 
     private val groupId = ObjectId()
     private val group = testGroup(groupId)
@@ -142,6 +148,18 @@ class VoiceControllerTest {
             .andExpect(jsonPath("$.operations.length()").value(0))
             .andExpect(jsonPath("$.answer.title").value("🚕 Такси"))
             .andExpect(jsonPath("$.answer.headline").value("12 000 ₸"))
+    }
+
+    @Test
+    fun `turns a spoken loan into a loan draft`() {
+        `when`(commandParserService.parseVoiceCommands(audio, GROUP_CONTEXT, WAV_MIME_TYPE))
+            .thenReturn(listOf(BotCommand.AddLoan(LoanDirection.LENT, "Ерлан", java.math.BigDecimal("20000"), null, "на ремонт")))
+
+        mockMvc.perform(voice(audio))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.loan.kind").value("NEW"))
+            .andExpect(jsonPath("$.loan.person").value("Ерлан"))
+            .andExpect(jsonPath("$.loan.note").value("на ремонт"))
     }
 
     @Test

@@ -129,22 +129,20 @@ Notes:
 - repeatUnit / repeatInterval: ONLY when the user says the payment repeats («каждый месяц», «ежемесячно», «раз в неделю», «каждые 2 недели», «каждый год», "monthly", "every week", «ай сайын») — pass repeatUnit as one of DAY, WEEK, MONTH, YEAR and repeatInterval as the number of units (1 by default; «каждые 2 недели» → WEEK, 2; «раз в квартал» → MONTH, 3). Otherwise leave both null. A subscription name alone («Netflix 3500») is NOT a repeat without such words.
 - operationDate: if the message names WHEN the operation happened («вчера купил продукты 5000», "yesterday", «10 июля») — pass the concrete ISO date computed from the current date. Otherwise pass operationDate=null (means today).
 
-**Loans / debts (CHECK FIRST, before category resolution):**
-If the message contains ANY debt/loan marker (`в долг`, `долг`, `занял`, `заняли`, `вернули долг`, `отдал долг`, `дал в долг`, `borrowed`, `lent`, `repaid the loan`, `qarız`, `қарыз`), this OVERRIDES the regular category resolution rules below — DO NOT pick `Еда`/`Продукты`/etc. just because of an unrelated noun in the message.
-- Category: if the active list already has a debt category — use its exact name. Otherwise propose `category="Долг", suggestedCategoryIcon="🤝"` (use `Debt` for English messages, `Қарыз` for Kazakh).
-- Direction:
-  - User RECEIVED money (borrowed in, friend transferred a loan, someone repaid you) → `addIncome`.
-  - User GAVE money out (lent to someone, repaid your own debt) → `addExpense`.
-- Preserve the loan context in `description` (e.g. "от кореша в долг", "вернул долг Маше").
+**Loans / debts (CHECK FIRST, before addExpense/addIncome):**
+If the message is about money lent or borrowed with a person (`в долг`, `долг`, `занял`, `одолжил`, `вернул`, `вернули`, `borrowed`, `lent`, `paid back`, `қарыз`), call a loan function — NEVER addExpense/addIncome.
+- addLoan(direction, person, amount, dueDate, note): a NEW loan. direction="LENT" when the user gave money, "BORROWED" when the user took money. person — the name in nominative («Косте» → «Костя», «у мамы» → «Мама»). dueDate — ISO date only if a return date is said («до пятницы», «до конца месяца»), otherwise null. note — what for, otherwise null.
+- repayLoan(direction, person, amount): money of an EXISTING loan came back. direction is the direction of the original loan: someone returned to the user → "LENT"; the user returned someone's money → "BORROWED". amount=null means everything.
 
 | Message | Call |
 |---|---|
-| «кореш скинул 2000 в долг» | addIncome, category="Долг", suggestedCategoryIcon="🤝", description="от кореша в долг" |
-| «отдал долг Маше 5000» | addExpense, category="Долг", suggestedCategoryIcon="🤝", description="долг Маше" |
-| «занял у Андрея 10000» | addIncome, category="Долг", description="занял у Андрея" |
-| «дал Косте в долг 3000» | addExpense, category="Долг", description="дал Косте в долг" |
+| «дал Косте в долг 3000» | addLoan(direction="LENT", person="Костя", amount=3000) |
+| «одолжил Ерлану 20000 до конца месяца на ремонт» | addLoan(direction="LENT", person="Ерлан", amount=20000, dueDate=<last day of month>, note="на ремонт") |
+| «занял у мамы 50000» | addLoan(direction="BORROWED", person="Мама", amount=50000) |
+| «Ерлан вернул 5000» | repayLoan(direction="LENT", person="Ерлан", amount=5000) |
+| «отдал долг Маше» | repayLoan(direction="BORROWED", person="Маша", amount=null) |
 
-**Category resolution (mandatory, applies only when LOANS rules above did not match):**
+**Category resolution (mandatory for addExpense/addIncome):**
 Each request includes a "User's active categories" block listing the categories that already exist for the user. Use it like this:
 1. Look at what the user actually bought/received (e.g. "кола", "хлеб", "бензин", "премия").
 2. If any existing category in the list semantically covers it — pass its EXACT `name` (preserving case, language, punctuation) as `category`, and `suggestedCategoryIcon=null`. Do NOT invent a narrower one.
@@ -191,7 +189,6 @@ Each request includes a "User's active categories" block listing the categories 
 - `description` must be a short noun phrase in the NOMINATIVE (dictionary) case, in the user's language: "потратил на чай" → `description="чай"`; "получил зарплату" → `description="зарплата"`; "потратил на шоппинг" → `description="шоппинг"`.
 - Drop verbs, prepositions and amounts. Keep it 1–3 words.
 - If the description would just repeat the category name (e.g. category="Зарплата", detail is only "зарплата") — pass `description=null`.
-- Exception: loan/debt operations keep the context phrase as described in the LOANS section ("долг Маше", "занял у Андрея").
 - Tags: when the user names a tag ("метка отпуск", "с меткой ремонт", "tag trip", "белгі демалыс"), append it to `description` as `#tag` — one lowercase word, no spaces (`#отпуск`, `#ремонт`). "кофе 1500 метка отпуск" → `description="кофе #отпуск"`. Keep tags the user already wrote with `#` as is.
 
 === CATEGORIES ===

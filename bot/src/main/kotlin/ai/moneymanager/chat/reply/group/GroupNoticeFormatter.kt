@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.reply.group
 
+import ai.moneymanager.chat.reply.common.LINE_BREAK
 import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.domain.text.formatAmount
 import ai.moneymanager.chat.reply.common.formatIconPrefix
@@ -13,7 +14,6 @@ import ai.moneymanager.service.LocalizationService
 import org.springframework.stereotype.Component
 
 private const val MAX_OPERATION_LINES = 10
-private const val LINE_BREAK = "\n"
 private const val DETAIL_SEPARATOR = ", "
 private const val DESCRIPTION_PREFIX = " · "
 private const val CURRENCY_LABEL_TEMPLATE = "%s %s"

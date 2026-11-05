@@ -55,7 +55,9 @@ internal val BotCommand.targetState: MoneyManagerState
         is BotCommand.DeleteNotification,
         is BotCommand.DeleteLastOperation,
         is BotCommand.EditLastOperation,
-        is BotCommand.AskFinance -> MoneyManagerState.NLP_RESPONSE
+        is BotCommand.AskFinance,
+        is BotCommand.AddLoan,
+        is BotCommand.RepayLoan -> MoneyManagerState.NLP_RESPONSE
     }
 
 internal fun clearNlpContext(context: MoneyManagerContext) {
@@ -144,7 +146,9 @@ internal fun processNlpCommand(
         is BotCommand.DeleteNotification,
         is BotCommand.DeleteLastOperation,
         is BotCommand.EditLastOperation,
-        is BotCommand.AskFinance -> {
+        is BotCommand.AskFinance,
+        is BotCommand.AddLoan,
+        is BotCommand.RepayLoan -> {
             context.nlpResponse = PARSE_ERROR_MESSAGE
             context.nlpTargetState = MoneyManagerState.NLP_RESPONSE
         }

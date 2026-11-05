@@ -350,16 +350,53 @@ export interface Settlement {
   canUndo: boolean
 }
 
+export type LoanDirection = 'LENT' | 'BORROWED'
+
+export interface Repayment {
+  id: string
+  amount: string
+  date: string
+}
+
+export interface Loan {
+  id: string
+  direction: LoanDirection
+  person: string
+  amount: string
+  repaid: string
+  remaining: string
+  lentOn: string
+  dueDate: string | null
+  note: string | null
+  repayments: Repayment[]
+  open: boolean
+}
+
+export interface VoiceLoan {
+  kind: 'NEW' | 'REPAYMENT'
+  direction: LoanDirection
+  person: string
+  amount: string | null
+  dueDate: string | null
+  note: string | null
+  loanId: string | null
+  remaining: string | null
+}
+
 export interface Debts {
   balance: string
+  owedToMe: string
+  iOwe: string
   mine: PersonalDebt[]
   others: DebtTransfer[]
   history: Settlement[]
+  loans: Loan[]
 }
 
 export interface VoiceResult {
   operations: VoiceOperation[]
   answer?: AnswerCard | null
+  loan?: VoiceLoan | null
 }
 
 export type AnswerScreen = 'REPORTS' | 'OPERATIONS' | 'CATEGORIES' | 'RECURRING'

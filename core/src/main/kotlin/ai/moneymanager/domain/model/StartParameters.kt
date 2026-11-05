@@ -10,6 +10,8 @@ object StartParameters {
     const val UNDO_OPERATION_PREFIX = "undo_"
     const val RECORD_RECURRING_PREFIX = "pay_"
     const val DEBT_PAID_PREFIX = "debt_"
+    const val LOAN_REPAID_PREFIX = "loanpaid_"
+    const val LOAN_LATER_PREFIX = "loanlater_"
 }
 
 fun buildInviteLink(inviteToken: String): String =

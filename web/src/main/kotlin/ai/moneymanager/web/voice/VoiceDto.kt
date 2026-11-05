@@ -3,6 +3,7 @@ package ai.moneymanager.web.voice
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.RecurrenceUnit
 import ai.moneymanager.domain.model.question.AnswerCard
+import ai.moneymanager.web.loan.VoiceLoanResponse
 import org.bson.types.ObjectId
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -10,6 +11,7 @@ import java.time.LocalDate
 data class VoiceResponse(
     val operations: List<VoiceOperationResponse>,
     val answer: AnswerCard? = null,
+    val loan: VoiceLoanResponse? = null,
 )
 
 data class VoiceOperationResponse(

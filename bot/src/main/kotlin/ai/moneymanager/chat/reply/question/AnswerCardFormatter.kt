@@ -1,12 +1,12 @@
 package ai.moneymanager.chat.reply.question
 
+import ai.moneymanager.chat.reply.common.LINE_BREAK
 import ai.moneymanager.chat.reply.common.bold
 import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.chat.reply.common.italic
 import ai.moneymanager.domain.model.question.AnswerCard
 import ai.moneymanager.domain.model.question.AnswerRow
 
-private const val LINE_BREAK = "\n"
 private const val ROW_TEMPLATE = "%s %s — %s"
 private const val NOTE_TEMPLATE = " · %s"
 

@@ -103,4 +103,12 @@ object BotFunctions {
         amount: Double?,
     ) {
     }
+
+    @JvmStatic
+    fun addLoan(direction: String, person: String, amount: Double, dueDate: String?, note: String?) {
+    }
+
+    @JvmStatic
+    fun repayLoan(direction: String, person: String, amount: Double?) {
+    }
 }

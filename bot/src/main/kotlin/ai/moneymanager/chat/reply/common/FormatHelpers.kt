@@ -13,6 +13,7 @@ import org.bson.types.ObjectId
 import java.math.BigDecimal
 import java.time.format.DateTimeFormatter
 
+const val LINE_BREAK = "\n"
 private const val DATE_PATTERN = "dd.MM.yyyy"
 private const val SHORT_DATE_PATTERN = "dd.MM"
 private const val POSITIVE_SIGN = "+"
@@ -93,10 +94,13 @@ fun formatBalanceBreakdown(
     |
     |${localizationService.t("balance.view.initial", language, formatAmount(balance.initial, currency))}
     |${localizationService.t("balance.view.income", language, formatAmount(balance.income, currency))}
-    |${localizationService.t("balance.view.expense", language, formatAmount(balance.expense, currency))}
+    |${localizationService.t("balance.view.expense", language, formatAmount(balance.expense, currency))}${loansLine(balance, currency, localizationService, language)}
     |
     |${blockquote(bold(localizationService.t("balance.view.total", language, formatAmount(balance.total, currency))))}
 """.trimMargin()
+
+private fun loansLine(balance: BalanceBreakdown, currency: Currency, localizationService: LocalizationService, language: String?): String =
+    if (balance.loans.signum() == 0) "" else LINE_BREAK + localizationService.t("balance.view.loans", language, formatAmount(balance.loans, currency))
 
 fun categoryTypeLabel(type: CategoryType?, form: CategoryTypeForm = CategoryTypeForm.GENITIVE): String {
     return when (form) {

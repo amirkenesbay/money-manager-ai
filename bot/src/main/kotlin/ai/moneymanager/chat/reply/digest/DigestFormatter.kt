@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.reply.digest
 
+import ai.moneymanager.chat.reply.common.LINE_BREAK
 import ai.moneymanager.chat.reply.common.blockquote
 import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.chat.reply.common.expandableBlockquote
@@ -21,7 +22,6 @@ import java.time.format.TextStyle
 
 private const val WEEK_DAY_PATTERN = "d MMM"
 private const val ABBREVIATION_DOT = "."
-private const val LINE_BREAK = "\n"
 private const val PARAGRAPH_BREAK = "\n\n"
 private val HUNDRED = BigDecimal(100)
 

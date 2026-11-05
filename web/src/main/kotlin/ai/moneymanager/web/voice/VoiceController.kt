@@ -17,6 +17,7 @@ import ai.moneymanager.web.API_V1_PREFIX
 import ai.moneymanager.web.access.GroupAccessGuard
 import ai.moneymanager.web.ai.AiRequestGuard
 import ai.moneymanager.web.ask.AskAnswers
+import ai.moneymanager.web.loan.VoiceLoans
 import ai.moneymanager.web.error.API_ERROR_KEY_PREFIX
 import ai.moneymanager.web.error.badRequest
 import ai.moneymanager.web.time.UserCalendar
@@ -48,6 +49,7 @@ class VoiceController(
     private val userCalendar: UserCalendar,
     private val aiRequestGuard: AiRequestGuard,
     private val askAnswers: AskAnswers,
+    private val voiceLoans: VoiceLoans,
 ) {
     @PostMapping(consumes = [WAV_MIME_TYPE])
     fun parse(user: UserInfo, @PathVariable groupId: ObjectId, @RequestBody audio: ByteArray): VoiceResponse {
@@ -66,7 +68,7 @@ class VoiceController(
                 suggestOperation(command, categories, today, rules)?.toResponse()?.withRepeat(repeatOf(command))?.withShare(expenseShareOf(command, speakerId, members))
             }
             .take(MAX_VOICE_OPERATIONS)
-        return VoiceResponse(operations, askAnswers.answerOf(user, group, commands))
+        return VoiceResponse(operations, askAnswers.answerOf(user, group, commands), voiceLoans.loanOf(groupId, speakerId, commands, today))
     }
 
     private fun requireWav(audio: ByteArray) {

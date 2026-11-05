@@ -7,11 +7,11 @@ import ai.moneymanager.domain.model.RecurrenceUnit
 import ai.moneymanager.domain.model.RecurringDraft
 import ai.moneymanager.domain.model.RecurringMode
 import ai.moneymanager.domain.model.RecurringSaveResult
-import ai.moneymanager.repository.MoneyGroupRepository
 import ai.moneymanager.repository.FinanceOperationRepository
 import ai.moneymanager.repository.RecurringPaymentRepository
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import ai.moneymanager.repository.entity.RecurringPaymentEntity
+import ai.moneymanager.testing.testFinanceOperationService
 import org.assertj.core.api.Assertions.assertThat
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.BeforeEach
@@ -34,7 +34,7 @@ class RecurringPaymentServiceTest {
     private val repository = mock(RecurringPaymentRepository::class.java)
     private val operations = mock(FinanceOperationRepository::class.java)
     private val categoryService = mock(CategoryService::class.java)
-    private val service = RecurringPaymentService(repository, FinanceOperationService(operations, mock(MoneyGroupRepository::class.java)) { }, categoryService)
+    private val service = RecurringPaymentService(repository, testFinanceOperationService(operations), categoryService)
     private val draft = RecurringDraft(
         CategoryType.EXPENSE, BigDecimal("3500"), subscriptions, "Netflix", Recurrence(RecurrenceUnit.MONTH), LocalDate.of(2026, 10, 15), null, RecurringMode.AUTO,
     )

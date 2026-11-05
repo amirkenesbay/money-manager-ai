@@ -12,10 +12,12 @@ import { type Recorder, startRecording } from './recorder'
 import { parseVoice } from './voiceApi'
 import { VoiceFlow } from './VoiceFlow'
 import { askQuestion, fetchAskSuggestions } from '../ask/askApi'
+import { createLoan } from '../debts/loansApi'
 import type { AnswerCard } from '../api/types'
 
 vi.mock('./voiceApi', () => ({ parseVoice: vi.fn() }))
 vi.mock('../ask/askApi', () => ({ askQuestion: vi.fn(), fetchAskSuggestions: vi.fn() }))
+vi.mock('../debts/loansApi', () => ({ createLoan: vi.fn(), repayLoan: vi.fn() }))
 vi.mock('./recorder', () => ({
   startRecording: vi.fn(),
   microphoneSupported: () => true,
@@ -43,13 +45,14 @@ const voiceOperation = (overrides: Partial<VoiceOperation> = {}): VoiceOperation
 })
 const recorderReturning = (recording: ReturnType<Recorder['stop']>): Recorder => ({ stop: () => recording, level: () => 0, cancel: vi.fn() })
 const onOpenLink = vi.fn()
+const onLoanSaved = vi.fn()
 const QUESTION = 'Сколько на такси в этом месяце?'
 const answer = (overrides: Partial<AnswerCard> = {}): AnswerCard => ({
   title: '🚕 Такси · Ноябрь', headline: '12 000 ₸', lines: ['Операций: 4'], bars: [], rows: [],
   followUps: ['А в прошлом месяце?'], link: { screen: 'REPORTS', month: '2026-11', search: null }, understood: true, ...overrides,
 })
 const renderFlow = (start?: Parameters<typeof VoiceFlow>[0]['start']) =>
-  render(<VoiceFlow me={me()} group={group()} start={start} onClose={vi.fn()} onManual={onManual} onSaved={onSaved} onOpenLink={onOpenLink} />)
+  render(<VoiceFlow me={me()} group={group()} start={start} onClose={vi.fn()} onManual={onManual} onSaved={onSaved} onLoanSaved={onLoanSaved} onOpenLink={onOpenLink} />)
 
 async function recordPhrase() {
   const user = userEvent.setup()
@@ -79,6 +82,23 @@ describe('VoiceFlow', () => {
 
     expect(await screen.findByRole('heading', { name: '🚕 Такси · Октябрь' })).toBeInTheDocument()
     expect(askQuestion).toHaveBeenCalledWith(group().id, 'А в прошлом месяце?', expect.anything())
+  })
+
+  it('saves a spoken loan with its due date', async () => {
+    vi.mocked(parseVoice).mockResolvedValue({
+      operations: [],
+      loan: { kind: 'NEW', direction: 'LENT', person: 'Ерлан', amount: '20000', dueDate: '2026-11-30', note: 'на ремонт', loanId: null, remaining: null },
+    })
+    vi.mocked(createLoan).mockResolvedValue({
+      id: 'loan-1', direction: 'LENT', person: 'Ерлан', amount: '20000', repaid: '0', remaining: '20000', lentOn: '2026-11-05', dueDate: '2026-11-30', note: 'на ремонт', repayments: [], open: true,
+    })
+    const user = await recordPhrase()
+
+    expect(await screen.findByText(strings.loanKind(true))).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: strings.save }))
+
+    expect(createLoan).toHaveBeenCalledWith(group().id, { direction: 'LENT', person: 'Ерлан', amount: '20000', dueDate: '2026-11-30', note: 'на ремонт' })
+    expect(onLoanSaved).toHaveBeenCalledWith(strings.loanSaved, expect.stringContaining('Ерлан'))
   })
 
   it('opens the screen the answer points to', async () => {

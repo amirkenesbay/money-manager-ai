@@ -46,7 +46,7 @@ export function Dashboard({ groups, groupId, userId, language, switchError, onSw
       {ready && group && (
         <>
           <HomeHero balance={ready.balance} summary={ready.summary} language={language} onAddIncome={onAddIncome} />
-          {group.splitExpenses && <DebtsSummary groupId={groupId} currency={ready.balance.currency} language={language} onOpen={onOpenDebts} />}
+          <DebtsSummary groupId={groupId} currency={ready.balance.currency} language={language} showSettled={group.splitExpenses} onOpen={onOpenDebts} />
           <HomeScreenOffer />
           {ready.summary.operationCount >= ASK_HINT_OPERATIONS && <Hint hint="ASK" title={strings.hintAskTitle} body={strings.hintAskBody} />}
           <BudgetsSummary groupId={groupId} currency={ready.balance.currency} language={language} onOpenAll={onOpenBudgets} onAsk={onAsk} />

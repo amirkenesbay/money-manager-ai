@@ -4,6 +4,9 @@ import ai.moneymanager.chat.state.MoneyManagerContext
 import ai.moneymanager.chat.state.MoneyManagerState
 import ai.moneymanager.chat.telegram.DebtNotifier
 import ai.moneymanager.chat.telegram.DigestNotifier
+import ai.moneymanager.chat.telegram.LoanNotifier
+import ai.moneymanager.chat.telegram.postponedLoanId
+import ai.moneymanager.chat.telegram.repaidLoanId
 import ai.moneymanager.chat.telegram.debtPaidRequest
 import ai.moneymanager.chat.telegram.MiniAppGateway
 import ai.moneymanager.chat.telegram.RecurringNotifier
@@ -26,6 +29,7 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.startLinkDialog(
     digestNotifier: DigestNotifier,
     recurringNotifier: RecurringNotifier,
     debtNotifier: DebtNotifier,
+    loanNotifier: LoanNotifier,
     telegramFileService: TelegramFileService,
     gateway: MiniAppGateway,
 ) {
@@ -44,6 +48,14 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.startLinkDialog(
 
         startLinkTransition("Record a reminded recurring payment", { recurringRecordRequest(it) != null }, telegramFileService, gateway) {
             recurringNotifier.recordNow(chat.id, user.id, checkNotNull(recurringRecordRequest(update.message?.text)), languageOf(userInfoService))
+        }
+
+        startLinkTransition("Mark a due loan as paid back", { repaidLoanId(it) != null }, telegramFileService, gateway) {
+            loanNotifier.markRepaid(chat.id, user.id, checkNotNull(repaidLoanId(update.message?.text)), languageOf(userInfoService))
+        }
+
+        startLinkTransition("Move a due loan a week ahead", { postponedLoanId(it) != null }, telegramFileService, gateway) {
+            loanNotifier.postpone(chat.id, user.id, checkNotNull(postponedLoanId(update.message?.text)), languageOf(userInfoService))
         }
 
         startLinkTransition("Mark a reminded debt as paid back", { debtPaidRequest(it) != null }, telegramFileService, gateway) {

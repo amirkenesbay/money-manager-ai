@@ -1,15 +1,19 @@
 package ai.moneymanager.web.debt
 
 import ai.moneymanager.domain.model.debt.DebtItemKind
+import ai.moneymanager.web.loan.LoanResponse
 import org.bson.types.ObjectId
 import java.math.BigDecimal
 import java.time.LocalDate
 
 data class DebtsResponse(
     val balance: BigDecimal,
+    val owedToMe: BigDecimal,
+    val iOwe: BigDecimal,
     val mine: List<PersonalDebtResponse>,
     val others: List<TransferResponse>,
     val history: List<SettlementResponse>,
+    val loans: List<LoanResponse>,
 )
 
 data class PersonalDebtResponse(

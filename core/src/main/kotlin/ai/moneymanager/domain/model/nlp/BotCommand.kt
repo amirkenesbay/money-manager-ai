@@ -1,5 +1,9 @@
 package ai.moneymanager.domain.model.nlp
 
+import java.time.LocalDate
+import java.math.BigDecimal
+import ai.moneymanager.domain.model.loan.LoanDirection
+import ai.moneymanager.domain.model.loan.LoanDraft
 import ai.moneymanager.domain.model.question.FinanceQuestion
 
 sealed class BotCommand {
@@ -118,6 +122,18 @@ sealed class BotCommand {
         val newCategory: String?,
         val newOperationDate: String?
     ) : BotCommand()
+
+    data class AddLoan(
+        val direction: LoanDirection,
+        val person: String,
+        val amount: BigDecimal,
+        val dueDate: LocalDate?,
+        val note: String?,
+    ) : BotCommand() {
+        fun draft(today: LocalDate): LoanDraft = LoanDraft(direction, person, amount, today, dueDate?.takeIf { it.isAfter(today) }, note)
+    }
+
+    data class RepayLoan(val direction: LoanDirection, val person: String, val amount: Double?) : BotCommand()
 
     data class AskFinance(val question: FinanceQuestion) : BotCommand()
 }

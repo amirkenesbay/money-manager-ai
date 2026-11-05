@@ -28,7 +28,10 @@ enum class GeminiFunction(val functionName: String) {
     DELETE_LAST_OPERATION("deleteLastOperation"),
     EDIT_LAST_OPERATION("editLastOperation"),
 
-    ASK_FINANCE("askFinance");
+    ASK_FINANCE("askFinance"),
+
+    ADD_LOAN("addLoan"),
+    REPAY_LOAN("repayLoan");
 
     companion object {
         fun from(name: String?): GeminiFunction? =

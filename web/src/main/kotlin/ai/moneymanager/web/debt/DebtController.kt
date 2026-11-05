@@ -6,6 +6,11 @@ import ai.moneymanager.domain.model.debt.Settlement
 import ai.moneymanager.service.UserInfoService
 import ai.moneymanager.service.debt.DebtService
 import ai.moneymanager.service.debt.ReminderResult
+import ai.moneymanager.service.loan.LoanService
+import ai.moneymanager.domain.model.loan.LoanDirection
+import ai.moneymanager.repository.entity.LoanEntity
+import ai.moneymanager.web.loan.toResponse
+import java.math.BigDecimal
 import ai.moneymanager.web.API_V1_PREFIX
 import ai.moneymanager.web.access.GroupAccessGuard
 import ai.moneymanager.web.error.API_ERROR_KEY_PREFIX
@@ -35,12 +40,13 @@ class DebtController(
     private val debtService: DebtService,
     private val userInfoService: UserInfoService,
     private val userCalendar: UserCalendar,
+    private val loanService: LoanService,
 ) {
     @GetMapping
     fun debts(user: UserInfo, @PathVariable groupId: ObjectId): DebtsResponse {
         val group = groupAccessGuard.requireMember(user, groupId)
         val userId = checkNotNull(user.telegramUserId)
-        return debtService.debts(group, userId).toResponse(userId)
+        return debtService.debts(group, userId).toResponse(userId, loanService.loans(groupId, userId))
     }
 
     @PostMapping("/settlements")
@@ -72,10 +78,15 @@ class DebtController(
         }
     }
 
-    private fun GroupDebts.toResponse(userId: Long): DebtsResponse {
+    private fun GroupDebts.toResponse(userId: Long, loans: List<LoanEntity>): DebtsResponse {
         val names = userInfoService.displayNames(mine.map { it.userId }.toSet() + others.flatMap { listOf(it.fromId, it.toId) } + history.flatMap { listOf(it.fromId, it.toId) })
+        val open = loans.filter { it.open }
+        val owedToMe = sumOf(mine.map { it.amount }.filter { it.signum() > 0 } + open.filter { it.direction == LoanDirection.LENT }.map { it.remaining })
+        val iOwe = sumOf(mine.map { it.amount.negate() }.filter { it.signum() > 0 } + open.filter { it.direction == LoanDirection.BORROWED }.map { it.remaining })
         return DebtsResponse(
-            balance = balance,
+            balance = owedToMe - iOwe,
+            owedToMe = owedToMe,
+            iOwe = iOwe,
             mine = mine.map { debt ->
                 PersonalDebtResponse(debt.userId, names.getValue(debt.userId), debt.amount, debt.items.map {
                     DebtItemResponse(it.kind, it.amount, it.date, it.operationId, it.icon, it.title)
@@ -83,8 +94,11 @@ class DebtController(
             },
             others = others.map { TransferResponse(it.fromId, names.getValue(it.fromId), it.toId, names.getValue(it.toId), it.amount) },
             history = history.map { it.toResponse(userId, names) },
+            loans = loans.map { it.toResponse() },
         )
     }
+
+    private fun sumOf(amounts: List<BigDecimal>): BigDecimal = amounts.fold(BigDecimal.ZERO, BigDecimal::add)
 
     private fun Settlement.toResponse(userId: Long, names: Map<Long, String>) =
         SettlementResponse(id, fromId, names.getValue(fromId), toId, names.getValue(toId), amount, date, canUndo = creatorId == userId)
