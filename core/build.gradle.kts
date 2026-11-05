@@ -12,6 +12,7 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("com.github.sps.junidecode:junidecode:0.3")
     implementation("org.dhatim:fastexcel:0.18.4")
+    implementation("org.dhatim:fastexcel-reader:0.18.4")
     kapt("org.springframework.boot:spring-boot-configuration-processor")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")

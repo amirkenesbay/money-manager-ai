@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Plugin } from 'vite'
 import { AUTH_SCHEME } from '../src/api/auth.ts'
-import type { AnswerCard, AskSuggestions, Debts, Loan, Settlement, AppHint, Budget, CategoryRule, DigestKind, GroupNoticeLevel, RecurringList, RecurringPayment, VoiceResult, AnalyticsReport, ApiErrorBody, ApiErrorCode, Balance, Category, CategoryReport, ComparisonReport, Currency, Group, Invite, Limits, Me, Member, MembersReport, MonthSummary, Operation, OperationsPage, Reminder, ReminderInput, SubscriptionTier } from '../src/api/types.ts'
+import type { AnswerCard, AskSuggestions, Debts, ImportPreview, ImportResult, Loan, Settlement, AppHint, Budget, CategoryRule, DigestKind, GroupNoticeLevel, RecurringList, RecurringPayment, VoiceResult, AnalyticsReport, ApiErrorBody, ApiErrorCode, Balance, Category, CategoryReport, ComparisonReport, Currency, Group, Invite, Limits, Me, Member, MembersReport, MonthSummary, Operation, OperationsPage, Reminder, ReminderInput, SubscriptionTier } from '../src/api/types.ts'
 
 const API_PREFIX = '/api/v1'
 const SCENARIO_PARAM = 'mock'
@@ -16,7 +16,7 @@ const PREMIUM_EXPIRES_AT = '2026-12-31T00:00:00Z'
 const NO_CONTENT_STATUS = 204
 const QUESTION_SCENARIO = 'question'
 const UNKNOWN_QUESTION = /погод|weather|ауа райы/i
-const GROUP_ROUTE = /^\/groups\/([0-9a-f]{24})(?:\/(balance|summary|operations|activate|categories|category-rules|notices|tags|recurring|export|budgets|members|invite|initial-balance|voice|ask|debts|loans|reports\/[a-z]+))?(?:\/([^/]+))?(?:\/(limit|repayments))?(?:\/([^/]+))?$/
+const GROUP_ROUTE = /^\/groups\/([0-9a-f]{24})(?:\/(balance|summary|operations|activate|categories|category-rules|notices|tags|recurring|export|budgets|members|invite|initial-balance|voice|ask|debts|loans|imports|reports\/[a-z]+))?(?:\/([^/]+))?(?:\/(limit|repayments|columns))?(?:\/([^/]+))?$/
 const REMINDER_ROUTE = /^\/notifications(?:\/([^/]+))?$/
 const GROUP_ID_PREFIX = '6650a1b2c3d4e5f6a7b8'
 const GROUP_ID_DIGITS = 4
@@ -31,13 +31,13 @@ const FREE_HISTORY_DAYS = 30
 const DEFAULT_PAGE_SIZE = 20
 const FILLER_OPERATIONS = 26
 
-type Body = { count: number } | string[] | AnswerCard | AskSuggestions | Debts | Settlement | Loan | RecurringList | RecurringPayment | Budget[] | CategoryRule[] | Me | Group | Group[] | Balance | MonthSummary | Operation | OperationsPage | Category | Category[] | AnalyticsReport | ComparisonReport | MembersReport | CategoryReport | Member[] | Invite | Reminder | Reminder[] | VoiceResult | ApiErrorBody | null
+type Body = { count: number } | string[] | AnswerCard | AskSuggestions | Debts | Settlement | Loan | ImportPreview | ImportResult | RecurringList | RecurringPayment | Budget[] | CategoryRule[] | Me | Group | Group[] | Balance | MonthSummary | Operation | OperationsPage | Category | Category[] | AnalyticsReport | ComparisonReport | MembersReport | CategoryReport | Member[] | Invite | Reminder | Reminder[] | VoiceResult | ApiErrorBody | null
 type MockResponse = { status: number; body: Body; delayMs?: number }
 
 const ok = (body: Body, delayMs?: number): MockResponse => ({ status: 200, body, delayMs })
 
-const FREE_LIMITS: Limits = { aiRequestsPerDay: 10, categoriesPerType: 10, ownedSharedGroups: 3, activeNotifications: 3, historyDaysBack: FREE_HISTORY_DAYS, budgets: 3, recurringPayments: 3 }
-const PAID_LIMITS: Limits = { aiRequestsPerDay: 100, categoriesPerType: 1000, ownedSharedGroups: null, activeNotifications: null, historyDaysBack: null, budgets: null, recurringPayments: null }
+const FREE_LIMITS: Limits = { aiRequestsPerDay: 10, categoriesPerType: 10, ownedSharedGroups: 3, activeNotifications: 3, historyDaysBack: FREE_HISTORY_DAYS, budgets: 3, recurringPayments: 3, imports: 3 }
+const PAID_LIMITS: Limits = { aiRequestsPerDay: 100, categoriesPerType: 1000, ownedSharedGroups: null, activeNotifications: null, historyDaysBack: null, budgets: null, recurringPayments: null, imports: null }
 
 const profile = { language: 'ru', timezone: null as string | null, seenHints: [] as AppHint[], mutedDigests: [] as DigestKind[], recurringHeadsUp: true }
 
@@ -473,6 +473,45 @@ function loansRoute(groupId: string, method: string, loanId: string | undefined,
   return { status: method === 'DELETE' ? 200 : 201, body: updated }
 }
 
+const IMPORT_TOKEN = 'import-token'
+const UNKNOWN_FILE_MARK = 'unknown'
+let importsUsed = 1
+
+function importPreview(needsColumns: boolean, scenario: string): ImportPreview {
+  const columns: ImportPreview['columns'] = [
+    { header: needsColumns ? 'when' : 'date', samples: [daysAgo(1), daysAgo(2)], role: needsColumns ? null : 'DATE' },
+    { header: needsColumns ? 'sum' : 'outcome', samples: ['1500', '3500'], role: needsColumns ? null : 'EXPENSE' },
+    { header: needsColumns ? 'group' : 'categoryName', samples: ['Кофейни', 'Продукты'], role: needsColumns ? null : 'CATEGORY' },
+  ]
+  const left = freeTier(scenario) ? Math.max(0, (FREE_LIMITS.imports ?? 0) - importsUsed) : null
+  if (needsColumns) return { token: IMPORT_TOKEN, source: null, columns, needsColumns, count: 0, from: null, to: null, skipped: {}, categories: [], importsLeft: left }
+  return {
+    token: IMPORT_TOKEN, source: 'ZENMONEY', columns, needsColumns, count: 1240, from: '2024-01-01', to: daysAgo(1),
+    skipped: { TRANSFER: 30, CURRENCY: 8 },
+    categories: [
+      { key: 'EXPENSE:продукты', name: 'Продукты', type: 'EXPENSE', count: 620, existingId: 'Продукты' },
+      { key: 'EXPENSE:кофейни', name: 'Кофейни', type: 'EXPENSE', count: 180, existingId: null },
+      { key: 'EXPENSE:собака', name: 'Собака', type: 'EXPENSE', count: 40, existingId: null },
+      { key: 'INCOME:зарплата', name: 'Зарплата', type: 'INCOME', count: 400, existingId: 'Зарплата' },
+    ],
+    importsLeft: left,
+  }
+}
+
+function importsRoute(method: string, itemId: string | undefined, action: string | undefined, body: string, scenario: string): MockResponse {
+  if (itemId === 'preview') return ok(importPreview(body.includes(UNKNOWN_FILE_MARK), scenario), VOICE_DELAY_MS)
+  if (itemId === 'batches') {
+    importsUsed = Math.max(0, importsUsed - 1)
+    return { status: NO_CONTENT_STATUS, body: null }
+  }
+  if (action === 'columns' || method === 'GET') return ok(importPreview(false, scenario))
+  const limit = FREE_LIMITS.imports ?? 0
+  if (freeTier(scenario) && importsUsed >= limit) return failure(LIMIT_STATUS, 'IMPORT_LIMIT_REACHED', `На Free доступно ${limit} импорта.`, { limit })
+  importsUsed += 1
+  const result: ImportResult = { importId: `batch-${importsUsed}`, count: 1180, createdCategories: 2, from: '2024-01-01', to: daysAgo(1), historyLimited: freeTier(scenario) }
+  return { status: 201, body: result }
+}
+
 function debtsRoute(groupId: string, method: string, itemId: string | undefined, action: string | undefined, body: string): MockResponse {
   if (method === 'GET') return ok(debtsOf(groupId))
   if (itemId === 'reminders') {
@@ -562,6 +601,7 @@ function groupRoute(path: string, query: URLSearchParams, scenario: string, meth
   if (resource === 'ask') return askRoute(method, itemId, body)
   if (resource === 'debts') return debtsRoute(groupId, method, itemId, subId, body)
   if (resource === 'loans') return loansRoute(groupId, method, itemId, action, subId, body)
+  if (resource === 'imports') return importsRoute(method, itemId, action, body, scenario)
   if (resource === 'tags') return ok(['отпуск', 'ремонт', 'подарки'])
   if (resource === 'notices') return ok(replaceGroup(groupId, { noticeLevel: (JSON.parse(body) as { level: GroupNoticeLevel }).level }))
   if (resource === 'operations' && method !== 'GET') return mutateOperation(groupId, method, itemId, body)

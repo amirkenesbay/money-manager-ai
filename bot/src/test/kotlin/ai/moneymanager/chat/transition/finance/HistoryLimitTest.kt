@@ -1,5 +1,7 @@
 package ai.moneymanager.chat.transition.finance
 
+import ai.moneymanager.testing.TEST_FREE_HISTORY_DAYS
+import ai.moneymanager.testing.testSubscriptionLimits
 import ai.moneymanager.domain.model.SubscriptionTier
 import ai.moneymanager.service.SubscriptionLimitsService
 import ai.moneymanager.testing.testLocalizationService
@@ -11,24 +13,13 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
-private const val FREE_HISTORY_DAYS = 30
+private const val FREE_HISTORY_DAYS = TEST_FREE_HISTORY_DAYS
 private val TODAY: LocalDate = LocalDate.of(2026, 10, 15)
 private val SIX_MONTHS_AGO: LocalDate = LocalDate.of(2026, 5, 1)
 
 class HistoryLimitTest {
     private val localization = testLocalizationService()
-    private val limits = SubscriptionLimitsService(
-        freeMaxAiRequestsPerDay = 10,
-        paidMaxAiRequestsPerDay = 100,
-        freeMaxCategoriesPerType = 10,
-        paidMaxCategoriesPerType = 1000,
-        freeMaxHistoryDaysBack = FREE_HISTORY_DAYS,
-        freeMaxOwnedSharedGroups = 3,
-        freeMaxActiveNotifications = 3,
-        freeMaxBudgets = 3,
-        freeMaxRecurringPayments = 3,
-        clock = Clock.fixed(TODAY.atStartOfDay(ZoneOffset.UTC).toInstant(), ZoneOffset.UTC),
-    )
+    private val limits = testSubscriptionLimits(TODAY)
 
     @Test
     fun `asks free users for premium beyond their history`() {

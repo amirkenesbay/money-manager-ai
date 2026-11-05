@@ -49,5 +49,6 @@ class MeResponseFactory(
         historyDaysBack = subscriptionLimitsService.maxHistoryDaysBack(paid),
         budgets = subscriptionLimitsService.maxBudgets(paid),
         recurringPayments = subscriptionLimitsService.maxRecurringPayments(paid),
+        imports = subscriptionLimitsService.maxImports(paid),
     )
 }

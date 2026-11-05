@@ -16,6 +16,8 @@ import java.util.Locale
 private const val SYSTEM_PROMPT_PATH = "prompts/ai-system-prompt.md"
 private const val VOICE_TRANSCRIPTION_PROMPT_PATH = "prompts/ai-voice-transcription.md"
 private const val OUT_OF_CONTEXT_PROMPT_PATH = "prompts/ai-out-of-context.md"
+private const val IMPORT_COLUMNS_PROMPT_PATH = "prompts/ai-import-columns.md"
+private const val PLACEHOLDER_TABLE = "{table}"
 
 private const val PLACEHOLDER_USER_MESSAGE = "{userMessage}"
 private const val PLACEHOLDER_REPLY_LANGUAGE = "{replyLanguage}"
@@ -52,6 +54,10 @@ class AiPromptService {
     val systemPrompt: String by lazy { loadPrompt(SYSTEM_PROMPT_PATH) }
 
     val voiceTranscriptionPrompt: String by lazy { loadPrompt(VOICE_TRANSCRIPTION_PROMPT_PATH) }
+
+    private val importColumnsTemplate: String by lazy { loadPrompt(IMPORT_COLUMNS_PROMPT_PATH) }
+
+    fun importColumnsPrompt(table: String): String = importColumnsTemplate.replace(PLACEHOLDER_TABLE, table)
 
     private val outOfContextTemplate: String by lazy { loadPrompt(OUT_OF_CONTEXT_PROMPT_PATH) }
 

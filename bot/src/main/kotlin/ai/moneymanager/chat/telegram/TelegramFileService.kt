@@ -1,5 +1,7 @@
 package ai.moneymanager.chat.telegram
 
+import ai.moneymanager.service.imports.MAX_IMPORT_BYTES
+import org.telegram.telegrambots.meta.api.objects.Document
 import ai.moneymanager.chat.telegram.TelegramFileProperties
 import jakarta.annotation.PreDestroy
 import kz.rmr.chatmachinist.ChatMachinistProperties
@@ -112,6 +114,13 @@ class TelegramFileService(
             log.error("Failed to download voice: ${e.message}", e)
             null
         }
+    }
+
+    fun downloadDocument(document: Document): ByteArray? {
+        if ((document.fileSize ?: 0L) > MAX_IMPORT_BYTES) return null
+        return runCatching { fetchFileBytes(getFilePath(document.fileId)) }
+            .onFailure { log.error("Failed to download document: ${it.message}", it) }
+            .getOrNull()
     }
 
     private fun validateVoice(voice: Voice): VoiceValidationResult {

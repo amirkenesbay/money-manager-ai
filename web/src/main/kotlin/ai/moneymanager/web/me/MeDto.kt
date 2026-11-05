@@ -44,6 +44,7 @@ data class LimitsResponse(
     val historyDaysBack: Int?,
     val budgets: Int?,
     val recurringPayments: Int?,
+    val imports: Int?,
 )
 
 data class DigestSettingRequest(

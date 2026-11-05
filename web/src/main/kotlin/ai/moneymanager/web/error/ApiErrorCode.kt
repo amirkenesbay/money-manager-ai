@@ -21,6 +21,7 @@ enum class ApiErrorCode(val status: HttpStatus) {
     AI_BUSY(HttpStatus.SERVICE_UNAVAILABLE),
     AI_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE),
     REMINDER_TOO_SOON(HttpStatus.TOO_MANY_REQUESTS),
+    IMPORT_LIMIT_REACHED(HttpStatus.UNPROCESSABLE_CONTENT),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR);
 
     val messageKey: String get() = API_ERROR_KEY_PREFIX + name.lowercase()

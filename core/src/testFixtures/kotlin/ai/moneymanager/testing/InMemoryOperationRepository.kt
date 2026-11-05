@@ -28,4 +28,16 @@ class InMemoryOperationRepository(
     }.sortedByDescending { it.operationDate }
 
     override fun findByGroupId(groupId: ObjectId): List<FinanceOperationEntity> = operations.filter { it.groupId == groupId }
+
+    override fun <S : FinanceOperationEntity> saveAll(entities: Iterable<S>): List<S> {
+        val saved = entities.map { it }
+        operations = operations + saved.map { it.copy(id = it.id ?: ObjectId()) }
+        return saved
+    }
+
+    override fun deleteByGroupIdAndImportId(groupId: ObjectId, importId: ObjectId): Long {
+        val before = operations.size
+        operations = operations.filterNot { it.groupId == groupId && it.importId == importId }
+        return (before - operations.size).toLong()
+    }
 }

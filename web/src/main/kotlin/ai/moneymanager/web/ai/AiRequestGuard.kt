@@ -38,6 +38,9 @@ class AiRequestGuard(
         )
     }
 
+    fun tryQuota(user: UserInfo): Boolean =
+        aiRateLimitService.tryConsume(checkNotNull(user.telegramUserId), user.hasActivePaidSubscription()) !is AiRateLimitResult.Exceeded
+
     fun requireParsed(commands: List<BotCommand>) {
         commands.filterIsInstance<BotCommand.RateLimitError>().firstOrNull()?.let { busy ->
             throw ApiException(ApiErrorCode.AI_BUSY, details = busy.retryAfterSeconds?.let { mapOf(RETRY_DETAIL to it) }.orEmpty())

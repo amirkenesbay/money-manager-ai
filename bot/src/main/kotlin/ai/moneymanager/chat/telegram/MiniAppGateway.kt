@@ -48,9 +48,9 @@ class MiniAppGateway(
     fun keyboard(textKey: String, language: String?, screen: MiniAppScreen): InlineKeyboardMarkup =
         InlineKeyboardMarkup(listOf(listOf(button(textKey, language, screen))))
 
-    fun button(textKey: String, language: String?, screen: MiniAppScreen, month: YearMonth? = null): InlineKeyboardButton =
+    fun button(textKey: String, language: String?, screen: MiniAppScreen, month: YearMonth? = null, importToken: String? = null): InlineKeyboardButton =
         InlineKeyboardButton(localizationService.t(textKey, language)).apply {
-            webApp = WebAppInfo(miniAppUrl(properties.url, screen, month))
+            webApp = WebAppInfo(miniAppUrl(properties.url, screen, month, importToken))
         }
 
     fun sendHint(chatId: Long, telegramUserId: Long) {

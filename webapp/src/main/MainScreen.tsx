@@ -6,6 +6,7 @@ import { useAsync } from '../api/useAsync'
 import { CategoriesScreen } from '../categories/CategoriesScreen'
 import { Dashboard } from '../dashboard/Dashboard'
 import { DebtsScreen } from '../debts/DebtsScreen'
+import { ImportScreen } from '../imports/ImportScreen'
 import { activateGroup, fetchGroups } from '../groups/groupsApi'
 import { type GroupActions, GroupsScreen } from '../groups/GroupsScreen'
 import { MoreScreen, type Section } from '../more/MoreScreen'
@@ -22,7 +23,7 @@ import { RemindersScreen } from '../reminders/RemindersScreen'
 import { RecurringScreen } from '../recurring/RecurringScreen'
 import { ReportsScreen } from '../reports/ReportsScreen'
 import { VoiceFlow, type VoiceStart } from '../voice/VoiceFlow'
-import { type LaunchScreen, launchMonth, launchScreen } from './launchScreen'
+import { type LaunchScreen, launchImportToken, launchMonth, launchScreen } from './launchScreen'
 import { strings } from '../strings'
 import { notifyOutcome } from '../telegram/haptics'
 import { LoadError } from '../ui/LoadError'
@@ -54,6 +55,7 @@ const LAUNCH_OVERLAYS: Partial<Record<LaunchScreen, Overlay>> = {
   categories: { kind: 'section', section: 'categories' },
   groups: { kind: 'section', section: 'groups' },
   debts: { kind: 'section', section: 'debts' },
+  import: { kind: 'section', section: 'import' },
 }
 
 interface Navigation {
@@ -102,6 +104,7 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
   const [questionsOpen, setQuestionsOpen] = useState(() => launchScreen() === 'ask')
   const [reportsMonth, setReportsMonth] = useState<string | null>(launchMonth)
   const [operationsSearch, setOperationsSearch] = useState<string | null>(null)
+  const [importToken, setImportToken] = useState<string | null>(launchImportToken)
   const hints = useHints()
   const [welcomeOpen, setWelcomeOpen] = useState(() => !hints.isSeen('WELCOME') && launchScreen() === null)
   const toast = useToast()
@@ -226,7 +229,23 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
   return (
     <>
       <main className={overlay ? 'screen' : 'screen with-tab-bar'}>
-        {overlay?.kind === 'section' && workspace && <SectionScreen key={overlay.section} section={overlay.section} workspace={workspace} onBack={closeSection} />}
+        {overlay?.kind === 'section' && workspace && (
+          <SectionScreen
+            key={overlay.section}
+            section={overlay.section}
+            workspace={workspace}
+            importToken={importToken}
+            onBack={() => {
+              setImportToken(null)
+              closeSection()
+            }}
+            onOpenOperations={() => goBack(null, () => {
+              setImportToken(null)
+              refresh()
+              setTab('operations')
+            })}
+          />
+        )}
         {overlay?.kind === 'voice' && group && (
           <VoiceFlow
             me={me}
@@ -321,7 +340,13 @@ function OperationOverlay({ overlay, group, me, onClose, onEdit, onBackToDetail,
   )
 }
 
-function SectionScreen({ section, workspace, onBack }: { section: Section; workspace: Workspace; onBack: () => void }) {
+function SectionScreen({ section, workspace, importToken, onBack, onOpenOperations }: {
+  section: Section
+  workspace: Workspace
+  importToken: string | null
+  onBack: () => void
+  onOpenOperations: () => void
+}) {
   const { me, group, groups, actions, notify, onMeChanged } = workspace
   switch (section) {
     case 'categories':
@@ -334,6 +359,8 @@ function SectionScreen({ section, workspace, onBack }: { section: Section; works
       return <RecurringScreen me={me} group={group} onMeChanged={onMeChanged} notify={notify} onBack={onBack} />
     case 'debts':
       return <DebtsScreen me={me} group={group} notify={notify} onBack={onBack} />
+    case 'import':
+      return <ImportScreen me={me} group={group} initialToken={importToken} notify={notify} onBack={onBack} onOpenOperations={onOpenOperations} />
     default:
       return <PremiumScreen me={me} onBack={onBack} />
   }

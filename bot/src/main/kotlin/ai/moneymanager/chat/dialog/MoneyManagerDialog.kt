@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.dialog
 
+import ai.moneymanager.chat.transition.imports.importFileDialog
 import ai.moneymanager.service.FinanceReportService
 import ai.moneymanager.chat.reply.finance.FinanceHistoryFormatter
 import ai.moneymanager.chat.telegram.toTelegramProfile
@@ -54,6 +55,7 @@ import ai.moneymanager.chat.telegram.SETTINGS_BUTTON_TEXT
 import ai.moneymanager.service.UserInfoService
 import ai.moneymanager.chat.telegram.DebtNotifier
 import ai.moneymanager.chat.telegram.DigestNotifier
+import ai.moneymanager.chat.telegram.ImportNotifier
 import ai.moneymanager.chat.telegram.LoanNotifier
 import ai.moneymanager.chat.telegram.RecurringNotifier
 import ai.moneymanager.chat.transition.digest.startLinkDialog
@@ -87,8 +89,10 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
     recurringNotifier: RecurringNotifier,
     debtNotifier: DebtNotifier,
     loanNotifier: LoanNotifier,
+    importNotifier: ImportNotifier,
 ) {
     startLinkDialog(userInfoService, digestNotifier, recurringNotifier, debtNotifier, loanNotifier, telegramFileService, miniAppGateway)
+    importFileDialog(importNotifier, miniAppGateway)
     miniAppGatewayDialog(miniAppGateway, userInfoService, adminService)
 
     dialog {

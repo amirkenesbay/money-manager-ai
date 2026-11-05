@@ -24,6 +24,8 @@ interface FinanceOperationRepository : MongoRepository<FinanceOperationEntity, O
 
     fun findByGroupIdAndIdIn(groupId: ObjectId, ids: List<ObjectId>): List<FinanceOperationEntity>
 
+    fun deleteByGroupIdAndImportId(groupId: ObjectId, importId: ObjectId): Long
+
     fun findByGroupIdOrderByOperationDateDescAuditInfoCreatedAtDesc(
         groupId: ObjectId,
         pageable: Pageable

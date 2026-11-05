@@ -1,7 +1,8 @@
 const SCREEN_PARAMETER = 'screen'
 const MONTH_PARAMETER = 'month'
+const IMPORT_PARAMETER = 'import'
 const ISO_MONTH = /^\d{4}-(0[1-9]|1[0-2])$/
-const LAUNCH_SCREENS = ['add', 'categories', 'groups', 'reports', 'operations', 'ask', 'debts'] as const
+const LAUNCH_SCREENS = ['add', 'categories', 'groups', 'reports', 'operations', 'ask', 'debts', 'import'] as const
 
 export type LaunchScreen = (typeof LAUNCH_SCREENS)[number]
 
@@ -14,3 +15,5 @@ export function launchMonth(search: string = window.location.search): string | n
   const requested = new URLSearchParams(search).get(MONTH_PARAMETER)
   return requested && ISO_MONTH.test(requested) ? requested : null
 }
+
+export const launchImportToken = (search: string = window.location.search): string | null => new URLSearchParams(search).get(IMPORT_PARAMETER)

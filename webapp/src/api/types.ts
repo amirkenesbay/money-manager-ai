@@ -15,6 +15,7 @@ export type ApiErrorCode =
   | 'AI_BUSY'
   | 'AI_UNAVAILABLE'
   | 'REMINDER_TOO_SOON'
+  | 'IMPORT_LIMIT_REACHED'
   | 'INTERNAL_ERROR'
 
 export interface ApiErrorBody {
@@ -33,6 +34,7 @@ export interface Limits {
   historyDaysBack: number | null
   budgets: number | null
   recurringPayments: number | null
+  imports: number | null
 }
 
 export interface Price {
@@ -481,4 +483,48 @@ export interface RecurringList {
   items: RecurringPayment[]
   monthlyExpense: string
   monthlyIncome: string
+}
+
+export type ColumnRole = 'DATE' | 'AMOUNT' | 'EXPENSE' | 'INCOME' | 'TYPE' | 'CATEGORY' | 'INCOME_CATEGORY' | 'COMMENT' | 'CURRENCY'
+
+export type ImportSource = 'ZENMONEY' | 'COINKEEPER' | 'MONEY_MANAGER' | 'DETECTED' | 'AI' | 'MANUAL'
+
+export type SkipReason = 'TRANSFER' | 'CURRENCY' | 'INVALID' | 'DUPLICATE'
+
+export interface ImportColumn {
+  header: string
+  samples: string[]
+  role: ColumnRole | null
+}
+
+export interface ImportCategory {
+  key: string
+  name: string
+  type: CategoryType
+  count: number
+  existingId: string | null
+}
+
+export interface ImportPreview {
+  token: string
+  source: ImportSource | null
+  columns: ImportColumn[]
+  needsColumns: boolean
+  count: number
+  from: string | null
+  to: string | null
+  skipped: Partial<Record<SkipReason, number>>
+  categories: ImportCategory[]
+  importsLeft: number | null
+}
+
+export type CategoryChoice = { action: 'CREATE' } | { action: 'SKIP' } | { action: 'EXISTING'; categoryId: string }
+
+export interface ImportResult {
+  importId: string
+  count: number
+  createdCategories: number
+  from: string | null
+  to: string | null
+  historyLimited: boolean
 }
