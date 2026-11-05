@@ -13,3 +13,15 @@ export function parseAmount(raw: string): string | null {
   const amount = parseBalance(raw)
   return amount !== null && Number(amount) > 0 ? amount : null
 }
+
+const DIGIT_GROUP = /\B(?=(\d{3})+(?!\d))/g
+const GROUP_SEPARATOR = ' '
+const DECIMAL_SEPARATORS = /[.,]/
+
+export function groupAmountInput(raw: string): string {
+  const compact = raw.replace(SPACES, '')
+  const separator = compact.match(DECIMAL_SEPARATORS)?.[0]
+  const [whole, fraction] = separator ? [compact.slice(0, compact.indexOf(separator)), compact.slice(compact.indexOf(separator))] : [compact, '']
+  if (!/^\d*$/.test(whole)) return raw
+  return whole.replace(DIGIT_GROUP, GROUP_SEPARATOR) + fraction
+}

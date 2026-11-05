@@ -15,7 +15,7 @@ import { Segmented } from '../ui/Segmented'
 import { useConfirmClosing } from '../ui/useConfirmClosing'
 import { useShake } from '../ui/useShake'
 import { SkeletonRows } from '../ui/Skeleton'
-import { HUGE_AMOUNT, parseAmount } from './amount'
+import { groupAmountInput, HUGE_AMOUNT, parseAmount } from './amount'
 import { CalendarSheet } from './CalendarSheet'
 import { DeleteSheet } from './DeleteSheet'
 import './operation.css'
@@ -141,7 +141,7 @@ function FormFields({ group, userId, language, operation, initialType, initialCa
             placeholder="0"
             aria-invalid={amountInvalid}
             value={amountText}
-            onChange={(event) => setAmountText(event.target.value)}
+            onChange={(event) => setAmountText(groupAmountInput(event.target.value))}
           />
           <span className="amount-currency" aria-hidden="true">{currencySymbol(group.currency)}</span>
         </span>

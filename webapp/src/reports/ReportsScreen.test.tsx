@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiRequestError } from '../api/client'
@@ -126,6 +126,16 @@ describe('ReportsScreen', () => {
 
     expect(fetchAnalytics).toHaveBeenLastCalledWith(PERSONAL_GROUP_ID, shiftMonth(CURRENT_MONTH, -1), expect.anything())
     expect(screen.getByRole('button', { name: strings.nextMonth })).toBeEnabled()
+  })
+
+  it('swipes to the previous month', async () => {
+    renderReports()
+    const body = (await screen.findByText(strings.otherCategories)).closest('.report-swipe') as HTMLElement
+
+    fireEvent.pointerDown(body, { clientX: 50, clientY: 100 })
+    fireEvent.pointerUp(body, { clientX: 250, clientY: 110 })
+
+    await waitFor(() => expect(fetchAnalytics).toHaveBeenLastCalledWith(PERSONAL_GROUP_ID, shiftMonth(CURRENT_MONTH, -1), expect.anything()))
   })
 
   it('offers Premium for months beyond the free history and returns to the current one', async () => {

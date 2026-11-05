@@ -1,4 +1,5 @@
 import { AskChip } from '../ask/AskChip'
+import { useHorizontalSwipe } from '../ui/useHorizontalSwipe'
 import { useState } from 'react'
 import type { Group, Me } from '../api/types'
 import { formatMonthName, formatMonthTitle, formatPeriod, shiftMonth } from '../format'
@@ -32,6 +33,10 @@ export function ReportsScreen({ me, group, initialMonth = null, onAddOperation, 
   const [tab, setTab] = useState<ReportTab>('analytics')
   const [month, setMonth] = useState(() => (initialMonth !== null && initialMonth <= currentMonth ? initialMonth : currentMonth))
   const context: ReportContext = { me, group, month, onAddOperation, onBackToCurrentMonth: () => setMonth(currentMonth) }
+  const swipe = useHorizontalSwipe(
+    () => tab !== 'category' && month < currentMonth && setMonth(shiftMonth(month, 1)),
+    () => tab !== 'category' && setMonth(shiftMonth(month, -1)),
+  )
 
   return (
     <>
@@ -45,7 +50,9 @@ export function ReportsScreen({ me, group, initialMonth = null, onAddOperation, 
             <Hint hint="REPORTS" title={strings.hintReportsTitle} body={strings.hintReportsBody} />
           </>
         )}
-      <ReportBody key={`${group.id}-${tab}-${month}`} tab={tab} context={context} />
+      <div className="report-swipe" {...swipe}>
+        <ReportBody key={`${group.id}-${tab}-${month}`} tab={tab} context={context} />
+      </div>
       {tab !== 'category' && <AskChip place="reports" question={strings.askReportsChip} onAsk={onAsk} />}
     </>
   )

@@ -153,6 +153,18 @@
   gap: 2px;
   height: 4.5rem;
   border-bottom: 1px solid var(--line);
+  touch-action: pan-y;
+  cursor: crosshair;
+}
+
+.home-bars-label {
+  min-height: 1.1em;
+  font-family: var(--font-mono);
+  color: var(--text);
+}
+
+.home-bar.active {
+  background: var(--text);
 }
 
 .home-bar {

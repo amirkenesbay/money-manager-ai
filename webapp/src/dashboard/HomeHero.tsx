@@ -1,11 +1,12 @@
-import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { type PointerEvent, type ReactNode, useEffect, useRef, useState } from 'react'
 import type { Balance, MonthSummary } from '../api/types'
-import { formatMoney } from '../format'
+import { formatDayLabel, formatMoney } from '../format'
 import { FULL_PERCENT } from '../percent'
 import { strings } from '../strings'
+import { selectionTick } from '../telegram/haptics'
 import { PlusIcon } from '../ui/icons'
 import { prefersLessMotion } from '../ui/motion'
-import { useCountUp } from '../ui/useCountUp'
+import { FlapNumber } from '../ui/FlapNumber'
 import { type HeroSlide, HERO_SLIDES, loadHeroSlide, saveHeroSlide } from './heroSlide'
 import { dayBars, monthPace, safeToSpend } from './homeMath'
 
@@ -93,9 +94,11 @@ export function HomeHero({ balance, summary, language, onAddIncome }: {
 }
 
 function HeroAmount({ amount, summary, language }: { amount: number; summary: MonthSummary; language: string }) {
-  const shown = useCountUp(amount)
-  const value = shown === amount ? amount : Math.round(shown)
-  return <p className="home-hero-amount amount">{formatMoney(String(value), summary.currency, language)}</p>
+  return (
+    <p className="home-hero-amount amount">
+      <FlapNumber text={formatMoney(String(amount), summary.currency, language)} memoryKey={`${summary.currency}:${summary.from}`} />
+    </p>
+  )
 }
 
 function SpentSlide({ summary, language, today }: { summary: MonthSummary; language: string; today: Date }) {
@@ -106,22 +109,47 @@ function SpentSlide({ summary, language, today }: { summary: MonthSummary; langu
       <p className="home-hero-kicker">{strings.homeSpentTitle}</p>
       <HeroAmount amount={Number(summary.expense)} summary={summary} language={language} />
       <p className="home-hero-meta">{hasIncome ? strings.homeSpentMeta(money(summary.income), money(summary.net)) : strings.homeNoIncome}</p>
-      <DayBars summary={summary} today={today} />
+      <DayBars summary={summary} language={language} today={today} />
     </>
   )
 }
 
-function DayBars({ summary, today }: { summary: MonthSummary; today: Date }) {
+function DayBars({ summary, language, today }: { summary: MonthSummary; language: string; today: Date }) {
   const bars = dayBars(summary, today)
   const highest = Math.max(1, ...bars.map((bar) => bar.total))
+  const [active, setActive] = useState<number | null>(null)
+  const pastBars = bars.filter((bar) => !bar.isFuture).length
+
+  const pick = (event: PointerEvent<HTMLDivElement>) => {
+    const box = event.currentTarget.getBoundingClientRect()
+    const index = Math.min(pastBars - 1, Math.max(0, Math.floor(((event.clientX - box.left) / box.width) * bars.length)))
+    if (index !== active) selectionTick()
+    setActive(index)
+  }
+
+  const bar = active === null ? null : bars[active]
   return (
     <div className="home-bars-wrap" role="img" aria-label={strings.homeChartLabel}>
-      <div className="home-bars">
-        {bars.map((bar) => (
+      <span className="home-bars-label caption" aria-live="polite">
+        {bar ? `${formatDayLabel(bar.date, today, language)} · ${formatMoney(String(bar.total), summary.currency, language)}` : ''}
+      </span>
+      <div
+        className="home-bars"
+        onPointerDown={(event) => {
+          event.stopPropagation()
+          event.currentTarget.setPointerCapture?.(event.pointerId)
+          pick(event)
+        }}
+        onPointerMove={(event) => active !== null && pick(event)}
+        onPointerUp={() => setActive(null)}
+        onPointerCancel={() => setActive(null)}
+        onClick={(event) => event.stopPropagation()}
+      >
+        {bars.map((day, index) => (
           <span
-            key={bar.date}
-            className={`home-bar ${bar.isToday ? 'today' : ''} ${bar.isFuture ? 'future' : ''}`}
-            style={{ height: bar.isFuture ? undefined : `${(bar.total / highest) * FULL_PERCENT}%` }}
+            key={day.date}
+            className={`home-bar ${day.isToday ? 'today' : ''} ${day.isFuture ? 'future' : ''} ${index === active ? 'active' : ''}`}
+            style={{ height: day.isFuture ? undefined : `${(day.total / highest) * FULL_PERCENT}%` }}
           />
         ))}
       </div>

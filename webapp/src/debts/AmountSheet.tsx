@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { Currency } from '../api/types'
 import { currencySymbol, formatMoney } from '../format'
-import { parseAmount } from '../operation/amount'
+import { groupAmountInput, parseAmount } from '../operation/amount'
 import { strings } from '../strings'
 import { Button } from '../ui/Button'
 import { Sheet } from '../ui/Sheet'
@@ -22,7 +22,7 @@ export function AmountSheet({ title, max, currency, language, onSave, onClose }:
       <h2 className="sheet-title">{title}</h2>
       <label className="amount-field">
         <span className="amount-input-row">
-          <input className="amount-input amount" inputMode="decimal" autoComplete="off" aria-label={title} value={text} onChange={(event) => setText(event.target.value)} />
+          <input className="amount-input amount" inputMode="decimal" autoComplete="off" aria-label={title} value={text} onChange={(event) => setText(groupAmountInput(event.target.value))} />
           <span className="amount-currency" aria-hidden="true">{currencySymbol(currency)}</span>
         </span>
       </label>

@@ -3,7 +3,7 @@ import { serverMessage } from '../api/client'
 import type { Group, Loan, LoanDirection } from '../api/types'
 import { useAsync } from '../api/useAsync'
 import { currencySymbol, formatDayLabel } from '../format'
-import { parseAmount } from '../operation/amount'
+import { groupAmountInput, parseAmount } from '../operation/amount'
 import { CalendarSheet } from '../operation/CalendarSheet'
 import { strings } from '../strings'
 import { notifyOutcome } from '../telegram/haptics'
@@ -81,7 +81,7 @@ export function LoanForm({ group, language, initialPerson = '', initialDirection
       <label className={`amount-field ${attempted && amount === null ? 'field-invalid' : ''} ${amountShake.shakeClass}`} onAnimationEnd={amountShake.onAnimationEnd}>
         <span className="field-label">{strings.amountLabel}</span>
         <span className="amount-input-row">
-          <input className="amount-input amount" inputMode="decimal" autoComplete="off" placeholder="0" value={amountText} onChange={(event) => setAmountText(event.target.value)} />
+          <input className="amount-input amount" inputMode="decimal" autoComplete="off" placeholder="0" value={amountText} onChange={(event) => setAmountText(groupAmountInput(event.target.value))} />
           <span className="amount-currency" aria-hidden="true">{currencySymbol(group.currency)}</span>
         </span>
       </label>

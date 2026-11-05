@@ -12,6 +12,7 @@ import { notifyOutcome } from '../telegram/haptics'
 import { openExternalLink } from '../telegram/telegramEnv'
 import { Button } from '../ui/Button'
 import { ThinkingDots } from '../ui/ThinkingDots'
+import { TypedText } from '../ui/TypedText'
 import { ScreenHeader } from '../ui/ScreenHeader'
 import { Sheet } from '../ui/Sheet'
 import { StateView } from '../ui/StateView'
@@ -277,7 +278,7 @@ function ThinkingScreen({ groupId, request, onDone, onFailed, onCancel }: {
     <>
       <ScreenHeader title={asking ? strings.askingTitle : strings.processingTitle} onBack={onCancel} />
       <section className="voice-stage" aria-busy="true">
-        {asking && <p className="hint centered">{strings.quoted(request.text)}</p>}
+        {asking && <p className="hint centered"><TypedText text={strings.quoted(request.text)} /></p>}
         <ThinkingDots stages={asking ? strings.askingStages : strings.processingStages} />
       </section>
       <Button variant="secondary" onClick={onCancel}>{strings.cancel}</Button>
