@@ -51,7 +51,7 @@ export interface Subscription {
 
 export type DigestKind = 'DAY' | 'WEEK' | 'MONTH'
 
-export type AppHint = 'WELCOME' | 'OPERATIONS' | 'REPORTS' | 'MORE' | 'OPERATION_FORM' | 'GROUP' | 'MANUAL_ENTRY'
+export type AppHint = 'WELCOME' | 'OPERATIONS' | 'REPORTS' | 'MORE' | 'OPERATION_FORM' | 'GROUP' | 'MANUAL_ENTRY' | 'ASK'
 
 export interface Me {
   userId: number
@@ -309,6 +309,52 @@ export interface VoiceOperation {
 
 export interface VoiceResult {
   operations: VoiceOperation[]
+  answer?: AnswerCard | null
+}
+
+export type AnswerScreen = 'REPORTS' | 'OPERATIONS' | 'CATEGORIES' | 'RECURRING'
+
+export interface AnswerLink {
+  screen: AnswerScreen
+  month: string | null
+  search: string | null
+}
+
+export interface AnswerBar {
+  label: string
+  value: string
+  current: boolean
+}
+
+export interface AnswerRow {
+  icon: string
+  label: string
+  value: string
+  note: string | null
+}
+
+export interface AnswerCard {
+  title: string
+  headline: string | null
+  lines: string[]
+  bars: AnswerBar[]
+  rows: AnswerRow[]
+  followUps: string[]
+  link: AnswerLink | null
+  understood: boolean
+}
+
+export type AskTopic = 'SUM' | 'COMPARE' | 'WHERE' | 'BUDGETS' | 'RECURRING'
+
+export interface AskTopicSuggestions {
+  topic: AskTopic
+  title: string
+  questions: string[]
+}
+
+export interface AskSuggestions {
+  questions: string[]
+  topics: AskTopicSuggestions[]
 }
 
 export interface CategoryRule {

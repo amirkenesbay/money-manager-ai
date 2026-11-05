@@ -8,7 +8,7 @@ import ai.moneymanager.domain.model.MonthLeft
 import ai.moneymanager.repository.DigestSentRepository
 import ai.moneymanager.repository.entity.DigestSentEntity
 import ai.moneymanager.repository.entity.FinanceOperationEntity
-import ai.moneymanager.repository.FinanceOperationRepository
+import ai.moneymanager.testing.InMemoryOperationRepository
 import ai.moneymanager.testing.TEST_USER_ID
 import ai.moneymanager.testing.testGroup
 import org.assertj.core.api.Assertions.assertThat
@@ -31,7 +31,7 @@ class DigestServiceTest {
     private val groupId = checkNotNull(group.id)
     private val groceries = Category(ObjectId(), "Продукты", "🛒", CategoryType.EXPENSE, groupId, BigDecimal("50000"))
     private val salary = Category(ObjectId(), "Зарплата", "💰", CategoryType.INCOME, groupId)
-    private val repository = DatedOperationRepository()
+    private val repository = InMemoryOperationRepository()
     private val categoryService = mock(CategoryService::class.java)
     private val sentRepository = mock(DigestSentRepository::class.java)
     private val clock = Clock.fixed(TODAY.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
@@ -92,16 +92,4 @@ class DigestServiceTest {
         operationDate = date,
         description = null,
     )
-}
-
-private class DatedOperationRepository(
-    private val delegate: FinanceOperationRepository = mock(FinanceOperationRepository::class.java),
-) : FinanceOperationRepository by delegate {
-    var operations: List<FinanceOperationEntity> = emptyList()
-
-    override fun findByGroupIdAndOperationDateBetweenOrderByOperationDateDesc(
-        groupId: ObjectId,
-        startDate: LocalDate,
-        endDate: LocalDate,
-    ): List<FinanceOperationEntity> = operations.filter { it.groupId == groupId && it.operationDate in startDate..endDate }
 }

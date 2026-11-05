@@ -3,7 +3,7 @@ package ai.moneymanager.chat.reply.digest
 import ai.moneymanager.chat.reply.common.blockquote
 import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.chat.reply.common.expandableBlockquote
-import ai.moneymanager.chat.reply.common.formatAmount
+import ai.moneymanager.domain.text.formatAmount
 import ai.moneymanager.chat.reply.common.formatIconPrefix
 import ai.moneymanager.domain.model.Budget
 import ai.moneymanager.domain.model.Digest

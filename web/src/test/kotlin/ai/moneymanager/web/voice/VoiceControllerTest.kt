@@ -2,7 +2,12 @@ package ai.moneymanager.web.voice
 
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.MoneyGroup
+import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.domain.model.nlp.BotCommand
+import ai.moneymanager.domain.model.question.AnswerCard
+import ai.moneymanager.domain.model.question.FinanceIntent
+import ai.moneymanager.domain.model.question.FinanceQuestion
 import ai.moneymanager.service.AiPromptService
 import ai.moneymanager.service.AiRateLimitResult
 import ai.moneymanager.service.AiRateLimitService
@@ -10,6 +15,9 @@ import ai.moneymanager.service.CategoryRuleService
 import ai.moneymanager.service.CategoryService
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.UserInfoService
+import ai.moneymanager.service.question.AskService
+import ai.moneymanager.service.question.AskSuggestionService
+import ai.moneymanager.service.question.FinanceAnswerService
 import ai.moneymanager.service.nlp.CommandParserService
 import ai.moneymanager.service.nlp.WAV_MIME_TYPE
 import ai.moneymanager.testing.TEST_USER_ID
@@ -17,6 +25,9 @@ import ai.moneymanager.testing.testGroup
 import ai.moneymanager.testing.testUser
 import ai.moneymanager.web.ApiWebLayerSetup
 import ai.moneymanager.web.access.GroupAccessGuard
+import ai.moneymanager.web.ai.AiRequestGuard
+import ai.moneymanager.web.ask.AskAnswers
+import ai.moneymanager.web.anyOf
 import ai.moneymanager.web.mockInvoked
 import ai.moneymanager.web.security.TestInitData
 import ai.moneymanager.web.time.UserCalendar
@@ -33,6 +44,7 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.time.LocalDate
 
 private const val GROUP_CONTEXT = "context"
 private const val FREE_AI_LIMIT = 10
@@ -40,7 +52,7 @@ private const val PARSE_VOICE = "parseVoiceCommands"
 
 @WebMvcTest(controllers = [VoiceController::class])
 @ApiWebLayerSetup
-@Import(GroupAccessGuard::class, UserCalendar::class)
+@Import(GroupAccessGuard::class, UserCalendar::class, AiRequestGuard::class, AskAnswers::class)
 class VoiceControllerTest {
     @Autowired
     private lateinit var mockMvc: MockMvc
@@ -65,6 +77,15 @@ class VoiceControllerTest {
 
     @MockitoBean
     private lateinit var commandParserService: CommandParserService
+
+    @MockitoBean
+    private lateinit var askService: AskService
+
+    @MockitoBean
+    private lateinit var askSuggestionService: AskSuggestionService
+
+    @MockitoBean
+    private lateinit var financeAnswerService: FinanceAnswerService
 
     private val groupId = ObjectId()
     private val group = testGroup(groupId)
@@ -108,6 +129,19 @@ class VoiceControllerTest {
         mockMvc.perform(voice(audio))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.operations.length()").value(0))
+    }
+
+    @Test
+    fun `answers a spoken question with a card`() {
+        val question = FinanceQuestion(FinanceIntent.SUM, categories = listOf("Такси"))
+        `when`(commandParserService.parseVoiceCommands(audio, GROUP_CONTEXT, WAV_MIME_TYPE)).thenReturn(listOf(BotCommand.AskFinance(question)))
+        `when`(askService.answer(anyOf(UserInfo::class.java), anyOf(MoneyGroup::class.java), anyOf(FinanceQuestion::class.java), anyOf(LocalDate::class.java))).thenReturn(AnswerCard("🚕 Такси", "12 000 ₸"))
+
+        mockMvc.perform(voice(audio))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.operations.length()").value(0))
+            .andExpect(jsonPath("$.answer.title").value("🚕 Такси"))
+            .andExpect(jsonPath("$.answer.headline").value("12 000 ₸"))
     }
 
     @Test

@@ -1,3 +1,4 @@
+import { AskChip } from '../ask/AskChip'
 import { useState } from 'react'
 import type { Group, Me } from '../api/types'
 import { formatMonthName, formatMonthTitle, formatPeriod, shiftMonth } from '../format'
@@ -20,11 +21,12 @@ export interface ReportContext {
   onBackToCurrentMonth: () => void
 }
 
-export function ReportsScreen({ me, group, initialMonth = null, onAddOperation }: {
+export function ReportsScreen({ me, group, initialMonth = null, onAddOperation, onAsk }: {
   me: Me
   group: Group
   initialMonth?: string | null
   onAddOperation: () => void
+  onAsk: (question: string) => void
 }) {
   const currentMonth = currentPeriodMonth(new Date(), group.monthStartDay)
   const [tab, setTab] = useState<ReportTab>('analytics')
@@ -44,6 +46,7 @@ export function ReportsScreen({ me, group, initialMonth = null, onAddOperation }
           </>
         )}
       <ReportBody key={`${group.id}-${tab}-${month}`} tab={tab} context={context} />
+      {tab !== 'category' && <AskChip place="reports" question={strings.askReportsChip} onAsk={onAsk} />}
     </>
   )
 }

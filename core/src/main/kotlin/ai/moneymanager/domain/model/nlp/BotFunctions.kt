@@ -83,4 +83,24 @@ object BotFunctions {
     @JvmStatic
     fun editLastOperation(type: String?, newAmount: Double?, newCategory: String?, newOperationDate: String?) {
     }
+
+    @JvmStatic
+    fun askFinance(
+        intent: String,
+        operationType: String?,
+        categories: String?,
+        period: String?,
+        month: String?,
+        from: String?,
+        to: String?,
+        comparePeriod: String?,
+        compareMonth: String?,
+        member: String?,
+        place: String?,
+        tag: String?,
+        minAmount: Double?,
+        limit: Double?,
+        amount: Double?,
+    ) {
+    }
 }

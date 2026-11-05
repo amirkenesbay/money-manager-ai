@@ -1,6 +1,11 @@
-import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ApiRequestError, serverErrorCode, serverMessage } from '../api/client'
-import type { Group, Me, Operation } from '../api/types'
+import type { AnswerCard, AnswerLink, Group, Me, Operation, VoiceResult } from '../api/types'
+import { askQuestion } from '../ask/askApi'
+import { AnswerView } from '../ask/AnswerView'
+import { hintItems } from '../ask/hintItems'
+import { RotatingHint } from '../ask/RotatingHint'
+import { useAskSuggestions } from '../ask/useAskSuggestions'
 import { strings } from '../strings'
 import { notifyOutcome } from '../telegram/haptics'
 import { openExternalLink } from '../telegram/telegramEnv'
@@ -11,6 +16,8 @@ import { MicIcon } from '../ui/icons'
 import { ScreenHeader } from '../ui/ScreenHeader'
 import { Sheet } from '../ui/Sheet'
 import { StateView } from '../ui/StateView'
+import { prefersLessMotion } from '../ui/motion'
+import { isFlagStored, storeFlag } from '../ui/storedFlag'
 import { useConfirmClosing } from '../ui/useConfirmClosing'
 import { type Draft, toDrafts } from './drafts'
 import { microphoneErrorOf, microphoneSupported, type Recorder, startRecording } from './recorder'
@@ -21,49 +28,40 @@ import './voice.css'
 const MAX_RECORDING_SECONDS = 60
 const WARNING_SECONDS = 10
 const SECOND_MS = 1000
-const SECONDS_IN_MINUTE = 60
-const SECONDS_DIGITS = 2
 const EXPLAINED_KEY = 'voice.microphoneExplained'
 const PROBLEM_ICON = '🎙️'
+const LEVEL_PROPERTY = '--voice-level'
 
 const THINKING: MomentInputs['orb'] = { mode: 'thinking', level: () => 0 }
 
 type Problem = 'denied' | 'unsupported' | 'silence' | 'notUnderstood' | 'aiLimit' | 'aiBusy' | 'network'
 
+type Request = { kind: 'processing'; wav: Blob } | { kind: 'asking'; text: string }
+
 type Phase =
   | { kind: 'ask' }
   | { kind: 'recording' }
   | { kind: 'paused'; wav: Blob }
-  | { kind: 'processing'; wav: Blob }
+  | Request
   | { kind: 'confirm'; drafts: Draft[] }
-  | { kind: 'problem'; problem: Problem; wav: Blob | null; message: string | null }
+  | { kind: 'answer'; card: AnswerCard }
+  | { kind: 'problem'; problem: Problem; retry: Request | null; message: string | null }
 
-const readExplained = (): boolean => {
-  try {
-    return localStorage.getItem(EXPLAINED_KEY) !== null
-  } catch {
-    return false
-  }
-}
+export type VoiceStart = { kind: 'record' } | { kind: 'question'; text: string }
 
-const rememberExplained = (): void => {
-  try {
-    localStorage.setItem(EXPLAINED_KEY, '1')
-  } catch {
-    return
-  }
-}
-
-export function VoiceFlow({ me, group, onClose, onManual, onSaved }: {
+export function VoiceFlow({ me, group, start = { kind: 'record' }, onClose, onManual, onSaved, onOpenLink }: {
   me: Me
   group: Group
+  start?: VoiceStart
   onClose: () => void
   onManual: () => void
   onSaved: (operations: Operation[], note?: string) => void
+  onOpenLink: (link: AnswerLink) => void
 }) {
-  const [phase, setPhase] = useState<Phase>(() => (readExplained() ? { kind: 'recording' } : { kind: 'ask' }))
-  const problem = (kind: Problem, wav: Blob | null = null, message: string | null = null) => setPhase({ kind: 'problem', problem: kind, wav, message })
+  const [phase, setPhase] = useState<Phase>(() => initialPhase(start))
+  const problem = (kind: Problem, retry: Request | null = null, message: string | null = null) => setPhase({ kind: 'problem', problem: kind, retry, message })
   const record = () => setPhase({ kind: 'recording' })
+  const ask = (text: string) => setPhase({ kind: 'asking', text })
 
   switch (phase.kind) {
     case 'ask':
@@ -71,13 +69,15 @@ export function VoiceFlow({ me, group, onClose, onManual, onSaved }: {
         <Sheet label={strings.voiceAskTitle} onClose={onClose}>
           <h2 className="sheet-title">{strings.voiceAskTitle}</h2>
           <p className="hint">{strings.voiceAskBody}</p>
-          <Button onClick={() => { rememberExplained(); record() }}>{strings.voiceAskAllow}</Button>
+          <Button onClick={() => { storeFlag(EXPLAINED_KEY); record() }}>{strings.voiceAskAllow}</Button>
           <Button variant="secondary" onClick={onClose}>{strings.voiceAskLater}</Button>
         </Sheet>
       )
     case 'recording':
       return (
         <RecordingScreen
+          groupId={group.id}
+          onAsk={ask}
           onRecorded={(wav) => setPhase({ kind: 'processing', wav })}
           onPaused={(wav) => setPhase({ kind: 'paused', wav })}
           onSilence={() => problem('silence')}
@@ -93,13 +93,26 @@ export function VoiceFlow({ me, group, onClose, onManual, onSaved }: {
         </ProblemScreen>
       )
     case 'processing':
+    case 'asking':
       return (
-        <ProcessingScreen
-          group={group}
-          wav={phase.wav}
-          onParsed={(drafts) => (drafts.length === 0 ? problem('notUnderstood') : setPhase({ kind: 'confirm', drafts }))}
-          onFailed={(kind, message) => problem(kind, phase.wav, message)}
+        <ThinkingScreen
+          groupId={group.id}
+          request={phase}
+          onDone={(next) => (next === null ? problem('notUnderstood') : setPhase(next))}
+          onFailed={(kind, message) => problem(kind, phase, message)}
           onCancel={onClose}
+        />
+      )
+    case 'answer':
+      return (
+        <AnswerView
+          card={phase.card}
+          currency={group.currency}
+          language={me.language}
+          onAsk={ask}
+          onRecord={record}
+          onOpenLink={onOpenLink}
+          onClose={onClose}
         />
       )
     case 'confirm':
@@ -111,7 +124,7 @@ export function VoiceFlow({ me, group, onClose, onManual, onSaved }: {
           message={phase.message}
           subscribeUrl={me.subscription.subscribeUrl}
           onRecord={record}
-          onResend={phase.wav ? () => setPhase({ kind: 'processing', wav: phase.wav as Blob }) : undefined}
+          onResend={phase.retry ? () => setPhase(phase.retry as Request) : undefined}
           onManual={onManual}
           onClose={onClose}
         />
@@ -119,7 +132,14 @@ export function VoiceFlow({ me, group, onClose, onManual, onSaved }: {
   }
 }
 
-function RecordingScreen({ onRecorded, onPaused, onSilence, onMicrophoneError, onCancel }: {
+function initialPhase(start: VoiceStart): Phase {
+  if (start.kind === 'question') return { kind: 'asking', text: start.text }
+  return isFlagStored(EXPLAINED_KEY) ? { kind: 'recording' } : { kind: 'ask' }
+}
+
+function RecordingScreen({ groupId, onAsk, onRecorded, onPaused, onSilence, onMicrophoneError, onCancel }: {
+  groupId: string
+  onAsk: (question: string) => void
   onRecorded: (wav: Blob) => void
   onPaused: (wav: Blob) => void
   onSilence: () => void
@@ -130,6 +150,8 @@ function RecordingScreen({ onRecorded, onPaused, onSilence, onMicrophoneError, o
   const [seconds, setSeconds] = useState(0)
   const [ready, setReady] = useState(false)
   const level = useCallback(() => recorder.current?.level() ?? 0, [])
+  const suggestions = useAskSuggestions(groupId)
+  const hints = useMemo(() => hintItems(strings.voiceExamples, suggestions?.questions ?? []), [suggestions])
   useConfirmClosing(true)
 
   const finish = useCallback((deliver: (wav: Blob) => void) => {
@@ -185,60 +207,87 @@ function RecordingScreen({ onRecorded, onPaused, onSilence, onMicrophoneError, o
     return () => document.removeEventListener('visibilitychange', pauseWhenHidden)
   }, [finish, onPaused])
 
-  const ending = MAX_RECORDING_SECONDS - seconds <= WARNING_SECONDS
+  const left = MAX_RECORDING_SECONDS - seconds
   return (
     <>
-      <ScreenHeader title={strings.recordingTitle} onBack={onCancel} />
+      <ScreenHeader title={strings.recordVoice} onBack={onCancel} />
       <section className="voice-stage">
-        <p className="hint centered">{strings.recordingHint}</p>
-        <p className={`amount voice-timer ${ending ? 'negative' : ''}`} role="timer">{`${formatSeconds(seconds)} / ${formatSeconds(MAX_RECORDING_SECONDS)}`}</p>
-        <button type="button" className="voice-orb-button pressable" aria-label={strings.stopRecording} disabled={!ready} onClick={() => finish(onRecorded)}>
-          <Moment
-            kind="orb"
-            input={{ mode: 'listening', level }}
-            className="voice-orb"
-            fallback={<span className="voice-stop"><span className="voice-stop-square" aria-hidden="true" /></span>}
-            overlay={<span className="voice-stop-square voice-orb-stop" aria-hidden="true" />}
-          />
+        <BreathingOrb level={level} />
+        <p className="voice-listening">{strings.recordingTitle}</p>
+        <RotatingHint items={hints} onAsk={onAsk} />
+        {left <= WARNING_SECONDS && <p className="caption negative" role="timer">{strings.recordingEnds(left)}</p>}
+        <button type="button" className="voice-stop-round pressable" aria-label={strings.stopRecording} disabled={!ready} onClick={() => finish(onRecorded)}>
+          <span className="voice-stop-square" aria-hidden="true" />
         </button>
-        <ul className="voice-examples">
-          {strings.voiceExamples.map((example) => <li key={example} className="caption">{example}</li>)}
-        </ul>
       </section>
       <Button variant="secondary" onClick={onCancel}>{strings.cancel}</Button>
     </>
   )
 }
 
-function ProcessingScreen({ group, wav, onParsed, onFailed, onCancel }: {
-  group: Group
-  wav: Blob
-  onParsed: (drafts: Draft[]) => void
+function BreathingOrb({ level }: { level: () => number }) {
+  const orb = useRef<HTMLSpanElement>(null)
+
+  useEffect(() => {
+    if (prefersLessMotion()) return undefined
+    let frame = 0
+    const follow = () => {
+      orb.current?.style.setProperty(LEVEL_PROPERTY, String(level()))
+      frame = requestAnimationFrame(follow)
+    }
+    frame = requestAnimationFrame(follow)
+    return () => cancelAnimationFrame(frame)
+  }, [level])
+
+  return <span ref={orb} className="voice-breath" aria-hidden="true" />
+}
+
+function ThinkingScreen({ groupId, request, onDone, onFailed, onCancel }: {
+  groupId: string
+  request: Request
+  onDone: (next: Phase | null) => void
   onFailed: (problem: Problem, message: string | null) => void
   onCancel: () => void
 }) {
+  const callbacks = useRef({ onDone, onFailed })
+
+  useEffect(() => {
+    callbacks.current = { onDone, onFailed }
+  })
+
   useEffect(() => {
     const controller = new AbortController()
-    parseVoice(group.id, wav, controller.signal)
-      .then((result) => onParsed(toDrafts(result.operations)))
+    const pending = request.kind === 'processing'
+      ? parseVoice(groupId, request.wav, controller.signal).then(voiceOutcome)
+      : askQuestion(groupId, request.text, controller.signal).then((card): Phase => ({ kind: 'answer', card }))
+    pending
+      .then((next) => callbacks.current.onDone(next))
       .catch((error: unknown) => {
         if (controller.signal.aborted) return
         notifyOutcome('error')
-        onFailed(problemOf(error), serverMessage(error))
+        callbacks.current.onFailed(problemOf(error), serverMessage(error))
       })
     return () => controller.abort()
-  }, [group.id, wav, onParsed, onFailed])
+  }, [groupId, request])
 
+  const asking = request.kind === 'asking'
   return (
     <>
-      <ScreenHeader title={strings.processingTitle} onBack={onCancel} />
+      <ScreenHeader title={asking ? strings.askingTitle : strings.processingTitle} onBack={onCancel} />
       <section className="voice-stage" aria-busy="true">
         <Moment kind="orb" input={THINKING} className="voice-orb" fallback={<span className="voice-processing" aria-hidden="true"><MicIcon /></span>} />
-        <p className="hint centered">{strings.processingHint}</p>
+        <p className="hint centered">{asking ? strings.quoted(request.text) : strings.processingHint}</p>
+        {asking && <p className="caption centered">{strings.askingHint}</p>}
       </section>
       <Button variant="secondary" onClick={onCancel}>{strings.cancel}</Button>
     </>
   )
+}
+
+function voiceOutcome(result: VoiceResult): Phase | null {
+  const drafts = toDrafts(result.operations)
+  if (drafts.length > 0) return { kind: 'confirm', drafts }
+  return result.answer ? { kind: 'answer', card: result.answer } : null
 }
 
 function problemOf(error: unknown): Problem {
@@ -320,9 +369,4 @@ function ProblemScreen({ icon, title, body, onBack, children }: {
       <StateView icon={icon} title={title} body={body} tone="alert">{children}</StateView>
     </>
   )
-}
-
-function formatSeconds(total: number): string {
-  const minutes = Math.floor(total / SECONDS_IN_MINUTE)
-  return `${minutes}:${String(total % SECONDS_IN_MINUTE).padStart(SECONDS_DIGITS, '0')}`
 }

@@ -12,7 +12,7 @@ import ai.moneymanager.chat.reply.common.italic
 import ai.moneymanager.chat.reply.common.code
 import ai.moneymanager.chat.reply.common.blockquote
 import ai.moneymanager.chat.reply.common.escapeHtml
-import ai.moneymanager.chat.reply.common.formatAmount
+import ai.moneymanager.domain.text.formatAmount
 import ai.moneymanager.chat.reply.common.progressBar
 import ai.moneymanager.domain.model.report.ComparisonReport
 import ai.moneymanager.domain.model.report.MembersReport

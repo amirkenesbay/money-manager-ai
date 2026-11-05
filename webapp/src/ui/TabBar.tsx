@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react'
 import { strings } from '../strings'
+import { tapImpact } from '../telegram/haptics'
 import { ChartIcon, GridIcon, HomeIcon, ListIcon, MicIcon } from './icons'
 import { type Tab, TABS } from './tabs'
+import { useLongPress } from './useLongPress'
 
 const TAB_ICONS: Record<Tab, ReactNode> = {
   home: <HomeIcon />,
@@ -22,7 +24,16 @@ const tabLabel = (tab: Tab): string => {
 
 const MIC_SLOT = 2
 
-export function TabBar({ active, onSelect, onRecordVoice }: { active: Tab; onSelect: (tab: Tab) => void; onRecordVoice: () => void }) {
+export function TabBar({ active, onSelect, onRecordVoice, onShowQuestions }: {
+  active: Tab
+  onSelect: (tab: Tab) => void
+  onRecordVoice: () => void
+  onShowQuestions: () => void
+}) {
+  const micPress = useLongPress(onRecordVoice, () => {
+    tapImpact()
+    onShowQuestions()
+  })
   const tabButton = (tab: Tab) => {
     const current = tab === active
     return (
@@ -36,7 +47,7 @@ export function TabBar({ active, onSelect, onRecordVoice }: { active: Tab; onSel
       <nav className="tab-bar" aria-label={strings.tabBarLabel}>
         {TABS.slice(0, MIC_SLOT).map(tabButton)}
         <span className="tab-mic-slot">
-          <button type="button" className="tab-mic pressable" aria-label={strings.recordVoice} onClick={onRecordVoice}><MicIcon /></button>
+          <button type="button" className="tab-mic pressable" aria-label={strings.recordVoice} {...micPress}><MicIcon /></button>
         </span>
         {TABS.slice(MIC_SLOT).map(tabButton)}
       </nav>

@@ -1,6 +1,6 @@
 package ai.moneymanager.chat.transition.nlp
 
-import ai.moneymanager.chat.reply.common.formatAmount
+import ai.moneymanager.domain.text.formatAmount
 import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.chat.state.MoneyManagerContext
 import ai.moneymanager.chat.state.MoneyManagerState
@@ -54,7 +54,8 @@ internal val BotCommand.targetState: MoneyManagerState
         is BotCommand.CreateNotification,
         is BotCommand.DeleteNotification,
         is BotCommand.DeleteLastOperation,
-        is BotCommand.EditLastOperation -> MoneyManagerState.NLP_RESPONSE
+        is BotCommand.EditLastOperation,
+        is BotCommand.AskFinance -> MoneyManagerState.NLP_RESPONSE
     }
 
 internal fun clearNlpContext(context: MoneyManagerContext) {
@@ -142,7 +143,8 @@ internal fun processNlpCommand(
         is BotCommand.CreateNotification,
         is BotCommand.DeleteNotification,
         is BotCommand.DeleteLastOperation,
-        is BotCommand.EditLastOperation -> {
+        is BotCommand.EditLastOperation,
+        is BotCommand.AskFinance -> {
             context.nlpResponse = PARSE_ERROR_MESSAGE
             context.nlpTargetState = MoneyManagerState.NLP_RESPONSE
         }

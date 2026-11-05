@@ -4,6 +4,8 @@ import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryRule
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.Currency
+import ai.moneymanager.domain.model.question.FinanceQuestion
+import ai.moneymanager.service.question.askFinanceCallOf
 import org.springframework.core.io.ClassPathResource
 import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
@@ -37,6 +39,9 @@ private const val REMEMBERED_PLACES_HEADER =
 private const val REMEMBERED_PLACE_TEMPLATE = "%s → %s"
 private const val MAX_REMEMBERED_PLACES_IN_PROMPT = 20
 
+private const val PREVIOUS_QUESTION_TEMPLATE =
+    "Previous question of this user (a short follow-up like «а в сентябре?» repeats it with only the mentioned parameter changed): %s"
+
 @Service
 class AiPromptService {
     val systemPrompt: String by lazy { loadPrompt(SYSTEM_PROMPT_PATH) }
@@ -58,8 +63,18 @@ class AiPromptService {
 
     fun currencyPreamble(currency: Currency): String = CURRENCY_TEMPLATE.format(currency.name)
 
-    fun groupContext(currency: Currency, categories: List<Category>, rules: List<CategoryRule> = emptyList()): String =
-        listOf(currencyPreamble(currency), categoryContextPreamble(categories), rememberedPlacesPreamble(categories, rules))
+    fun groupContext(
+        currency: Currency,
+        categories: List<Category>,
+        rules: List<CategoryRule> = emptyList(),
+        previousQuestion: FinanceQuestion? = null,
+    ): String =
+        listOf(
+            currencyPreamble(currency),
+            categoryContextPreamble(categories),
+            rememberedPlacesPreamble(categories, rules),
+            previousQuestion?.let { PREVIOUS_QUESTION_TEMPLATE.format(askFinanceCallOf(it)) }.orEmpty(),
+        )
             .filter { it.isNotEmpty() }
             .joinToString("\n")
 

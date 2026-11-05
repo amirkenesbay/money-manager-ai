@@ -6,16 +6,13 @@ import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.UserInfo
+import ai.moneymanager.domain.text.formatAmount
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
 import org.bson.types.ObjectId
 import java.math.BigDecimal
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
 import java.time.format.DateTimeFormatter
 
-private const val AMOUNT_PATTERN = "#,##0"
-private const val THOUSANDS_SEPARATOR = ' '
 private const val DATE_PATTERN = "dd.MM.yyyy"
 private const val SHORT_DATE_PATTERN = "dd.MM"
 private const val POSITIVE_SIGN = "+"
@@ -25,15 +22,8 @@ private const val DESCRIPTION_PREFIX = " ("
 private const val DESCRIPTION_SUFFIX = ")"
 private const val TIME_PATTERN = "%02d:%02d"
 
-private val amountFormat = DecimalFormat(
-    AMOUNT_PATTERN,
-    DecimalFormatSymbols().apply { groupingSeparator = THOUSANDS_SEPARATOR }
-)
-
 val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern(DATE_PATTERN)
 val shortDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern(SHORT_DATE_PATTERN)
-
-fun formatAmount(amount: BigDecimal, currency: Currency): String = "${amountFormat.format(amount)}${currency.symbol}"
 
 fun resolveCurrency(groupService: GroupService, groupId: ObjectId?): Currency =
     groupId?.let { groupService.getGroup(it)?.currency } ?: Currency.DEFAULT

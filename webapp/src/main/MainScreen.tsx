@@ -1,6 +1,7 @@
 import { type ReactNode, useState } from 'react'
 import { serverMessage } from '../api/client'
-import type { CategoryType, Group, Me, Operation } from '../api/types'
+import type { AnswerLink, CategoryType, Group, Me, Operation } from '../api/types'
+import { AskTopicsSheet } from '../ask/AskTopicsSheet'
 import { useAsync } from '../api/useAsync'
 import { CategoriesScreen } from '../categories/CategoriesScreen'
 import { Dashboard } from '../dashboard/Dashboard'
@@ -19,7 +20,7 @@ import { PremiumScreen } from '../premium/PremiumScreen'
 import { RemindersScreen } from '../reminders/RemindersScreen'
 import { RecurringScreen } from '../recurring/RecurringScreen'
 import { ReportsScreen } from '../reports/ReportsScreen'
-import { VoiceFlow } from '../voice/VoiceFlow'
+import { VoiceFlow, type VoiceStart } from '../voice/VoiceFlow'
 import { type LaunchScreen, launchMonth, launchScreen } from './launchScreen'
 import { strings } from '../strings'
 import { notifyOutcome } from '../telegram/haptics'
@@ -40,7 +41,7 @@ type Overlay =
   | { kind: 'form'; operation: Operation | null; type?: CategoryType }
   | { kind: 'detail'; operation: Operation }
   | { kind: 'section'; section: Section }
-  | { kind: 'voice' }
+  | { kind: 'voice'; start?: VoiceStart }
 
 const LAUNCH_TABS: Partial<Record<LaunchScreen, Tab>> = {
   reports: 'reports',
@@ -58,6 +59,7 @@ interface Navigation {
   selectOperation: (operation: Operation) => void
   openSection: (section: Section) => void
   showWelcome: () => void
+  ask: (question: string) => void
 }
 
 interface Workspace {
@@ -95,6 +97,9 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
   const [tab, setTab] = useState<Tab>(launchTab)
   const [overlay, setOverlay] = useState<Overlay | null>(launchOverlay)
   const [version, setVersion] = useState(0)
+  const [questionsOpen, setQuestionsOpen] = useState(() => launchScreen() === 'ask')
+  const [reportsMonth, setReportsMonth] = useState<string | null>(launchMonth)
+  const [operationsSearch, setOperationsSearch] = useState<string | null>(null)
   const hints = useHints()
   const [welcomeOpen, setWelcomeOpen] = useState(() => !hints.isSeen('WELCOME') && launchScreen() === null)
   const toast = useToast()
@@ -146,6 +151,28 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
     selectOperation: (operation) => open({ kind: 'detail', operation }),
     openSection: (section) => open({ kind: 'section', section }),
     showWelcome: () => setWelcomeOpen(true),
+    ask: (question) => {
+      setQuestionsOpen(false)
+      open({ kind: 'voice', start: { kind: 'question', text: question } })
+    },
+  }
+
+  const recordVoice = () => {
+    setQuestionsOpen(false)
+    open({ kind: 'voice' })
+  }
+
+  const openLink = (link: AnswerLink) => {
+    if (link.screen === 'CATEGORIES' || link.screen === 'RECURRING') {
+      open({ kind: 'section', section: link.screen === 'CATEGORIES' ? 'categories' : 'recurring' })
+      return
+    }
+    goBack(null, () => {
+      if (link.screen === 'REPORTS') setReportsMonth(link.month)
+      else setOperationsSearch(link.search)
+      refresh()
+      setTab(link.screen === 'REPORTS' ? 'reports' : 'operations')
+    })
   }
 
   const finishWelcome = (tryVoice: boolean) => {
@@ -205,6 +232,7 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
             onClose={closeSection}
             onManual={() => navigation.addOperation()}
             onSaved={recorded}
+            onOpenLink={openLink}
           />
         )}
         {overlay && (overlay.kind === 'form' || overlay.kind === 'detail') && group && (
@@ -235,18 +263,22 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
               onOpenBudgets={() => navigation.openSection('categories')}
               onAddIncome={() => navigation.addOperation('INCOME')}
               onSelectOperation={navigation.selectOperation}
+              onAsk={navigation.ask}
             />
           </TabPanel>
           {workspace && SECONDARY_TABS.map((candidate) => (
             <TabPanel key={`${candidate}-${groupId}-${version}`} active={tab === candidate} hintsVisible={!overlay && !welcomeOpen}>
-              <TabContent tab={candidate} workspace={workspace} navigation={navigation} />
+              <TabContent tab={candidate} workspace={workspace} navigation={navigation} reportsMonth={reportsMonth} operationsSearch={operationsSearch} />
             </TabPanel>
           ))}
-          <TabBar active={tab} onSelect={switchTab} onRecordVoice={() => open({ kind: 'voice' })} />
+          <TabBar active={tab} onSelect={switchTab} onRecordVoice={recordVoice} onShowQuestions={() => setQuestionsOpen(true)} />
           {!welcomeOpen && <ManualFab onOpen={() => navigation.addOperation()} />}
         </div>
       </main>
       {welcomeOpen && group && !overlay && <WelcomeSheet group={group} onFinish={finishWelcome} />}
+      {questionsOpen && !welcomeOpen && !overlay && (
+        <AskTopicsSheet groupId={groupId} onAsk={navigation.ask} onRecord={recordVoice} onClose={() => setQuestionsOpen(false)} />
+      )}
       {toast.current && <Toast toast={toast.current} onDone={toast.hide} />}
     </>
   )
@@ -304,13 +336,19 @@ function TabPanel({ active, hintsVisible, children }: { active: boolean; hintsVi
   )
 }
 
-function TabContent({ tab, workspace, navigation }: { tab: SecondaryTab; workspace: Workspace; navigation: Navigation }) {
+function TabContent({ tab, workspace, navigation, reportsMonth, operationsSearch }: {
+  tab: SecondaryTab
+  workspace: Workspace
+  navigation: Navigation
+  reportsMonth: string | null
+  operationsSearch: string | null
+}) {
   const { me, group, groups, actions, notify, onMeChanged } = workspace
   switch (tab) {
     case 'operations':
-      return <OperationsScreen me={me} group={group} onSelectOperation={navigation.selectOperation} />
+      return <OperationsScreen me={me} group={group} initialSearch={operationsSearch} onSelectOperation={navigation.selectOperation} />
     case 'reports':
-      return <ReportsScreen me={me} group={group} initialMonth={launchMonth()} onAddOperation={() => navigation.addOperation()} />
+      return <ReportsScreen me={me} group={group} initialMonth={reportsMonth} onAddOperation={() => navigation.addOperation()} onAsk={navigation.ask} />
     default:
       return (
         <MoreScreen

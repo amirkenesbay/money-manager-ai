@@ -1,5 +1,7 @@
 package ai.moneymanager.domain.model.nlp
 
+import ai.moneymanager.domain.model.question.FinanceQuestion
+
 sealed class BotCommand {
     data class CreateGroup(
         val groupName: String
@@ -114,4 +116,6 @@ sealed class BotCommand {
         val newCategory: String?,
         val newOperationDate: String?
     ) : BotCommand()
+
+    data class AskFinance(val question: FinanceQuestion) : BotCommand()
 }

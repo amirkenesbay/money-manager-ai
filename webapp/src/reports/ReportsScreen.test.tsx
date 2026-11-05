@@ -76,7 +76,7 @@ const categoryReport: CategoryReport = {
 }
 
 const onAddOperation = vi.fn()
-const renderReports = (reportGroup = group()) => render(<ReportsScreen me={me()} group={reportGroup} onAddOperation={onAddOperation} />)
+const renderReports = (reportGroup = group()) => render(<ReportsScreen me={me()} group={reportGroup} onAddOperation={onAddOperation} onAsk={vi.fn()} />)
 const openTab = (tab: Parameters<typeof strings.reportTab>[0]) => userEvent.click(screen.getByRole('radio', { name: strings.reportTab(tab) }))
 const money = (amount: string) => asRendered(formatMoney(amount, 'KZT', LANGUAGE))
 

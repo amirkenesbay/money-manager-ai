@@ -1,7 +1,7 @@
 package ai.moneymanager.chat.reply.ai
 
 import ai.moneymanager.chat.reply.common.escapeHtml
-import ai.moneymanager.chat.reply.common.formatAmount
+import ai.moneymanager.domain.text.formatAmount
 import ai.moneymanager.chat.reply.common.formatDescriptionSuffix
 import ai.moneymanager.chat.reply.common.formatIconPrefix
 import ai.moneymanager.chat.reply.common.formatSignedAmount

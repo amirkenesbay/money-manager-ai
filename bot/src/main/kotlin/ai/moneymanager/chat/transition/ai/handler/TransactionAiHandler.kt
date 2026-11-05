@@ -1,6 +1,6 @@
 package ai.moneymanager.chat.transition.ai.handler
 
-import ai.moneymanager.chat.reply.common.formatAmount
+import ai.moneymanager.domain.text.formatAmount
 import ai.moneymanager.chat.reply.common.formatDescriptionSuffix
 import ai.moneymanager.chat.reply.common.formatIconPrefix
 import ai.moneymanager.chat.reply.common.escapeHtml

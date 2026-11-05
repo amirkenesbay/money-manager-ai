@@ -17,6 +17,7 @@ import ai.moneymanager.chat.telegram.TelegramFileService
 import ai.moneymanager.service.nlp.CommandParserService
 import ai.moneymanager.chat.telegram.withAiFeedback
 import kz.rmr.chatmachinist.model.ActionContext
+import ai.moneymanager.service.question.AskService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.objects.Update
@@ -43,7 +44,8 @@ class AiRequestHandler(
     private val aiPromptService: AiPromptService,
     private val localizationService: LocalizationService,
     private val aiRateLimitService: AiRateLimitService,
-    private val actionExecutor: AiActionExecutor
+    private val actionExecutor: AiActionExecutor,
+    private val askService: AskService,
 ) {
     private val log = LoggerFactory.getLogger(AiRequestHandler::class.java)
 
@@ -140,7 +142,8 @@ class AiRequestHandler(
         val categories: List<Category> = categoryService.getCategoriesByGroup(groupId)
         context.aiCategoriesCache = categories
         val currency = resolveCurrency(groupService, groupId)
-        return aiPromptService.groupContext(currency, categories, categoryRuleService.rules(groupId))
+        val previousQuestion = context.userInfo?.let(askService::previousQuestion)
+        return aiPromptService.groupContext(currency, categories, categoryRuleService.rules(groupId), previousQuestion)
     }
 
     private fun showErrorStageIfNeeded(commands: List<BotCommand>, feedback: AiFeedback, language: String?) {

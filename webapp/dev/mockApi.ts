@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Plugin } from 'vite'
 import { AUTH_SCHEME } from '../src/api/auth.ts'
-import type { AppHint, Budget, CategoryRule, DigestKind, GroupNoticeLevel, RecurringList, RecurringPayment, VoiceResult, AnalyticsReport, ApiErrorBody, ApiErrorCode, Balance, Category, CategoryReport, ComparisonReport, Currency, Group, Invite, Limits, Me, Member, MembersReport, MonthSummary, Operation, OperationsPage, Reminder, ReminderInput, SubscriptionTier } from '../src/api/types.ts'
+import type { AnswerCard, AskSuggestions, AppHint, Budget, CategoryRule, DigestKind, GroupNoticeLevel, RecurringList, RecurringPayment, VoiceResult, AnalyticsReport, ApiErrorBody, ApiErrorCode, Balance, Category, CategoryReport, ComparisonReport, Currency, Group, Invite, Limits, Me, Member, MembersReport, MonthSummary, Operation, OperationsPage, Reminder, ReminderInput, SubscriptionTier } from '../src/api/types.ts'
 
 const API_PREFIX = '/api/v1'
 const SCENARIO_PARAM = 'mock'
@@ -14,7 +14,9 @@ const PERSONAL_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d0'
 const FAMILY_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d1'
 const PREMIUM_EXPIRES_AT = '2026-12-31T00:00:00Z'
 const NO_CONTENT_STATUS = 204
-const GROUP_ROUTE = /^\/groups\/([0-9a-f]{24})(?:\/(balance|summary|operations|activate|categories|category-rules|notices|tags|recurring|export|budgets|members|invite|initial-balance|voice|reports\/[a-z]+))?(?:\/([^/]+))?(?:\/(limit))?$/
+const QUESTION_SCENARIO = 'question'
+const UNKNOWN_QUESTION = /погод|weather|ауа райы/i
+const GROUP_ROUTE = /^\/groups\/([0-9a-f]{24})(?:\/(balance|summary|operations|activate|categories|category-rules|notices|tags|recurring|export|budgets|members|invite|initial-balance|voice|ask|reports\/[a-z]+))?(?:\/([^/]+))?(?:\/(limit))?$/
 const REMINDER_ROUTE = /^\/notifications(?:\/([^/]+))?$/
 const GROUP_ID_PREFIX = '6650a1b2c3d4e5f6a7b8'
 const GROUP_ID_DIGITS = 4
@@ -29,7 +31,7 @@ const FREE_HISTORY_DAYS = 30
 const DEFAULT_PAGE_SIZE = 20
 const FILLER_OPERATIONS = 26
 
-type Body = { count: number } | string[] | RecurringList | RecurringPayment | Budget[] | CategoryRule[] | Me | Group | Group[] | Balance | MonthSummary | Operation | OperationsPage | Category | Category[] | AnalyticsReport | ComparisonReport | MembersReport | CategoryReport | Member[] | Invite | Reminder | Reminder[] | VoiceResult | ApiErrorBody | null
+type Body = { count: number } | string[] | AnswerCard | AskSuggestions | RecurringList | RecurringPayment | Budget[] | CategoryRule[] | Me | Group | Group[] | Balance | MonthSummary | Operation | OperationsPage | Category | Category[] | AnalyticsReport | ComparisonReport | MembersReport | CategoryReport | Member[] | Invite | Reminder | Reminder[] | VoiceResult | ApiErrorBody | null
 type MockResponse = { status: number; body: Body; delayMs?: number }
 
 const ok = (body: Body, delayMs?: number): MockResponse => ({ status: 200, body, delayMs })
@@ -412,6 +414,48 @@ function voiceResult(groupId: string): VoiceResult {
   }
 }
 
+const ASK_SUGGESTIONS: AskSuggestions = {
+  questions: ['Сколько на продукты в этом месяце?', 'На продукты больше, чем в прошлом месяце?', 'Куда ушли деньги?', 'Уложусь в бюджет на такси?'],
+  topics: [
+    { topic: 'SUM', title: 'Сколько', questions: ['Сколько на продукты в этом месяце?', 'Сколько на такси в этом месяце?', 'Сколько я потратил в прошлом месяце?'] },
+    { topic: 'COMPARE', title: 'Сравнить', questions: ['На продукты больше, чем в прошлом месяце?', 'Сравни с прошлым месяцем'] },
+    { topic: 'WHERE', title: 'Куда ушло', questions: ['Куда ушли деньги?', 'Кто сколько потратил?', 'Самые крупные траты'] },
+    { topic: 'BUDGETS', title: 'Бюджеты и остаток', questions: ['Уложусь в бюджет на такси?', 'Сколько можно тратить в день?', 'Где перерасход?'] },
+    { topic: 'RECURRING', title: 'Подписки', questions: ['Сколько я плачу за подписки?', 'Какие платежи скоро?'] },
+  ],
+}
+
+function answerTo(text: string): AnswerCard {
+  if (UNKNOWN_QUESTION.test(text)) {
+    return {
+      title: 'Пока не умею это 🙂', headline: null, lines: ['Я отвечаю про твои траты: суммы, сравнения, бюджеты, подписки. Попробуй:'],
+      bars: [], rows: [], followUps: ASK_SUGGESTIONS.questions.slice(0, 3), link: null, understood: false,
+    }
+  }
+  return {
+    title: '🛒 Продукты · Ноябрь',
+    headline: '48 500 ₸',
+    lines: ['на 12% больше, чем 43 300 ₸ в прошлый раз', 'Операций: 14'],
+    bars: [
+      { label: 'Сентябрь', value: '39800', current: false },
+      { label: 'Октябрь', value: '43300', current: false },
+      { label: 'Ноябрь', value: '48500', current: true },
+    ],
+    rows: [
+      { icon: '🛒', label: 'Магнум', value: '21 300 ₸', note: '6 раз' },
+      { icon: '🛒', label: 'Small', value: '12 700 ₸', note: '5 раз' },
+    ],
+    followUps: ['А в прошлом месяце?', 'Самые крупные траты', 'Где траты выросли?'],
+    link: { screen: 'REPORTS', month: daysAgo(0).slice(0, 7), search: null },
+    understood: true,
+  }
+}
+
+function askRoute(method: string, itemId: string | undefined, body: string): MockResponse {
+  if (method === 'GET' && itemId === 'suggestions') return ok(ASK_SUGGESTIONS)
+  return ok(answerTo((JSON.parse(body) as { text: string }).text), VOICE_DELAY_MS)
+}
+
 function groupRoute(path: string, query: URLSearchParams, scenario: string, method: string, body: string): MockResponse | null {
   const match = GROUP_ROUTE.exec(path)
   if (!match || !groups.some((group) => group.id === match[1])) return null
@@ -422,6 +466,7 @@ function groupRoute(path: string, query: URLSearchParams, scenario: string, meth
   if (resource === 'category-rules') return categoryRulesRoute(groupId, method, itemId)
   if (resource === 'export') return ok({ count: operations[groupId].length })
   if (resource === 'recurring') return recurringRoute(groupId, method, itemId, body)
+  if (resource === 'ask') return askRoute(method, itemId, body)
   if (resource === 'tags') return ok(['отпуск', 'ремонт', 'подарки'])
   if (resource === 'notices') return ok(replaceGroup(groupId, { noticeLevel: (JSON.parse(body) as { level: GroupNoticeLevel }).level }))
   if (resource === 'operations' && method !== 'GET') return mutateOperation(groupId, method, itemId, body)
@@ -443,7 +488,7 @@ function groupRoute(path: string, query: URLSearchParams, scenario: string, meth
     case 'invite':
       return ok({ inviteToken: `K7Q2${groupId.slice(-5)}`, url: `${BOT_LINK}K7Q2${groupId.slice(-5)}` })
     case 'voice':
-      return ok(voiceResult(groupId), VOICE_DELAY_MS)
+      return ok(scenario === QUESTION_SCENARIO ? { operations: [], answer: answerTo('') } : voiceResult(groupId), VOICE_DELAY_MS)
     case 'initial-balance':
       return ok(replaceGroup(groupId, { initialBalance: (JSON.parse(body) as { amount: string }).amount }))
     default:

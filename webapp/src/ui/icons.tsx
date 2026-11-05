@@ -76,3 +76,5 @@ export const DownloadIcon = () => <Icon size={18}><path d="M12 3v12M7 10l5 5 5-5
 export const PhoneIcon = () => <Icon size={18}><rect x="7" y="2" width="10" height="20" rx="2" /><path d="M11 18h2" /></Icon>
 
 export const ArrowDownIcon = () => <Icon size={28} strokeWidth={2.2}><path d="M12 4v16M5 13l7 7 7-7" /></Icon>
+
+export const SparkIcon = () => <Icon size={14}><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.7 1.8 1.8.7-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7z" /></Icon>

@@ -25,6 +25,7 @@ import java.time.YearMonth
 private const val DIGEST_CHECK_INTERVAL_MS = 300_000L
 private const val REPORT_BUTTON_KEY = "mini_app.button.report"
 private const val OPEN_BUTTON_KEY = "mini_app.button.open"
+private const val ASK_BUTTON_KEY = "mini_app.button.ask"
 
 @Service
 class DigestNotifier(
@@ -78,7 +79,8 @@ class DigestNotifier(
             url = startLink(botUsername, digestMuteParameter(kind))
         }
         val open = if (miniAppGateway.enabled) openButton(digest, language) else null
-        return InlineKeyboardMarkup(listOfNotNull(open?.let { listOf(it) }, listOf(mute)))
+        val ask = if (miniAppGateway.enabled && digest.period.kind == DigestKind.MONTH) miniAppGateway.button(ASK_BUTTON_KEY, language, MiniAppScreen.ASK) else null
+        return InlineKeyboardMarkup(listOfNotNull(open?.let { listOf(it) }, ask?.let { listOf(it) }, listOf(mute)))
     }
 
     private fun openButton(digest: Digest, language: String?): InlineKeyboardButton =

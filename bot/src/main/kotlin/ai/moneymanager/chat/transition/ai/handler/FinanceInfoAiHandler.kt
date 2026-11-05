@@ -15,6 +15,9 @@ import ai.moneymanager.service.LocalizationService
 import org.bson.types.ObjectId
 import java.math.BigDecimal
 import java.time.LocalDate
+import ai.moneymanager.chat.reply.question.formatAnswerCard
+import ai.moneymanager.domain.model.MoneyGroup
+import ai.moneymanager.service.question.AskService
 import org.springframework.stereotype.Component
 
 private val VALID_MONTH_RANGE = 1..12
@@ -26,12 +29,14 @@ class FinanceInfoAiHandler(
     private val financeOperationService: FinanceOperationService,
     private val financeReportFormatter: FinanceReportFormatter,
     private val financeHistoryFormatter: FinanceHistoryFormatter,
-    private val localizationService: LocalizationService
+    private val localizationService: LocalizationService,
+    private val askService: AskService,
 ) : AiDomainHandler {
     override fun canHandle(command: BotCommand): Boolean = when (command) {
         is BotCommand.ShowBalance,
         is BotCommand.ShowReport,
-        is BotCommand.ShowHistory -> true
+        is BotCommand.ShowHistory,
+        is BotCommand.AskFinance -> true
         else -> false
     }
 
@@ -51,6 +56,7 @@ class FinanceInfoAiHandler(
             is BotCommand.ShowBalance -> renderBalance(groupId, group?.initialBalance ?: BigDecimal.ZERO, currency, lang)
             is BotCommand.ShowReport -> renderReport(command, groupId, currency, lang)
             is BotCommand.ShowHistory -> renderHistory(command, groupId, currency, lang)
+            is BotCommand.AskFinance -> group?.let { renderAnswer(command, it, context) } ?: localizationService.t("ai.error.no_active_group", lang)
             else -> localizationService.t("ai.error.unknown_command", lang)
         }
         return AiPreparationResult.ImmediateResult(message)
@@ -58,6 +64,11 @@ class FinanceInfoAiHandler(
 
     override fun execute(action: AiPendingAction, context: MoneyManagerContext): String =
         localizationService.t("ai.error.unknown_command", context.userInfo?.language)
+
+    private fun renderAnswer(command: BotCommand.AskFinance, group: MoneyGroup, context: MoneyManagerContext): String {
+        val user = checkNotNull(context.userInfo)
+        return formatAnswerCard(askService.answer(user, group, command.question, LocalDate.now(user.zone)))
+    }
 
     private fun renderBalance(groupId: ObjectId, initialBalance: BigDecimal, currency: Currency, lang: String?): String {
         val breakdown = financeOperationService.calculateBalance(groupId, initialBalance)

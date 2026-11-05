@@ -1,6 +1,6 @@
 package ai.moneymanager.chat.reply.money
 
-import ai.moneymanager.chat.reply.common.formatAmount
+import ai.moneymanager.domain.text.formatAmount
 import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.chat.state.MoneyManagerButtonType
 import ai.moneymanager.chat.state.MoneyManagerContext

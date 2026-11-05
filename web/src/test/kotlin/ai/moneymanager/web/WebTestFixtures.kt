@@ -3,6 +3,7 @@ package ai.moneymanager.web
 import ai.moneymanager.testing.TEST_USER_ID
 import ai.moneymanager.web.json.ApiJsonConfig
 import ai.moneymanager.web.security.TestInitData
+import org.mockito.Mockito
 import org.mockito.Mockito.mockingDetails
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -23,3 +24,9 @@ fun MockHttpServletRequestBuilder.json(content: String): MockHttpServletRequestB
 
 fun mockInvoked(mock: Any, methodName: String): Boolean =
     mockingDetails(mock).invocations.any { it.method.name == methodName }
+
+@Suppress("UNCHECKED_CAST")
+fun <T> anyOf(type: Class<T>): T {
+    Mockito.any(type)
+    return null as T
+}

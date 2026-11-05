@@ -68,3 +68,21 @@ data class EditLastOperationArgs(
     val newCategory: String? = null,
     val newOperationDate: String? = null
 )
+
+data class AskFinanceArgs(
+    val intent: String,
+    val operationType: String? = null,
+    val categories: String? = null,
+    val period: String? = null,
+    val month: String? = null,
+    val from: String? = null,
+    val to: String? = null,
+    val comparePeriod: String? = null,
+    val compareMonth: String? = null,
+    val member: String? = null,
+    val place: String? = null,
+    val tag: String? = null,
+    val minAmount: Double? = null,
+    val limit: Double? = null,
+    val amount: Double? = null,
+)

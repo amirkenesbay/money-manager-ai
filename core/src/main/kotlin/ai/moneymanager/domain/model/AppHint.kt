@@ -8,4 +8,5 @@ enum class AppHint {
     OPERATION_FORM,
     GROUP,
     MANUAL_ENTRY,
+    ASK,
 }

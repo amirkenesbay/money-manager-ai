@@ -1,6 +1,6 @@
 package ai.moneymanager.chat.telegram
 
-import ai.moneymanager.chat.reply.common.formatAmount
+import ai.moneymanager.domain.text.formatAmount
 import ai.moneymanager.chat.reply.common.formatIconPrefix
 import ai.moneymanager.chat.reply.common.shortDateFormatter
 import ai.moneymanager.chat.reply.group.GroupNoticeFormatter

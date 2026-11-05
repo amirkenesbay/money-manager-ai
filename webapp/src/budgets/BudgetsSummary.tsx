@@ -1,15 +1,17 @@
 import type { Currency } from '../api/types'
+import { AskChip } from '../ask/AskChip'
 import { strings } from '../strings'
 import { ChevronRightIcon } from '../ui/icons'
 import { BudgetRow } from './BudgetRow'
 import { needsAttention } from './budgetTone'
 import { useBudgets } from './useBudgets'
 
-export function BudgetsSummary({ groupId, currency, language, onOpenAll }: {
+export function BudgetsSummary({ groupId, currency, language, onOpenAll, onAsk }: {
   groupId: string
   currency: Currency
   language: string
   onOpenAll: () => void
+  onAsk: (question: string) => void
 }) {
   const budgets = useBudgets(groupId)
   if (budgets.state.status !== 'ready' || budgets.state.data.length === 0) return null
@@ -36,6 +38,7 @@ export function BudgetsSummary({ groupId, currency, language, onOpenAll }: {
         {attention.map((budget) => <BudgetRow key={budget.categoryId} budget={budget} currency={currency} language={language} />)}
         {fine > 0 && <p className="caption centered">{strings.budgetsMoreFine(fine)}</p>}
       </div>
+      <AskChip place="budget" question={strings.askBudgetChip(attention[0].name)} onAsk={onAsk} />
     </section>
   )
 }

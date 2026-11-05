@@ -1,7 +1,7 @@
 const SCREEN_PARAMETER = 'screen'
 const MONTH_PARAMETER = 'month'
 const ISO_MONTH = /^\d{4}-(0[1-9]|1[0-2])$/
-const LAUNCH_SCREENS = ['add', 'categories', 'groups', 'reports', 'operations'] as const
+const LAUNCH_SCREENS = ['add', 'categories', 'groups', 'reports', 'operations', 'ask'] as const
 
 export type LaunchScreen = (typeof LAUNCH_SCREENS)[number]
 

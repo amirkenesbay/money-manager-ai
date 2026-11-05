@@ -3,7 +3,7 @@ package ai.moneymanager.chat.reply.ai
 import ai.moneymanager.domain.model.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.chat.reply.common.backButton
 import ai.moneymanager.chat.reply.common.bold
-import ai.moneymanager.chat.reply.common.formatAmount
+import ai.moneymanager.domain.text.formatAmount
 import ai.moneymanager.chat.reply.common.resolveCurrency
 import ai.moneymanager.chat.transition.ai.rankCategoriesByProposed
 import ai.moneymanager.domain.model.Category

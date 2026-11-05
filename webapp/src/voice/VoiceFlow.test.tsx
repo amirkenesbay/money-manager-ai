@@ -11,8 +11,11 @@ import { category, group, me, operation, PERSONAL_GROUP_ID } from '../test/fixtu
 import { type Recorder, startRecording } from './recorder'
 import { parseVoice } from './voiceApi'
 import { VoiceFlow } from './VoiceFlow'
+import { askQuestion, fetchAskSuggestions } from '../ask/askApi'
+import type { AnswerCard } from '../api/types'
 
 vi.mock('./voiceApi', () => ({ parseVoice: vi.fn() }))
+vi.mock('../ask/askApi', () => ({ askQuestion: vi.fn(), fetchAskSuggestions: vi.fn() }))
 vi.mock('./recorder', () => ({
   startRecording: vi.fn(),
   microphoneSupported: () => true,
@@ -39,7 +42,14 @@ const voiceOperation = (overrides: Partial<VoiceOperation> = {}): VoiceOperation
   ...overrides,
 })
 const recorderReturning = (recording: ReturnType<Recorder['stop']>): Recorder => ({ stop: () => recording, level: () => 0, cancel: vi.fn() })
-const renderFlow = () => render(<VoiceFlow me={me()} group={group()} onClose={vi.fn()} onManual={onManual} onSaved={onSaved} />)
+const onOpenLink = vi.fn()
+const QUESTION = 'Сколько на такси в этом месяце?'
+const answer = (overrides: Partial<AnswerCard> = {}): AnswerCard => ({
+  title: '🚕 Такси · Ноябрь', headline: '12 000 ₸', lines: ['Операций: 4'], bars: [], rows: [],
+  followUps: ['А в прошлом месяце?'], link: { screen: 'REPORTS', month: '2026-11', search: null }, understood: true, ...overrides,
+})
+const renderFlow = (start?: Parameters<typeof VoiceFlow>[0]['start']) =>
+  render(<VoiceFlow me={me()} group={group()} start={start} onClose={vi.fn()} onManual={onManual} onSaved={onSaved} onOpenLink={onOpenLink} />)
 
 async function recordPhrase() {
   const user = userEvent.setup()
@@ -55,7 +65,44 @@ describe('VoiceFlow', () => {
     localStorage.clear()
     vi.mocked(startRecording).mockResolvedValue(recorderReturning({ kind: 'audio', wav }))
     vi.mocked(fetchCategories).mockResolvedValue([taxi])
+    vi.mocked(fetchAskSuggestions).mockResolvedValue({ questions: [QUESTION], topics: [] })
   })
+
+  it('answers a spoken question with a card and asks a follow-up by text', async () => {
+    vi.mocked(parseVoice).mockResolvedValue({ operations: [], answer: answer() })
+    vi.mocked(askQuestion).mockResolvedValue(answer({ title: '🚕 Такси · Октябрь', followUps: [] }))
+    const user = await recordPhrase()
+
+    expect(await screen.findByRole('heading', { name: '🚕 Такси · Ноябрь' })).toBeInTheDocument()
+    expect(screen.getByText('12 000 ₸')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'А в прошлом месяце?' }))
+
+    expect(await screen.findByRole('heading', { name: '🚕 Такси · Октябрь' })).toBeInTheDocument()
+    expect(askQuestion).toHaveBeenCalledWith(group().id, 'А в прошлом месяце?', expect.anything())
+  })
+
+  it('opens the screen the answer points to', async () => {
+    vi.mocked(askQuestion).mockResolvedValue(answer())
+    const user = userEvent.setup()
+    renderFlow({ kind: 'question', text: QUESTION })
+
+    await user.click(await screen.findByRole('button', { name: strings.answerLinks.REPORTS }))
+
+    expect(onOpenLink).toHaveBeenCalledWith({ screen: 'REPORTS', month: '2026-11', search: null })
+  })
+
+  it('asks a suggested question straight from the recording screen', async () => {
+    vi.mocked(askQuestion).mockResolvedValue(answer())
+    localStorage.setItem('voice.microphoneExplained', '1')
+    const user = userEvent.setup()
+    renderFlow()
+    await screen.findByRole('button', { name: strings.stopRecording })
+
+    await user.click(await screen.findByRole('button', { name: strings.quoted(QUESTION) }, { timeout: 4000 }))
+
+    expect(await screen.findByRole('heading', { name: '🚕 Такси · Ноябрь' })).toBeInTheDocument()
+    expect(askQuestion).toHaveBeenCalledWith(group().id, QUESTION, expect.anything())
+  }, 8000)
 
   it('records a phrase, shows the parsed operation and saves it', async () => {
     vi.mocked(parseVoice).mockResolvedValue({ operations: [voiceOperation()] })

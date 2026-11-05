@@ -27,16 +27,17 @@ const FEED_SKELETON_ROWS = 6
 const ALL_MEMBERS = ''
 const SEARCH_DELAY_MS = 300
 
-export function OperationsScreen({ me, group, onSelectOperation }: {
+export function OperationsScreen({ me, group, initialSearch = null, onSelectOperation }: {
   me: Me
   group: Group
+  initialSearch?: string | null
   onSelectOperation: (operation: Operation) => void
 }) {
   const [period, setPeriod] = useState<Period>(DEFAULT_PERIOD)
   const [type, setType] = useState<CategoryType | null>(null)
   const [categoryId, setCategoryId] = useState<string | null>(null)
   const [creatorId, setCreatorId] = useState<number | null>(null)
-  const [searchText, setSearchText] = useState('')
+  const [searchText, setSearchText] = useState(initialSearch ?? '')
   const search = useDebounced(searchText.trim(), SEARCH_DELAY_MS)
   const categories = useCategories(group.id)
   const query = useMemo<OperationsQuery>(

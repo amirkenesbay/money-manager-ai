@@ -33,10 +33,27 @@ describe('ManualFab', () => {
 describe('TabBar', () => {
   it('records voice from the middle of the bar on every tab', () => {
     const onRecordVoice = vi.fn()
-    render(<TabBar active="reports" onSelect={vi.fn()} onRecordVoice={onRecordVoice} />)
+    render(<TabBar active="reports" onSelect={vi.fn()} onRecordVoice={onRecordVoice} onShowQuestions={vi.fn()} />)
 
     fireEvent.click(screen.getByRole('button', { name: strings.recordVoice }))
 
     expect(onRecordVoice).toHaveBeenCalledOnce()
+  })
+
+  it('shows what can be asked on a long press instead of recording', () => {
+    vi.useFakeTimers()
+    const onRecordVoice = vi.fn()
+    const onShowQuestions = vi.fn()
+    render(<TabBar active="home" onSelect={vi.fn()} onRecordVoice={onRecordVoice} onShowQuestions={onShowQuestions} />)
+    const mic = screen.getByRole('button', { name: strings.recordVoice })
+
+    fireEvent.pointerDown(mic)
+    vi.advanceTimersByTime(600)
+    fireEvent.pointerUp(mic)
+    fireEvent.click(mic)
+    vi.useRealTimers()
+
+    expect(onShowQuestions).toHaveBeenCalledOnce()
+    expect(onRecordVoice).not.toHaveBeenCalled()
   })
 })

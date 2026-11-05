@@ -5,7 +5,7 @@ import ai.moneymanager.chat.reply.common.bold
 import ai.moneymanager.chat.reply.common.code
 import ai.moneymanager.chat.reply.common.dateFormatter
 import ai.moneymanager.chat.reply.common.escapeHtml
-import ai.moneymanager.chat.reply.common.formatAmount
+import ai.moneymanager.domain.text.formatAmount
 import ai.moneymanager.chat.reply.common.formatDescriptionSuffix
 import ai.moneymanager.chat.reply.common.formatSignedAmount
 import ai.moneymanager.chat.reply.common.italic

@@ -25,7 +25,8 @@ const budget = (overrides: Partial<Budget> = {}): Budget => ({
 const taxi = budget({ categoryId: 'cat-2', icon: '🚕', name: 'Такси', limit: '20000', spent: '17000', remaining: '3000', percent: 85 })
 const fun = budget({ categoryId: 'cat-3', icon: '🎬', name: 'Развлечения', limit: '30000', spent: '31200', remaining: '-1200', percent: 104 })
 
-const renderSummary = () => render(<BudgetsSummary groupId={group().id} currency="KZT" language={LANGUAGE} onOpenAll={vi.fn()} />)
+const renderSummary = () => render(<BudgetsSummary groupId={group().id} currency="KZT" language={LANGUAGE} onOpenAll={vi.fn()} onAsk={onAsk} />)
+const onAsk = vi.fn()
 
 describe('budget tone', () => {
   it('turns orange at 80 percent and red past the limit', () => {
@@ -46,6 +47,16 @@ describe('BudgetsSummary', () => {
     expect(screen.getByText(asRendered(strings.budgetOver(formatMoney('1200', 'KZT', LANGUAGE))))).toBeInTheDocument()
     expect(screen.queryByText('🛒 Продукты')).not.toBeInTheDocument()
     expect(screen.getByText(strings.budgetsMoreFine(1))).toBeInTheDocument()
+  })
+
+  it('offers to ask about the budget closest to running out', async () => {
+    localStorage.clear()
+    vi.mocked(fetchBudgets).mockResolvedValue([fun, taxi])
+    renderSummary()
+
+    await userEvent.click(await screen.findByRole('button', { name: strings.askBudgetChip(fun.name) }))
+
+    expect(onAsk).toHaveBeenCalledWith(strings.askBudgetChip(fun.name))
   })
 
   it('shows what a rolling budget brought from last month', async () => {

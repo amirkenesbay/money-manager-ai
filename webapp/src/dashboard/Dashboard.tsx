@@ -1,5 +1,6 @@
 import type { Group, Operation } from '../api/types'
 import { BudgetsSummary } from '../budgets/BudgetsSummary'
+import { Hint } from '../onboarding/Hint'
 import { formatPeriod } from '../format'
 import { OperationDays } from '../operations/OperationDays'
 import { strings } from '../strings'
@@ -12,8 +13,9 @@ import { HomeScreenOffer } from './HomeScreenOffer'
 import { useDashboard } from './useDashboard'
 
 const RECENT_SKELETON_ROWS = 3
+const ASK_HINT_OPERATIONS = 5
 
-export function Dashboard({ groups, groupId, language, switchError, onSwitchGroup, onOpenOperations, onOpenBudgets, onAddIncome, onSelectOperation }: {
+export function Dashboard({ groups, groupId, language, switchError, onSwitchGroup, onOpenOperations, onOpenBudgets, onAddIncome, onSelectOperation, onAsk }: {
   groups: Group[]
   groupId: string
   language: string
@@ -23,6 +25,7 @@ export function Dashboard({ groups, groupId, language, switchError, onSwitchGrou
   onOpenBudgets: () => void
   onAddIncome: () => void
   onSelectOperation: (operation: Operation) => void
+  onAsk: (question: string) => void
 }) {
   const dashboard = useDashboard(groupId)
   const ready = dashboard.state.status === 'ready' ? dashboard.state.data : null
@@ -41,7 +44,8 @@ export function Dashboard({ groups, groupId, language, switchError, onSwitchGrou
         <>
           <HomeHero balance={ready.balance} summary={ready.summary} language={language} onAddIncome={onAddIncome} />
           <HomeScreenOffer />
-          <BudgetsSummary groupId={groupId} currency={ready.balance.currency} language={language} onOpenAll={onOpenBudgets} />
+          {ready.summary.operationCount >= ASK_HINT_OPERATIONS && <Hint hint="ASK" title={strings.hintAskTitle} body={strings.hintAskBody} />}
+          <BudgetsSummary groupId={groupId} currency={ready.balance.currency} language={language} onOpenAll={onOpenBudgets} onAsk={onAsk} />
           <RecentOperations
             operations={ready.operations.items}
             group={group}
