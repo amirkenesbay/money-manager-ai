@@ -2,19 +2,23 @@ import type { Currency, Operation } from '../api/types'
 import { formatSignedMoney } from '../format'
 import { TaggedText } from './TaggedText'
 import { ImpactNote } from '../debts/ImpactNote'
+import { strings } from '../strings'
+import { SwipeRow } from '../ui/SwipeRow'
+import type { OperationActions } from './operationActions'
 
-export function OperationList({ operations, currency, language, userId, note, onSelect }: {
+export function OperationList({ operations, currency, language, userId, actions, note, onSelect }: {
   operations: Operation[]
   currency: Currency
   language: string
   userId?: number
+  actions?: OperationActions
   note: (operation: Operation) => string
   onSelect: (operation: Operation) => void
 }) {
   return (
     <ul className="rows">
-      {operations.map((operation) => (
-        <li key={operation.id}>
+      {operations.map((operation) => {
+        const row = (
           <button type="button" className="row row-button pressable" onClick={() => onSelect(operation)}>
             <span className="icon-circle" aria-hidden="true">{operation.categoryIcon}</span>
             <span className="row-main">
@@ -28,8 +32,25 @@ export function OperationList({ operations, currency, language, userId, note, on
               {userId !== undefined && <ImpactNote operation={operation} userId={userId} currency={currency} language={language} />}
             </span>
           </button>
-        </li>
-      ))}
+        )
+        return (
+          <li key={operation.id}>
+            {actions
+              ? (
+                <SwipeRow
+                  leftLabel={strings.delete}
+                  rightLabel={strings.edit}
+                  onSwipeLeft={() => actions.remove(operation)}
+                  onSwipeRight={() => actions.edit(operation)}
+                  onLongPress={() => actions.menu(operation)}
+                >
+                  {row}
+                </SwipeRow>
+              )
+              : row}
+          </li>
+        )
+      })}
     </ul>
   )
 }

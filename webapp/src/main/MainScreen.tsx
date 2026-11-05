@@ -16,7 +16,13 @@ import { WelcomeSheet } from '../onboarding/WelcomeSheet'
 import { OperationDetail } from '../operation/OperationDetail'
 import { OperationForm, type SaveResult } from '../operation/OperationForm'
 import { operationSummary } from '../operation/operationSummary'
-import { deleteOperation } from '../operations/operationsApi'
+import { createOperation, deleteOperation } from '../operations/operationsApi'
+import type { OperationActions } from '../operations/operationActions'
+import { operationInputOf } from '../operations/operationInput'
+import { OperationMenu } from '../operation/OperationMenu'
+import { useQuickCategories } from '../operation/useQuickCategories'
+import { startRepeating } from '../recurring/repeatOperation'
+import { toIsoDate } from '../format'
 import { OperationsScreen } from '../operations/OperationsScreen'
 import { PremiumScreen } from '../premium/PremiumScreen'
 import { RemindersScreen } from '../reminders/RemindersScreen'
@@ -37,10 +43,12 @@ import { type Notify, useToast } from '../ui/useToast'
 
 type SecondaryTab = Exclude<Tab, 'home'>
 
+const MONTHLY = { unit: 'MONTH', interval: 1 } as const
+
 const SECONDARY_TABS = TABS.filter((candidate): candidate is SecondaryTab => candidate !== 'home')
 
 type Overlay =
-  | { kind: 'form'; operation: Operation | null; type?: CategoryType }
+  | { kind: 'form'; operation: Operation | null; type?: CategoryType; categoryId?: string }
   | { kind: 'detail'; operation: Operation }
   | { kind: 'section'; section: Section }
   | { kind: 'voice'; start?: VoiceStart }
@@ -105,6 +113,8 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
   const [reportsMonth, setReportsMonth] = useState<string | null>(launchMonth)
   const [operationsSearch, setOperationsSearch] = useState<string | null>(null)
   const [importToken, setImportToken] = useState<string | null>(launchImportToken)
+  const [menuFor, setMenuFor] = useState<Operation | null>(null)
+  const quickCategories = useQuickCategories(groupId)
   const hints = useHints()
   const [welcomeOpen, setWelcomeOpen] = useState(() => !hints.isSeen('WELCOME') && launchScreen() === null)
   const toast = useToast()
@@ -208,6 +218,57 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
     toast.show({ title: strings.savedToast, detail, celebrate: true, action: { label: strings.undo, onClick: () => void undo(operations) } })
   }
 
+  const remove = async (operation: Operation) => {
+    try {
+      await deleteOperation(groupId, operation.id)
+      notifyOutcome('success')
+      refresh()
+      toast.show({ title: strings.deletedToast, detail: summary(operation), action: { label: strings.undo, onClick: () => void restore(operation) } })
+    } catch {
+      notifyOutcome('error')
+      toast.show({ title: strings.saveFailed })
+    }
+  }
+
+  const restore = async (operation: Operation) => {
+    toast.hide()
+    try {
+      await createOperation(groupId, operationInputOf(operation))
+      refresh()
+      toast.show({ title: strings.restoredToast, detail: summary(operation) })
+    } catch {
+      toast.show({ title: strings.saveFailed })
+    }
+  }
+
+  const repeatToday = async (operation: Operation) => {
+    try {
+      const created = await createOperation(groupId, operationInputOf(operation, toIsoDate(new Date())))
+      notifyOutcome('success')
+      refresh()
+      toast.show({ title: strings.repeatedToast, detail: summary(created), action: { label: strings.undo, onClick: () => void undo([created]) } })
+    } catch {
+      notifyOutcome('error')
+      toast.show({ title: strings.saveFailed })
+    }
+  }
+
+  const copy = async (operation: Operation) => {
+    const text = summary(operation) ?? ''
+    try {
+      await navigator.clipboard.writeText(text)
+      toast.show({ title: strings.copiedToast, detail: text })
+    } catch {
+      toast.show({ title: strings.saveFailed })
+    }
+  }
+
+  const operationActions: OperationActions = {
+    edit: (operation) => open({ kind: 'form', operation }),
+    remove: (operation) => void remove(operation),
+    menu: setMenuFor,
+  }
+
   const saved = ({ operation, created, note }: SaveResult) => {
     if (created) {
       recorded([operation], note)
@@ -290,21 +351,34 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
               onOpenDebts={() => navigation.openSection('debts')}
               onAddIncome={() => navigation.addOperation('INCOME')}
               onSelectOperation={navigation.selectOperation}
+              operationActions={operationActions}
               onAsk={navigation.ask}
             />
           </TabPanel>
           {workspace && SECONDARY_TABS.map((candidate) => (
             <TabPanel key={`${candidate}-${groupId}-${version}`} active={tab === candidate} hintsVisible={!overlay && !welcomeOpen}>
-              <TabContent tab={candidate} workspace={workspace} navigation={navigation} reportsMonth={reportsMonth} operationsSearch={operationsSearch} />
+              <TabContent tab={candidate} workspace={workspace} navigation={navigation} reportsMonth={reportsMonth} operationsSearch={operationsSearch} operationActions={operationActions} />
             </TabPanel>
           ))}
           <TabBar active={tab} onSelect={switchTab} onRecordVoice={recordVoice} onShowQuestions={() => setQuestionsOpen(true)} />
-          {!welcomeOpen && <ManualFab onOpen={() => navigation.addOperation()} />}
+          {!welcomeOpen && <ManualFab quickCategories={quickCategories} onOpen={(category) => open({ kind: 'form', operation: null, categoryId: category?.id })} />}
         </div>
       </main>
       {welcomeOpen && group && !overlay && <WelcomeSheet group={group} onFinish={finishWelcome} />}
       {questionsOpen && !welcomeOpen && !overlay && (
         <AskTopicsSheet groupId={groupId} onAsk={navigation.ask} onRecord={recordVoice} onClose={() => setQuestionsOpen(false)} />
+      )}
+      {menuFor && group && (
+        <OperationMenu
+          operation={menuFor}
+          currency={group.currency}
+          language={me.language}
+          onRepeat={() => void repeatToday(menuFor)}
+          onRecurring={() => void startRepeating(groupId, menuFor, MONTHLY).then((note) => toast.show({ title: note }))}
+          onCopy={() => void copy(menuFor)}
+          onDelete={() => void remove(menuFor)}
+          onClose={() => setMenuFor(null)}
+        />
       )}
       {toast.current && <Toast toast={toast.current} onDone={toast.hide} />}
     </>
@@ -333,6 +407,7 @@ function OperationOverlay({ overlay, group, me, onClose, onEdit, onBackToDetail,
       language={me.language}
       operation={editing}
       initialType={overlay.type}
+      initialCategoryId={overlay.categoryId}
       onBack={editing ? () => onBackToDetail(editing) : onClose}
       onSaved={onSaved}
       onDeleted={onDeleted}
@@ -374,17 +449,18 @@ function TabPanel({ active, hintsVisible, children }: { active: boolean; hintsVi
   )
 }
 
-function TabContent({ tab, workspace, navigation, reportsMonth, operationsSearch }: {
+function TabContent({ tab, workspace, navigation, reportsMonth, operationsSearch, operationActions }: {
   tab: SecondaryTab
   workspace: Workspace
   navigation: Navigation
   reportsMonth: string | null
   operationsSearch: string | null
+  operationActions: OperationActions
 }) {
   const { me, group, groups, actions, notify, onMeChanged } = workspace
   switch (tab) {
     case 'operations':
-      return <OperationsScreen me={me} group={group} initialSearch={operationsSearch} onSelectOperation={navigation.selectOperation} />
+      return <OperationsScreen me={me} group={group} initialSearch={operationsSearch} actions={operationActions} onSelectOperation={navigation.selectOperation} />
     case 'reports':
       return <ReportsScreen me={me} group={group} initialMonth={reportsMonth} onAddOperation={() => navigation.addOperation()} onAsk={navigation.ask} />
     default:

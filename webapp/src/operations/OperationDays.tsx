@@ -2,12 +2,14 @@ import type { Group, Operation } from '../api/types'
 import { formatDayLabel, formatSignedMoney } from '../format'
 import { groupByDay } from './groupByDay'
 import { OperationList } from './OperationList'
+import type { OperationActions } from './operationActions'
 
-export function OperationDays({ operations, group, language, userId, showDayTotal = true, onSelect }: {
+export function OperationDays({ operations, group, language, userId, actions, showDayTotal = true, onSelect }: {
   operations: Operation[]
   group: Group
   language: string
   userId?: number
+  actions?: OperationActions
   showDayTotal?: boolean
   onSelect: (operation: Operation) => void
 }) {
@@ -22,7 +24,7 @@ export function OperationDays({ operations, group, language, userId, showDayTota
     return (
       <section key={day.date} className="day" aria-label={label}>
         <h2 className="day-header"><span>{label}</span>{showDayTotal && <span>{net}</span>}</h2>
-        <OperationList operations={day.operations} currency={group.currency} language={language} userId={userId} note={note} onSelect={onSelect} />
+        <OperationList operations={day.operations} currency={group.currency} language={language} userId={userId} actions={actions} note={note} onSelect={onSelect} />
       </section>
     )
   })

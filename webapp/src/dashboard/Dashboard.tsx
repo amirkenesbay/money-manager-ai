@@ -4,6 +4,7 @@ import { DebtsSummary } from '../debts/DebtsSummary'
 import { Hint } from '../onboarding/Hint'
 import { formatPeriod } from '../format'
 import { OperationDays } from '../operations/OperationDays'
+import type { OperationActions } from '../operations/operationActions'
 import { strings } from '../strings'
 import { ArrowDownIcon, ChevronDownIcon } from '../ui/icons'
 import { LoadError } from '../ui/LoadError'
@@ -16,7 +17,7 @@ import { useDashboard } from './useDashboard'
 const RECENT_SKELETON_ROWS = 3
 const ASK_HINT_OPERATIONS = 5
 
-export function Dashboard({ groups, groupId, userId, language, switchError, onSwitchGroup, onOpenOperations, onOpenBudgets, onOpenDebts, onAddIncome, onSelectOperation, onAsk }: {
+export function Dashboard({ groups, groupId, userId, language, switchError, onSwitchGroup, onOpenOperations, onOpenBudgets, onOpenDebts, onAddIncome, onSelectOperation, operationActions, onAsk }: {
   groups: Group[]
   groupId: string
   userId: number
@@ -28,6 +29,7 @@ export function Dashboard({ groups, groupId, userId, language, switchError, onSw
   onOpenDebts: () => void
   onAddIncome: () => void
   onSelectOperation: (operation: Operation) => void
+  operationActions?: OperationActions
   onAsk: (question: string) => void
 }) {
   const dashboard = useDashboard(groupId)
@@ -55,6 +57,7 @@ export function Dashboard({ groups, groupId, userId, language, switchError, onSw
             group={group}
             userId={userId}
             language={language}
+            actions={operationActions}
             onOpenOperations={onOpenOperations}
             onSelectOperation={onSelectOperation}
           />
@@ -91,11 +94,12 @@ function DashboardSkeleton() {
   )
 }
 
-function RecentOperations({ operations, group, userId, language, onOpenOperations, onSelectOperation }: {
+function RecentOperations({ operations, group, userId, language, actions, onOpenOperations, onSelectOperation }: {
   operations: Operation[]
   group: Group
   userId: number
   language: string
+  actions?: OperationActions
   onOpenOperations: () => void
   onSelectOperation: (operation: Operation) => void
 }) {
@@ -112,7 +116,7 @@ function RecentOperations({ operations, group, userId, language, onOpenOperation
             <span className="recent-empty-arrow"><ArrowDownIcon /></span>
           </>
         )
-        : <OperationDays operations={operations} group={group} language={language} userId={userId} showDayTotal={false} onSelect={onSelectOperation} />}
+        : <OperationDays operations={operations} group={group} language={language} userId={userId} actions={actions} showDayTotal={false} onSelect={onSelectOperation} />}
     </section>
   )
 }

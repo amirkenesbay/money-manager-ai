@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { strings } from '../strings'
-import { tapImpact } from '../telegram/haptics'
+import { selectionTick, tapImpact } from '../telegram/haptics'
 import { ChartIcon, GridIcon, HomeIcon, ListIcon, MicIcon } from './icons'
 import { type Tab, TABS } from './tabs'
 import { useLongPress } from './useLongPress'
@@ -37,7 +37,7 @@ export function TabBar({ active, onSelect, onRecordVoice, onShowQuestions }: {
   const tabButton = (tab: Tab) => {
     const current = tab === active
     return (
-      <button key={tab} type="button" className="tab" aria-label={tabLabel(tab)} aria-current={current ? 'page' : undefined} onClick={() => onSelect(tab)}>
+      <button key={tab} type="button" className="tab" aria-label={tabLabel(tab)} aria-current={current ? 'page' : undefined} onClick={() => { selectionTick(); onSelect(tab) }}>
         {TAB_ICONS[tab]}
       </button>
     )

@@ -14,6 +14,7 @@ import { Segmented } from '../ui/Segmented'
 import { SkeletonRows } from '../ui/Skeleton'
 import { StateView } from '../ui/StateView'
 import { OperationDays } from './OperationDays'
+import type { OperationActions } from './operationActions'
 import './OperationsScreen.css'
 import type { OperationsQuery } from './operationsApi'
 import { DEFAULT_PERIOD, type Period, PERIODS, periodRange } from './periods'
@@ -26,10 +27,11 @@ const FEED_SKELETON_ROWS = 6
 const ALL_MEMBERS = ''
 const SEARCH_DELAY_MS = 300
 
-export function OperationsScreen({ me, group, initialSearch = null, onSelectOperation }: {
+export function OperationsScreen({ me, group, initialSearch = null, actions, onSelectOperation }: {
   me: Me
   group: Group
   initialSearch?: string | null
+  actions?: OperationActions
   onSelectOperation: (operation: Operation) => void
 }) {
   const [period, setPeriod] = useState<Period>(DEFAULT_PERIOD)
@@ -99,15 +101,16 @@ export function OperationsScreen({ me, group, initialSearch = null, onSelectOper
       </div>
       {period === 'allTime' && historyLimited
         ? premiumOffer
-        : <OperationsFeed me={me} group={group} query={query} premiumOffer={premiumOffer} onResetFilters={resetFilters} onSelectOperation={onSelectOperation} />}
+        : <OperationsFeed me={me} group={group} query={query} premiumOffer={premiumOffer} actions={actions} onResetFilters={resetFilters} onSelectOperation={onSelectOperation} />}
     </>
   )
 }
 
-function OperationsFeed({ me, group, query, premiumOffer, onResetFilters, onSelectOperation }: {
+function OperationsFeed({ me, group, query, premiumOffer, actions, onResetFilters, onSelectOperation }: {
   me: Me
   group: Group
   query: OperationsQuery
+  actions?: OperationActions
   premiumOffer: ReactNode
   onResetFilters: () => void
   onSelectOperation: (operation: Operation) => void
@@ -129,7 +132,7 @@ function OperationsFeed({ me, group, query, premiumOffer, onResetFilters, onSele
   return (
     <section className="feed" aria-busy={feed.refreshing}>
       {feed.totals && <SearchTotals totals={feed.totals} group={group} language={me.language} />}
-      <OperationDays operations={feed.items} group={group} language={me.language} userId={me.userId} onSelect={onSelectOperation} />
+      <OperationDays operations={feed.items} group={group} language={me.language} userId={me.userId} actions={actions} onSelect={onSelectOperation} />
       {feed.loadMoreFailed && <p className="error-text" role="alert">{strings.loadMoreFailed}</p>}
       {feed.refreshing ? null : feed.hasMore
         ? (

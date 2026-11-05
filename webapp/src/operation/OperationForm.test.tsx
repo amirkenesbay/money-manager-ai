@@ -130,7 +130,18 @@ describe('OperationForm', () => {
     await userEvent.type(await screen.findByRole('textbox', { name: strings.amountLabel }), '0')
 
     expect(screen.getByRole('alert')).toHaveTextContent(strings.amountInvalid)
-    expect(saveButton()).toBeDisabled()
+    await userEvent.click(saveButton())
+
+    expect(createOperation).not.toHaveBeenCalled()
+  })
+
+  it('shakes the amount when saving without one', async () => {
+    renderForm()
+    await userEvent.click(await screen.findByRole('button', { name: strings.save }))
+
+    expect(screen.getByRole('alert')).toHaveTextContent(strings.amountInvalid)
+    expect(screen.getByRole('textbox', { name: strings.amountLabel }).closest('label')).toHaveClass('shake')
+    expect(createOperation).not.toHaveBeenCalled()
   })
 
   it('asks to double-check a huge amount', async () => {

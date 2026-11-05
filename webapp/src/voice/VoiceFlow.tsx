@@ -11,9 +11,7 @@ import { strings } from '../strings'
 import { notifyOutcome } from '../telegram/haptics'
 import { openExternalLink } from '../telegram/telegramEnv'
 import { Button } from '../ui/Button'
-import { Moment } from '../three/Moment'
-import type { MomentInputs } from '../three/moments'
-import { MicIcon } from '../ui/icons'
+import { ThinkingDots } from '../ui/ThinkingDots'
 import { ScreenHeader } from '../ui/ScreenHeader'
 import { Sheet } from '../ui/Sheet'
 import { StateView } from '../ui/StateView'
@@ -33,7 +31,6 @@ const EXPLAINED_KEY = 'voice.microphoneExplained'
 const PROBLEM_ICON = '🎙️'
 const LEVEL_PROPERTY = '--voice-level'
 
-const THINKING: MomentInputs['orb'] = { mode: 'thinking', level: () => 0 }
 
 type Problem = 'denied' | 'unsupported' | 'silence' | 'notUnderstood' | 'aiLimit' | 'aiBusy' | 'network'
 
@@ -280,9 +277,8 @@ function ThinkingScreen({ groupId, request, onDone, onFailed, onCancel }: {
     <>
       <ScreenHeader title={asking ? strings.askingTitle : strings.processingTitle} onBack={onCancel} />
       <section className="voice-stage" aria-busy="true">
-        <Moment kind="orb" input={THINKING} className="voice-orb" fallback={<span className="voice-processing" aria-hidden="true"><MicIcon /></span>} />
-        <p className="hint centered">{asking ? strings.quoted(request.text) : strings.processingHint}</p>
-        {asking && <p className="caption centered">{strings.askingHint}</p>}
+        {asking && <p className="hint centered">{strings.quoted(request.text)}</p>}
+        <ThinkingDots stages={asking ? strings.askingStages : strings.processingStages} />
       </section>
       <Button variant="secondary" onClick={onCancel}>{strings.cancel}</Button>
     </>

@@ -13,6 +13,7 @@ import { CalendarIcon } from '../ui/icons'
 import { ScreenHeader } from '../ui/ScreenHeader'
 import { Segmented } from '../ui/Segmented'
 import { useConfirmClosing } from '../ui/useConfirmClosing'
+import { useShake } from '../ui/useShake'
 import { type DueChoice, DUE_CHOICES, latestDueDate, quickDueDate } from './loanDates'
 import { createLoan, fetchLoanPeople } from './loansApi'
 import './debts.css'
@@ -47,10 +48,18 @@ export function LoanForm({ group, language, initialPerson = '', initialDirection
   const amount = parseAmount(amountText)
   const dueDate = due === 'pick' ? pickedDue : quickDueDate(due, today)
   const ready = amount !== null && person.trim() !== ''
+  const [attempted, setAttempted] = useState(false)
+  const amountShake = useShake()
+  const personShake = useShake()
   useConfirmClosing(amountText.trim() !== '' || person.trim() !== '')
 
   const save = async () => {
-    if (!ready || amount === null) return
+    if (!ready || amount === null) {
+      setAttempted(true)
+      if (amount === null) amountShake.shake()
+      else personShake.shake()
+      return
+    }
     setSaving(true)
     setError(null)
     try {
@@ -69,7 +78,7 @@ export function LoanForm({ group, language, initialPerson = '', initialDirection
     <>
       <ScreenHeader title={strings.loanNew} onBack={onBack} />
       <Segmented label={strings.loanNew} options={DIRECTIONS} value={direction} optionKey={(option) => option} optionLabel={directionLabel} onChange={setDirection} />
-      <label className="amount-field">
+      <label className={`amount-field ${attempted && amount === null ? 'field-invalid' : ''} ${amountShake.shakeClass}`} onAnimationEnd={amountShake.onAnimationEnd}>
         <span className="field-label">{strings.amountLabel}</span>
         <span className="amount-input-row">
           <input className="amount-input amount" inputMode="decimal" autoComplete="off" placeholder="0" value={amountText} onChange={(event) => setAmountText(event.target.value)} />
@@ -79,7 +88,8 @@ export function LoanForm({ group, language, initialPerson = '', initialDirection
       <fieldset className="field-group">
         <legend className="field-label">{direction === 'LENT' ? strings.loanTo : strings.loanFrom}</legend>
         <input
-          className="text-field"
+          className={`text-field ${attempted && person.trim() === '' ? 'field-invalid' : ''} ${personShake.shakeClass}`}
+          onAnimationEnd={personShake.onAnimationEnd}
           aria-label={direction === 'LENT' ? strings.loanTo : strings.loanFrom}
           maxLength={MAX_PERSON_LENGTH}
           value={person}
@@ -105,7 +115,7 @@ export function LoanForm({ group, language, initialPerson = '', initialDirection
       <input className="text-field" aria-label={strings.loanNotePlaceholder} placeholder={strings.loanNotePlaceholder} value={note} onChange={(event) => setNote(event.target.value)} />
       {error && <p className="error-text" role="alert">{error}</p>}
       <BottomBar>
-        <Button disabled={!ready || saving} onClick={save}>{saving ? strings.saving : strings.save}</Button>
+        <Button disabled={saving} onClick={save}>{saving ? strings.saving : strings.save}</Button>
       </BottomBar>
       {calendarOpen && (
         <CalendarSheet

@@ -8,64 +8,11 @@
   padding: 1rem 0;
 }
 
-.voice-timer {
-  font-size: 1.5rem;
-}
-
-.voice-stop {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 7.5rem;
-  height: 7.5rem;
-  border: none;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: var(--raise-accent);
-  animation: voice-pulse 1.6s ease-in-out infinite;
-}
-
-.voice-orb-button {
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: none;
-}
-
-.voice-orb-button:disabled .voice-stop {
-  opacity: 0.6;
-  animation: none;
-}
-
-.moment.voice-orb {
-  width: 12rem;
-  height: 12rem;
-}
-
-.voice-stop-square.voice-orb-stop {
-  position: absolute;
-  width: 1.75rem;
-  height: 1.75rem;
-  pointer-events: none;
-}
-
 .voice-stop-square {
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 0.5rem;
   background: var(--on-accent);
-}
-
-.voice-processing {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 7.5rem;
-  height: 7.5rem;
-  border-radius: 50%;
-  box-shadow: var(--inset-lg);
-  color: var(--accent);
-  animation: voice-pulse 1.2s ease-in-out infinite;
 }
 
 .voice-examples {
@@ -132,12 +79,6 @@
   color: inherit;
   font-weight: 700;
   text-align: left;
-}
-
-@keyframes voice-pulse {
-  50% {
-    transform: scale(1.05);
-  }
 }
 
 .voice-listening {

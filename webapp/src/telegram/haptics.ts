@@ -18,6 +18,22 @@ export function tapImpact(): void {
   }
 }
 
+export function holdImpact(): void {
+  try {
+    hapticFeedback.impactOccurred.ifAvailable('medium')
+  } catch {
+    return
+  }
+}
+
+export function selectionTick(): void {
+  try {
+    hapticFeedback.selectionChanged.ifAvailable()
+  } catch {
+    return
+  }
+}
+
 export function confirmClosing(enabled: boolean): void {
   try {
     if (enabled) closingBehavior.enableConfirmation.ifAvailable()

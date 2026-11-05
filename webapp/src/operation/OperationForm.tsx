@@ -13,6 +13,7 @@ import { LoadError } from '../ui/LoadError'
 import { ScreenHeader } from '../ui/ScreenHeader'
 import { Segmented } from '../ui/Segmented'
 import { useConfirmClosing } from '../ui/useConfirmClosing'
+import { useShake } from '../ui/useShake'
 import { SkeletonRows } from '../ui/Skeleton'
 import { HUGE_AMOUNT, parseAmount } from './amount'
 import { CalendarSheet } from './CalendarSheet'
@@ -35,12 +36,13 @@ const CATEGORY_SKELETON_ROWS = 2
 
 export type SaveResult = { operation: Operation; created: boolean; note?: string }
 
-export function OperationForm({ group, userId, language, operation, initialType = 'EXPENSE', onBack, onSaved, onDeleted }: {
+export function OperationForm({ group, userId, language, operation, initialType = 'EXPENSE', initialCategoryId, onBack, onSaved, onDeleted }: {
   group: Group
   userId: number
   language: string
   operation: Operation | null
   initialType?: CategoryType
+  initialCategoryId?: string
   onBack: () => void
   onSaved: (result: SaveResult) => void
   onDeleted: (operation: Operation) => void
@@ -53,18 +55,19 @@ export function OperationForm({ group, userId, language, operation, initialType 
       {categories.state.status === 'loading' && <SkeletonRows count={CATEGORY_SKELETON_ROWS} />}
       {categories.state.status === 'error' && <LoadError message={categories.state.message} onRetry={categories.reload} />}
       {categories.state.status === 'ready' && (
-        <FormFields group={group} userId={userId} language={language} operation={operation} initialType={initialType} categories={categories.state.data} onSaved={onSaved} onDeleted={onDeleted} />
+        <FormFields group={group} userId={userId} language={language} operation={operation} initialType={initialType} initialCategoryId={initialCategoryId} categories={categories.state.data} onSaved={onSaved} onDeleted={onDeleted} />
       )}
     </>
   )
 }
 
-function FormFields({ group, userId, language, operation, initialType, categories, onSaved, onDeleted }: {
+function FormFields({ group, userId, language, operation, initialType, initialCategoryId, categories, onSaved, onDeleted }: {
   group: Group
   userId: number
   language: string
   operation: Operation | null
   initialType: CategoryType
+  initialCategoryId?: string
   categories: Category[]
   onSaved: (result: SaveResult) => void
   onDeleted: (operation: Operation) => void
@@ -72,7 +75,7 @@ function FormFields({ group, userId, language, operation, initialType, categorie
   const today = toIsoDate(new Date())
   const [type, setType] = useState<CategoryType>(operation?.type ?? initialType)
   const [amountText, setAmountText] = useState(operation ? operation.amount : '')
-  const [categoryId, setCategoryId] = useState<string | null>(operation?.categoryId ?? null)
+  const [categoryId, setCategoryId] = useState<string | null>(operation?.categoryId ?? initialCategoryId ?? null)
   const [date, setDate] = useState(operation?.operationDate ?? today)
   const [comment, setComment] = useState(withoutTags(operation?.description ?? null))
   const [tags, setTags] = useState(tagsOf(operation?.description ?? null))
@@ -82,11 +85,13 @@ function FormFields({ group, userId, language, operation, initialType, categorie
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [attempted, setAttempted] = useState(false)
+  const amountShake = useShake()
 
   const typeCategories = categories.filter((category) => category.type === type)
   const selectedCategory = typeCategories.find((category) => category.id === categoryId) ?? typeCategories[0] ?? null
   const amount = parseAmount(amountText)
-  const amountInvalid = amountText.trim() !== '' && amount === null
+  const amountInvalid = (attempted || amountText.trim() !== '') && amount === null
   const huge = amount !== null && Number(amount) >= HUGE_AMOUNT
   const quickDates = QUICK_DAYS_AGO.map((daysAgo) => toIsoDate(daysBefore(daysAgo)))
   const customDate = !quickDates.includes(date)
@@ -101,7 +106,12 @@ function FormFields({ group, userId, language, operation, initialType, categorie
   }
 
   const save = async () => {
-    if (amount === null || selectedCategory === null) return
+    if (amount === null) {
+      setAttempted(true)
+      amountShake.shake()
+      return
+    }
+    if (selectedCategory === null) return
     const split = splitting && share ? { payerId: share.payerId, participantIds: share.participantIds } : {}
     const input: OperationInput = { type, amount, categoryId: selectedCategory.id, operationDate: date, description: withTags(comment, tags), ...split }
     setSaving(true)
@@ -121,7 +131,7 @@ function FormFields({ group, userId, language, operation, initialType, categorie
   return (
     <>
       <Segmented label={strings.operationTypeLabel} options={OPERATION_TYPES} value={type} optionKey={(option) => option} optionLabel={strings.operationType} onChange={selectType} />
-      <label className={`amount-field ${amountInvalid ? 'field-invalid' : ''} ${huge ? 'field-warning' : ''}`}>
+      <label className={`amount-field ${amountInvalid ? 'field-invalid' : ''} ${huge ? 'field-warning' : ''} ${amountShake.shakeClass}`} onAnimationEnd={amountShake.onAnimationEnd}>
         <span className="field-label">{strings.amountLabel}</span>
         <span className="amount-input-row">
           <input
@@ -189,7 +199,7 @@ function FormFields({ group, userId, language, operation, initialType, categorie
       {saveError && <p className="error-text" role="alert">{saveError}</p>}
 
       <BottomBar>
-        <Button disabled={amount === null || selectedCategory === null || saving} onClick={save}>
+        <Button disabled={selectedCategory === null || saving} onClick={save}>
           {saving ? strings.saving : huge ? strings.saveHuge : operation ? strings.saveChanges : strings.save}
         </Button>
       </BottomBar>
