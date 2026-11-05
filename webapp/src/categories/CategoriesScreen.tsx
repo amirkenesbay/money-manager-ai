@@ -4,7 +4,7 @@ import { strings } from '../strings'
 import { BottomBar } from '../ui/BottomBar'
 import { Button } from '../ui/Button'
 import { EmptyCard } from '../ui/EmptyCard'
-import { ChevronRightIcon, GridIcon } from '../ui/icons'
+import { ChevronRightIcon, GridIcon, GripIcon } from '../ui/icons'
 import { LimitScreen } from '../ui/LimitScreen'
 import { LoadError } from '../ui/LoadError'
 import { ScreenHeader } from '../ui/ScreenHeader'
@@ -15,6 +15,9 @@ import { CategoryForm } from './CategoryForm'
 import { RememberedPlaces } from './RememberedPlaces'
 import { CATEGORY_TYPES } from './categoryTypes'
 import { useCategories } from './useCategories'
+import { reorderCategories } from './categoriesApi'
+import { useReorder } from '../ui/useReorder'
+import { serverMessage } from '../api/client'
 import { useBudgets } from '../budgets/useBudgets'
 import { budgetColor } from '../budgets/budgetTone'
 import { Meter } from '../ui/Meter'
@@ -39,6 +42,18 @@ export function CategoriesScreen({ me, group, notify, onBack }: {
   const free = subscription.tier === 'FREE'
   const ofType = categories.state.status === 'ready' ? categories.state.data.filter((category) => category.type === type) : []
   const toList = () => setMode({ kind: 'list' })
+  const saveOrder = async (ids: string[]) => {
+    const others = categories.state.status === 'ready' ? categories.state.data.filter((category) => category.type !== type).map((category) => category.id) : []
+    try {
+      await reorderCategories(group.id, [...ids, ...others])
+      categories.reload()
+    } catch (error) {
+      notify({ title: serverMessage(error) ?? strings.saveFailed })
+      categories.reload()
+    }
+  }
+
+  const reorder = useReorder(ofType.map((category) => category.id), (ids) => void saveOrder(ids))
 
   const budgetOf = (categoryId: string) => (budgets.state.status === 'ready' ? budgets.state.data.find((budget) => budget.categoryId === categoryId) : undefined)
 
@@ -115,18 +130,23 @@ export function CategoriesScreen({ me, group, notify, onBack }: {
         ? <EmptyCard icon={<GridIcon />} title={strings.categoriesEmptyTitle(type)} body={strings.categoriesEmptyHint(type)} />
         : (
           <ul className="rows">
-            {ofType.map((category) => {
+            {reorder.order.map((id) => ofType.find((category) => category.id === id)).filter((category): category is Category => Boolean(category)).map((category) => {
               const budget = budgetOf(category.id)
               return (
-                <li key={category.id}>
-                  <button type="button" className="row row-button pressable" onClick={() => setMode({ kind: 'form', category })}>
-                    <span className="icon-circle" aria-hidden="true">{category.icon}</span>
-                    <span className="row-main">
-                      <span className="row-title">{category.name}</span>
-                      {budget && <CategoryBudget budget={budget} currency={group.currency} language={me.language} />}
-                    </span>
-                    <ChevronRightIcon />
-                  </button>
+                <li key={category.id} data-reorder-id={category.id} className={reorder.dragging === category.id ? 'reorder-dragging' : undefined}>
+                  <span className="reorder-row">
+                    <button type="button" className="row row-button pressable" onClick={() => setMode({ kind: 'form', category })}>
+                      <span className="icon-circle" aria-hidden="true">{category.icon}</span>
+                      <span className="row-main">
+                        <span className="row-title">{category.name}</span>
+                        {budget && <CategoryBudget budget={budget} currency={group.currency} language={me.language} />}
+                      </span>
+                      <ChevronRightIcon />
+                    </button>
+                    <button type="button" className="reorder-handle" aria-label={strings.moveCategory(category.name)} {...reorder.handle(category.id)}>
+                      <GripIcon />
+                    </button>
+                  </span>
                 </li>
               )
             })}

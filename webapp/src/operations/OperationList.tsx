@@ -4,6 +4,7 @@ import { TaggedText } from './TaggedText'
 import { ImpactNote } from '../debts/ImpactNote'
 import { strings } from '../strings'
 import { SwipeRow } from '../ui/SwipeRow'
+import { OPERATION_CARD, shareElement } from '../ui/sharedElement'
 import type { OperationActions } from './operationActions'
 
 export function OperationList({ operations, currency, language, userId, actions, note, onSelect }: {
@@ -19,7 +20,14 @@ export function OperationList({ operations, currency, language, userId, actions,
     <ul className="rows">
       {operations.map((operation) => {
         const row = (
-          <button type="button" className="row row-button pressable" onClick={() => onSelect(operation)}>
+          <button
+            type="button"
+            className="row row-button pressable"
+            onClick={(event) => {
+              shareElement(event.currentTarget, OPERATION_CARD)
+              onSelect(operation)
+            }}
+          >
             <span className="icon-circle" aria-hidden="true">{operation.categoryIcon}</span>
             <span className="row-main">
               <span className="row-title">{operation.categoryName}</span>

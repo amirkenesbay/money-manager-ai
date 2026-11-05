@@ -82,3 +82,5 @@ export const SparkIcon = () => <Icon size={14}><path d="M12 3l1.8 5.2L19 10l-5.2
 export const SwapIcon = () => <Icon size={18}><path d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7" /></Icon>
 
 export const UploadIcon = () => <Icon size={18}><path d="M12 21V9M7 14l5-5 5 5M5 3h14" /></Icon>
+
+export const GripIcon = () => <Icon size={18}><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01" /></Icon>

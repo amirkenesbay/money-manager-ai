@@ -14,6 +14,7 @@ import { StateView } from '../ui/StateView'
 import type { ToastMessage } from '../ui/Toast'
 import type { Notify } from '../ui/useToast'
 import { AmountSheet } from './AmountSheet'
+import { burstConfetti, flyCoins } from '../ui/celebrate'
 import { recordSettlement, remindDebtor, undoSettlement } from './debtsApi'
 import { LoanDetail } from './LoanDetail'
 import { overdueDays } from './loanDates'
@@ -33,7 +34,10 @@ interface Repayment {
   fromId: number
   toId: number
   amount: string
+  origin: Element
 }
+
+const TAB_TOTAL_SELECTOR = '.debt-tab[aria-selected="true"] .debt-tab-total'
 
 export function DebtsScreen({ me, group, notify, onBack }: { me: Me; group: Group; notify: Notify; onBack: () => void }) {
   const debts = useDebts(group.id)
@@ -56,7 +60,10 @@ export function DebtsScreen({ me, group, notify, onBack }: { me: Me; group: Grou
 
   const undoSettled = (settlementId: string) => void run(() => undoSettlement(group.id, settlementId), () => ({ title: strings.debtUndone }))
 
-  const repay = (loan: Loan, amount: string) => void run(() => repayLoan(group.id, loan.id, amount), (saved) => ({
+  const repay = (loan: Loan, amount: string) => void run(() => repayLoan(group.id, loan.id, amount).then((saved) => {
+    if (!saved.open) burstConfetti()
+    return saved
+  }), (saved) => ({
     title: saved.open ? strings.loanRepaid : strings.loanClosed,
     detail: money(amount),
     celebrate: !saved.open,
@@ -127,7 +134,12 @@ export function DebtsScreen({ me, group, notify, onBack }: { me: Me; group: Grou
           language={me.language}
           onSave={(amount) => {
             setRepayment(null)
-            void run(() => recordSettlement(group.id, repayment.fromId, repayment.toId, amount), (settlement) => ({
+            void run(() => recordSettlement(group.id, repayment.fromId, repayment.toId, amount).then((settlement) => {
+              const total = document.querySelector(TAB_TOTAL_SELECTOR)
+              if (total && repayment.toId === me.userId) flyCoins(repayment.origin, total)
+              else if (total) flyCoins(total, repayment.origin)
+              return settlement
+            }), (settlement) => ({
               title: strings.debtSaved,
               detail: money(amount),
               action: { label: strings.undo, onClick: () => undoSettled(settlement.id) },
@@ -251,7 +263,7 @@ function PersonDebt({ debt, groupName, userId, currency, language, onRemind, onR
   const amount = Number(debt.amount)
   const owed = amount > 0
   const total = formatMoney(String(Math.abs(amount)), currency, language)
-  const repay = (fromId: number, toId: number) => onRepay({ fromId, toId, amount: String(Math.abs(amount)) })
+  const repay = (fromId: number, toId: number, origin: Element) => onRepay({ fromId, toId, amount: String(Math.abs(amount)), origin })
   return (
     <div>
       <div className="debt-person">
@@ -263,10 +275,10 @@ function PersonDebt({ debt, groupName, userId, currency, language, onRemind, onR
           ? (
             <>
               <Button size="small" variant="secondary" onClick={() => onRemind(debt)}>{strings.debtRemind}</Button>
-              <Button size="small" variant="secondary" onClick={() => repay(debt.userId, userId)}>{strings.debtReceived}</Button>
+              <Button size="small" variant="secondary" onClick={(event) => repay(debt.userId, userId, event.currentTarget)}>{strings.debtReceived}</Button>
             </>
           )
-          : <Button size="small" variant="secondary" onClick={() => repay(userId, debt.userId)}>{strings.debtPaid}</Button>}
+          : <Button size="small" variant="secondary" onClick={(event) => repay(userId, debt.userId, event.currentTarget)}>{strings.debtPaid}</Button>}
       </div>
       {open && (
         <ul className="debt-items">

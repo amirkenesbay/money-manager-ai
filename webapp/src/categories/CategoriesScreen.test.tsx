@@ -1,13 +1,14 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiRequestError } from '../api/client'
 import { strings } from '../strings'
 import { category, group, me, PERSONAL_GROUP_ID } from '../test/fixtures'
-import { createCategory, deleteCategory, fetchCategories, fetchCategoryRules, forgetCategoryRule, updateCategory } from './categoriesApi'
+import { createCategory, reorderCategories, deleteCategory, fetchCategories, fetchCategoryRules, forgetCategoryRule, updateCategory } from './categoriesApi'
 import { CategoriesScreen } from './CategoriesScreen'
 
 vi.mock('./categoriesApi', () => ({
+  reorderCategories: vi.fn(),
   fetchCategories: vi.fn(),
   createCategory: vi.fn(),
   updateCategory: vi.fn(),
@@ -118,7 +119,7 @@ describe('CategoriesScreen', () => {
     vi.mocked(updateCategory).mockResolvedValue({ ...groceries, name: 'Еда' })
     renderScreen(true)
 
-    await user.click(await screen.findByRole('button', { name: /Продукты/ }))
+    await user.click(await screen.findByRole('button', { name: /^Продукты/ }))
     expect(screen.getByText(strings.sharedChangeNotice)).toBeInTheDocument()
     await user.clear(nameInput())
     await user.type(nameInput(), 'Еда')
@@ -133,11 +134,30 @@ describe('CategoriesScreen', () => {
     vi.mocked(deleteCategory).mockResolvedValue(undefined)
     renderScreen()
 
-    await user.click(await screen.findByRole('button', { name: /Продукты/ }))
+    await user.click(await screen.findByRole('button', { name: /^Продукты/ }))
     await user.click(screen.getByRole('button', { name: strings.deleteCategory }))
     await user.click(screen.getByRole('button', { name: strings.delete }))
 
     expect(deleteCategory).toHaveBeenCalledWith(PERSONAL_GROUP_ID, groceries.id)
     expect(notify).toHaveBeenCalledWith({ title: strings.categoryDeletedToast, detail: '🛒 Продукты' })
+  })
+
+  it('saves a new order when a category is dragged above another', async () => {
+    const taxi = category({ id: 'cat-taxi', name: 'Такси', icon: '🚕' })
+    vi.mocked(fetchCategories).mockResolvedValue([groceries, taxi, salary])
+    vi.mocked(reorderCategories).mockResolvedValue([taxi, groceries, salary])
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      const index = ['cat-1', 'cat-taxi'].indexOf(this.dataset.reorderId ?? '')
+      return { top: index * 50, bottom: index * 50 + 50, left: 0, right: 300, width: 300, height: 50, x: 0, y: index * 50, toJSON: () => ({}) } as DOMRect
+    })
+    renderScreen()
+    const handle = await screen.findByRole('button', { name: strings.moveCategory('Такси') })
+
+    fireEvent.pointerDown(handle, { clientY: 75, pointerId: 1 })
+    fireEvent.pointerMove(handle, { clientY: 20, pointerId: 1 })
+    fireEvent.pointerUp(handle, { clientY: 20, pointerId: 1 })
+
+    await waitFor(() => expect(reorderCategories).toHaveBeenCalledWith(group().id, ['cat-taxi', groceries.id, salary.id]))
+    vi.restoreAllMocks()
   })
 })

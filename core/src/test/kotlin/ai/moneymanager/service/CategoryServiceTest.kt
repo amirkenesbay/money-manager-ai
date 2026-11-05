@@ -13,6 +13,7 @@ import org.bson.types.ObjectId
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.any
+import org.mockito.ArgumentMatchers.anyList
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import java.math.BigDecimal
@@ -101,5 +102,18 @@ class CategoryServiceTest {
 
         assertThat(service.deleteCategory(ACTOR_ID, transport.id!!)).isFalse()
         assertThat(publishedEvents).isEmpty()
+    }
+
+    @Test
+    fun `keeps the order the user dragged categories into`() {
+        `when`(repository.findByGroupIdOrderByAuditInfoCreatedAtAsc(groupId)).thenReturn(listOf(taxi, transport))
+        val saved = mutableListOf<CategoryEntity>()
+        `when`(repository.saveAll(anyList<CategoryEntity>())).thenAnswer { invocation -> invocation.getArgument<List<CategoryEntity>>(0).also(saved::addAll) }
+
+        assertThat(service.reorder(groupId, listOf(checkNotNull(transport.id), checkNotNull(taxi.id)))).isTrue()
+        `when`(repository.findByGroupIdOrderByAuditInfoCreatedAtAsc(groupId)).thenReturn(saved)
+
+        assertThat(service.getCategoriesByGroup(groupId).map { it.name }).containsExactly("Транспорт", "Такси")
+        assertThat(service.reorder(groupId, listOf(ObjectId()))).isFalse()
     }
 }

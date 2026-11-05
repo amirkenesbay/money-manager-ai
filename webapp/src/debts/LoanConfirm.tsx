@@ -9,6 +9,7 @@ import { Button } from '../ui/Button'
 import { ScreenHeader } from '../ui/ScreenHeader'
 import { StateView } from '../ui/StateView'
 import { createLoan, repayLoan } from './loansApi'
+import { burstConfetti } from '../ui/celebrate'
 import './debts.css'
 
 const MISSING_ICON = '🤔'
@@ -45,6 +46,7 @@ export function LoanConfirm({ group, language, loan, onSayAgain, onClose, onSave
     try {
       if (repayment && loan.loanId) {
         const saved = await repayLoan(group.id, loan.loanId, amount)
+        if (!saved.open) burstConfetti()
         onSaved(saved.open ? strings.loanRepaid : strings.loanClosed, `${saved.person} · ${money(amount)}`)
       } else {
         const saved = await createLoan(group.id, { direction: loan.direction, person: loan.person, amount, dueDate: loan.dueDate, note: loan.note })

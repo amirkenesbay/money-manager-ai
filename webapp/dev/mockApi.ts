@@ -15,6 +15,7 @@ const FAMILY_GROUP_ID = '6650a1b2c3d4e5f6a7b8c9d1'
 const PREMIUM_EXPIRES_AT = '2026-12-31T00:00:00Z'
 const NO_CONTENT_STATUS = 204
 const QUESTION_SCENARIO = 'question'
+const CATEGORY_ORDER = 'order'
 const UNKNOWN_QUESTION = /погод|weather|ауа райы/i
 const GROUP_ROUTE = /^\/groups\/([0-9a-f]{24})(?:\/(balance|summary|operations|activate|categories|category-rules|notices|tags|recurring|export|budgets|members|invite|initial-balance|voice|ask|debts|loans|imports|reports\/[a-z]+))?(?:\/([^/]+))?(?:\/(limit|repayments|columns))?(?:\/([^/]+))?$/
 const REMINDER_ROUTE = /^\/notifications(?:\/([^/]+))?$/
@@ -225,6 +226,11 @@ function setLimit(groupId: string, categoryId: string, body: string, scenario: s
 
 function mutateCategory(groupId: string, method: string, categoryId: string | undefined, body: string, scenario: string): MockResponse {
   const list = categoriesOf(groupId)
+  if (categoryId === CATEGORY_ORDER) {
+    const ids = (JSON.parse(body) as { ids: string[] }).ids
+    categories[groupId] = [...list].sort((left, right) => ids.indexOf(left.id) - ids.indexOf(right.id))
+    return ok(categories[groupId])
+  }
   if (method === 'DELETE') {
     categories[groupId] = list.filter((category) => category.id !== categoryId)
     return { status: NO_CONTENT_STATUS, body: null }

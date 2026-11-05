@@ -6,6 +6,7 @@ import { BottomBar } from '../ui/BottomBar'
 import { Button } from '../ui/Button'
 import { ScreenHeader } from '../ui/ScreenHeader'
 import { DeleteSheet } from './DeleteSheet'
+import { OPERATION_CARD } from '../ui/sharedElement'
 import { ShareDetail } from '../debts/ShareDetail'
 import { shareOf } from '../debts/share'
 import './operation.css'
@@ -31,7 +32,7 @@ export function OperationDetail({ group, userId, language, operation, onBack, on
   return (
     <>
       <ScreenHeader title={strings.operationTitle} onBack={onBack} />
-      <section className="card detail-card">
+      <section className="card detail-card" style={{ viewTransitionName: OPERATION_CARD }}>
         <span className="detail-icon" aria-hidden="true">{operation.categoryIcon}</span>
         <p className={`amount detail-amount ${income ? 'income' : ''}`}>{formatSignedMoney(operation.type, operation.amount, group.currency, language)}</p>
         <span className={`detail-badge ${income ? 'income' : 'negative'}`}>{`${strings.operationType(operation.type)} · ${operation.categoryName}`}</span>

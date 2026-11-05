@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Group, ImportResult } from '../api/types'
 import { formatPeriod } from '../format'
 import { strings } from '../strings'
@@ -7,6 +7,7 @@ import { Button } from '../ui/Button'
 import { ScreenHeader } from '../ui/ScreenHeader'
 import { StateView } from '../ui/StateView'
 import { undoImport } from './importApi'
+import { burstConfetti } from '../ui/celebrate'
 
 const DONE_ICON = '🎉'
 const PART_SEPARATOR = ' · '
@@ -21,6 +22,10 @@ export function ImportDone({ group, language, result, onBack, onOpenOperations, 
   onFailed: (error: unknown) => void
 }) {
   const [undoing, setUndoing] = useState(false)
+
+  useEffect(() => {
+    burstConfetti()
+  }, [])
   const details = [
     result.from && result.to ? formatPeriod(result.from, result.to, language) : null,
     result.createdCategories > 0 ? strings.importCreated(result.createdCategories) : null,

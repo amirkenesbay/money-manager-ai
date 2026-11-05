@@ -38,6 +38,7 @@ describe('live components', () => {
     const { actions, face } = renderRow()
 
     swipe(face, -200)
+    act(() => vi.advanceTimersByTime(300))
     swipe(face, 200)
 
     expect(actions.left).toHaveBeenCalledOnce()

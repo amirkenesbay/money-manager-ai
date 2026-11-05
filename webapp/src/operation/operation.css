@@ -27,6 +27,25 @@
   box-shadow: var(--inset-sm);
 }
 
+.category-tile {
+  transition: box-shadow var(--press), transform 0.25s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+.category-tile:active {
+  box-shadow: var(--inset-sm);
+  transform: scale(0.94);
+}
+
+.category-tile[aria-pressed='true'] .category-tile-icon {
+  animation: tile-pick 0.35s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+@keyframes tile-pick {
+  40% {
+    transform: scale(1.3);
+  }
+}
+
 .category-tile-icon {
   font-size: 1.25rem;
 }

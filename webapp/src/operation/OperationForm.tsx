@@ -14,6 +14,7 @@ import { ScreenHeader } from '../ui/ScreenHeader'
 import { Segmented } from '../ui/Segmented'
 import { useConfirmClosing } from '../ui/useConfirmClosing'
 import { useShake } from '../ui/useShake'
+import { HoldButton } from '../ui/HoldButton'
 import { SkeletonRows } from '../ui/Skeleton'
 import { groupAmountInput, HUGE_AMOUNT, parseAmount } from './amount'
 import { CalendarSheet } from './CalendarSheet'
@@ -199,9 +200,13 @@ function FormFields({ group, userId, language, operation, initialType, initialCa
       {saveError && <p className="error-text" role="alert">{saveError}</p>}
 
       <BottomBar>
-        <Button disabled={selectedCategory === null || saving} onClick={save}>
-          {saving ? strings.saving : huge ? strings.saveHuge : operation ? strings.saveChanges : strings.save}
-        </Button>
+        {huge && !saving
+          ? <HoldButton label={strings.holdToSave} disabled={selectedCategory === null} onComplete={() => void save()} />
+          : (
+            <Button disabled={selectedCategory === null || saving} onClick={save}>
+              {saving ? strings.saving : operation ? strings.saveChanges : strings.save}
+            </Button>
+          )}
       </BottomBar>
 
       {calendarOpen && (

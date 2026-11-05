@@ -4,6 +4,7 @@ import { holdImpact, selectionTick } from '../telegram/haptics'
 const ACTION_SHARE = 0.4
 const SWIPE_SLOP_PX = 10
 const HOLD_MS = 450
+const LEAVE_MS = 260
 
 interface Gesture {
   x: number
@@ -26,6 +27,7 @@ export function SwipeRow({ children, leftLabel, rightLabel, onSwipeLeft, onSwipe
   const handled = useRef(false)
   const [offset, setOffset] = useState(0)
   const [dragging, setDragging] = useState(false)
+  const [leaving, setLeaving] = useState<number | null>(null)
 
   const reset = () => {
     clearTimeout(hold.current)
@@ -69,9 +71,22 @@ export function SwipeRow({ children, leftLabel, rightLabel, onSwipeLeft, onSwipe
     clearTimeout(hold.current)
     if (current?.swiping) {
       handled.current = true
-      if (current.crossed) (offset < 0 ? onSwipeLeft : onSwipeRight)()
+      if (current.crossed && offset < 0) {
+        leave(current.width)
+        return
+      }
+      if (current.crossed) onSwipeRight()
     }
     reset()
+  }
+
+  const leave = (width: number) => {
+    clearTimeout(hold.current)
+    gesture.current = null
+    setDragging(false)
+    setOffset(-width)
+    setLeaving(width)
+    setTimeout(onSwipeLeft, LEAVE_MS)
   }
 
   const swallowClick = (event: MouseEvent) => {
@@ -82,7 +97,7 @@ export function SwipeRow({ children, leftLabel, rightLabel, onSwipeLeft, onSwipe
   }
 
   return (
-    <div className={`swipe-row ${offset < 0 ? 'to-left' : offset > 0 ? 'to-right' : ''}`}>
+    <div className={`swipe-row ${offset < 0 ? 'to-left' : offset > 0 ? 'to-right' : ''} ${leaving !== null ? 'leaving' : ''}`}>
       <span className="swipe-under" aria-hidden="true">
         <span className="swipe-right">{rightLabel}</span>
         <span className="swipe-left">{leftLabel}</span>

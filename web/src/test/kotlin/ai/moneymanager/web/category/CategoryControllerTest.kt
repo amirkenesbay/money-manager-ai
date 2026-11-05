@@ -114,6 +114,15 @@ class CategoryControllerTest {
     }
 
     @Test
+    fun `saves the dragged order of categories`() {
+        `when`(categoryService.reorder(groupId, listOf(checkNotNull(groceries.id)))).thenReturn(true)
+
+        mockMvc.perform(put("/api/v1/groups/$groupId/categories/order").withTelegramAuth().json("""{"ids":["${groceries.id!!.toHexString()}"]}"""))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$[0].name").value("Продукты"))
+    }
+
+    @Test
     fun `filters categories by type`() {
         mockMvc.perform(get("/api/v1/groups/$groupId/categories").withTelegramAuth().param("type", "INCOME"))
             .andExpect(status().isOk)

@@ -144,12 +144,17 @@ describe('OperationForm', () => {
     expect(createOperation).not.toHaveBeenCalled()
   })
 
-  it('asks to double-check a huge amount', async () => {
+  it('asks to hold the button to save a huge amount', async () => {
     renderForm()
     await userEvent.type(await screen.findByRole('textbox', { name: strings.amountLabel }), '50000000000')
 
     expect(screen.getByText(asRendered(strings.amountHuge(formatMoney('50000000000', 'KZT', 'ru'))))).toBeInTheDocument()
-    expect(saveButton(strings.saveHuge)).toBeEnabled()
+    await userEvent.click(saveButton(strings.holdToSave))
+    expect(createOperation).not.toHaveBeenCalled()
+
+    saveButton(strings.holdToSave).focus()
+    await userEvent.keyboard('{Enter}')
+    expect(createOperation).toHaveBeenCalled()
   })
 
   it('keeps the form and shows the server message when saving fails', async () => {

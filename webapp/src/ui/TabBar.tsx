@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { type CSSProperties, type ReactNode, useLayoutEffect, useRef, useState } from 'react'
 import { strings } from '../strings'
 import { selectionTick, tapImpact } from '../telegram/haptics'
 import { ChartIcon, GridIcon, HomeIcon, ListIcon, MicIcon } from './icons'
@@ -30,6 +30,14 @@ export function TabBar({ active, onSelect, onRecordVoice, onShowQuestions }: {
   onRecordVoice: () => void
   onShowQuestions: () => void
 }) {
+  const nav = useRef<HTMLElement>(null)
+  const [indicatorX, setIndicatorX] = useState<number | null>(null)
+
+  useLayoutEffect(() => {
+    const current = nav.current?.querySelector<HTMLElement>('.tab[aria-current="page"]')
+    setIndicatorX(current ? current.offsetLeft : null)
+  }, [active])
+
   const micPress = useLongPress(onRecordVoice, () => {
     tapImpact()
     onShowQuestions()
@@ -44,7 +52,8 @@ export function TabBar({ active, onSelect, onRecordVoice, onShowQuestions }: {
   }
   return (
     <div className="tab-bar-dock">
-      <nav className="tab-bar" aria-label={strings.tabBarLabel}>
+      <nav ref={nav} className="tab-bar" aria-label={strings.tabBarLabel}>
+        {indicatorX !== null && <span className="tab-indicator" style={{ '--indicator-x': `${indicatorX}px` } as CSSProperties} aria-hidden="true" />}
         {TABS.slice(0, MIC_SLOT).map(tabButton)}
         <span className="tab-mic-slot">
           <button type="button" className="tab-mic pressable" aria-label={strings.recordVoice} {...micPress}><MicIcon /></button>

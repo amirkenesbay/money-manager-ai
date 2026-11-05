@@ -30,3 +30,6 @@ export const fetchCategoryRules = (groupId: string, signal?: AbortSignal): Promi
 
 export const forgetCategoryRule = (groupId: string, ruleId: string): Promise<void> =>
   apiRequest<void>(`${rulesPath(groupId)}/${ruleId}`, { method: 'DELETE' })
+
+export const reorderCategories = (groupId: string, ids: string[]): Promise<Category[]> =>
+  apiRequest<Category[]>(`/groups/${groupId}/categories/order`, { method: 'PUT', body: JSON.stringify({ ids }) })

@@ -63,6 +63,12 @@ data class UpdateCategoryRequest(
 private const val BUDGET_AMOUNT_KEY = "${API_ERROR_KEY_PREFIX}budget_amount"
 private const val BUDGET_INCOME_KEY = "${API_ERROR_KEY_PREFIX}budget_income"
 
+data class CategoryOrderRequest(
+    val ids: List<ObjectId>,
+)
+
+private const val CATEGORY_ORDER_KEY = "${API_ERROR_KEY_PREFIX}category_order"
+
 @RestController
 @RequestMapping("$API_V1_PREFIX/groups/{groupId}/categories")
 class CategoryController(
@@ -81,6 +87,13 @@ class CategoryController(
         val categories = type?.let { categoryService.getCategoriesByGroupAndType(groupId, it) }
             ?: categoryService.getCategoriesByGroup(groupId)
         return categories.map { it.toResponse() }
+    }
+
+    @PutMapping("/order")
+    fun reorder(user: UserInfo, @PathVariable groupId: ObjectId, @RequestBody request: CategoryOrderRequest): List<CategoryResponse> {
+        groupAccessGuard.requireMember(user, groupId)
+        if (!categoryService.reorder(groupId, request.ids)) throw badRequest(CATEGORY_ORDER_KEY)
+        return categoryService.getCategoriesByGroup(groupId).map { it.toResponse() }
     }
 
     @PostMapping

@@ -63,14 +63,24 @@ class CategoryService(
     }
 
     fun getCategoriesByGroup(groupId: ObjectId): List<Category> {
-        return categoryRepository.findByGroupIdOrderByAuditInfoCreatedAtAsc(groupId)
+        return ordered(categoryRepository.findByGroupIdOrderByAuditInfoCreatedAtAsc(groupId))
             .map { mapToModel(it) }
     }
 
     fun getCategoriesByGroupAndType(groupId: ObjectId, type: CategoryType): List<Category> {
-        return categoryRepository.findByGroupIdAndTypeOrderByAuditInfoCreatedAtAsc(groupId, type)
+        return ordered(categoryRepository.findByGroupIdAndTypeOrderByAuditInfoCreatedAtAsc(groupId, type))
             .map { mapToModel(it) }
     }
+
+    fun reorder(groupId: ObjectId, categoryIds: List<ObjectId>): Boolean {
+        val categories = categoryRepository.findByGroupIdOrderByAuditInfoCreatedAtAsc(groupId).associateBy { it.id }
+        if (categoryIds.distinct().size != categoryIds.size || !categories.keys.containsAll(categoryIds)) return false
+        categoryRepository.saveAll(categoryIds.mapIndexed { position, id -> checkNotNull(categories[id]).copy(position = position) })
+        return true
+    }
+
+    private fun ordered(categories: List<CategoryEntity>): List<CategoryEntity> =
+        categories.sortedBy { it.position ?: Int.MAX_VALUE }
 
     fun getCategory(categoryId: ObjectId): Category? {
         return categoryRepository.findById(categoryId)
