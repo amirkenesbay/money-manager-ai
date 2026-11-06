@@ -14,18 +14,11 @@ import { useConfirmClosing } from '../ui/useConfirmClosing'
 import { useNameInput } from '../ui/useNameInput'
 import { useSubmit } from '../ui/useSubmit'
 import { createCategory, deleteCategory, setCategoryLimit, updateCategory } from './categoriesApi'
-import { CATEGORY_TYPES } from './categoryTypes'
+import { CATEGORY_TYPES, ICON_PRESETS, MAX_CATEGORY_NAME_LENGTH } from './categoryTypes'
 import { formatPeriod } from '../format'
 import { parseAmount } from '../operation/amount'
 import { currentPeriodMonth, monthRange } from '../operations/periods'
 import { AmountInput } from '../ui/AmountInput'
-
-const MAX_CATEGORY_NAME_LENGTH = 50
-
-const ICON_PRESETS: Record<CategoryType, string[]> = {
-  EXPENSE: ['🛒', '🍔', '☕', '🚕', '🚗', '🏠', '💊', '👕', '📚', '🎬', '✈️', '📱', '🐾', '🎁', '💡', '📦'],
-  INCOME: ['💰', '💼', '🎁', '📈', '🏦', '💵', '🤝', '📦'],
-}
 
 export function CategoryForm({ group, language, type, category, onBack, onSaved, onDeleted, onLimit, onBudgetLimit }: {
   group: Group

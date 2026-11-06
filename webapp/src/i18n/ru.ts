@@ -352,6 +352,7 @@ export const ru = {
     : 'Создай первую — например, «Продукты» или «Такси»'),
   addCategory: 'Добавить категорию',
   newCategoryTitle: 'Новая категория',
+  newCategoryTile: 'Новая',
   editCategoryTitle: 'Изменить категорию',
   categoryNamePlaceholder: 'Например, Кафе',
   categoryTypeLocked: 'Тип не меняется — от него зависят уже записанные операции',

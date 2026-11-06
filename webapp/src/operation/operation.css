@@ -50,6 +50,14 @@
   font-size: 1.25rem;
 }
 
+.category-tile-add {
+  color: var(--accent);
+}
+
+.category-tile-add .category-tile-icon {
+  display: flex;
+}
+
 .category-tile-name {
   max-width: 100%;
   overflow: hidden;

@@ -353,6 +353,7 @@ export const en: Strings = {
     : 'Create the first one — for example, “Groceries” or “Taxi”'),
   addCategory: 'Add category',
   newCategoryTitle: 'New category',
+  newCategoryTile: 'New',
   editCategoryTitle: 'Edit category',
   categoryNamePlaceholder: 'For example, Cafe',
   categoryTypeLocked: 'The type cannot change — recorded operations depend on it',

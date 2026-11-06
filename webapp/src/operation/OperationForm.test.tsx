@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiRequestError } from '../api/client'
 import { formatMoney, toIsoDate } from '../format'
-import { fetchCategories } from '../categories/categoriesApi'
+import { createCategory, fetchCategories } from '../categories/categoriesApi'
 import { createOperation, fetchRecentTags, replaceOperation } from '../operations/operationsApi'
 import { createRecurring } from '../recurring/recurringApi'
 import { fetchMembers } from '../groups/groupsApi'
@@ -19,7 +19,7 @@ vi.mock('../operations/operationsApi', () => ({
   fetchRecentTags: vi.fn(),
 }))
 
-vi.mock('../categories/categoriesApi', () => ({ fetchCategories: vi.fn() }))
+vi.mock('../categories/categoriesApi', () => ({ fetchCategories: vi.fn(), createCategory: vi.fn() }))
 vi.mock('../recurring/recurringApi', () => ({ createRecurring: vi.fn() }))
 vi.mock('../groups/groupsApi', () => ({ fetchMembers: vi.fn() }))
 
@@ -59,6 +59,23 @@ describe('OperationForm', () => {
       type: 'EXPENSE', amount: '5000', categoryId: 'cat-2', operationDate: daysAgo(1), description: 'до работы',
     })
     expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({ created: true }))
+  })
+
+  it('creates a missing category right from the picker and records into it', async () => {
+    vi.mocked(createCategory).mockImplementation(async (_, { name, type }) => category({ id: 'cat-new', name, type }))
+    renderForm()
+    await userEvent.type(await screen.findByRole('textbox', { name: strings.amountLabel }), '1200')
+    await userEvent.click(screen.getByRole('button', { name: strings.addCategory }))
+    const sheet = screen.getByRole('dialog', { name: strings.newCategoryTitle })
+    await userEvent.type(within(sheet).getByRole('textbox', { name: strings.nameLabel }), 'Кафе')
+    await userEvent.click(within(sheet).getByRole('button', { name: strings.save }))
+
+    expect(createCategory).toHaveBeenCalledWith(PERSONAL_GROUP_ID, { name: 'Кафе', icon: '🛒', type: 'EXPENSE' })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Кафе/ })).toHaveAttribute('aria-pressed', 'true')
+
+    await userEvent.click(saveButton())
+    expect(createOperation).toHaveBeenCalledWith(PERSONAL_GROUP_ID, expect.objectContaining({ categoryId: 'cat-new' }))
   })
 
   it('records who paid and for whom in a group that splits expenses', async () => {

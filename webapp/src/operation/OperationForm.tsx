@@ -56,13 +56,13 @@ export function OperationForm({ group, userId, language, operation, initialType 
       {categories.state.status === 'loading' && <SkeletonRows count={CATEGORY_SKELETON_ROWS} />}
       {categories.state.status === 'error' && <LoadError message={categories.state.message} onRetry={categories.reload} />}
       {categories.state.status === 'ready' && (
-        <FormFields group={group} userId={userId} language={language} operation={operation} initialType={initialType} initialCategoryId={initialCategoryId} categories={categories.state.data} onSaved={onSaved} onDeleted={onDeleted} />
+        <FormFields group={group} userId={userId} language={language} operation={operation} initialType={initialType} initialCategoryId={initialCategoryId} categories={categories.state.data} onCategoryCreated={categories.add} onSaved={onSaved} onDeleted={onDeleted} />
       )}
     </>
   )
 }
 
-function FormFields({ group, userId, language, operation, initialType, initialCategoryId, categories, onSaved, onDeleted }: {
+function FormFields({ group, userId, language, operation, initialType, initialCategoryId, categories, onCategoryCreated, onSaved, onDeleted }: {
   group: Group
   userId: number
   language: string
@@ -70,6 +70,7 @@ function FormFields({ group, userId, language, operation, initialType, initialCa
   initialType: CategoryType
   initialCategoryId?: string
   categories: Category[]
+  onCategoryCreated: (category: Category) => void
   onSaved: (result: SaveResult) => void
   onDeleted: (operation: Operation) => void
 }) {
@@ -152,7 +153,7 @@ function FormFields({ group, userId, language, operation, initialType, initialCa
 
       <fieldset className="field-group">
         <legend className="field-label">{strings.categoryLabel}</legend>
-        <CategoryTiles categories={typeCategories} selectedId={selectedCategory?.id ?? null} onSelect={setCategoryId} />
+        <CategoryTiles categories={typeCategories} selectedId={selectedCategory?.id ?? null} onSelect={setCategoryId} creation={{ groupId: group.id, type, onCreated: onCategoryCreated }} />
         {type === 'EXPENSE' && selectedCategory && (
           <BudgetNote groupId={group.id} category={selectedCategory} amount={amount} editing={operation} currency={group.currency} language={language} />
         )}

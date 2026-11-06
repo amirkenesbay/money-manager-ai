@@ -75,7 +75,7 @@ export function RecurringForm({ group, payment, onBack, onSaved, onDeleted, onLi
         <legend className="field-label">{strings.categoryLabel}</legend>
         {categories.state.status === 'loading' && <SkeletonRows count={CATEGORY_SKELETON_ROWS} />}
         {categories.state.status === 'error' && <LoadError message={categories.state.message} onRetry={categories.reload} />}
-        {categories.state.status === 'ready' && <CategoryTiles categories={typeCategories} selectedId={selected?.id ?? null} onSelect={setCategoryId} />}
+        {categories.state.status === 'ready' && <CategoryTiles categories={typeCategories} selectedId={selected?.id ?? null} onSelect={setCategoryId} creation={{ groupId: group.id, type, onCreated: categories.add }} />}
       </fieldset>
       <input className="text-field" aria-label={strings.commentLabel} placeholder={strings.commentPlaceholder} maxLength={MAX_COMMENT_LENGTH} value={description} onChange={(event) => setDescription(event.target.value)} />
       <fieldset className="field-group">

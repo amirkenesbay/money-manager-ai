@@ -347,6 +347,7 @@ export const kk: Strings = {
     : 'Алғашқысын құр — мысалы, «Азық-түлік» немесе «Такси»'),
   addCategory: 'Санат қосу',
   newCategoryTitle: 'Жаңа санат',
+  newCategoryTile: 'Жаңа',
   editCategoryTitle: 'Санатты өзгерту',
   categoryNamePlaceholder: 'Мысалы, Кафе',
   categoryTypeLocked: 'Түрі өзгермейді — жазылған операциялар соған байланысты',
