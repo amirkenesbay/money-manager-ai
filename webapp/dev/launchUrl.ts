@@ -1,14 +1,6 @@
-import { createHmac } from 'node:crypto'
+import { launchParams } from './launchParams.ts'
 
-const SECRET_KEY_SEED = 'WebAppData'
-const HMAC_ALGORITHM = 'sha256'
-const PLACEHOLDER_SIGNATURE = 'dev'
 const DEFAULT_APP_URL = 'http://localhost:5173/'
-const DEFAULT_USER_ID = '1000001'
-const DEFAULT_FIRST_NAME = 'Dev'
-const DEFAULT_LANGUAGE_CODE = 'ru'
-const WEB_APP_VERSION = '8.0'
-const WEB_APP_PLATFORM = 'tdesktop'
 
 function requireEnv(name: string): string {
   const value = process.env[name]
@@ -19,30 +11,4 @@ function requireEnv(name: string): string {
   return value
 }
 
-function sign(fields: Record<string, string>, botToken: string): string {
-  const dataCheckString = Object.keys(fields).sort().map((key) => `${key}=${fields[key]}`).join('\n')
-  const secretKey = createHmac(HMAC_ALGORITHM, SECRET_KEY_SEED).update(botToken).digest()
-  return createHmac(HMAC_ALGORITHM, secretKey).update(dataCheckString).digest('hex')
-}
-
-function signedInitData(botToken: string): string {
-  const user = {
-    id: Number(process.env.DEV_USER_ID ?? DEFAULT_USER_ID),
-    first_name: process.env.DEV_FIRST_NAME ?? DEFAULT_FIRST_NAME,
-    language_code: DEFAULT_LANGUAGE_CODE,
-  }
-  const fields = {
-    auth_date: String(Math.floor(Date.now() / 1000)),
-    signature: PLACEHOLDER_SIGNATURE,
-    user: JSON.stringify(user),
-  }
-  return new URLSearchParams({ ...fields, hash: sign(fields, botToken) }).toString()
-}
-
-const launchParams = new URLSearchParams({
-  tgWebAppData: signedInitData(requireEnv('BOT_TOKEN')),
-  tgWebAppVersion: WEB_APP_VERSION,
-  tgWebAppPlatform: WEB_APP_PLATFORM,
-})
-
-console.log(`${process.env.DEV_APP_URL ?? DEFAULT_APP_URL}#${launchParams}`)
+console.log(`${process.env.DEV_APP_URL ?? DEFAULT_APP_URL}#${launchParams(requireEnv('BOT_TOKEN'))}`)
