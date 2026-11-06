@@ -15,7 +15,7 @@ export default {
   }],
   agents: {
     default: {
-      executor: claudeCode({ model: 'sonnet', system: 'You test a Telegram Mini App for personal finance. Its interface is in Russian.' }),
+      executor: claudeCode({ model: 'sonnet', system: 'You test a Telegram Mini App for personal finance. Its interface is in Russian. Move only by tapping and typing inside the app: never navigate to a URL, never reload the page, never use browser back.' }),
     },
   },
   workers: 1,

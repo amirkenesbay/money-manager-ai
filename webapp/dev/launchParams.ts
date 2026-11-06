@@ -15,9 +15,9 @@ function sign(fields: Record<string, string>, botToken: string): string {
   return createHmac(HMAC_ALGORITHM, secretKey).update(dataCheckString).digest('hex')
 }
 
-function signedInitData(botToken: string): string {
+function signedInitData(botToken: string, userId: number): string {
   const user = {
-    id: Number(process.env.DEV_USER_ID ?? DEFAULT_USER_ID),
+    id: userId,
     first_name: process.env.DEV_FIRST_NAME ?? DEFAULT_FIRST_NAME,
     language_code: DEFAULT_LANGUAGE_CODE,
   }
@@ -29,9 +29,9 @@ function signedInitData(botToken: string): string {
   return new URLSearchParams({ ...fields, hash: sign(fields, botToken) }).toString()
 }
 
-export function launchParams(botToken: string): string {
+export function launchParams(botToken: string, userId = Number(process.env.DEV_USER_ID ?? DEFAULT_USER_ID)): string {
   return new URLSearchParams({
-    tgWebAppData: signedInitData(botToken),
+    tgWebAppData: signedInitData(botToken, userId),
     tgWebAppVersion: WEB_APP_VERSION,
     tgWebAppPlatform: WEB_APP_PLATFORM,
   }).toString()
