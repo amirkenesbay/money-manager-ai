@@ -48,9 +48,9 @@ Our pipeline turns one command — `git push` — into a working, updated bot on
   │ GitHub: money-       │   Workflow file: .github/workflows/build.yml
   │ manager-ai repo      │   Job: build-push
   │                      │
-  │ 1. Build Docker image│
+  │ 1. Build two images  │
   │ 2. Push to GHCR      │───► ghcr.io/amirkenesbay/money-manager-ai:latest
-  │ 3. Ping infra repo   │           (public container registry)
+  │ 3. Ping infra repo   │───► ghcr.io/amirkenesbay/money-manager-webapp:latest
   └──────┬──────────────┘
          │ HTTP POST (repository_dispatch)
          ▼
@@ -67,15 +67,16 @@ Our pipeline turns one command — `git push` — into a working, updated bot on
          │ SSH
          ▼
   ┌─────────────────────┐
-  │   VPS (rented        │   Server: vds31199.vpsza500.kz
-  │   Ubuntu server)     │   IP:     93.170.72.240
-  │                      │   User:   deploy
+  │   VPS (rented        │   Server: vds40587.vpsza500.kz
+  │   Ubuntu server)     │   IP:     93.170.72.48
+  │                      │   User:   root
   │ /opt/money-manager:  │
   │   docker-compose.yml │
   │   volumes/…          │
   │                      │
   │ Containers running:  │
   │   - app              │◄── pulls new image here
+  │   - web (nginx)      │◄── Mini App static + HTTPS
   │   - mongo            │    (mongo never restarts on deploy)
   └─────────────────────┘
 ```
@@ -90,10 +91,10 @@ Two GitHub repos, two workflow files, one server. That is the whole system.
 |---|---|---|
 | **money-manager-ai** | The repo with the bot's Kotlin source code | github.com/amirkenesbay/money-manager-ai |
 | **money-manager-infra** | The repo that knows how to run the bot (`docker-compose.yml` + configs) | github.com/amirkenesbay/money-manager-infra |
-| **GHCR** | GitHub Container Registry — an online warehouse that stores built Docker images | ghcr.io/amirkenesbay/money-manager-ai |
+| **GHCR** | GitHub Container Registry — an online warehouse that stores built Docker images | ghcr.io/amirkenesbay/money-manager-ai, ghcr.io/amirkenesbay/money-manager-webapp |
+| **Webapp image** | nginx with the built Mini App (`webapp/Dockerfile`: `npm ci`, lint, tests, `vite build`) | Served at https://moneymanager.kz |
 | **Docker image** | A frozen snapshot of "the bot + everything it needs to run" in one file | Lives in GHCR, runs on the VPS |
-| **VPS** | A rented Linux server, always on, with a public IP | 93.170.72.240 (Ubuntu 24.04) |
-| **`deploy` user** | A Linux account on the VPS with just enough rights to run Docker | /home/deploy on the VPS |
+| **VPS** | A rented Linux server, always on, with a public IP | 93.170.72.48 (Ubuntu 24.04) |
 | **GitHub Actions** | GitHub's built-in CI/CD robots — free VMs that run your workflows | github.com (runs on GitHub-hosted runners) |
 | **Workflow file** | A YAML file that tells GitHub Actions "when X happens, run these steps" | `.github/workflows/*.yml` in each repo |
 
@@ -137,7 +138,7 @@ The final image is what runs on the server. It has the bot and nothing else — 
 
 We generated a brand-new SSH key pair just for the CI robot — `~/.ssh/money-manager-deploy-ci` (private) and `.pub` (public).
 
-- Public part was appended to `/home/deploy/.ssh/authorized_keys` on the VPS — meaning "whoever holds the private half can log in as `deploy`."
+- Public part was appended to `/root/.ssh/authorized_keys` on the VPS — meaning "whoever holds the private half can log in as `root`."
 - Private part was copied into GitHub Actions as a secret called `SSH_PRIVATE_KEY` in the infra repo.
 
 Why a separate key and not your personal one? Principle of **least privilege**. If this key ever leaks, you delete one line from `authorized_keys` and the robot is locked out. Your personal keys keep working. Every automation gets its own key.
@@ -168,11 +169,11 @@ The next 2–4 minutes look like this:
 2. GitHub spins up a fresh virtual machine (a "runner"), installs Docker on it.
 3. The runner downloads the bot's source code.
 4. The runner logs into GHCR using a temporary, auto-generated `GITHUB_TOKEN` (it gets one automatically, you don't manage it).
-5. The runner builds the Docker image using your `Dockerfile`. Build cache is reused where possible so successive builds are faster.
-6. The runner pushes the image to GHCR with two tags:
+5. Two parallel jobs build two images: the bot from the root `Dockerfile`, the Mini App from `webapp/Dockerfile` (`npm ci`, lint, tests, `vite build`, then nginx with the static files). A failing frontend test stops the deploy. Build cache is reused per image.
+6. Each job pushes its image to GHCR with two tags:
    - `latest` — always points to the newest version
    - `sha-abc1234` — points to this exact commit (for rollback)
-7. The last step: `curl` fires a POST to GitHub's API:
+7. When both images are pushed, a separate `deploy` job fires a POST to GitHub's API:
    ```
    POST https://api.github.com/repos/amirkenesbay/money-manager-infra/dispatches
    body: {"event_type":"deploy","client_payload":{"sha":"abc1234..."}}
@@ -188,13 +189,13 @@ If any step fails, the run turns red in the Actions tab and the infra repo is ne
 3. The runner pulls the infra repo code.
 4. The runner starts an SSH agent and loads `SSH_PRIVATE_KEY` into it.
 5. The runner writes `SSH_KNOWN_HOSTS` to a file so the SSH client trusts the VPS without prompting.
-6. The runner SSHes into the VPS as `deploy@93.170.72.240` and runs a block of commands:
+6. The runner SSHes into the VPS as `root@93.170.72.48` and runs a block of commands:
    ```bash
    set -euo pipefail              # strict mode: stop on any error
    cd /opt/money-manager          # go to the infra clone on the VPS
    git pull --ff-only             # get the latest docker-compose.yml
-   docker compose pull app        # download the new image from GHCR
-   docker compose up -d app       # recreate the app container with the new image
+   docker compose pull app web    # download the new images from GHCR
+   docker compose up -d app web   # recreate app and web with the new images
    docker compose ps              # print status so the log shows both containers
    ```
 7. When the SSH session exits cleanly, the runner exits cleanly, the workflow shows green in the Actions tab.
@@ -381,9 +382,9 @@ Secrets are encrypted values GitHub injects into workflow runs. They are never p
 | Secret name | Value | Purpose |
 |---|---|---|
 | `SSH_PRIVATE_KEY` | Contents of `~/.ssh/money-manager-deploy-ci` | Private half of the CI-only SSH key. Lets the runner log into the VPS. |
-| `SSH_HOST` | `93.170.72.240` | The VPS IP. |
-| `SSH_USER` | `deploy` | The Linux user the workflow connects as. |
-| `SSH_KNOWN_HOSTS` | Output of `ssh-keyscan 93.170.72.240` | The VPS's public host fingerprints, so SSH trusts it non-interactively. |
+| `SSH_HOST` | `93.170.72.48` | The VPS IP. |
+| `SSH_USER` | `root` | The Linux user the workflow connects as. |
+| `SSH_KNOWN_HOSTS` | Output of `ssh-keyscan 93.170.72.48` | The VPS's public host fingerprints, so SSH trusts it non-interactively. |
 
 ### On the VPS (`/opt/money-manager/.env`)
 
@@ -409,7 +410,7 @@ Both runs should be green.
 ### Proof the container restarted
 
 ```bash
-ssh deploy@93.170.72.240 "docker inspect money-manager-ai --format '{{.Image}} started={{.State.StartedAt}}'"
+ssh root@93.170.72.48 "docker inspect money-manager-ai --format '{{.Image}} started={{.State.StartedAt}}'"
 ```
 
 This prints the SHA of the image currently running and when it started. Run it before and after a push — both should change.
@@ -421,7 +422,7 @@ Send `/start` to the bot in Telegram. Or do whatever interaction exercises your 
 ### Tail logs on the server
 
 ```bash
-ssh deploy@93.170.72.240 "cd /opt/money-manager && docker compose logs -f --tail=50 app"
+ssh root@93.170.72.48 "cd /opt/money-manager && docker compose logs -f --tail=50 app"
 ```
 
 Ctrl+C to stop tailing.
@@ -437,7 +438,7 @@ You pushed something broken. The bot is down. How to get the previous version ba
 Every build tags the image with `sha-<commit>` in addition to `latest`. Find a known-good commit SHA from the bot repo's commit history, then:
 
 ```bash
-ssh deploy@93.170.72.240
+ssh root@93.170.72.48
 cd /opt/money-manager
 # Temporarily override the image tag, for example sha-abc1234:
 docker pull ghcr.io/amirkenesbay/money-manager-ai:sha-abc1234
@@ -474,7 +475,7 @@ Commit and push. Because `docker-compose.yml` is in the deploy-trigger `paths`, 
 ### How to identify which image is bad
 
 ```bash
-ssh deploy@93.170.72.240 "docker inspect money-manager-ai --format '{{.Image}}'"
+ssh root@93.170.72.48 "docker inspect money-manager-ai --format '{{.Image}}'"
 ```
 
 Shows the SHA of the currently-running image. Match it to a build in GitHub Actions by the short SHA in the tag.
@@ -487,27 +488,25 @@ Shows the SHA of the currently-running image. Match it to a build in GitHub Acti
 
 The CI SSH key is not in `authorized_keys` on the VPS anymore, or `SSH_PRIVATE_KEY` secret does not match.
 
-Fix: regenerate the key pair locally, put the new public half in `/home/deploy/.ssh/authorized_keys`, update the `SSH_PRIVATE_KEY` secret in the infra repo.
+Fix: regenerate the key pair locally, put the new public half in `/root/.ssh/authorized_keys`, update the `SSH_PRIVATE_KEY` secret in the infra repo.
 
-### "cannot open '.git/FETCH_HEAD': Permission denied"
+### "detected dubious ownership in repository"
 
-Someone cloned `/opt/money-manager` as root. The `deploy` user cannot write to `.git/`.
+Files in `/opt/money-manager` belong to another user (e.g. after `rsync` from a laptop).
 
 Fix:
 ```bash
-ssh deploy@93.170.72.240
-sudo chown -R deploy:deploy /opt/money-manager
+ssh root@93.170.72.48 "chown -R root:root /opt/money-manager"
 ```
 
 ### "unauthorized" on `docker compose pull`
 
 The GHCR package is private and the VPS is not logged in, or the login credentials expired.
 
-Fix: easiest is to keep the package public (we did). If for some reason it becomes private, on the VPS:
+Fix: the VPS logs in with `GPR_KEY` from `.env` (needed for the private `money-manager-webapp` package). Log in again:
 ```bash
 echo "<GITHUB_PAT_with_read:packages>" | docker login ghcr.io -u amirkenesbay --password-stdin
 ```
-as the `deploy` user.
 
 ### "dial tcp: lookup ghcr.io ... i/o timeout"
 
@@ -526,7 +525,7 @@ The doorbell didn't ring, or the infra repo didn't hear it.
 
 Check logs:
 ```bash
-ssh deploy@93.170.72.240 "cd /opt/money-manager && docker compose logs --tail=100 app"
+ssh root@93.170.72.48 "cd /opt/money-manager && docker compose logs --tail=100 app"
 ```
 
 Most common culprits:
@@ -540,12 +539,12 @@ A leftover long-polling connection from a previous run is still alive on Telegra
 
 Fix:
 ```bash
-ssh deploy@93.170.72.240 "cd /opt/money-manager && docker compose stop app"
+ssh root@93.170.72.48 "cd /opt/money-manager && docker compose stop app"
 # From your laptop, hit the API 3–5 times to flush the stale session:
 curl "https://api.telegram.org/bot<TOKEN>/getUpdates"
 curl "https://api.telegram.org/bot<TOKEN>/getUpdates"
 curl "https://api.telegram.org/bot<TOKEN>/getUpdates"
-ssh deploy@93.170.72.240 "cd /opt/money-manager && docker compose up -d app"
+ssh root@93.170.72.48 "cd /opt/money-manager && docker compose up -d app"
 ```
 
 ---

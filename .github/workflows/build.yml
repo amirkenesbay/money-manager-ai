@@ -1,4 +1,4 @@
-name: Build and push Docker image
+name: Build and push Docker images
 
 on:
   push:
@@ -11,6 +11,13 @@ jobs:
     permissions:
       contents: read
       packages: write
+    strategy:
+      matrix:
+        include:
+          - image: money-manager-ai
+            context: .
+          - image: money-manager-webapp
+            context: webapp
     steps:
       - uses: actions/checkout@v4
 
@@ -27,7 +34,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/amirkenesbay/money-manager-ai
+          images: ghcr.io/amirkenesbay/${{ matrix.image }}
           tags: |
             type=raw,value=latest
             type=sha,prefix=sha-,format=short
@@ -35,16 +42,20 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ${{ matrix.context }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           secrets: |
             gpr_user=${{ github.actor }}
             gpr_key=${{ secrets.GITHUB_TOKEN }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
 
+  deploy:
+    needs: build-push
+    runs-on: ubuntu-latest
+    steps:
       - name: Trigger infra deploy
         run: |
           curl -fsSL -X POST \
