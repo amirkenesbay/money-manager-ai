@@ -16,13 +16,10 @@ import ai.moneymanager.chat.telegram.recurringRecordRequest
 import ai.moneymanager.chat.telegram.undoOperationId
 import ai.moneymanager.service.UserInfoService
 import kz.rmr.chatmachinist.api.transition.ChatBuilder
-import kz.rmr.chatmachinist.api.transition.DialogBuilder
 import kz.rmr.chatmachinist.model.ActionContext
 import kz.rmr.chatmachinist.model.EventType
 import java.time.LocalDate
 import java.time.ZoneOffset
-
-private const val START_LINK_DIALOG_NAME = "Start Link Dialog"
 
 fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.startLinkDialog(
     userInfoService: UserInfoService,
@@ -33,63 +30,63 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.startLinkDialog(
     telegramFileService: TelegramFileService,
     gateway: MiniAppGateway,
 ) {
-    dialog {
-        name = START_LINK_DIALOG_NAME
+    startLinkTransition("Mute a digest from its message", { mutedDigestKind(it) != null }, telegramFileService, gateway) {
+        val kind = checkNotNull(mutedDigestKind(update.message?.text))
+        val language = userInfoService.setDigestMuted(user.id, kind, muted = true)?.language
+        digestNotifier.confirmMuted(chat.id, kind, language)
+    }
 
-        startLinkTransition("Mute a digest from its message", { mutedDigestKind(it) != null }, telegramFileService, gateway) {
-            val kind = checkNotNull(mutedDigestKind(update.message?.text))
-            val language = userInfoService.setDigestMuted(user.id, kind, muted = true)?.language
-            digestNotifier.confirmMuted(chat.id, kind, language)
-        }
+    startLinkTransition("Undo an operation from its message", { undoOperationId(it) != null }, telegramFileService, gateway) {
+        recurringNotifier.undo(chat.id, user.id, checkNotNull(undoOperationId(update.message?.text)), languageOf(userInfoService))
+    }
 
-        startLinkTransition("Undo an operation from its message", { undoOperationId(it) != null }, telegramFileService, gateway) {
-            recurringNotifier.undo(chat.id, user.id, checkNotNull(undoOperationId(update.message?.text)), languageOf(userInfoService))
-        }
+    startLinkTransition("Record a reminded recurring payment", { recurringRecordRequest(it) != null }, telegramFileService, gateway) {
+        recurringNotifier.recordNow(chat.id, user.id, checkNotNull(recurringRecordRequest(update.message?.text)), languageOf(userInfoService))
+    }
 
-        startLinkTransition("Record a reminded recurring payment", { recurringRecordRequest(it) != null }, telegramFileService, gateway) {
-            recurringNotifier.recordNow(chat.id, user.id, checkNotNull(recurringRecordRequest(update.message?.text)), languageOf(userInfoService))
-        }
+    startLinkTransition("Mark a due loan as paid back", { repaidLoanId(it) != null }, telegramFileService, gateway) {
+        loanNotifier.markRepaid(chat.id, user.id, checkNotNull(repaidLoanId(update.message?.text)), languageOf(userInfoService))
+    }
 
-        startLinkTransition("Mark a due loan as paid back", { repaidLoanId(it) != null }, telegramFileService, gateway) {
-            loanNotifier.markRepaid(chat.id, user.id, checkNotNull(repaidLoanId(update.message?.text)), languageOf(userInfoService))
-        }
+    startLinkTransition("Move a due loan a week ahead", { postponedLoanId(it) != null }, telegramFileService, gateway) {
+        loanNotifier.postpone(chat.id, user.id, checkNotNull(postponedLoanId(update.message?.text)), languageOf(userInfoService))
+    }
 
-        startLinkTransition("Move a due loan a week ahead", { postponedLoanId(it) != null }, telegramFileService, gateway) {
-            loanNotifier.postpone(chat.id, user.id, checkNotNull(postponedLoanId(update.message?.text)), languageOf(userInfoService))
-        }
-
-        startLinkTransition("Mark a reminded debt as paid back", { debtPaidRequest(it) != null }, telegramFileService, gateway) {
-            val userInfo = userInfoService.getUserInfoByTelegramId(user.id)
-            val today = LocalDate.now(userInfo?.zone ?: ZoneOffset.UTC)
-            debtNotifier.markPaid(chat.id, user.id, checkNotNull(debtPaidRequest(update.message?.text)), today, userInfo?.language)
-        }
+    startLinkTransition("Mark a reminded debt as paid back", { debtPaidRequest(it) != null }, telegramFileService, gateway) {
+        val userInfo = userInfoService.getUserInfoByTelegramId(user.id)
+        val today = LocalDate.now(userInfo?.zone ?: ZoneOffset.UTC)
+        debtNotifier.markPaid(chat.id, user.id, checkNotNull(debtPaidRequest(update.message?.text)), today, userInfo?.language)
     }
 }
 
-private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.startLinkTransition(
+private fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.startLinkTransition(
     transitionName: String,
     matches: (String?) -> Boolean,
     telegramFileService: TelegramFileService,
     gateway: MiniAppGateway,
     handle: ActionContext<MoneyManagerState, MoneyManagerContext>.() -> Unit,
 ) {
-    transition {
+    dialog {
         name = transitionName
-        startDialog = true
 
-        condition {
-            eventType = EventType.COMMAND
-            guard { matches(update.message?.text) }
-        }
+        transition {
+            name = transitionName
+            startDialog = true
 
-        action {
-            handle()
-            update.message?.messageId?.let { telegramFileService.deleteMessage(chat.id, it) }
-        }
+            condition {
+                eventType = EventType.COMMAND
+                guard { matches(update.message?.text) }
+            }
 
-        then {
-            to = if (gateway.enabled) MoneyManagerState.MINI_APP_GATEWAY else MoneyManagerState.MENU
-            noReply = true
+            action {
+                handle()
+                update.message?.messageId?.let { telegramFileService.deleteMessage(chat.id, it) }
+            }
+
+            then {
+                to = if (gateway.enabled) MoneyManagerState.MINI_APP_GATEWAY else MoneyManagerState.MENU
+                noReply = true
+            }
         }
     }
 }
