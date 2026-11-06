@@ -258,19 +258,24 @@ function ThinkingScreen({ groupId, request, onDone, onFailed, onCancel }: {
     callbacks.current = { onDone, onFailed }
   })
 
+  const inFlight = useRef<InFlight | null>(null)
+
   useEffect(() => {
-    const controller = new AbortController()
-    const pending = request.kind === 'processing'
-      ? parseVoice(groupId, request.wav, controller.signal).then(voiceOutcome)
-      : askQuestion(groupId, request.text, controller.signal).then((card): Phase => ({ kind: 'answer', card }))
-    pending
-      .then((next) => callbacks.current.onDone(next))
+    const flight = inFlight.current?.request === request ? inFlight.current : send(groupId, request)
+    inFlight.current = flight
+    clearTimeout(flight.abortTimer)
+    let attached = true
+    flight.pending
+      .then((next) => attached && callbacks.current.onDone(next))
       .catch((error: unknown) => {
-        if (controller.signal.aborted) return
+        if (!attached || flight.controller.signal.aborted) return
         notifyOutcome('error')
         callbacks.current.onFailed(problemOf(error), serverMessage(error))
       })
-    return () => controller.abort()
+    return () => {
+      attached = false
+      flight.abortTimer = setTimeout(() => flight.controller.abort())
+    }
   }, [groupId, request])
 
   const asking = request.kind === 'asking'
@@ -284,6 +289,21 @@ function ThinkingScreen({ groupId, request, onDone, onFailed, onCancel }: {
       <Button variant="secondary" onClick={onCancel}>{strings.cancel}</Button>
     </>
   )
+}
+
+interface InFlight {
+  request: Request
+  controller: AbortController
+  pending: Promise<Phase | null>
+  abortTimer?: ReturnType<typeof setTimeout>
+}
+
+function send(groupId: string, request: Request): InFlight {
+  const controller = new AbortController()
+  const pending = request.kind === 'processing'
+    ? parseVoice(groupId, request.wav, controller.signal).then(voiceOutcome)
+    : askQuestion(groupId, request.text, controller.signal).then((card): Phase => ({ kind: 'answer', card }))
+  return { request, controller, pending }
 }
 
 function voiceOutcome(result: VoiceResult): Phase | null {

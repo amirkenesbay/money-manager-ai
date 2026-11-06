@@ -32,7 +32,7 @@ describe('describeRepeat', () => {
 describe('RecurringScreen', () => {
   beforeEach(() => {
     vi.resetAllMocks()
-    vi.mocked(fetchRecurring).mockResolvedValue({ items: [netflix], monthlyExpense: '3500.00', monthlyIncome: '0' })
+    vi.mocked(fetchRecurring).mockResolvedValue({ items: [netflix], monthlyExpense: '3500.00', monthlyIncome: '0', activeByMe: 1 })
     vi.mocked(fetchCategories).mockResolvedValue([category()])
   })
 
@@ -67,11 +67,21 @@ describe('RecurringScreen', () => {
   })
 
   it('sends a free user at the limit to Premium instead of the form', async () => {
-    vi.mocked(fetchRecurring).mockResolvedValue({ items: [netflix, { ...netflix, id: 'rec-2' }, { ...netflix, id: 'rec-3' }], monthlyExpense: '10500', monthlyIncome: '0' })
+    vi.mocked(fetchRecurring).mockResolvedValue({ items: [netflix, { ...netflix, id: 'rec-2' }, { ...netflix, id: 'rec-3' }], monthlyExpense: '10500', monthlyIncome: '0', activeByMe: 3 })
     renderScreen()
 
     await userEvent.click(await screen.findByRole('button', { name: strings.addRecurring }))
 
     expect(screen.getByText(strings.recurringLimitTitle)).toBeInTheDocument()
+  })
+
+  it('counts active payments from every group against the limit', async () => {
+    vi.mocked(fetchRecurring).mockResolvedValue({ items: [], monthlyExpense: '0', monthlyIncome: '0', activeByMe: 3 })
+    renderScreen()
+
+    await userEvent.click(await screen.findByRole('button', { name: strings.addRecurring }))
+
+    expect(screen.getByText(strings.recurringLimitTitle)).toBeInTheDocument()
+    expect(screen.getByText(strings.limitCounter(3, 3))).toBeInTheDocument()
   })
 })

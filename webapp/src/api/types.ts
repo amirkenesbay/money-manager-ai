@@ -483,6 +483,7 @@ export interface RecurringList {
   items: RecurringPayment[]
   monthlyExpense: string
   monthlyIncome: string
+  activeByMe: number
 }
 
 export type ColumnRole = 'DATE' | 'AMOUNT' | 'EXPENSE' | 'INCOME' | 'TYPE' | 'CATEGORY' | 'INCOME_CATEGORY' | 'COMMENT' | 'CURRENCY'

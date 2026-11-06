@@ -41,9 +41,14 @@ export function RecurringScreen({ me, group, onMeChanged, notify, onBack }: {
   const [toggling, setToggling] = useState<string | null>(null)
   const limit = me.subscription.limits.recurringPayments
   const items = recurring.state.status === 'ready' ? recurring.state.data.items : []
-  const activeCount = items.filter((payment) => payment.active).length
+  const activeCount = recurring.state.status === 'ready' ? recurring.state.data.activeByMe : 0
   const atLimit = limit !== null && activeCount >= limit
   const money = (type: RecurringPayment['type'], amount: string) => formatSignedMoney(type, amount, group.currency, me.language)
+
+  const showLimit = () => {
+    recurring.reload()
+    setMode({ kind: 'limit' })
+  }
 
   const done = (title: string, payment: RecurringPayment) => {
     recurring.reload()
@@ -58,7 +63,7 @@ export function RecurringScreen({ me, group, onMeChanged, notify, onBack }: {
       recurring.reload()
     } catch (failure) {
       notifyOutcome('error')
-      if (serverErrorCode(failure) === 'RECURRING_LIMIT_REACHED') setMode({ kind: 'limit' })
+      if (serverErrorCode(failure) === 'RECURRING_LIMIT_REACHED') showLimit()
       else notify({ title: strings.toggleFailed })
     } finally {
       setToggling(null)
@@ -77,7 +82,7 @@ export function RecurringScreen({ me, group, onMeChanged, notify, onBack }: {
         onBack={() => setMode({ kind: 'list' })}
         onSaved={(payment, created) => done(created ? strings.recurringCreatedToast : strings.recurringSavedToast, payment)}
         onDeleted={(payment) => done(strings.recurringDeletedToast, payment)}
-        onLimit={() => setMode({ kind: 'limit' })}
+        onLimit={showLimit}
       />
     )
   }

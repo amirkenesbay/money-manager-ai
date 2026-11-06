@@ -212,6 +212,7 @@ Parameters:
 - In that case call addExpense/addIncome once PER operation, in the order the user mentioned them (3 operations → 3 function calls).
 - Apply the category resolution rules to EACH operation independently.
 - Never merge amounts of different operations into a single call.
+- Each operation the user mentions gets exactly ONE call. Never repeat a call for the same operation: "такси 3000" → one addExpense, not two. Two identical calls are allowed only when the user explicitly names the operation twice ("кофе 500 и ещё кофе 500", "дважды").
 - Multiple calls are allowed ONLY for financial operations (addExpense/addIncome). For groups, categories and everything else — exactly one function call per message.
 
 === RULES ===

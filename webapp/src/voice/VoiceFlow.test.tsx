@@ -1,3 +1,4 @@
+import { StrictMode } from 'react'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -51,12 +52,13 @@ const answer = (overrides: Partial<AnswerCard> = {}): AnswerCard => ({
   title: '🚕 Такси · Ноябрь', headline: '12 000 ₸', lines: ['Операций: 4'], bars: [], rows: [],
   followUps: ['А в прошлом месяце?'], link: { screen: 'REPORTS', month: '2026-11', search: null }, understood: true, ...overrides,
 })
-const renderFlow = (start?: Parameters<typeof VoiceFlow>[0]['start']) =>
-  render(<VoiceFlow me={me()} group={group()} start={start} onClose={vi.fn()} onManual={onManual} onSaved={onSaved} onLoanSaved={onLoanSaved} onOpenLink={onOpenLink} />)
+const flow = (start?: Parameters<typeof VoiceFlow>[0]['start']) =>
+  <VoiceFlow me={me()} group={group()} start={start} onClose={vi.fn()} onManual={onManual} onSaved={onSaved} onLoanSaved={onLoanSaved} onOpenLink={onOpenLink} />
+const renderFlow = (start?: Parameters<typeof VoiceFlow>[0]['start']) => render(flow(start))
 
-async function recordPhrase() {
+async function recordPhrase(strict = false) {
   const user = userEvent.setup()
-  renderFlow()
+  render(strict ? <StrictMode>{flow()}</StrictMode> : flow())
   await user.click(screen.getByRole('button', { name: strings.voiceAskAllow }))
   await user.click(await screen.findByRole('button', { name: strings.stopRecording }))
   return user
@@ -123,6 +125,26 @@ describe('VoiceFlow', () => {
     expect(await screen.findByRole('heading', { name: '🚕 Такси · Ноябрь' })).toBeInTheDocument()
     expect(askQuestion).toHaveBeenCalledWith(group().id, QUESTION, expect.anything())
   }, 8000)
+
+  it('sends a recording once even when React mounts the screen twice', async () => {
+    vi.mocked(parseVoice).mockResolvedValue({ operations: [voiceOperation()] })
+
+    await recordPhrase(true)
+
+    expect(await screen.findByRole('heading', { name: strings.confirmOneTitle })).toBeInTheDocument()
+    expect(parseVoice).toHaveBeenCalledTimes(1)
+  })
+
+  it('flags an operation the recognizer returned twice so it can be removed', async () => {
+    vi.mocked(parseVoice).mockResolvedValue({ operations: [voiceOperation(), voiceOperation()] })
+
+    const user = await recordPhrase()
+
+    expect(await screen.findByText(strings.repeatedDraft)).toBeInTheDocument()
+    await user.click(screen.getAllByRole('button', { name: strings.removeOperation })[1])
+    expect(screen.queryByText(strings.repeatedDraft)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: strings.save })).toBeInTheDocument()
+  })
 
   it('records a phrase, shows the parsed operation and saves it', async () => {
     vi.mocked(parseVoice).mockResolvedValue({ operations: [voiceOperation()] })

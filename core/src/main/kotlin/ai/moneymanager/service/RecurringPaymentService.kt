@@ -110,6 +110,8 @@ class RecurringPaymentService(
         return financeOperationService.create(groupId = payment.groupId, creatorId = actorId, draft = OperationDraft(payment.type, payment.amount, category, date, payment.description))
     }
 
+    fun activeCount(actorId: Long): Long = recurringPaymentRepository.countByCreatorIdAndActiveTrue(actorId)
+
     private fun limitReached(actorId: Long, maxActive: Int?): Boolean =
-        maxActive != null && recurringPaymentRepository.countByCreatorIdAndActiveTrue(actorId) >= maxActive
+        maxActive != null && activeCount(actorId) >= maxActive
 }

@@ -14,7 +14,7 @@ import { ScreenHeader } from '../ui/ScreenHeader'
 import { Segmented } from '../ui/Segmented'
 import { Sheet } from '../ui/Sheet'
 import { useSubmit } from '../ui/useSubmit'
-import { type Draft, draftReady, saveDraft, withCategory, withType } from './drafts'
+import { type Draft, draftReady, repeatedKeys, saveDraft, withCategory, withType } from './drafts'
 import { repeatChoiceLabel, REPEAT_CHOICES } from '../recurring/recurrence'
 import { startRepeating } from '../recurring/repeatOperation'
 import { MAX_COMMENT_LENGTH } from '../operation/limits'
@@ -40,6 +40,7 @@ export function VoiceConfirm({ group, userId, language, initialDrafts, onSayAgai
 
   const update = (next: Draft) => setDrafts((list) => list.map((draft) => (draft.key === next.key ? next : draft)))
   const remove = (key: string) => setDrafts((list) => list.filter((draft) => draft.key !== key))
+  const repeated = repeatedKeys(drafts)
   const closeField = () => setEditing(null)
 
   const save = async () => {
@@ -72,6 +73,7 @@ export function VoiceConfirm({ group, userId, language, initialDrafts, onSayAgai
               userId={userId}
               language={language}
               removable={drafts.length > 1}
+              repeated={repeated.has(draft.key)}
               onChange={update}
               onEdit={(field) => setEditing({ key: draft.key, field })}
               onRemove={() => remove(draft.key)}
@@ -124,12 +126,13 @@ export function VoiceConfirm({ group, userId, language, initialDrafts, onSayAgai
   )
 }
 
-function DraftCard({ draft, group, userId, language, removable, onChange, onEdit, onRemove }: {
+function DraftCard({ draft, group, userId, language, removable, repeated, onChange, onEdit, onRemove }: {
   draft: Draft
   group: Group
   userId: number
   language: string
   removable: boolean
+  repeated: boolean
   onChange: (draft: Draft) => void
   onEdit: (field: Field) => void
   onRemove: () => void
@@ -144,6 +147,7 @@ function DraftCard({ draft, group, userId, language, removable, onChange, onEdit
         </button>
         {removable && <button type="button" className="link-button danger-link" onClick={onRemove}>{strings.removeOperation}</button>}
       </span>
+      {repeated && <p className="field-message warning" role="status">{strings.repeatedDraft}</p>}
       <Segmented label={strings.operationTypeLabel} options={CATEGORY_TYPES} value={draft.type} optionKey={(type) => type} optionLabel={strings.operationType} onChange={(type) => onChange(withType(draft, type))} />
       <dl className="detail-fields draft-fields">
         <FieldRow label={strings.categoryLabel} value={category} warning={!draftReady(draft) && draft.categoryId === null && !draft.isNewCategory} badge={draft.isNewCategory ? strings.newCategoryBadge : undefined} onClick={() => onEdit('category')} />

@@ -7,6 +7,7 @@ import { pluralOf } from './plural'
 const rules = new Intl.PluralRules('ru')
 
 const members = pluralOf(rules, { zero: 'участников', one: 'участник', two: 'участника', few: 'участника', many: 'участников', other: 'участника' })
+const operations = pluralOf(rules, { zero: 'операций', one: 'операция', two: 'операции', few: 'операции', many: 'операций', other: 'операции' })
 const days = pluralOf(rules, { zero: 'дней', one: 'день', two: 'дня', few: 'дня', many: 'дней', other: 'дня' })
 
 const INTERVAL_FORMS: Record<IntervalUnit, (count: number) => string> = {
@@ -492,6 +493,7 @@ export const ru = {
   sayAgain: 'Сказать заново',
   saveCount: (count: number) => `Сохранить ${count}`,
   removeOperation: 'Убрать операцию',
+  repeatedDraft: 'Похоже на повтор',
   savedCount: (count: number) => `Операций: ${count}`,
   micDeniedTitle: 'Нет доступа к микрофону',
   micDeniedBody: 'Без микрофона я не услышу операцию. Разреши доступ — это займёт полминуты',
@@ -539,7 +541,7 @@ export const ru = {
   importLooksLike: (app: string) => `Похоже на ${app}`,
   importColumnsFound: (roles: string) => `Колонки: ${roles}`,
   importColumnsLink: 'Колонки',
-  importCount: (count: number) => `${count} операций`,
+  importCount: (count: number) => `${count} ${operations(count)}`,
   importSkipped: (parts: string) => `Пропущено · ${parts}`,
   importSkipReasons: { TRANSFER: 'переводы', CURRENCY: 'другая валюта', INVALID: 'без даты или суммы', DUPLICATE: 'уже есть' },
   importCategories: (count: number) => `Категории · ${count}`,

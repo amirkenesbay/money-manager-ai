@@ -8,6 +8,7 @@ import type { Strings } from './ru'
 const rules = new Intl.PluralRules('en')
 
 const members = pluralOf(rules, { zero: 'members', one: 'member', two: 'members', few: 'members', many: 'members', other: 'members' })
+const operations = pluralOf(rules, { zero: 'operations', one: 'operation', two: 'operations', few: 'operations', many: 'operations', other: 'operations' })
 const days = pluralOf(rules, { zero: 'days', one: 'day', two: 'days', few: 'days', many: 'days', other: 'days' })
 
 const INTERVAL_FORMS: Record<IntervalUnit, (count: number) => string> = {
@@ -493,6 +494,7 @@ export const en: Strings = {
   sayAgain: 'Say again',
   saveCount: (count: number) => `Save ${count}`,
   removeOperation: 'Remove operation',
+  repeatedDraft: 'Looks like a repeat',
   savedCount: (count: number) => `Operations: ${count}`,
   micDeniedTitle: 'No microphone access',
   micDeniedBody: 'Without the microphone I cannot hear the operation. Allow access — it takes half a minute',
@@ -540,7 +542,7 @@ export const en: Strings = {
   importLooksLike: (app: string) => `Looks like ${app}`,
   importColumnsFound: (roles: string) => `Columns: ${roles}`,
   importColumnsLink: 'Columns',
-  importCount: (count: number) => `${count} operations`,
+  importCount: (count: number) => `${count} ${operations(count)}`,
   importSkipped: (parts: string) => `Skipped · ${parts}`,
   importSkipReasons: { TRANSFER: 'transfers', CURRENCY: 'other currency', INVALID: 'no date or amount', DUPLICATE: 'already here' },
   importCategories: (count: number) => `Categories · ${count}`,

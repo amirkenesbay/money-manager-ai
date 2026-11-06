@@ -11,6 +11,13 @@ export interface Draft extends VoiceOperation {
 export const toDrafts = (operations: VoiceOperation[]): Draft[] =>
   operations.map((operation, index) => ({ ...operation, key: `draft-${index}`, categoryCorrected: false }))
 
+const sameOperation = (left: Draft, right: Draft): boolean =>
+  left.type === right.type && Number(left.amount) === Number(right.amount) && left.categoryName === right.categoryName
+    && left.operationDate === right.operationDate && (left.description ?? '') === (right.description ?? '')
+
+export const repeatedKeys = (drafts: Draft[]): Set<string> =>
+  new Set(drafts.filter((draft, index) => drafts.slice(0, index).some((earlier) => sameOperation(earlier, draft))).map((draft) => draft.key))
+
 export const draftReady = (draft: Draft): boolean =>
   parseAmount(draft.amount) !== null && (draft.categoryId !== null || (draft.isNewCategory && draft.categoryName !== null))
 

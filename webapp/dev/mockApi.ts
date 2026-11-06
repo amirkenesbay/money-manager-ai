@@ -667,7 +667,7 @@ function recurringRoute(groupId: string, method: string, paymentId: string | und
   }
   const active = recurringPayments.filter((payment) => payment.active)
   const monthly = (type: RecurringPayment['type']) => String(active.filter((payment) => payment.type === type).reduce((total, payment) => total + Number(payment.monthlyAmount), 0))
-  return ok({ items: recurringPayments, monthlyExpense: monthly('EXPENSE'), monthlyIncome: monthly('INCOME') })
+  return ok({ items: recurringPayments, monthlyExpense: monthly('EXPENSE'), monthlyIncome: monthly('INCOME'), activeByMe: active.length })
 }
 
 const forgottenRules = new Set<string>()

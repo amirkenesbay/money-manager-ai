@@ -72,6 +72,7 @@ data class RecurringListResponse(
     val items: List<RecurringResponse>,
     val monthlyExpense: BigDecimal,
     val monthlyIncome: BigDecimal,
+    val activeByMe: Long,
 )
 
 @RestController
@@ -87,7 +88,12 @@ class RecurringController(
     fun payments(user: UserInfo, @PathVariable groupId: ObjectId): RecurringListResponse {
         groupAccessGuard.requireMember(user, groupId)
         val items = recurringPaymentService.payments(groupId).map { it.toResponse() }
-        return RecurringListResponse(items, monthlyTotal(items, CategoryType.EXPENSE), monthlyTotal(items, CategoryType.INCOME))
+        return RecurringListResponse(
+            items = items,
+            monthlyExpense = monthlyTotal(items, CategoryType.EXPENSE),
+            monthlyIncome = monthlyTotal(items, CategoryType.INCOME),
+            activeByMe = recurringPaymentService.activeCount(actorOf(user)),
+        )
     }
 
     @PostMapping

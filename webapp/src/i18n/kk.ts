@@ -487,6 +487,7 @@ export const kk: Strings = {
   sayAgain: 'Қайта айту',
   saveCount: (count: number) => `${count} сақтау`,
   removeOperation: 'Операцияны алып тастау',
+  repeatedDraft: 'Қайталанған сияқты',
   savedCount: (count: number) => `Операциялар: ${count}`,
   micDeniedTitle: 'Микрофонға рұқсат жоқ',
   micDeniedBody: 'Микрофонсыз операцияны естімеймін. Рұқсат бер — жарты минут алады',

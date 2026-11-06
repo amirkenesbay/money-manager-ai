@@ -50,6 +50,7 @@ class GroupService(
         val group = saveGroupAndUpdateUser(name, ownerId, GroupType.SHARED, currency) { existing, newId ->
             existing + newId
         }
+        seedDefaultCategories(group, languageOf(ownerId))
         return GroupCreationResult.Created(group)
     }
 
@@ -57,8 +58,7 @@ class GroupService(
         val group = saveGroupAndUpdateUser(name, userId, GroupType.PERSONAL, currency) { _, newId ->
             setOf(newId)
         }
-        categoryService.createDefaultCategories(group.id!!, language)
-        log.info("Created default categories for personal group: ${group.id}")
+        seedDefaultCategories(group, language)
         return group
     }
 
@@ -195,6 +195,14 @@ class GroupService(
 
         return true
     }
+
+    private fun seedDefaultCategories(group: MoneyGroup, language: String) {
+        categoryService.createDefaultCategories(checkNotNull(group.id), language)
+        log.info("Created default categories for group: ${group.id}")
+    }
+
+    private fun languageOf(userId: Long): String =
+        userRepository.findFirstByTelegramUserIdOrderByIdAsc(userId)?.language ?: LocalizationService.FALLBACK_LANGUAGE
 
     private fun saveGroupAndUpdateUser(
         name: String,
