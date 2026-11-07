@@ -45,6 +45,7 @@ import ai.moneymanager.chat.telegram.PRO_MODE_BUTTON_TEXT
 import ai.moneymanager.chat.telegram.PersistentMenuKeyboardService
 import ai.moneymanager.chat.telegram.MiniAppGateway
 import ai.moneymanager.chat.transition.common.inviteTokenOf
+import ai.moneymanager.chat.transition.common.repeatButtonOnlyStepTransitions
 import ai.moneymanager.chat.transition.gateway.miniAppGatewayDialog
 import ai.moneymanager.chat.transition.gateway.miniAppHintTransitions
 import ai.moneymanager.chat.transition.gateway.toGatewayOrMenu
@@ -110,6 +111,7 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
         financeDialogTransitions(categoryService, financeOperationService, financeHistoryService, financeHistoryFormatter, financeReportFormatter, financeReportService, userInfoService, groupService, subscriptionLimitsService, localizationService)
         notificationDialogTransitions(notificationService, userInfoService, subscriptionLimitsService)
         aiDialogTransitions(aiActionExecutor, aiRequestHandler, localizationService)
+        repeatButtonOnlyStepTransitions()
         adminDialogTransitions(adminService, userInfoService)
     }
 }
