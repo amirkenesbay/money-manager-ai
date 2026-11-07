@@ -3,6 +3,7 @@ package ai.moneymanager.metrics
 import ai.moneymanager.domain.event.NewUserRegistered
 import ai.moneymanager.domain.event.SubscriptionUpdated
 import ai.moneymanager.domain.model.SubscriptionChange
+import ai.moneymanager.domain.model.SubscriptionPeriod
 import ai.moneymanager.domain.model.SubscriptionTier
 import ai.moneymanager.domain.model.UserAccess
 import ai.moneymanager.repository.entity.FinanceOperationEntity
@@ -30,6 +31,9 @@ private const val PERIOD_TAG = "period"
 private const val CURRENCY_TAG = "currency"
 private const val NO_PERIOD = "none"
 private const val CREATED_AT = "auditInfo.createdAt"
+private const val USERS_REGISTERED = "users.registered"
+private const val REVENUE_CURRENCY = "usd"
+private val PAID_PERIODS = SubscriptionPeriod.entries.map { it.name.lowercase() }
 
 private enum class Window(val tag: String, val days: Long) {
     DAY("day", 1),
@@ -48,6 +52,12 @@ class BusinessMetrics(
     private val registry: MeterRegistry,
 ) {
     private val values = ConcurrentHashMap<String, AtomicLong>()
+
+    init {
+        registry.counter(PREFIX + USERS_REGISTERED)
+        SubscriptionChange.entries.forEach { change -> PAID_PERIODS.forEach { period -> subscriptionEvents(change.name.lowercase(), period) } }
+        PAID_PERIODS.forEach { period -> revenue(REVENUE_CURRENCY, period) }
+    }
 
     private fun gauge(name: String, vararg tags: String): AtomicLong =
         values.computeIfAbsent(name + tags.joinToString()) {
@@ -77,18 +87,24 @@ class BusinessMetrics(
 
     @EventListener
     fun onNewUser(event: NewUserRegistered) {
-        registry.counter(PREFIX + "users.registered").increment()
+        registry.counter(PREFIX + USERS_REGISTERED).increment()
     }
 
     @EventListener
     fun onSubscription(event: SubscriptionUpdated) {
         val subscription = event.subscription
         val period = subscription.period?.name?.lowercase() ?: NO_PERIOD
-        registry.counter(PREFIX + "subscriptions.events", CHANGE_TAG, subscription.change.name.lowercase(), PERIOD_TAG, period).increment()
+        subscriptionEvents(subscription.change.name.lowercase(), period).increment()
         if (subscription.change != SubscriptionChange.CANCELLED) {
-            registry.counter(PREFIX + "subscriptions.revenue", CURRENCY_TAG, subscription.currency.lowercase(), PERIOD_TAG, period).increment(subscription.price.toDouble())
+            revenue(subscription.currency.lowercase(), period).increment(subscription.price.toDouble())
         }
     }
+
+    private fun subscriptionEvents(change: String, period: String) =
+        registry.counter(PREFIX + "subscriptions.events", CHANGE_TAG, change, PERIOD_TAG, period)
+
+    private fun revenue(currency: String, period: String) =
+        registry.counter(PREFIX + "subscriptions.revenue", CURRENCY_TAG, currency, PERIOD_TAG, period)
 
     private inline fun <reified T> count(criteria: Criteria): Long = mongoTemplate.count(Query(criteria), T::class.java)
 }

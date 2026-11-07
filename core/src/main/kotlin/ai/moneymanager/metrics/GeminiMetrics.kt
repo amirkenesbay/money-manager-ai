@@ -20,8 +20,14 @@ enum class GeminiCall(val tag: String) {
     VOICE("voice"),
 }
 
+private val OUTCOMES = listOf(OUTCOME_SUCCESS, OUTCOME_QUOTA, OUTCOME_ERROR)
+
 @Component
 class GeminiMetrics(private val registry: MeterRegistry) {
+    init {
+        GeminiCall.entries.forEach { call -> OUTCOMES.forEach { outcome -> timer(call, outcome) } }
+    }
+
     fun <T> timed(call: GeminiCall, block: () -> T): T {
         val sample = Timer.start(registry)
         var outcome = OUTCOME_SUCCESS
@@ -31,7 +37,10 @@ class GeminiMetrics(private val registry: MeterRegistry) {
             outcome = if (failure is ClientException && failure.code() == GEMINI_QUOTA_STATUS) OUTCOME_QUOTA else OUTCOME_ERROR
             throw failure
         } finally {
-            sample.stop(Timer.builder(GEMINI_REQUESTS).tag(CALL_TAG, call.tag).tag(OUTCOME_TAG, outcome).register(registry))
+            sample.stop(timer(call, outcome))
         }
     }
+
+    private fun timer(call: GeminiCall, outcome: String): Timer =
+        Timer.builder(GEMINI_REQUESTS).tag(CALL_TAG, call.tag).tag(OUTCOME_TAG, outcome).register(registry)
 }

@@ -44,6 +44,10 @@ class NotificationSchedulerService(
 ) {
     private val log = LoggerFactory.getLogger(NotificationSchedulerService::class.java)
 
+    init {
+        listOf(OUTCOME_SENT, OUTCOME_FAILED, OUTCOME_SKIPPED).forEach { meterRegistry.counter(REMINDERS_METRIC, OUTCOME_TAG, it) }
+    }
+
     @Scheduled(fixedRate = 60000)
     fun checkAndSendNotifications() {
         val now = LocalDateTime.now()
