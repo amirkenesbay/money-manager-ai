@@ -1,4 +1,6 @@
 import { useCallback, useState } from 'react'
+import { tourTarget } from '../onboarding/tourTarget'
+import { ScreenTour } from '../onboarding/ScreenTour'
 import { serverErrorCode } from '../api/client'
 import type { Group, Me, RecurringPayment } from '../api/types'
 import { useAsync } from '../api/useAsync'
@@ -152,7 +154,8 @@ export function RecurringScreen({ me, group, onMeChanged, notify, onBack }: {
         <Switch checked={me.recurringHeadsUp} label={strings.recurringHeadsUpLabel} onChange={toggleHeadsUp} />
       </div>
       <BottomBar>
-        <Button onClick={() => setMode(atLimit ? { kind: 'limit' } : { kind: 'form', payment: null })}>{strings.addRecurring}</Button>
+        <Button {...tourTarget('recurring-add')} onClick={() => setMode(atLimit ? { kind: 'limit' } : { kind: 'form', payment: null })}>{strings.addRecurring}</Button>
+        <ScreenTour hint="RECURRING" />
       </BottomBar>
     </>
   )

@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { tourTarget } from '../onboarding/tourTarget'
+import { ScreenTour } from '../onboarding/ScreenTour'
 import type { Budget, Category, CategoryType, Currency, Group, Me } from '../api/types'
 import { strings } from '../strings'
 import { BottomBar } from '../ui/BottomBar'
@@ -123,13 +125,16 @@ export function CategoriesScreen({ me, group, notify, onBack }: {
         onBack={onBack}
         action={free && categories.state.status === 'ready' ? <span className="counter-chip">{strings.limitCounter(ofType.length, limit)}</span> : undefined}
       />
-      <Segmented label={strings.categoryTypeTabsLabel} options={CATEGORY_TYPES} value={type} optionKey={(option) => option} optionLabel={strings.typeFilter} onChange={setType} />
+      <div {...tourTarget('categories-type')}>
+        <Segmented label={strings.categoryTypeTabsLabel} options={CATEGORY_TYPES} value={type} optionKey={(option) => option} optionLabel={strings.typeFilter} onChange={setType} />
+      </div>
+      <ScreenTour hint="CATEGORIES" />
       {categories.state.status === 'loading' && <SkeletonRows count={SKELETON_ROWS} />}
       {categories.state.status === 'error' && <LoadError message={categories.state.message} onRetry={categories.reload} />}
       {categories.state.status === 'ready' && (ofType.length === 0
         ? <EmptyCard icon={<GridIcon />} title={strings.categoriesEmptyTitle(type)} body={strings.categoriesEmptyHint(type)} />
         : (
-          <ul className="rows">
+          <ul className="rows" {...tourTarget('categories-list')}>
             {reorder.order.map((id) => ofType.find((category) => category.id === id)).filter((category): category is Category => Boolean(category)).map((category) => {
               const budget = budgetOf(category.id)
               return (
@@ -157,7 +162,7 @@ export function CategoriesScreen({ me, group, notify, onBack }: {
       )}
       {free && <p className="caption centered">{strings.categoriesFreeNote(limit)}</p>}
       <BottomBar>
-        <Button onClick={add}>{strings.addCategory}</Button>
+        <Button {...tourTarget('categories-add')} onClick={add}>{strings.addCategory}</Button>
       </BottomBar>
     </>
   )

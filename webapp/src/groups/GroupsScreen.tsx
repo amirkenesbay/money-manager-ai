@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { tourTarget } from '../onboarding/tourTarget'
+import { ScreenTour } from '../onboarding/ScreenTour'
 import type { Group, Me } from '../api/types'
 import { strings } from '../strings'
 import { BottomBar } from '../ui/BottomBar'
@@ -93,7 +95,8 @@ export function GroupsScreen({ me, groups, actions, notify, onBack }: {
         onBack={onBack}
         action={limit !== null ? <span className="counter-chip">{strings.groupsFreeCounter(ownedShared, limit)}</span> : undefined}
       />
-      <ul className="rows">
+      <ScreenTour hint="GROUPS" />
+      <ul className="rows" {...tourTarget('groups-list')}>
         {groups.map((group) => (
           <li key={group.id}>
             <button type="button" className={`row row-button pressable group-row ${group.isActive ? 'group-row-active' : ''}`} onClick={() => setMode({ kind: 'detail', groupId: group.id })}>
@@ -110,7 +113,7 @@ export function GroupsScreen({ me, groups, actions, notify, onBack }: {
       </ul>
       {!groups.some((group) => group.type === 'SHARED') && <p className="hint-box caption">{strings.noSharedGroupsHint}</p>}
       <BottomBar>
-        <Button onClick={() => setMode(atLimit ? { kind: 'limit' } : { kind: 'create' })}>{strings.createGroup}</Button>
+        <Button {...tourTarget('groups-create')} onClick={() => setMode(atLimit ? { kind: 'limit' } : { kind: 'create' })}>{strings.createGroup}</Button>
       </BottomBar>
     </>
   )

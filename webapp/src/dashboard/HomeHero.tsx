@@ -7,6 +7,7 @@ import { selectionTick } from '../telegram/haptics'
 import { PlusIcon } from '../ui/icons'
 import { prefersLessMotion } from '../ui/motion'
 import { FlapNumber } from '../ui/FlapNumber'
+import { tourTarget } from '../onboarding/tourTarget'
 import { type HeroSlide, HERO_SLIDES, loadHeroSlide, saveHeroSlide } from './heroSlide'
 import { dayBars, monthPace, safeToSpend } from './homeMath'
 
@@ -62,7 +63,7 @@ export function HomeHero({ balance, summary, language, onAddIncome }: {
   }
 
   return (
-    <section className="home-hero" aria-roledescription="carousel" aria-label={strings.homeSummaryLabel}>
+    <section className="home-hero" {...tourTarget('summary')} aria-roledescription="carousel" aria-label={strings.homeSummaryLabel}>
       <div className="home-hero-track" ref={track}>
         {HERO_SLIDES.map((slide, index) => (
           <div

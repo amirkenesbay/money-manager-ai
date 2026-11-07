@@ -21,6 +21,8 @@
   --chart-4: #8cc4c4;
   --chart-5: #bfdcdc;
   --tint: rgba(30, 41, 56, 0.06);
+  --accent-wash: rgba(0, 102, 102, 0.1);
+  --tour-dim: rgba(15, 23, 31, 0.72);
 
   --raise-xs: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light);
   --raise-sm: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
@@ -88,6 +90,8 @@
   --chart-4: #1f6b63;
   --chart-5: #184a45;
   --tint: rgba(255, 255, 255, 0.06);
+  --accent-wash: rgba(60, 196, 180, 0.14);
+  --tour-dim: rgba(0, 0, 0, 0.75);
 
   color-scheme: dark;
 }
@@ -153,8 +157,9 @@ button {
 }
 
 .hint {
-  color: var(--muted);
+  color: var(--text);
   font-size: var(--text-sm);
+  opacity: 0.85;
 }
 
 .caption {
@@ -729,18 +734,6 @@ button {
   animation: none;
 }
 
-.manual-fab-hint {
-  position: absolute;
-  bottom: calc(100% + 0.75rem);
-  right: 0;
-  width: min(15rem, calc(100vw - 2 * var(--gutter)));
-}
-
-.manual-fab.left .manual-fab-hint {
-  right: auto;
-  left: 0;
-}
-
 @media (prefers-reduced-motion: no-preference) {
   .manual-fab:not(.dragging) .manual-fab-button {
     animation: levitate 3.2s ease-in-out infinite;
@@ -1195,8 +1188,11 @@ button {
 
 .hint-box {
   padding: 0.875rem 1rem;
+  border-left: 3px solid var(--accent);
   border-radius: 1.25rem;
-  box-shadow: var(--inset-sm);
+  background: var(--accent-wash);
+  color: var(--text);
+  font-size: var(--text-sm);
   line-height: 1.5;
 }
 

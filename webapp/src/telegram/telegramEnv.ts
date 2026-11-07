@@ -1,4 +1,4 @@
-import { backButton, closingBehavior, init, isTMA, miniApp, openTelegramLink, retrieveRawInitData, swipeBehavior, themeParams, viewport } from '@tma.js/sdk-react'
+import { backButton, closingBehavior, init, isTMA, miniApp, openTelegramLink, retrieveLaunchParams, retrieveRawInitData, swipeBehavior, themeParams, viewport } from '@tma.js/sdk-react'
 import { applyTheme } from '../theme/theme'
 
 const APP_HEIGHT_VAR = '--app-height'
@@ -52,6 +52,14 @@ function setAppHeight(height: number): void {
 export function rawInitData(): string | undefined {
   try {
     return retrieveRawInitData()
+  } catch {
+    return undefined
+  }
+}
+
+export function telegramPlatform(): string | undefined {
+  try {
+    return retrieveLaunchParams().tgWebAppPlatform
   } catch {
     return undefined
   }

@@ -1,4 +1,6 @@
 import { useRef, useState } from 'react'
+import { tourTarget } from '../onboarding/tourTarget'
+import { ScreenTour } from '../onboarding/ScreenTour'
 import { strings } from '../strings'
 import { Button } from '../ui/Button'
 import { ScreenHeader } from '../ui/ScreenHeader'
@@ -17,7 +19,7 @@ export function ImportPick({ onBack, onFile }: { onBack: () => void; onFile: (fi
     <>
       <ScreenHeader title={strings.importTitle} onBack={onBack} />
       <StateView icon={HERO_ICON} title={strings.importHero} body={strings.importFormats}>
-        <Button onClick={() => input.current?.click()}>{strings.importPick}</Button>
+        <Button {...tourTarget('import-pick')} onClick={() => input.current?.click()}>{strings.importPick}</Button>
         <p className="caption centered">{strings.importViaBot}</p>
       </StateView>
       <input
@@ -32,7 +34,8 @@ export function ImportPick({ onBack, onFile }: { onBack: () => void; onFile: (fi
           if (file) onFile(file)
         }}
       />
-      <details className="import-help">
+      <ScreenTour hint="IMPORT" />
+      <details className="import-help" {...tourTarget('import-help')}>
         <summary className="link-button">{strings.importHowTo}</summary>
         <div className="date-chips">
           {APPS.map((candidate) => (

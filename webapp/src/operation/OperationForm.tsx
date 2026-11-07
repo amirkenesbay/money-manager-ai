@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { tourTarget } from '../onboarding/tourTarget'
+import { ScreenTour } from '../onboarding/ScreenTour'
 import { serverMessage } from '../api/client'
 import type { Category, CategoryType, Group, Operation, RecurrenceUnit } from '../api/types'
 import { useCategories } from '../categories/useCategories'
@@ -26,7 +28,6 @@ import { repeatChoiceLabel, REPEAT_CHOICES } from '../recurring/recurrence'
 import { startRepeating } from '../recurring/repeatOperation'
 import { TagsField } from './TagsField'
 import { tagsOf, withoutTags, withTags } from '../operations/tags'
-import { Hint } from '../onboarding/Hint'
 import { BudgetNote } from '../budgets/BudgetNote'
 import { ExpenseSplit } from '../debts/ExpenseSplit'
 import { type Share, shareOf } from '../debts/share'
@@ -132,7 +133,10 @@ function FormFields({ group, userId, language, operation, initialType, initialCa
 
   return (
     <>
-      <Segmented label={strings.operationTypeLabel} options={OPERATION_TYPES} value={type} optionKey={(option) => option} optionLabel={strings.operationType} onChange={selectType} />
+      <div {...tourTarget('form-type')}>
+        <Segmented label={strings.operationTypeLabel} options={OPERATION_TYPES} value={type} optionKey={(option) => option} optionLabel={strings.operationType} onChange={selectType} />
+      </div>
+      {!operation && <ScreenTour hint="OPERATION_FORM" />}
       <label className={`amount-field ${amountInvalid ? 'field-invalid' : ''} ${huge ? 'field-warning' : ''} ${amountShake.shakeClass}`} onAnimationEnd={amountShake.onAnimationEnd}>
         <span className="field-label">{strings.amountLabel}</span>
         <span className="amount-input-row">
@@ -151,7 +155,7 @@ function FormFields({ group, userId, language, operation, initialType, initialCa
       {amountInvalid && <p className="field-message negative" role="alert">{strings.amountInvalid}</p>}
       {huge && amount !== null && <p className="field-message warning" role="status">{strings.amountHuge(formatMoney(amount, group.currency, language))}</p>}
 
-      <fieldset className="field-group">
+      <fieldset className="field-group" {...tourTarget('form-categories')}>
         <legend className="field-label">{strings.categoryLabel}</legend>
         <CategoryTiles categories={typeCategories} selectedId={selectedCategory?.id ?? null} onSelect={setCategoryId} creation={{ groupId: group.id, type, onCreated: onCategoryCreated }} />
         {type === 'EXPENSE' && selectedCategory && (
@@ -163,7 +167,7 @@ function FormFields({ group, userId, language, operation, initialType, initialCa
         <ExpenseSplit groupId={group.id} userId={userId} amount={amount === null ? null : Number(amount)} currency={group.currency} language={language} share={share} onChange={setShare} />
       )}
 
-      <fieldset className="field-group">
+      <fieldset className="field-group" {...tourTarget('form-date')}>
         <legend className="field-label">{strings.dateLabel}</legend>
         <div className="date-chips">
           {quickDates.map((quickDate, daysAgo) => (
@@ -176,7 +180,6 @@ function FormFields({ group, userId, language, operation, initialType, initialCa
           </button>
         </div>
         {customDate && <p className="caption">{formatDayLabel(date, new Date(), language)}</p>}
-        {!operation && <Hint hint="OPERATION_FORM" title={strings.hintFormTitle} body={strings.hintFormBody} />}
       </fieldset>
 
       <input
@@ -189,7 +192,7 @@ function FormFields({ group, userId, language, operation, initialType, initialCa
       />
       <TagsField groupId={group.id} tags={tags} onChange={setTags} />
       {!operation && (
-        <fieldset className="field-group">
+        <fieldset className="field-group" {...tourTarget('form-repeat')}>
           <legend className="field-label">{strings.repeatLabel}</legend>
           <Segmented variant="choices" label={strings.repeatLabel} options={REPEAT_CHOICES} value={repeat} optionKey={(option) => option ?? 'none'} optionLabel={repeatChoiceLabel} onChange={setRepeat} />
         </fieldset>

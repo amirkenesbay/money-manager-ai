@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { tourTarget } from '../onboarding/tourTarget'
+import { ScreenTour } from '../onboarding/ScreenTour'
 import type { Group, Me } from '../api/types'
 import { useAsync } from '../api/useAsync'
 import { useCategories } from '../categories/useCategories'
@@ -20,7 +22,6 @@ import { InitialBalanceSheet } from './InitialBalanceSheet'
 import { LanguageSheet } from './LanguageSheet'
 import type { Notify } from '../ui/useToast'
 import './more.css'
-import { Hint } from '../onboarding/Hint'
 
 export type Section = 'categories' | 'groups' | 'reminders' | 'recurring' | 'premium' | 'debts' | 'import'
 
@@ -55,7 +56,7 @@ export function MoreScreen({ me, group, groups, name, onMeChanged, onGroupUpdate
   return (
     <>
       <h1 className="title">{strings.moreTitle}</h1>
-      <Hint hint="MORE" title={strings.hintMoreTitle} body={strings.hintMoreBody} />
+      <ScreenTour hint="MORE" />
       <section className="card profile-card">
         <span className="avatar profile-avatar" aria-hidden="true">{name.charAt(0)}</span>
         <span className="row-main">
@@ -66,7 +67,7 @@ export function MoreScreen({ me, group, groups, name, onMeChanged, onGroupUpdate
       </section>
 
       <h2 className="field-label">{strings.manageSection}</h2>
-      <ul className="settings-list">
+      <ul className="settings-list" {...tourTarget('more-manage')}>
         <li><SettingsRow icon={<UsersIcon />} label={strings.groupsTitle} value={String(groups.length)} onClick={() => onOpenSection('groups')} /></li>
         <li><SettingsRow icon={<GridIcon />} label={strings.categoriesTitle} value={categoryCount} onClick={() => onOpenSection('categories')} /></li>
         <li><SettingsRow icon={<BellIcon />} label={strings.remindersTitle} value={activeReminders} onClick={() => onOpenSection('reminders')} /></li>
@@ -78,13 +79,13 @@ export function MoreScreen({ me, group, groups, name, onMeChanged, onGroupUpdate
       </ul>
 
       <h2 className="field-label">{strings.preferencesSection}</h2>
-      <ul className="settings-list">
+      <ul className="settings-list" {...tourTarget('more-preferences')}>
         <li><SettingsRow icon={<GlobeIcon />} label={strings.languageLabel} value={isLanguage(language) ? LANGUAGE_NAMES[language] : language} onClick={() => setSheet('language')} /></li>
         <li><SettingsRow icon={<CoinIcon />} label={strings.currencyLabel} value={currencyBadge(group.currency)} onClick={() => setSheet('currency')} /></li>
         <li><SettingsRow icon={<CalendarIcon />} label={strings.monthStartLabel} value={strings.monthStartValue(group.monthStartDay)} onClick={() => setSheet('monthStart')} /></li>
         <li><SettingsRow icon={<WalletIcon />} label={strings.initialBalanceLabel} value={formatMoney(group.initialBalance, group.currency, language)} onClick={() => setSheet('balance')} /></li>
         {homeScreen.state === 'available' && <li><SettingsRow icon={<PhoneIcon />} label={strings.homeScreenRow} onClick={homeScreen.add} /></li>}
-        <li><SettingsRow icon={<HelpIcon />} label={strings.howToUse} onClick={onShowWelcome} /></li>
+        <li {...tourTarget('more-help')}><SettingsRow icon={<HelpIcon />} label={strings.howToUse} onClick={onShowWelcome} /></li>
       </ul>
 
       {sheet === 'language' && (

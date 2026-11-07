@@ -1,7 +1,7 @@
 import type { Group, Operation } from '../api/types'
+import { ScreenTour } from '../onboarding/ScreenTour'
 import { BudgetsSummary } from '../budgets/BudgetsSummary'
 import { DebtsSummary } from '../debts/DebtsSummary'
-import { Hint } from '../onboarding/Hint'
 import { formatPeriod } from '../format'
 import { OperationDays } from '../operations/OperationDays'
 import type { OperationActions } from '../operations/operationActions'
@@ -11,6 +11,7 @@ import { LoadError } from '../ui/LoadError'
 import { SkeletonCard, SkeletonRows } from '../ui/Skeleton'
 import './Dashboard.css'
 import { HomeHero } from './HomeHero'
+import { tourTarget } from '../onboarding/tourTarget'
 import { HomeScreenOffer } from './HomeScreenOffer'
 import { useDashboard } from './useDashboard'
 
@@ -50,7 +51,7 @@ export function Dashboard({ groups, groupId, userId, language, switchError, onSw
           <HomeHero balance={ready.balance} summary={ready.summary} language={language} onAddIncome={onAddIncome} />
           <DebtsSummary groupId={groupId} currency={ready.balance.currency} language={language} showSettled={group.splitExpenses} onOpen={onOpenDebts} />
           <HomeScreenOffer />
-          {ready.summary.operationCount >= ASK_HINT_OPERATIONS && <Hint hint="ASK" title={strings.hintAskTitle} body={strings.hintAskBody} />}
+          {ready.summary.operationCount >= ASK_HINT_OPERATIONS && <ScreenTour hint="ASK" />}
           <BudgetsSummary groupId={groupId} currency={ready.balance.currency} language={language} onOpenAll={onOpenBudgets} onAsk={onAsk} />
           <RecentOperations
             operations={ready.operations.items}
@@ -75,7 +76,7 @@ function GroupSwitch({ groups, activeGroupId, onSwitch }: {
   const active = groups.find((group) => group.id === activeGroupId)
   if (groups.length < 2) return <h1 className="home-group">{active?.name}</h1>
   return (
-    <label className="home-group home-group-switch">
+    <label className="home-group home-group-switch" {...tourTarget('group')}>
       <span>{active?.name}</span>
       <ChevronDownIcon />
       <select aria-label={strings.groupLabel} value={activeGroupId} onChange={(event) => onSwitch(event.target.value)}>

@@ -1,4 +1,6 @@
 import { shareToTelegram } from '../telegram/share'
+import { tourTarget } from '../onboarding/tourTarget'
+import { ScreenTour } from '../onboarding/ScreenTour'
 import { useCallback, useState } from 'react'
 import type { Group, Me, Member } from '../api/types'
 import { useAsync } from '../api/useAsync'
@@ -22,7 +24,6 @@ import { useMembers } from './useMembers'
 import { NoticesSheet } from './NoticesSheet'
 import { RenameSheet } from './RenameSheet'
 import { SplitSwitch } from './SplitSwitch'
-import { Hint } from '../onboarding/Hint'
 
 const MEMBER_SKELETON_ROWS = 2
 
@@ -113,12 +114,12 @@ function SharedGroupPanels({ me, group, notify }: { me: Me; group: Group; notify
           </ul>
         )}
       </section>
-      <section className="well group-panel">
+      <section className="well group-panel" {...tourTarget('group-invite')}>
         <h2 className="section-title">{strings.inviteTitle(group.name)}</h2>
         {invite.state.status === 'loading' && <SkeletonRows count={1} />}
         {invite.state.status === 'error' && <LoadError message={invite.state.message} onRetry={invite.reload} />}
         {invite.state.status === 'ready' && <InviteActions url={invite.state.data.url} groupName={group.name} notify={notify} />}
-        <Hint hint="GROUP" title={strings.hintGroupTitle} body={strings.hintGroupBody} />
+        <ScreenTour hint="GROUP" />
       </section>
     </>
   )

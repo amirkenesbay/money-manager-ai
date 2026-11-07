@@ -1,7 +1,7 @@
 import { type CSSProperties, type PointerEvent, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { Category } from '../api/types'
 import { holdImpact } from '../telegram/haptics'
-import { Hint } from '../onboarding/Hint'
+import { tourTarget } from '../onboarding/tourTarget'
 import { strings } from '../strings'
 import { clampFabPoint, type FabArea, type FabPoint, fabPoint, loadFabPosition, saveFabPosition, snapFabPosition, type FabSide } from './fabPosition'
 import { PlusIcon } from './icons'
@@ -101,13 +101,11 @@ export function ManualFab({ quickCategories = [], onOpen }: { quickCategories?: 
           {category.icon}
         </button>
       ))}
-      <div className="manual-fab-hint">
-        <Hint hint="MANUAL_ENTRY" title={strings.hintManualTitle} body={strings.hintManualBody} placement="above" />
-      </div>
       <button
         ref={button}
         type="button"
         className="manual-fab-button"
+        {...tourTarget('manual')}
         aria-label={strings.manualEntryLabel}
         onPointerDown={press}
         onPointerMove={move}

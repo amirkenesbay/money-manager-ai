@@ -1,4 +1,6 @@
 import { type ReactNode, useMemo, useState } from 'react'
+import { tourTarget } from '../onboarding/tourTarget'
+import { ScreenTour } from '../onboarding/ScreenTour'
 import type { CategoryType, Group, Me, Operation, OperationTotals } from '../api/types'
 import { formatSignedMoney } from '../format'
 import { useMembers } from '../groups/useMembers'
@@ -19,7 +21,6 @@ import './OperationsScreen.css'
 import type { OperationsQuery } from './operationsApi'
 import { DEFAULT_PERIOD, type Period, PERIODS, periodRange } from './periods'
 import { useOperationsFeed } from './useOperationsFeed'
-import { Hint } from '../onboarding/Hint'
 
 const TYPE_FILTERS: (CategoryType | null)[] = [null, 'EXPENSE', 'INCOME']
 const ALL_CATEGORIES = ''
@@ -76,9 +77,9 @@ export function OperationsScreen({ me, group, initialSearch = null, actions, onS
         optionLabel={strings.typeFilter}
         onChange={selectType}
       />
-      <Hint hint="OPERATIONS" title={strings.hintOperationsTitle} body={strings.hintOperationsBody} />
+      <ScreenTour hint="OPERATIONS" />
       <SearchField value={searchText} onChange={setSearchText} />
-      <div className="filter-chips">
+      <div className="filter-chips" {...tourTarget('operations-filters')}>
         <ChipSelect
           label={strings.periodFilterLabel}
           icon={<CalendarIcon />}
@@ -130,7 +131,7 @@ function OperationsFeed({ me, group, query, premiumOffer, actions, onResetFilter
     )
   }
   return (
-    <section className="feed" aria-busy={feed.refreshing}>
+    <section className="feed" {...tourTarget('operations-feed')} aria-busy={feed.refreshing}>
       {feed.totals && <SearchTotals totals={feed.totals} group={group} language={me.language} />}
       <OperationDays operations={feed.items} group={group} language={me.language} userId={me.userId} actions={actions} onSelect={onSelectOperation} />
       {feed.loadMoreFailed && <p className="error-text" role="alert">{strings.loadMoreFailed}</p>}
@@ -147,7 +148,7 @@ function OperationsFeed({ me, group, query, premiumOffer, actions, onResetFilter
 
 function SearchField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   return (
-    <label className="search-field">
+    <label className="search-field" {...tourTarget('operations-search')}>
       <SearchIcon />
       <input
         type="search"

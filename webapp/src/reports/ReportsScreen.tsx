@@ -1,4 +1,6 @@
 import { AskChip } from '../ask/AskChip'
+import { tourTarget } from '../onboarding/tourTarget'
+import { ScreenTour } from '../onboarding/ScreenTour'
 import { useHorizontalSwipe } from '../ui/useHorizontalSwipe'
 import { useState } from 'react'
 import type { Group, Me } from '../api/types'
@@ -9,7 +11,6 @@ import { ChevronLeftIcon, ChevronRightIcon } from '../ui/icons'
 import { Segmented } from '../ui/Segmented'
 import { AnalyticsView, CategoryView, ComparisonView, MembersView } from './reportViews'
 import './ReportsScreen.css'
-import { Hint } from '../onboarding/Hint'
 import { currentPeriodMonth, isCalendarMonth, monthRange } from '../operations/periods'
 
 const REPORT_TABS: ReportTab[] = ['analytics', 'comparison', 'members', 'category']
@@ -41,16 +42,18 @@ export function ReportsScreen({ me, group, initialMonth = null, onAddOperation, 
   return (
     <>
       <h1 className="title">{strings.reportsTitle}</h1>
-      <Segmented label={strings.reportTabsLabel} options={REPORT_TABS} value={tab} optionKey={(option) => option} optionLabel={strings.reportTab} onChange={setTab} />
+      <div {...tourTarget('reports-tabs')}>
+        <Segmented label={strings.reportTabsLabel} options={REPORT_TABS} value={tab} optionKey={(option) => option} optionLabel={strings.reportTab} onChange={setTab} />
+      </div>
+      <ScreenTour hint="REPORTS" />
       {tab === 'category'
         ? <p className="month-nav-title">{strings.categoryPeriod}</p>
         : (
           <>
             <MonthNav tab={tab} month={month} currentMonth={currentMonth} startDay={group.monthStartDay} language={me.language} onChange={setMonth} />
-            <Hint hint="REPORTS" title={strings.hintReportsTitle} body={strings.hintReportsBody} />
           </>
         )}
-      <div className="report-swipe" {...swipe}>
+      <div className="report-swipe" {...tourTarget('reports-body')} {...swipe}>
         <ReportBody key={`${group.id}-${tab}-${month}`} tab={tab} context={context} />
       </div>
       {tab !== 'category' && <AskChip place="reports" question={strings.askReportsChip} onAsk={onAsk} />}
@@ -70,7 +73,7 @@ function MonthNav({ tab, month, currentMonth, startDay, language, onChange }: {
     ? strings.comparisonPeriod(formatMonthName(shiftMonth(month, -1), language), formatMonthName(month, language))
     : monthTitle(month, startDay, language)
   return (
-    <div className="month-nav">
+    <div className="month-nav" {...tourTarget('reports-month')}>
       <button type="button" className="round-button pressable month-nav-arrow" aria-label={strings.previousMonth} onClick={() => onChange(shiftMonth(month, -1))}>
         <ChevronLeftIcon />
       </button>

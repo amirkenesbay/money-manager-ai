@@ -1,6 +1,6 @@
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useMemo, useState } from 'react'
 import { serverMessage } from '../api/client'
-import type { AnswerLink, CategoryType, Group, Me, Operation } from '../api/types'
+import type { AnswerLink, AppHint, CategoryType, Group, Me, Operation } from '../api/types'
 import { AskTopicsSheet } from '../ask/AskTopicsSheet'
 import { useAsync } from '../api/useAsync'
 import { CategoriesScreen } from '../categories/CategoriesScreen'
@@ -12,7 +12,8 @@ import { type GroupActions, GroupsScreen } from '../groups/GroupsScreen'
 import { MoreScreen, type Section } from '../more/MoreScreen'
 import { HintScope, HintsProvider } from '../onboarding/Hint'
 import { useHints } from '../onboarding/hintsContext'
-import { WelcomeSheet } from '../onboarding/WelcomeSheet'
+import { SpotlightTour } from '../onboarding/SpotlightTour'
+import { tourSteps } from '../onboarding/tourSteps'
 import { OperationDetail } from '../operation/OperationDetail'
 import { OperationForm, type SaveResult } from '../operation/OperationForm'
 import { operationSummary } from '../operation/operationSummary'
@@ -46,6 +47,8 @@ type SecondaryTab = Exclude<Tab, 'home'>
 const MONTHLY = { unit: 'MONTH', interval: 1 } as const
 
 const SECONDARY_TABS = TABS.filter((candidate): candidate is SecondaryTab => candidate !== 'home')
+
+const WELCOME_COVERS: AppHint[] = ['WELCOME', 'ASK']
 
 type Overlay =
   | { kind: 'form'; operation: Operation | null; type?: CategoryType; categoryId?: string }
@@ -190,9 +193,11 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
     })
   }
 
+  const welcomeSteps = useMemo(() => (group ? tourSteps(group) : []), [group])
+
   const finishWelcome = (tryVoice: boolean) => {
     setWelcomeOpen(false)
-    if (!hints.isSeen('WELCOME')) hints.dismiss('WELCOME')
+    WELCOME_COVERS.filter((hint) => !hints.isSeen(hint)).forEach(hints.dismiss)
     if (tryVoice) open({ kind: 'voice' })
   }
 
@@ -334,7 +339,7 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
           />
         )}
         <div className="screen-section" style={overlay ? { display: 'none' } : undefined}>
-          <TabPanel active={tab === 'home' || !workspace} hintsVisible={!welcomeOpen}>
+          <TabPanel active={tab === 'home' || !workspace} hintsVisible={!overlay && !welcomeOpen}>
             <Dashboard
               key={`${groupId}-${version}`}
               groups={groups}
@@ -361,10 +366,10 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
             </TabPanel>
           ))}
           <TabBar active={tab} onSelect={switchTab} onRecordVoice={recordVoice} onShowQuestions={() => setQuestionsOpen(true)} />
-          {!welcomeOpen && <ManualFab quickCategories={quickCategories} onOpen={(category) => open({ kind: 'form', operation: null, categoryId: category?.id })} />}
+          <ManualFab quickCategories={quickCategories} onOpen={(category) => open({ kind: 'form', operation: null, categoryId: category?.id })} />
         </div>
       </main>
-      {welcomeOpen && group && !overlay && <WelcomeSheet group={group} onFinish={finishWelcome} />}
+      {welcomeOpen && group && !overlay && <SpotlightTour steps={welcomeSteps} finishLabel={strings.welcomeTryVoice} laterLabel={strings.homeScreenLater} onFinish={finishWelcome} />}
       {questionsOpen && !welcomeOpen && !overlay && (
         <AskTopicsSheet groupId={groupId} onAsk={navigation.ask} onRecord={recordVoice} onClose={() => setQuestionsOpen(false)} />
       )}

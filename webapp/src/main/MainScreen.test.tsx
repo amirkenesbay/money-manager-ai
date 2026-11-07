@@ -194,13 +194,12 @@ describe('MainScreen dashboard', () => {
     vi.mocked(markHintSeen).mockResolvedValue(me())
     render(<MainScreen me={me({ seenHints: [] })} activeGroupId={PERSONAL_GROUP_ID} onMeChanged={vi.fn()} />)
 
-    expect(await screen.findByRole('heading', { name: strings.welcomeVoiceTitle })).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: strings.welcomeNext }))
-    await userEvent.click(screen.getByRole('button', { name: strings.welcomeNext }))
+    expect(await screen.findByRole('dialog', { name: strings.tourSummaryTitle })).toBeInTheDocument()
+    while (screen.queryByRole('button', { name: strings.welcomeNext })) await userEvent.click(screen.getByRole('button', { name: strings.welcomeNext }))
     await userEvent.click(screen.getByRole('button', { name: strings.welcomeTryVoice }))
 
     expect(markHintSeen).toHaveBeenCalledWith('WELCOME')
-    expect(screen.queryByRole('heading', { name: strings.welcomeVoiceTitle })).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: strings.tourSummaryTitle })).not.toBeInTheDocument()
   })
 
   it('keeps the welcome for later when the bot opens a form', async () => {
@@ -210,7 +209,7 @@ describe('MainScreen dashboard', () => {
       render(<MainScreen me={me({ seenHints: [] })} activeGroupId={PERSONAL_GROUP_ID} onMeChanged={vi.fn()} />)
 
       expect(await screen.findByRole('textbox', { name: strings.amountLabel })).toBeInTheDocument()
-      expect(screen.queryByRole('heading', { name: strings.welcomeVoiceTitle })).not.toBeInTheDocument()
+      expect(screen.queryByRole('dialog', { name: strings.tourSummaryTitle })).not.toBeInTheDocument()
     } finally {
       window.history.replaceState(null, '', '/')
     }
@@ -222,7 +221,7 @@ describe('MainScreen dashboard', () => {
     await userEvent.click(await screen.findByRole('button', { name: strings.tabMore }))
     await userEvent.click(await screen.findByRole('button', { name: strings.howToUse }))
 
-    expect(await screen.findByRole('heading', { name: strings.welcomeVoiceTitle })).toBeInTheDocument()
+    expect(await screen.findByRole('dialog', { name: strings.tourSummaryTitle })).toBeInTheDocument()
   })
 
   it('opens a recent operation and returns home with the back control', async () => {

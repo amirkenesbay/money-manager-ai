@@ -1,112 +1,122 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { AppHint } from '../api/types'
 import { markHintSeen } from '../me/meApi'
 import { strings } from '../strings'
 import { group, me } from '../test/fixtures'
-import { Hint, HintScope, HintsProvider } from './Hint'
-import { WelcomeSheet } from './WelcomeSheet'
+import { HintScope, HintsProvider } from './Hint'
+import { ScreenTour } from './ScreenTour'
+import { SpotlightTour } from './SpotlightTour'
+import { tourTarget } from './tourTarget'
+import { tourSteps } from './tourSteps'
 
 vi.mock('../me/meApi', () => ({ markHintSeen: vi.fn() }))
 
-const renderHint = ({ seen = false, visible = true } = {}) => {
+const reportsScreen = (
+  <>
+    <div {...tourTarget('reports-tabs')}>tabs</div>
+    <div {...tourTarget('reports-month')}>month</div>
+    <div {...tourTarget('reports-body')}>body</div>
+  </>
+)
+
+const renderReportsTour = ({ seen = ['WELCOME'] as AppHint[], visible = true } = {}) => {
   const onMeChanged = vi.fn()
   render(
-    <HintsProvider me={me({ seenHints: seen ? ['REPORTS'] : [] })} onMeChanged={onMeChanged}>
+    <HintsProvider me={me({ seenHints: seen })} onMeChanged={onMeChanged}>
+      {reportsScreen}
       <HintScope visible={visible}>
-        <Hint hint="REPORTS" title={strings.hintReportsTitle} body={strings.hintReportsBody} />
+        <ScreenTour hint="REPORTS" />
       </HintScope>
     </HintsProvider>,
   )
   return onMeChanged
 }
 
-describe('Hint', () => {
+describe('ScreenTour', () => {
   beforeEach(() => {
     vi.resetAllMocks()
-    vi.mocked(markHintSeen).mockResolvedValue(me({ seenHints: ['REPORTS'] }))
+    vi.mocked(markHintSeen).mockResolvedValue(me({ seenHints: ['WELCOME', 'REPORTS'] }))
   })
 
-  it('explains the screen once and remembers it on the server', async () => {
-    const onMeChanged = renderHint()
+  it('walks the screen step by step and remembers it on the server', async () => {
+    const onMeChanged = renderReportsTour()
 
-    await userEvent.click(screen.getByRole('button', { name: strings.hintOk }))
+    expect(await screen.findByRole('dialog', { name: strings.tourTexts.reportsTabs.title })).toBeInTheDocument()
+    expect(screen.getByText(strings.welcomeStep(1, 3))).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: strings.welcomeNext }))
+    expect(screen.getByRole('dialog', { name: strings.tourTexts.reportsMonth.title })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: strings.welcomeNext }))
+    await userEvent.click(screen.getByRole('button', { name: strings.tourDone }))
 
-    expect(screen.queryByRole('note')).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(markHintSeen).toHaveBeenCalledWith('REPORTS')
     expect(onMeChanged).toHaveBeenCalled()
   })
 
-  it('closes on a tap anywhere', async () => {
-    renderHint()
+  it('can be skipped at any step', async () => {
+    renderReportsTour()
 
-    await userEvent.click(document.body)
+    await userEvent.click(await screen.findByRole('button', { name: strings.welcomeSkip }))
 
-    expect(screen.queryByRole('note')).not.toBeInTheDocument()
-  })
-
-  it('lets the tap that closes it reach the button the user aimed at', async () => {
-    const onPress = vi.fn()
-    render(
-      <HintsProvider me={me({ seenHints: [] })} onMeChanged={vi.fn()}>
-        <Hint hint="REPORTS" title={strings.hintReportsTitle} body={strings.hintReportsBody} />
-        <button type="button" onClick={onPress}>{strings.addTag}</button>
-      </HintsProvider>,
-    )
-
-    await userEvent.click(screen.getByRole('button', { name: strings.addTag }))
-
-    expect(onPress).toHaveBeenCalledOnce()
-    expect(screen.queryByRole('note')).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(markHintSeen).toHaveBeenCalledWith('REPORTS')
   })
 
   it('stays away when already seen', () => {
-    renderHint({ seen: true })
+    renderReportsTour({ seen: ['WELCOME', 'REPORTS'] })
 
-    expect(screen.queryByRole('note')).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  it('waits while its screen is hidden', () => {
-    renderHint({ visible: false })
+  it('waits for the welcome tour and for its screen to be shown', () => {
+    renderReportsTour({ seen: [] })
+    renderReportsTour({ visible: false })
 
-    expect(screen.queryByRole('note')).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(markHintSeen).not.toHaveBeenCalled()
   })
 })
 
-describe('WelcomeSheet', () => {
-  it('walks through the cards and ends with voice', async () => {
+describe('SpotlightTour', () => {
+  it('skips steps whose element is not on the screen', async () => {
+    render(
+      <>
+        <div {...tourTarget('summary')}>summary</div>
+        <div {...tourTarget('voice')}>voice</div>
+        <SpotlightTour steps={tourSteps(group())} finishLabel={strings.welcomeTryVoice} laterLabel={strings.homeScreenLater} onFinish={vi.fn()} />
+      </>,
+    )
+
+    expect(await screen.findByText(strings.welcomeStep(1, 2))).toBeInTheDocument()
+  })
+
+  it('ends the welcome tour with voice', async () => {
     const onFinish = vi.fn()
-    render(<WelcomeSheet group={group()} onFinish={onFinish} />)
+    render(
+      <>
+        <div {...tourTarget('summary')}>summary</div>
+        <div {...tourTarget('voice')}>voice</div>
+        <SpotlightTour steps={tourSteps(group())} finishLabel={strings.welcomeTryVoice} laterLabel={strings.homeScreenLater} onFinish={onFinish} />
+      </>,
+    )
 
-    expect(screen.getByRole('heading', { name: strings.welcomeVoiceTitle })).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: strings.welcomeNext }))
-    expect(screen.getByRole('heading', { name: strings.welcomeBalanceTitle })).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: strings.welcomeNext }))
-    expect(screen.getByRole('heading', { name: strings.welcomeTogetherTitle })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: strings.welcomeSkip })).not.toBeInTheDocument()
-
+    await userEvent.click(await screen.findByRole('button', { name: strings.welcomeNext }))
     await userEvent.click(screen.getByRole('button', { name: strings.welcomeTryVoice }))
 
     expect(onFinish).toHaveBeenCalledWith(true)
   })
 
-  it('can be skipped from the first card', async () => {
-    const onFinish = vi.fn()
-    render(<WelcomeSheet group={group()} onFinish={onFinish} />)
+  it('greets an invited member with their group', async () => {
+    render(
+      <>
+        <div {...tourTarget('summary')}>summary</div>
+        <SpotlightTour steps={tourSteps(group({ name: 'Семья', type: 'SHARED', isOwner: false, memberCount: 3 }))} finishLabel={strings.welcomeTryVoice} onFinish={vi.fn()} />
+      </>,
+    )
 
-    await userEvent.click(screen.getByRole('button', { name: strings.welcomeSkip }))
-
-    expect(onFinish).toHaveBeenCalledWith(false)
-  })
-
-  it('greets an invited member with their group instead of asking to invite', async () => {
-    render(<WelcomeSheet group={group({ name: 'Семья', type: 'SHARED', isOwner: false, memberCount: 3 })} onFinish={vi.fn()} />)
-
-    await userEvent.click(screen.getByRole('button', { name: strings.welcomeNext }))
-    await userEvent.click(screen.getByRole('button', { name: strings.welcomeNext }))
-
-    expect(screen.getByRole('heading', { name: strings.welcomeInvitedTitle('Семья') })).toBeInTheDocument()
+    expect(await screen.findByRole('dialog', { name: strings.welcomeInvitedTitle('Семья') })).toBeInTheDocument()
     expect(screen.getByText(strings.welcomeInvitedBody(3))).toBeInTheDocument()
   })
 })

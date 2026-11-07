@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { tourTarget } from '../onboarding/tourTarget'
+import { ScreenTour } from '../onboarding/ScreenTour'
 import { serverErrorCode } from '../api/client'
 import type { Me, Reminder } from '../api/types'
 import { useAsync } from '../api/useAsync'
@@ -135,7 +137,8 @@ export function RemindersScreen({ me, onMeChanged, notify, onBack }: {
         ))}
       {limit !== null && <p className="caption centered">{strings.remindersFreeNote(limit)}</p>}
       <BottomBar>
-        <Button onClick={() => setMode(atLimit ? { kind: 'limit' } : { kind: 'form', reminder: null })}>{strings.addReminder}</Button>
+        <Button {...tourTarget('reminders-add')} onClick={() => setMode(atLimit ? { kind: 'limit' } : { kind: 'form', reminder: null })}>{strings.addReminder}</Button>
+        <ScreenTour hint="REMINDERS" />
       </BottomBar>
     </>
   )

@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { tourTarget } from '../onboarding/tourTarget'
+import { ScreenTour } from '../onboarding/ScreenTour'
 import { serverMessage } from '../api/client'
 import type { Currency, DebtItem, Debts, Group, Loan, LoanDirection, Me, PersonalDebt } from '../api/types'
 import { formatDayLabel, formatMoney, formatSignedMoney, parseLocalDate } from '../format'
@@ -124,7 +126,8 @@ export function DebtsScreen({ me, group, notify, onBack }: { me: Me; group: Grou
         />
       )}
       <BottomBar>
-        <Button onClick={() => setView({ kind: 'new' })}><PlusIcon />{strings.loanAdd}</Button>
+        <Button {...tourTarget('debts-add')} onClick={() => setView({ kind: 'new' })}><PlusIcon />{strings.loanAdd}</Button>
+        <ScreenTour hint="DEBTS" />
       </BottomBar>
       {repayment && (
         <AmountSheet
@@ -175,7 +178,7 @@ function DebtsBody({ debts, group, userId, language, onOpenLoan, onRemind, onRep
   if (empty) return <StateView icon={EMPTY_ICON} title={strings.debtsNone} />
   return (
     <>
-      <div className="debt-tabs" role="tablist" aria-label={strings.debtsTitle}>
+      <div className="debt-tabs" {...tourTarget('debts-tabs')} role="tablist" aria-label={strings.debtsTitle}>
         {(['owed', 'mine'] as const).map((candidate) => (
           <button key={candidate} type="button" role="tab" className="debt-tab" aria-selected={tab === candidate} onClick={() => setTab(candidate)}>
             <span>{candidate === 'owed' ? strings.debtsTabOwed : strings.debtsTabMine}</span>
