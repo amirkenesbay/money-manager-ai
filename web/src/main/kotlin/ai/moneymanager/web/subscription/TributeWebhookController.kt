@@ -31,7 +31,10 @@ class TributeWebhookController(
         @RequestHeader(SIGNATURE_HEADER, required = false) signatureHeader: String?,
     ): ResponseEntity<Void> {
         val verifier = signature ?: return status(HttpStatus.SERVICE_UNAVAILABLE).also { log.warn("Tribute webhook received but TRIBUTE_API_KEY is not set") }
-        if (!verifier.matches(body, signatureHeader)) return status(HttpStatus.UNAUTHORIZED).also { log.warn("Tribute webhook with a wrong signature") }
+        if (!verifier.matches(body, signatureHeader)) {
+            log.warn("Tribute webhook with a wrong signature: header={}, body={}", signatureHeader, String(body))
+            return status(HttpStatus.UNAUTHORIZED)
+        }
         val event = jsonMapper.readValue(body, TributeEvent::class.java)
         val change = event.change
         val payloadNode = event.payload
