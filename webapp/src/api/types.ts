@@ -2,6 +2,7 @@ export type ApiErrorCode =
   | 'BAD_REQUEST'
   | 'UNAUTHORIZED'
   | 'FORBIDDEN'
+  | 'USER_BLOCKED'
   | 'NOT_FOUND'
   | 'PREMIUM_REQUIRED'
   | 'CATEGORY_DUPLICATE'
@@ -37,7 +38,10 @@ export interface Limits {
   imports: number | null
 }
 
+export type SubscriptionPeriod = 'MONTH' | 'QUARTER' | 'YEAR'
+
 export interface Price {
+  period: SubscriptionPeriod
   amount: string
   currency: Currency
 }
@@ -48,7 +52,7 @@ export interface Subscription {
   limits: Limits
   freeLimits: Limits
   paidLimits: Limits
-  price: Price
+  prices: Price[]
   subscribeUrl: string
 }
 

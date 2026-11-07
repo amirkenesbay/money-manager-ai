@@ -25,7 +25,7 @@ export const me = (overrides: Partial<Me> = {}): Me => ({
     limits: FREE_LIMITS,
     freeLimits: FREE_LIMITS,
     paidLimits: PAID_LIMITS,
-    price: { amount: '990', currency: 'KZT' },
+    prices: [{ period: 'MONTH', amount: '4.41', currency: 'USD' }, { period: 'YEAR', amount: '49.69', currency: 'USD' }],
     subscribeUrl: SUBSCRIBE_URL,
   },
   ...overrides,

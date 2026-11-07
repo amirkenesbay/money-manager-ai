@@ -33,6 +33,13 @@ function MeScreen() {
       </Screen>
     )
   }
+  if (state.status === 'error' && state.code === 'USER_BLOCKED') {
+    return (
+      <Screen>
+        <StateView icon={strings.blockedIcon} title={strings.blockedTitle} body={state.message ?? undefined} />
+      </Screen>
+    )
+  }
   if (state.status === 'error') {
     return (
       <Screen>

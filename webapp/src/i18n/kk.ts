@@ -1,4 +1,4 @@
-import type { CategoryType, Currency, DigestKind, GroupNoticeLevel, RecurringMode } from '../api/types'
+import type { CategoryType, Currency, DigestKind, GroupNoticeLevel, RecurringMode, SubscriptionPeriod } from '../api/types'
 import type { Period } from '../operations/periods'
 import type { IntervalUnit, RepeatOption } from '../reminders/schedule'
 import type { ReportTab } from '../reports/reportTabs'
@@ -78,6 +78,8 @@ export const kk: Strings = {
   noGroupIcon: '👥',
   noGroupTitle: 'Әзірге топ жоқ',
   noGroupHint: 'Ботты ашып, тілді таңда — жеке топ өздігінен құрылады да, бюджетің осында шығады',
+  blockedIcon: '⛔',
+  blockedTitle: 'Кіру жабық',
   groupLabel: 'Топ',
   groupSwitchFailed: 'Топты ауыстыру мүмкін болмады. Қайталап көр',
   balanceTitle: 'Баланс',
@@ -277,6 +279,7 @@ export const kk: Strings = {
   moreTitle: 'Тағы',
   tierFree: 'Free тарифі',
   tierPaid: (date: string) => `Premium ${date} дейін`,
+  tierForever: 'Premium мерзімсіз',
   premiumButton: 'Premium',
   manageSection: 'Басқару',
   preferencesSection: 'Баптаулар',
@@ -482,9 +485,12 @@ export const kk: Strings = {
   historyDays: (count: number) => `${count} күн`,
   wholeHistory: 'бүкіл',
   unlimited: 'шексіз',
-  perMonth: 'айына',
   perDay: (amount: string) => `Бұл күніне ≈ ${amount}`,
-  subscribeFor: (price: string) => `${price} рәсімдеу`,
+  planPeriod: { MONTH: 'Ай', QUARTER: '3 ай', YEAR: 'Жыл' } as Record<SubscriptionPeriod, string>,
+  planPerMonth: (amount: string) => `айына ≈ ${amount}`,
+  planSaving: (percent: number) => `${percent}% үнем`,
+  subscribePremium: 'Premium рәсімдеу',
+  premiumForeverBody: 'Premium мерзімсіз — барлық шектеу алынды.',
   tributeNote: 'Төлем Tribute-та ашылады — тура Telegram ішінде',
   premiumActiveTitle: 'Premium белсенді',
   premiumActiveBody: (date: string) => `${date} дейін жарамды. Барлық шектеу алынды — жобаны қолдағаның үшін рақмет!`,

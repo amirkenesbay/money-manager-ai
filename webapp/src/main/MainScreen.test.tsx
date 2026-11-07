@@ -271,7 +271,9 @@ describe('MainScreen dashboard', () => {
 
     await userEvent.click(screen.getByRole('button', { name: strings.premiumButton }))
 
-    expect(screen.getByRole('button', { name: strings.subscribeFor(formatMoney('990', 'KZT', LANGUAGE)) })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: strings.subscribePremium })).toBeInTheDocument()
+    expect(screen.getByText(formatMoney('4.41', 'USD', LANGUAGE), { normalizer: (text) => text })).toBeInTheDocument()
+    expect(screen.getByText(formatMoney('49.69', 'USD', LANGUAGE), { normalizer: (text) => text })).toBeInTheDocument()
     expect(screen.queryByRole('navigation', { name: strings.tabBarLabel })).not.toBeInTheDocument()
   })
 

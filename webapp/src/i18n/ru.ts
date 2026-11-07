@@ -1,4 +1,4 @@
-import type { CategoryType, Currency, DigestKind, GroupNoticeLevel, RecurringMode } from '../api/types'
+import type { CategoryType, Currency, DigestKind, GroupNoticeLevel, RecurringMode, SubscriptionPeriod } from '../api/types'
 import type { Period } from '../operations/periods'
 import type { IntervalUnit, RepeatOption } from '../reminders/schedule'
 import type { ReportTab } from '../reports/reportTabs'
@@ -84,6 +84,8 @@ export const ru = {
   noGroupIcon: '👥',
   noGroupTitle: 'Пока нет группы',
   noGroupHint: 'Открой бота и выбери язык — личная группа создастся автоматически, и здесь появится твой бюджет',
+  blockedIcon: '⛔',
+  blockedTitle: 'Доступ закрыт',
   groupLabel: 'Группа',
   groupSwitchFailed: 'Не удалось переключить группу. Попробуй ещё раз',
   balanceTitle: 'Баланс',
@@ -283,6 +285,7 @@ export const ru = {
   moreTitle: 'Ещё',
   tierFree: 'Тариф Free',
   tierPaid: (date: string) => `Premium до ${date}`,
+  tierForever: 'Premium навсегда',
   premiumButton: 'Premium',
   manageSection: 'Управление',
   preferencesSection: 'Предпочтения',
@@ -488,9 +491,12 @@ export const ru = {
   historyDays: (count: number) => `${count} ${days(count)}`,
   wholeHistory: 'вся',
   unlimited: 'без лимита',
-  perMonth: 'в месяц',
   perDay: (amount: string) => `Это ≈ ${amount} в день`,
-  subscribeFor: (price: string) => `Оформить за ${price}`,
+  planPeriod: { MONTH: 'Месяц', QUARTER: '3 месяца', YEAR: 'Год' } as Record<SubscriptionPeriod, string>,
+  planPerMonth: (amount: string) => `≈ ${amount} в месяц`,
+  planSaving: (percent: number) => `выгода ${percent}%`,
+  subscribePremium: 'Оформить Premium',
+  premiumForeverBody: 'Premium навсегда — все лимиты сняты.',
   tributeNote: 'Откроется оплата в Tribute — прямо в Telegram',
   premiumActiveTitle: 'Premium активен',
   premiumActiveBody: (date: string) => `Действует до ${date}. Все лимиты сняты — спасибо, что поддерживаешь проект!`,

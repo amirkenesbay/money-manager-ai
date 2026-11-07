@@ -61,7 +61,7 @@ export function MoreScreen({ me, group, groups, name, onMeChanged, onGroupUpdate
         <span className="avatar profile-avatar" aria-hidden="true">{name.charAt(0)}</span>
         <span className="row-main">
           <span className="row-title">{name}</span>
-          <span className="caption">{paid && subscription.expiresAt ? strings.tierPaid(formatDate(subscription.expiresAt, language)) : strings.tierFree}</span>
+          <span className="caption">{!paid ? strings.tierFree : subscription.expiresAt ? strings.tierPaid(formatDate(subscription.expiresAt, language)) : strings.tierForever}</span>
         </span>
         <Button size="small" onClick={() => onOpenSection('premium')}>{strings.premiumButton}</Button>
       </section>

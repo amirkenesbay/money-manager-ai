@@ -1,4 +1,4 @@
-import type { CategoryType, Currency, DigestKind, GroupNoticeLevel, RecurringMode } from '../api/types'
+import type { CategoryType, Currency, DigestKind, GroupNoticeLevel, RecurringMode, SubscriptionPeriod } from '../api/types'
 import type { Period } from '../operations/periods'
 import type { IntervalUnit, RepeatOption } from '../reminders/schedule'
 import type { ReportTab } from '../reports/reportTabs'
@@ -85,6 +85,8 @@ export const en: Strings = {
   noGroupIcon: '👥',
   noGroupTitle: 'No group yet',
   noGroupHint: 'Open the bot and pick a language — a personal group is created automatically and your budget shows up here',
+  blockedIcon: '⛔',
+  blockedTitle: 'Access closed',
   groupLabel: 'Group',
   groupSwitchFailed: 'Could not switch the group. Try again',
   balanceTitle: 'Balance',
@@ -284,6 +286,7 @@ export const en: Strings = {
   moreTitle: 'More',
   tierFree: 'Free plan',
   tierPaid: (date: string) => `Premium until ${date}`,
+  tierForever: 'Premium forever',
   premiumButton: 'Premium',
   manageSection: 'Manage',
   preferencesSection: 'Preferences',
@@ -489,9 +492,12 @@ export const en: Strings = {
   historyDays: (count: number) => `${count} ${days(count)}`,
   wholeHistory: 'all',
   unlimited: 'no limit',
-  perMonth: 'per month',
   perDay: (amount: string) => `That is ≈ ${amount} a day`,
-  subscribeFor: (price: string) => `Get it for ${price}`,
+  planPeriod: { MONTH: 'Month', QUARTER: '3 months', YEAR: 'Year' } as Record<SubscriptionPeriod, string>,
+  planPerMonth: (amount: string) => `≈ ${amount} a month`,
+  planSaving: (percent: number) => `save ${percent}%`,
+  subscribePremium: 'Get Premium',
+  premiumForeverBody: 'Premium forever — all limits are lifted.',
   tributeNote: 'Payment opens in Tribute — right inside Telegram',
   premiumActiveTitle: 'Premium is active',
   premiumActiveBody: (date: string) => `Valid until ${date}. All limits are lifted — thank you for supporting the project!`,

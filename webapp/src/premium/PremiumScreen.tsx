@@ -1,5 +1,6 @@
-import type { Limits, Me } from '../api/types'
+import type { Limits, Me, Price } from '../api/types'
 import { formatDate, formatMoney } from '../format'
+import { FULL_PERCENT } from '../percent'
 import { strings } from '../strings'
 import { openExternalLink } from '../telegram/telegramEnv'
 import { Moment } from '../three/Moment'
@@ -10,6 +11,7 @@ import { ScreenHeader } from '../ui/ScreenHeader'
 import './premium.css'
 
 const DAYS_IN_MONTH = 30
+const MONTHS_IN_YEAR = 12
 const CRYSTAL_INPUT = {}
 
 interface LimitRow {
@@ -28,11 +30,39 @@ const LIMIT_ROWS: LimitRow[] = [
   { label: () => strings.premiumRemindersRow, value: (limits, language) => countOrUnlimited(limits.activeNotifications, language) },
 ]
 
+const monthlyOf = (prices: Price[]): Price | undefined => prices.find((price) => price.period === 'MONTH')
+
+function yearlySaving(yearly: Price, monthly: Price | undefined): number | null {
+  if (!monthly || yearly.period !== 'YEAR') return null
+  const saving = Math.round((1 - Number(yearly.amount) / (Number(monthly.amount) * MONTHS_IN_YEAR)) * FULL_PERCENT)
+  return saving > 0 ? saving : null
+}
+
+function PricePlans({ prices, language }: { prices: Price[]; language: string }) {
+  const monthly = monthlyOf(prices)
+  return (
+    <ul className="premium-plans">
+      {prices.map((price) => {
+        const saving = yearlySaving(price, monthly)
+        return (
+          <li key={price.period} className="premium-plan">
+            <span className="caption">{strings.planPeriod[price.period]}</span>
+            <span className="amount premium-price-value">{formatMoney(price.amount, price.currency, language)}</span>
+            {price.period === 'YEAR' && <span className="caption">{strings.planPerMonth(formatMoney((Number(price.amount) / MONTHS_IN_YEAR).toFixed(2), price.currency, language))}</span>}
+            {saving !== null && <span className="premium-plan-saving">{strings.planSaving(saving)}</span>}
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
 export function PremiumScreen({ me, onBack }: { me: Me; onBack: () => void }) {
   const { subscription, language } = me
   const paid = subscription.tier === 'PAID'
-  const price = formatMoney(subscription.price.amount, subscription.price.currency, language)
-  const perDay = formatMoney(String(Math.round(Number(subscription.price.amount) / DAYS_IN_MONTH)), subscription.price.currency, language)
+  const forever = paid && subscription.expiresAt === null
+  const monthly = monthlyOf(subscription.prices)
+  const perDay = monthly && formatMoney((Number(monthly.amount) / DAYS_IN_MONTH).toFixed(2), monthly.currency, language)
 
   return (
     <>
@@ -46,7 +76,9 @@ export function PremiumScreen({ me, onBack }: { me: Me; onBack: () => void }) {
         />
         <h2 className="premium-title">{paid ? strings.premiumActiveTitle : strings.premiumTitle}</h2>
         <p className="hint centered">
-          {paid && subscription.expiresAt ? strings.premiumActiveBody(formatDate(subscription.expiresAt, language)) : strings.premiumTagline}
+          {forever
+            ? strings.premiumForeverBody
+            : paid && subscription.expiresAt ? strings.premiumActiveBody(formatDate(subscription.expiresAt, language)) : strings.premiumTagline}
         </p>
       </section>
       <table className="premium-table">
@@ -69,14 +101,18 @@ export function PremiumScreen({ me, onBack }: { me: Me; onBack: () => void }) {
       </table>
       {!paid && (
         <section className="premium-price">
-          <p><span className="amount premium-price-value">{price}</span> <span className="hint">{strings.perMonth}</span></p>
-          <p className="caption">{strings.perDay(perDay)}</p>
+          <PricePlans prices={subscription.prices} language={language} />
+          {perDay && <p className="caption">{strings.perDay(perDay)}</p>}
         </section>
       )}
-      <p className="caption centered">{strings.tributeNote}</p>
-      <BottomBar>
-        <Button onClick={() => openExternalLink(subscription.subscribeUrl)}>{paid ? strings.extendPremium : strings.subscribeFor(price)}</Button>
-      </BottomBar>
+      {!forever && (
+        <>
+          <p className="caption centered">{strings.tributeNote}</p>
+          <BottomBar>
+            <Button onClick={() => openExternalLink(subscription.subscribeUrl)}>{paid ? strings.extendPremium : strings.subscribePremium}</Button>
+          </BottomBar>
+        </>
+      )}
     </>
   )
 }

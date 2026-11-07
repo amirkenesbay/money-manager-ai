@@ -69,6 +69,17 @@ describe('App', () => {
     expect(await screen.findByText(strings.balanceTitle)).toBeInTheDocument()
   })
 
+  it('tells a blocked user that access is closed and offers no retry', async () => {
+    const serverMessage = 'Аккаунт заблокирован.'
+    fetchMeMock.mockRejectedValue(new ApiRequestError(serverMessage, 403, { code: 'USER_BLOCKED', message: serverMessage, details: {} }))
+
+    render(<App insideTelegram />)
+
+    expect(await screen.findByText(strings.blockedTitle)).toBeInTheDocument()
+    expect(screen.getByText(serverMessage)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: strings.retry })).not.toBeInTheDocument()
+  })
+
   it('shows a generic hint when the network is down', async () => {
     fetchMeMock.mockRejectedValue(new ApiRequestError('Failed to fetch', null, null))
 
