@@ -2,6 +2,7 @@ package ai.moneymanager.service
 
 import ai.moneymanager.domain.event.NewUserRegistered
 import ai.moneymanager.domain.event.SubscriptionUpdated
+import ai.moneymanager.domain.event.TimezoneChanged
 import ai.moneymanager.domain.model.PaidSubscription
 import ai.moneymanager.domain.model.SubscriptionChange
 import ai.moneymanager.domain.model.SubscriptionPeriod
@@ -128,6 +129,16 @@ class UserInfoServiceTest {
 
         assertThat(service.setAccess(FORMER_OWNER_ID, UserAccess.BLOCKED)?.blocked).isTrue()
         assertThat(service.setAccess(FORMER_OWNER_ID, UserAccess.REGULAR)?.blocked).isFalse()
+    }
+
+    @Test
+    fun `announces a new time zone once so reminders can follow it`() {
+        repository.givenUser(telegramUserId = FORMER_OWNER_ID, username = RECYCLED_USERNAME)
+
+        service.updateTimezone(FORMER_OWNER_ID, "Europe/Moscow")
+        service.updateTimezone(FORMER_OWNER_ID, "Europe/Moscow")
+
+        assertThat(publishedEvents.filterIsInstance<TimezoneChanged>()).containsExactly(TimezoneChanged(FORMER_OWNER_ID, "Europe/Moscow"))
     }
 
     @Test

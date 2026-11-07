@@ -3,6 +3,7 @@ package ai.moneymanager.service
 import ai.moneymanager.domain.model.UserAccess
 import ai.moneymanager.domain.model.PaidSubscription
 import ai.moneymanager.domain.event.SubscriptionUpdated
+import ai.moneymanager.domain.event.TimezoneChanged
 import ai.moneymanager.domain.event.NewUserRegistered
 import ai.moneymanager.domain.model.AppHint
 import ai.moneymanager.domain.model.DigestKind
@@ -48,7 +49,9 @@ class UserInfoService(
 
     fun updateTimezone(telegramUserId: Long, timezone: String): UserInfo? {
         val entity = userRepository.findFirstByTelegramUserIdOrderByIdAsc(telegramUserId) ?: return null
+        if (entity.timezone == timezone) return mapEntity(entity)
         val updated = userRepository.save(entity.copy(timezone = timezone))
+        eventPublisher.publishEvent(TimezoneChanged(telegramUserId, timezone))
         return mapEntity(updated)
     }
 

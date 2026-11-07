@@ -1,5 +1,7 @@
 package ai.moneymanager.service
 
+import org.springframework.context.event.EventListener
+import ai.moneymanager.domain.event.TimezoneChanged
 import ai.moneymanager.domain.model.FrequencyType
 import ai.moneymanager.domain.model.NotificationCreationResult
 import ai.moneymanager.domain.model.NotificationToggleResult
@@ -142,14 +144,26 @@ class NotificationService(
     fun getDueNotifications(now: LocalDateTime): List<NotificationEntity> =
         notificationRepository.findByIsActiveTrueAndNextFireTimeLessThanEqual(now)
 
-    fun advanceNextFireTime(notification: NotificationEntity, userTimezone: String): NotificationEntity {
-        val nextFireTime = computeNextFireTime(
+    @EventListener
+    fun onTimezoneChanged(event: TimezoneChanged) {
+        val rescheduled = notificationRepository.findByTelegramUserIdOrderByAuditInfoCreatedAtAsc(event.telegramUserId)
+            .filter { it.isActive }
+            .map { it.copy(nextFireTime = nextFireTimeOf(it, event.timezone)) }
+        if (rescheduled.isEmpty()) return
+        notificationRepository.saveAll(rescheduled)
+        log.info("Rescheduled {} notifications of user {} to {}", rescheduled.size, event.telegramUserId, event.timezone)
+    }
+
+    private fun nextFireTimeOf(notification: NotificationEntity, userTimezone: String, fromTime: LocalDateTime? = null): LocalDateTime =
+        computeNextFireTime(
             notification.frequencyType, notification.customInterval,
             notification.hour, notification.minute,
             notification.dayOfWeek, notification.dayOfMonth, notification.monthOfYear,
-            userTimezone, fromTime = notification.nextFireTime
+            userTimezone, fromTime
         )
-        return notificationRepository.save(notification.copy(nextFireTime = nextFireTime))
+
+    fun advanceNextFireTime(notification: NotificationEntity, userTimezone: String): NotificationEntity {
+        return notificationRepository.save(notification.copy(nextFireTime = nextFireTimeOf(notification, userTimezone, notification.nextFireTime)))
     }
 
     internal fun computeNextFireTime(
