@@ -1,5 +1,8 @@
 package ai.moneymanager.service.nlp
 
+import ai.moneymanager.metrics.GEMINI_QUOTA_STATUS
+import ai.moneymanager.metrics.GeminiCall
+import ai.moneymanager.metrics.GeminiMetrics
 import ai.moneymanager.domain.text.geminiValue
 import ai.moneymanager.config.GeminiProperties
 import ai.moneymanager.domain.model.nlp.BotCommand
@@ -52,7 +55,8 @@ const val WAV_MIME_TYPE = "audio/wav"
 class CommandParserService(
     private val geminiProperties: GeminiProperties,
     private val argsMapper: GeminiArgsMapper,
-    private val aiPromptService: AiPromptService
+    private val aiPromptService: AiPromptService,
+    private val geminiMetrics: GeminiMetrics
 ) {
     private lateinit var client: Client
     private lateinit var config: GenerateContentConfig
@@ -144,7 +148,7 @@ class CommandParserService(
     fun parseCommands(userMessage: String, categoryContext: String? = null): List<BotCommand> {
         return try {
             val content = contentWithCategoryContext(categoryContext, Part.fromText(userMessage))
-            val response = client.models.generateContent(geminiProperties.model, content, config)
+            val response = geminiMetrics.timed(GeminiCall.COMMAND) { client.models.generateContent(geminiProperties.model, content, config) }
             processResponse(response, userMessage)
         } catch (e: Exception) {
             log.error("CommandParser error: ${e.message}", e)
@@ -172,7 +176,7 @@ class CommandParserService(
             val textPart = Part.fromText(aiPromptService.voiceTranscriptionPrompt)
 
             val content = contentWithCategoryContext(categoryContext, audioPart, textPart)
-            val response = client.models.generateContent(geminiProperties.model, content, config)
+            val response = geminiMetrics.timed(GeminiCall.VOICE) { client.models.generateContent(geminiProperties.model, content, config) }
 
             processResponse(response, VOICE_MESSAGE_PLACEHOLDER)
         } catch (e: Exception) {
@@ -193,7 +197,7 @@ class CommandParserService(
     private fun classifyError(e: Exception): BotCommand {
         return when (e) {
             is ClientException -> {
-                if (e.code() == HTTP_TOO_MANY_REQUESTS) {
+                if (e.code() == GEMINI_QUOTA_STATUS) {
                     BotCommand.RateLimitError(parseRetryAfterSeconds(e.message()))
                 } else {
                     BotCommand.ServiceError
@@ -363,7 +367,6 @@ class CommandParserService(
     }
 
     companion object {
-        private const val HTTP_TOO_MANY_REQUESTS = 429
         private const val VOICE_MESSAGE_PLACEHOLDER = "[voice message]"
         private val RETRY_AFTER_REGEX = Regex("""Please retry in (\d+(?:\.\d+)?)s""")
 

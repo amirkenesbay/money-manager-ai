@@ -15,6 +15,8 @@ import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
+import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.bean.override.mockito.MockitoBean
@@ -39,6 +41,7 @@ private fun event(name: String, period: String = "yearly") = """
 
 @WebMvcTest(controllers = [TributeWebhookController::class])
 @ApiWebLayerSetup
+@Import(SimpleMeterRegistry::class)
 @TestPropertySource(properties = ["tribute.api-key=$TRIBUTE_KEY"])
 class TributeWebhookControllerTest {
     @Autowired
@@ -64,6 +67,19 @@ class TributeWebhookControllerTest {
         assertThat(subscription.period).isEqualTo(SubscriptionPeriod.YEAR)
         assertThat(subscription.price).isEqualByComparingTo(BigDecimal("49.69"))
         assertThat(subscription.expiresAt).isEqualTo(LocalDateTime.ofInstant(Instant.parse(EXPIRES_AT), ZoneId.systemDefault()))
+    }
+
+    @Autowired
+    private lateinit var meterRegistry: SimpleMeterRegistry
+
+    @Test
+    fun `counts each webhook by outcome`() {
+        val ignored = meterRegistry.counter("moneymanager.tribute.webhooks", "outcome", "ignored")
+        val before = ignored.count()
+
+        send("""{"name":"new_donation","payload":{}}""")
+
+        assertThat(ignored.count() - before).isEqualTo(1.0)
     }
 
     @Test

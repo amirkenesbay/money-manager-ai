@@ -1,5 +1,7 @@
 package ai.moneymanager.service
 
+import ai.moneymanager.metrics.GeminiCall
+import ai.moneymanager.metrics.GeminiMetrics
 import ai.moneymanager.config.GeminiProperties
 import com.google.genai.Client
 import com.google.genai.types.GenerateContentResponse
@@ -10,7 +12,8 @@ import org.springframework.stereotype.Service
 
 @Service
 class GeminiService(
-    private val geminiProperties: GeminiProperties
+    private val geminiProperties: GeminiProperties,
+    private val geminiMetrics: GeminiMetrics
 ) {
     private lateinit var client: Client
 
@@ -26,11 +29,9 @@ class GeminiService(
 
     fun generateText(prompt: String): String? {
         return try {
-            val response: GenerateContentResponse = client.models.generateContent(
-                geminiProperties.model,
-                prompt,
-                null
-            )
+            val response: GenerateContentResponse = geminiMetrics.timed(GeminiCall.TEXT) {
+                client.models.generateContent(geminiProperties.model, prompt, null)
+            }
             response.text()
         } catch (e: Exception) {
             log.error("Gemini generateText error: ${e.message}", e)

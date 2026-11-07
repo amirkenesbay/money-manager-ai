@@ -1,5 +1,8 @@
 package ai.moneymanager.chat.telegram
 
+import ai.moneymanager.domain.model.FALLBACK_TIMEZONE
+import ai.moneymanager.domain.model.UserInfo
+import io.micrometer.core.instrument.MeterRegistry
 import ai.moneymanager.domain.model.DEFAULT_NOTIFICATION_ICON
 import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.NotificationService
@@ -18,6 +21,11 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import java.time.LocalDateTime
 
 private const val ADD_OPERATION_BUTTON_KEY = "mini_app.button.add_operation"
+private const val REMINDERS_METRIC = "moneymanager.reminders.delivered"
+private const val OUTCOME_TAG = "outcome"
+private const val OUTCOME_SENT = "sent"
+private const val OUTCOME_FAILED = "failed"
+private const val OUTCOME_SKIPPED = "skipped"
 
 
 @Service
@@ -26,6 +34,7 @@ class NotificationSchedulerService(
     private val userInfoService: UserInfoService,
     private val localizationService: LocalizationService,
     private val miniAppGateway: MiniAppGateway,
+    private val meterRegistry: MeterRegistry,
     @Value("\${chat-machinist.bot.token}")
     private val botToken: String,
     @Value("\${chat-machinist.bot.name}")
@@ -45,16 +54,24 @@ class NotificationSchedulerService(
         log.info("Found {} due notifications", dueNotifications.size)
 
         for (notification in dueNotifications) {
-            try {
-                val userInfo = userInfoService.getUserInfoByTelegramId(notification.telegramUserId)
-                val timezone = userInfo?.timezone ?: "UTC"
-                sendNotification(notification, userInfo?.language)
-                notificationService.advanceNextFireTime(notification, timezone)
-                log.info("Sent and advanced notification '{}' for user {}", notification.name, notification.telegramUserId)
-            } catch (e: Exception) {
-                log.error("Failed to send notification '{}' to user {}: {}", notification.name, notification.telegramUserId, e.message, e)
-            }
+            val userInfo = userInfoService.getUserInfoByTelegramId(notification.telegramUserId)
+            val outcome = deliver(notification, userInfo)
+            runCatching { notificationService.advanceNextFireTime(notification, userInfo?.timezone ?: FALLBACK_TIMEZONE) }
+                .onFailure { log.error("Failed to schedule notification '{}' of user {}: {}", notification.name, notification.telegramUserId, it.message, it) }
+            meterRegistry.counter(REMINDERS_METRIC, OUTCOME_TAG, outcome).increment()
         }
+    }
+
+    private fun deliver(notification: NotificationEntity, userInfo: UserInfo?): String {
+        if (userInfo?.blocked == true) return OUTCOME_SKIPPED
+        return runCatching { sendNotification(notification, userInfo?.language) }
+            .fold(
+                onSuccess = { OUTCOME_SENT },
+                onFailure = {
+                    log.warn("Failed to send notification '{}' to user {}: {}", notification.name, notification.telegramUserId, it.message)
+                    OUTCOME_FAILED
+                },
+            )
     }
 
     private fun sendNotification(notification: NotificationEntity, language: String?) {
