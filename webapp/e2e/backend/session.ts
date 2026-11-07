@@ -84,7 +84,7 @@ export const categoryNamed = (categories: Category[], name: string): Category =>
 }
 
 export async function openAs(app: App, screen: Screen, userId: number, waitForHome = true): Promise<void> {
-  await app.open(`/#${launchParams(botToken(), userId)}`)
+  await app.open(`/?visit=${Date.now()}#${launchParams(botToken(), userId)}`)
   if (!waitForHome) return
   await expect(screen.getByRole('navigation', text.tabBarLabel)).toBeVisible()
   const tour = screen.getByRole('dialog', text.welcomeLabel)

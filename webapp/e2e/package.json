@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "e2e run",
-    "test:backend": "set -a && . ../../.env.dev && set +a && e2e run --config e2e.backend.config.ts"
+    "test:backend": "set -a && . ../../.env.dev && set +a && TRIBUTE_API_KEY=${TRIBUTE_API_KEY:-e2e-tribute-key} e2e run --config e2e.backend.config.ts"
   },
   "devDependencies": {
     "@agentclientprotocol/claude-agent-acp": "^0.101.0",
