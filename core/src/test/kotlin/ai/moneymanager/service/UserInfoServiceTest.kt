@@ -129,6 +129,11 @@ private class FakeUserInfoRepository(
     override fun findFirstByTelegramUserIdOrderByIdAsc(id: Long): UserInfoEntity? =
         users.firstOrNull { it.telegramUserId == id }
 
+    override fun addSeenHint(telegramUserId: Long, hint: AppHint): UserInfoEntity? {
+        val user = findFirstByTelegramUserIdOrderByIdAsc(telegramUserId) ?: return null
+        return save(user.copy(seenHints = user.seenHints + hint))
+    }
+
     override fun findFirstByUsernameOrderByIdAsc(username: String): UserInfoEntity? =
         users.firstOrNull { it.username == username }
 

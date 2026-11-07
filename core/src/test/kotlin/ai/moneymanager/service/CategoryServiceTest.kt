@@ -39,6 +39,17 @@ class CategoryServiceTest {
     }
 
     @Test
+    fun `keeps default categories in their seed order with salary first among income`() {
+        val saved = mutableListOf<CategoryEntity>()
+        `when`(repository.saveAll(anyList<CategoryEntity>())).thenAnswer { invocation -> invocation.getArgument<List<CategoryEntity>>(0).also { saved.addAll(it) } }
+
+        service.createDefaultCategories(groupId, "ru")
+
+        assertThat(saved.map { it.position }).isEqualTo(saved.indices.toList())
+        assertThat(saved.first { it.type == CategoryType.INCOME }.icon).isEqualTo("💰")
+    }
+
+    @Test
     fun `renames a category and tells the group who did it`() {
         val result = service.updateCategory(ACTOR_ID, taxi.id!!, "Такси и каршеринг", "🚕")
 

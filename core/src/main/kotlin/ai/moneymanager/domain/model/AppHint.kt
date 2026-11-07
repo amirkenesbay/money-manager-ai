@@ -9,4 +9,10 @@ enum class AppHint {
     GROUP,
     MANUAL_ENTRY,
     ASK,
+    CATEGORIES,
+    GROUPS,
+    RECURRING,
+    REMINDERS,
+    DEBTS,
+    IMPORT,
 }

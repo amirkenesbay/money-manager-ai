@@ -54,7 +54,12 @@ export interface Subscription {
 
 export type DigestKind = 'DAY' | 'WEEK' | 'MONTH'
 
-export type AppHint = 'WELCOME' | 'OPERATIONS' | 'REPORTS' | 'MORE' | 'OPERATION_FORM' | 'GROUP' | 'MANUAL_ENTRY' | 'ASK'
+export const APP_HINTS = [
+  'WELCOME', 'OPERATIONS', 'REPORTS', 'MORE', 'OPERATION_FORM', 'GROUP', 'MANUAL_ENTRY', 'ASK',
+  'CATEGORIES', 'GROUPS', 'RECURRING', 'REMINDERS', 'DEBTS', 'IMPORT',
+] as const
+
+export type AppHint = typeof APP_HINTS[number]
 
 export interface Me {
   userId: number

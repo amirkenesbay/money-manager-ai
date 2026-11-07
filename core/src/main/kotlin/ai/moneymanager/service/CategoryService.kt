@@ -160,12 +160,13 @@ class CategoryService(
     }
 
     fun createDefaultCategories(groupId: ObjectId, language: String) {
-        val entities = DEFAULT_CATEGORY_SEEDS.map { seed ->
+        val entities = DEFAULT_CATEGORY_SEEDS.mapIndexed { position, seed ->
             CategoryEntity(
                 name = localizationService.t(seed.nameKey, language),
                 icon = seed.icon,
                 type = seed.type,
-                groupId = groupId
+                groupId = groupId,
+                position = position
             )
         }
         categoryRepository.saveAll(entities)

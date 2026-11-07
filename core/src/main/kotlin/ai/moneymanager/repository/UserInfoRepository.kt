@@ -6,7 +6,7 @@ import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface UserInfoRepository : MongoRepository<UserInfoEntity, ObjectId> {
+interface UserInfoRepository : MongoRepository<UserInfoEntity, ObjectId>, UserInfoRepositoryCustom {
     fun findFirstByUsernameOrderByIdAsc(username: String): UserInfoEntity?
     fun findFirstByTelegramUserIdOrderByIdAsc(id: Long): UserInfoEntity?
     fun findByActiveGroupIdIsNotNullAndTelegramUserIdIsNotNull(): List<UserInfoEntity>

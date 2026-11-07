@@ -68,11 +68,8 @@ class UserInfoService(
         userRepository.save(entity.copy(miniAppIntroduced = true))
     }
 
-    fun markHintSeen(telegramUserId: Long, hint: AppHint): UserInfo? {
-        val entity = userRepository.findFirstByTelegramUserIdOrderByIdAsc(telegramUserId) ?: return null
-        if (hint in entity.seenHints) return mapEntity(entity)
-        return mapEntity(userRepository.save(entity.copy(seenHints = entity.seenHints + hint)))
-    }
+    fun markHintSeen(telegramUserId: Long, hint: AppHint): UserInfo? =
+        userRepository.addSeenHint(telegramUserId, hint)?.let(::mapEntity)
 
     fun setDigestMuted(telegramUserId: Long, kind: DigestKind, muted: Boolean): UserInfo? {
         val entity = userRepository.findFirstByTelegramUserIdOrderByIdAsc(telegramUserId) ?: return null
