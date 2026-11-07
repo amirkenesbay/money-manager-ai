@@ -12,6 +12,7 @@ import { type GroupActions, GroupsScreen } from '../groups/GroupsScreen'
 import { MoreScreen, type Section } from '../more/MoreScreen'
 import { HintScope, HintsProvider } from '../onboarding/Hint'
 import { useHints } from '../onboarding/hintsContext'
+import { useDeviceTimezone } from '../me/useDeviceTimezone'
 import { SpotlightTour } from '../onboarding/SpotlightTour'
 import { tourSteps } from '../onboarding/tourSteps'
 import { OperationDetail } from '../operation/OperationDetail'
@@ -88,6 +89,7 @@ interface Workspace {
 
 export function MainScreen({ me, activeGroupId, onMeChanged }: { me: Me; activeGroupId: string; onMeChanged: (me: Me) => void }) {
   const groups = useAsync(fetchGroups)
+  useDeviceTimezone(me, onMeChanged)
 
   if (groups.state.status === 'loading') return <main className="screen" aria-busy="true" aria-label={strings.loading}><SkeletonCard /></main>
   if (groups.state.status === 'error') {
@@ -434,7 +436,7 @@ function SectionScreen({ section, workspace, importToken, onBack, onOpenOperatio
     case 'groups':
       return <GroupsScreen me={me} groups={groups} actions={actions} notify={notify} onBack={onBack} />
     case 'reminders':
-      return <RemindersScreen me={me} onMeChanged={onMeChanged} notify={notify} onBack={onBack} />
+      return <RemindersScreen me={me} notify={notify} onBack={onBack} />
     case 'recurring':
       return <RecurringScreen me={me} group={group} onMeChanged={onMeChanged} notify={notify} onBack={onBack} />
     case 'debts':

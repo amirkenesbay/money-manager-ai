@@ -9,7 +9,7 @@ import { fetchMe } from './me/meApi'
 import { applyLanguage, dictionaries, strings } from './strings'
 import { balance, group, me, operationsPage, summary } from './test/fixtures'
 
-vi.mock('./me/meApi', () => ({ fetchMe: vi.fn() }))
+vi.mock('./me/meApi', () => ({ fetchMe: vi.fn(), updateMe: vi.fn(() => new Promise(() => undefined)) }))
 vi.mock('./groups/groupsApi', () => ({ fetchGroups: vi.fn(), activateGroup: vi.fn() }))
 vi.mock('./dashboard/dashboardApi', () => ({
   RECENT_OPERATIONS_LIMIT: 10,

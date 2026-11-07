@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.transition.ai.handler
 
+import ai.moneymanager.domain.model.FALLBACK_TIMEZONE
 import ai.moneymanager.chat.reply.common.formatIconPrefix
 import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.chat.reply.common.formatTime
@@ -16,7 +17,6 @@ import ai.moneymanager.service.NotificationService
 import ai.moneymanager.service.SubscriptionLimitsService
 import org.springframework.stereotype.Component
 
-private const val DEFAULT_TIMEZONE = "UTC"
 private const val ACTIVE_STATUS_MARKER = "🟢"
 private const val PAUSED_STATUS_MARKER = "⏸️"
 private const val LIST_LINE_SEPARATOR = "\n"
@@ -132,7 +132,7 @@ class NotificationAiHandler(
             dayOfWeek = null,
             dayOfMonth = null,
             monthOfYear = null,
-            userTimezone = timezone ?: DEFAULT_TIMEZONE,
+            userTimezone = timezone ?: FALLBACK_TIMEZONE,
             maxActiveNotifications = maxActiveNotifications
         )
         if (result is NotificationCreationResult.LimitReached) {

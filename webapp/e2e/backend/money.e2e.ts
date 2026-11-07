@@ -47,7 +47,16 @@ test('a reminder created in the app is stored on the server', async ({ app, scre
   await seedGroup(api)
   await openAs(app, screen, api.userId)
   await agent.act('open reminders from the «Ещё» tab and create a daily reminder at 21:00 named {name}', { params: { name: 'Записать траты' } })
-  await expect.poll(async () => (await api.json<{ name: string; hour: number; frequencyType: string }[]>('/notifications')).map((reminder) => [reminder.name, reminder.hour, reminder.frequencyType])).toEqual([['Записать траты', 21, 'DAILY']])
+  await expect.poll(async () => (await api.json<{ name: string; hour: number; frequencyType: string }[]>('/notifications')).some((reminder) => reminder.name === 'Записать траты' && reminder.hour === 21 && reminder.frequencyType === 'DAILY')).toBe(true)
+})
+
+test('every new user gets a daily spending reminder at nine in the evening', async ({ app }) => {
+  const api = new Api(app.baseUrl, newUserId())
+  await seedGroup(api)
+
+  const reminders = await api.json<{ name: string; hour: number; minute: number; frequencyType: string; isActive: boolean }[]>('/notifications')
+
+  expect(reminders.map((reminder) => [reminder.name, reminder.hour, reminder.minute, reminder.frequencyType, reminder.isActive])).toEqual([['Записать траты за день', 21, 0, 'DAILY', true]])
 })
 
 test('a personal loan is recorded and repaid', async ({ app, screen, agent }) => {

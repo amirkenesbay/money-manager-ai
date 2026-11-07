@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.transition.notification
 
+import ai.moneymanager.domain.model.FALLBACK_TIMEZONE
 import ai.moneymanager.chat.reply.notification.parseDayOfWeek
 import ai.moneymanager.chat.reply.notification.parseMonth
 import ai.moneymanager.chat.transition.common.simpleTransition
@@ -398,7 +399,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
             guard { !context.notifEditMode }
         }
         action {
-            val timezone = context.userInfo?.timezone ?: "UTC"
+            val timezone = context.userInfo?.timezone ?: FALLBACK_TIMEZONE
             val hasPaidSubscription = context.userInfo?.hasActivePaidSubscription() == true
             val maxActiveNotifications = subscriptionLimitsService.maxActiveNotifications(hasPaidSubscription)
 
@@ -436,7 +437,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationCreateTran
         }
         action {
             val id = context.currentNotification?.id ?: return@action
-            val timezone = context.userInfo?.timezone ?: "UTC"
+            val timezone = context.userInfo?.timezone ?: FALLBACK_TIMEZONE
             val updated = notificationService.updateFrequency(
                 id = id,
                 frequencyType = context.notifFrequencyType!!,

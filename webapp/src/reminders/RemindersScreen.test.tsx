@@ -2,7 +2,6 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiRequestError } from '../api/client'
-import { updateMe } from '../me/meApi'
 import { strings } from '../strings'
 import { me, reminder } from '../test/fixtures'
 import { createReminder, fetchReminders, setReminderActive } from './remindersApi'
@@ -15,16 +14,14 @@ vi.mock('./remindersApi', () => ({
   setReminderActive: vi.fn(),
   deleteReminder: vi.fn(),
 }))
-vi.mock('../me/meApi', () => ({ updateMe: vi.fn() }))
 vi.mock('../telegram/telegramEnv', () => ({ openExternalLink: vi.fn(), rawInitData: () => undefined }))
 
 const TIMEZONE = 'Asia/Almaty'
 const notify = vi.fn()
-const onMeChanged = vi.fn()
 const evening = reminder()
 const weekly = reminder({ id: 'rem-2', name: 'Итоги недели', isActive: false, frequencyType: 'WEEKLY', dayOfWeek: 'SUNDAY', hour: 20 })
 const renderScreen = (timezone: string | null = TIMEZONE) =>
-  render(<RemindersScreen me={me({ timezone })} onMeChanged={onMeChanged} notify={notify} onBack={vi.fn()} />)
+  render(<RemindersScreen me={me({ timezone })} notify={notify} onBack={vi.fn()} />)
 
 describe('RemindersScreen', () => {
   beforeEach(() => {
@@ -75,15 +72,5 @@ describe('RemindersScreen', () => {
 
     expect(createReminder).toHaveBeenCalledWith(expect.objectContaining({ name: 'Аренда', frequencyType: 'MONTHLY', dayOfMonth: 10, dayOfWeek: null }))
     expect(notify).toHaveBeenCalledWith(expect.objectContaining({ title: strings.reminderCreatedToast }))
-  })
-
-  it('remembers the device time zone when the profile has none', async () => {
-    vi.mocked(updateMe).mockResolvedValue(me({ timezone: TIMEZONE }))
-    renderScreen(null)
-
-    await screen.findByText('каждый день · 21:00')
-
-    expect(updateMe).toHaveBeenCalledWith({ timezone: Intl.DateTimeFormat().resolvedOptions().timeZone })
-    expect(onMeChanged).toHaveBeenCalledWith(me({ timezone: TIMEZONE }))
   })
 })

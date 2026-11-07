@@ -12,4 +12,5 @@ interface UserInfoRepository : MongoRepository<UserInfoEntity, ObjectId>, UserIn
     fun findFirstByTelegramUserIdOrderByIdAsc(id: Long): UserInfoEntity?
     fun findByActiveGroupIdIsNotNullAndTelegramUserIdIsNotNull(): List<UserInfoEntity>
     fun findByAccess(access: UserAccess): List<UserInfoEntity>
+    fun findByDailyReminderSeededNotAndTelegramUserIdIsNotNull(seeded: Boolean): List<UserInfoEntity>
 }

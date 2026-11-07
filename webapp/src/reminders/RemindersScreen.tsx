@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { tourTarget } from '../onboarding/tourTarget'
 import { ScreenTour } from '../onboarding/ScreenTour'
 import { serverErrorCode } from '../api/client'
 import type { Me, Reminder } from '../api/types'
 import { useAsync } from '../api/useAsync'
-import { updateMe } from '../me/meApi'
 import { strings } from '../strings'
 import { notifyOutcome } from '../telegram/haptics'
 import { BottomBar } from '../ui/BottomBar'
@@ -26,11 +25,9 @@ const SKELETON_ROWS = 3
 
 type Mode = { kind: 'list' } | { kind: 'form'; reminder: Reminder | null } | { kind: 'limit' }
 
-const deviceTimezone = (): string => Intl.DateTimeFormat().resolvedOptions().timeZone
 
-export function RemindersScreen({ me, onMeChanged, notify, onBack }: {
+export function RemindersScreen({ me, notify, onBack }: {
   me: Me
-  onMeChanged: (me: Me) => void
   notify: Notify
   onBack: () => void
 }) {
@@ -43,11 +40,6 @@ export function RemindersScreen({ me, onMeChanged, notify, onBack }: {
   const list = reminders.state.status === 'ready' ? reminders.state.data.map((reminder) => patched[reminder.id] ?? reminder) : []
   const activeCount = list.filter((reminder) => reminder.isActive).length
   const atLimit = limit !== null && activeCount >= limit
-
-  useEffect(() => {
-    if (me.timezone !== null) return
-    updateMe({ timezone: deviceTimezone() }).then(onMeChanged).catch(() => undefined)
-  }, [me.timezone, onMeChanged])
 
   const refresh = (title: string, reminder: Reminder) => {
     setPatched({})

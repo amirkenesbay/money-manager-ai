@@ -135,6 +135,14 @@ class UserInfoService(
         return mapEntity(userRepository.save(entity.copy(access = access)))
     }
 
+    fun usersWithoutDailyReminder(): List<UserInfo> =
+        userRepository.findByDailyReminderSeededNotAndTelegramUserIdIsNotNull(seeded = true).map(::mapEntity)
+
+    fun markDailyReminderSeeded(telegramUserId: Long) {
+        val entity = userRepository.findFirstByTelegramUserIdOrderByIdAsc(telegramUserId) ?: return
+        if (!entity.dailyReminderSeeded) userRepository.save(entity.copy(dailyReminderSeeded = true))
+    }
+
     fun usersWithAccess(access: UserAccess): List<UserInfo> = userRepository.findByAccess(access).map(::mapEntity)
 
     private fun mapUserModel(profile: TelegramProfile): UserInfoEntity {
@@ -168,6 +176,7 @@ class UserInfoService(
             subscriptionTier = it.subscriptionTier,
             subscriptionExpiresAt = it.subscriptionExpiresAt,
             subscriptionPeriod = it.subscriptionPeriod,
+            dailyReminderSeeded = it.dailyReminderSeeded,
             access = it.access
         )
     }

@@ -32,6 +32,7 @@ data class UserInfoEntity(
     val subscriptionTier: SubscriptionTier = SubscriptionTier.FREE,
     val subscriptionExpiresAt: LocalDateTime? = null,
     val subscriptionPeriod: SubscriptionPeriod? = null,
+    val dailyReminderSeeded: Boolean = false,
     val access: UserAccess = UserAccess.REGULAR,
     val auditInfo: AuditInfo = AuditInfo()
 )

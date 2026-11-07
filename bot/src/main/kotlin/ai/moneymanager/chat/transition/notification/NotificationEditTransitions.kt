@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.transition.notification
 
+import ai.moneymanager.domain.model.FALLBACK_TIMEZONE
 import ai.moneymanager.chat.transition.common.simpleTransition
 import ai.moneymanager.chat.state.MoneyManagerButtonType
 import ai.moneymanager.chat.state.MoneyManagerContext
@@ -116,7 +117,7 @@ fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.notificationEditTransi
         action {
             val notification = context.currentNotification ?: return@action
             val id = notification.id ?: return@action
-            val timezone = context.userInfo?.timezone ?: "UTC"
+            val timezone = context.userInfo?.timezone ?: FALLBACK_TIMEZONE
             val maxActive = subscriptionLimitsService.maxActiveNotifications(context.userInfo?.hasActivePaidSubscription() == true)
             when (val result = notificationService.setActive(id, !notification.isActive, timezone, maxActive)) {
                 is NotificationToggleResult.Updated -> context.currentNotification = result.notification
