@@ -4,6 +4,7 @@ import ai.moneymanager.chat.transition.imports.importFileDialog
 import ai.moneymanager.service.FinanceReportService
 import ai.moneymanager.chat.reply.finance.FinanceHistoryFormatter
 import ai.moneymanager.chat.telegram.toTelegramProfile
+import ai.moneymanager.chat.transition.access.blockedUserDialog
 import ai.moneymanager.chat.transition.admin.adminDialogTransitions
 import ai.moneymanager.chat.transition.ai.AiActionExecutor
 import ai.moneymanager.chat.transition.ai.AiRequestHandler
@@ -92,6 +93,7 @@ fun ChatBuilder<MoneyManagerState, MoneyManagerContext>.moneyManagerDialog(
     loanNotifier: LoanNotifier,
     importNotifier: ImportNotifier,
 ) {
+    blockedUserDialog(userInfoService, localizationService, adminService)
     startLinkDialog(userInfoService, digestNotifier, recurringNotifier, debtNotifier, loanNotifier, telegramFileService, miniAppGateway)
     importFileDialog(importNotifier, miniAppGateway)
     miniAppGatewayDialog(miniAppGateway, userInfoService, adminService)

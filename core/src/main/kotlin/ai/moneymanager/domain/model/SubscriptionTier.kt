@@ -7,6 +7,17 @@ enum class SubscriptionTier {
     PAID
 }
 
+enum class SubscriptionPeriod {
+    MONTH,
+    QUARTER,
+    YEAR,
+}
+
+data class PremiumPrice(val period: SubscriptionPeriod, val amount: BigDecimal, val currency: Currency)
+
 const val PREMIUM_SUBSCRIBE_LINK = "https://t.me/tribute/app?startapp=s11rb"
-val PREMIUM_MONTHLY_PRICE: BigDecimal = BigDecimal("990")
-val PREMIUM_PRICE_CURRENCY: Currency = Currency.KZT
+
+val PREMIUM_PRICES: List<PremiumPrice> = listOf(
+    PremiumPrice(SubscriptionPeriod.MONTH, BigDecimal("4.41"), Currency.USD),
+    PremiumPrice(SubscriptionPeriod.YEAR, BigDecimal("49.69"), Currency.USD),
+)

@@ -1,7 +1,6 @@
 package ai.moneymanager.web.me
 
-import ai.moneymanager.domain.model.PREMIUM_MONTHLY_PRICE
-import ai.moneymanager.domain.model.PREMIUM_PRICE_CURRENCY
+import ai.moneymanager.domain.model.PREMIUM_PRICES
 import ai.moneymanager.domain.model.PREMIUM_SUBSCRIBE_LINK
 import ai.moneymanager.domain.model.SubscriptionTier
 import ai.moneymanager.domain.model.UserInfo
@@ -36,7 +35,7 @@ class MeResponseFactory(
             limits = limitsOf(paid),
             freeLimits = limitsOf(false),
             paidLimits = limitsOf(true),
-            price = PriceResponse(PREMIUM_MONTHLY_PRICE, PREMIUM_PRICE_CURRENCY),
+            prices = PREMIUM_PRICES.map { PriceResponse(it.period, it.amount, it.currency) },
             subscribeUrl = PREMIUM_SUBSCRIBE_LINK,
         )
     }

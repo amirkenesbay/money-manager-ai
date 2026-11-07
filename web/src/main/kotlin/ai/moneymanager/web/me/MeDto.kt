@@ -3,6 +3,7 @@ package ai.moneymanager.web.me
 import ai.moneymanager.domain.model.AppHint
 import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.DigestKind
+import ai.moneymanager.domain.model.SubscriptionPeriod
 import ai.moneymanager.domain.model.SubscriptionTier
 import org.bson.types.ObjectId
 import java.math.BigDecimal
@@ -27,11 +28,12 @@ data class SubscriptionResponse(
     val limits: LimitsResponse,
     val freeLimits: LimitsResponse,
     val paidLimits: LimitsResponse,
-    val price: PriceResponse,
+    val prices: List<PriceResponse>,
     val subscribeUrl: String,
 )
 
 data class PriceResponse(
+    val period: SubscriptionPeriod,
     val amount: BigDecimal,
     val currency: Currency,
 )

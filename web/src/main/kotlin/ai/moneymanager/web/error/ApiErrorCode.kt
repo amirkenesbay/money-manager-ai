@@ -8,6 +8,7 @@ enum class ApiErrorCode(val status: HttpStatus) {
     BAD_REQUEST(HttpStatus.BAD_REQUEST),
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED),
     FORBIDDEN(HttpStatus.FORBIDDEN),
+    USER_BLOCKED(HttpStatus.FORBIDDEN),
     NOT_FOUND(HttpStatus.NOT_FOUND),
     PREMIUM_REQUIRED(HttpStatus.UNPROCESSABLE_CONTENT),
     CATEGORY_DUPLICATE(HttpStatus.CONFLICT),

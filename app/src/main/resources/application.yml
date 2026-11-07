@@ -43,6 +43,9 @@ telegram:
     max-file-size-bytes: 2097152 # 2 MB (2 * 1024 * 1024)
     api-url: "https://api.telegram.org/file/bot"
 
+tribute:
+  api-key: ${TRIBUTE_API_KEY:}
+
 mini-app:
   url: ${MINI_APP_URL:}
   bot-gateway: ${MINI_APP_BOT_GATEWAY:false}

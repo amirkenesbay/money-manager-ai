@@ -5,7 +5,7 @@ import ai.moneymanager.chat.state.MoneyManagerContext
 import ai.moneymanager.chat.state.MoneyManagerState
 import ai.moneymanager.chat.telegram.AdminService
 import ai.moneymanager.chat.telegram.MiniAppGateway
-import ai.moneymanager.chat.transition.admin.isAdminActivation
+import ai.moneymanager.chat.transition.admin.isAdminCommand
 import ai.moneymanager.chat.transition.common.inviteTokenOf
 import ai.moneymanager.service.UserInfoService
 import kz.rmr.chatmachinist.api.transition.ChatBuilder
@@ -104,4 +104,4 @@ private fun ActionContext<MoneyManagerState, MoneyManagerContext>.isOnboarded(us
     userInfoService.getUserInfoByTelegramId(user.id)?.onboardingCompleted == true
 
 private fun ActionContext<MoneyManagerState, MoneyManagerContext>.isPassThroughMessage(adminService: AdminService): Boolean =
-    inviteTokenOf(update.message?.text) != null || isAdminActivation(adminService)
+    inviteTokenOf(update.message?.text) != null || isAdminCommand(adminService)

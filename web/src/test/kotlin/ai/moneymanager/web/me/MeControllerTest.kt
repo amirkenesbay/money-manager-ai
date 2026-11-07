@@ -2,10 +2,11 @@ package ai.moneymanager.web.me
 
 import ai.moneymanager.domain.model.AppHint
 import ai.moneymanager.domain.model.DigestKind
-import ai.moneymanager.domain.model.PREMIUM_MONTHLY_PRICE
-import ai.moneymanager.domain.model.PREMIUM_PRICE_CURRENCY
+import ai.moneymanager.domain.model.PREMIUM_PRICES
 import ai.moneymanager.domain.model.PREMIUM_SUBSCRIBE_LINK
+import ai.moneymanager.domain.model.SubscriptionPeriod
 import ai.moneymanager.domain.model.SubscriptionTier
+import ai.moneymanager.domain.model.UserAccess
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.service.OnboardingService
 import ai.moneymanager.service.SubscriptionLimitsService
@@ -170,8 +171,31 @@ class MeControllerTest {
             .andExpect(jsonPath("$.subscription.freeLimits.categoriesPerType").value(limits.maxCategoriesPerType(false)))
             .andExpect(jsonPath("$.subscription.paidLimits.categoriesPerType").value(limits.maxCategoriesPerType(true)))
             .andExpect(jsonPath("$.subscription.paidLimits.ownedSharedGroups").value(nullValue()))
-            .andExpect(jsonPath("$.subscription.price.amount").value(PREMIUM_MONTHLY_PRICE.toPlainString()))
-            .andExpect(jsonPath("$.subscription.price.currency").value(PREMIUM_PRICE_CURRENCY.name))
+            .andExpect(jsonPath("$.subscription.prices[0].period").value(PREMIUM_PRICES[0].period.name))
+            .andExpect(jsonPath("$.subscription.prices[0].amount").value(PREMIUM_PRICES[0].amount.toPlainString()))
+            .andExpect(jsonPath("$.subscription.prices[0].currency").value(PREMIUM_PRICES[0].currency.name))
+            .andExpect(jsonPath("$.subscription.prices[1].period").value(SubscriptionPeriod.YEAR.name))
+    }
+
+    @Test
+    fun `gives a whitelisted user premium without an end date`() {
+        givenCurrentUser(testUser().copy(access = UserAccess.WHITELISTED))
+
+        mockMvc.perform(get(ME_PATH).withTelegramAuth())
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.subscription.tier").value("PAID"))
+            .andExpect(jsonPath("$.subscription.expiresAt").value(nullValue()))
+            .andExpectLimits(paid = true)
+    }
+
+    @Test
+    fun `refuses a blocked user with a readable reason`() {
+        givenCurrentUser(testUser().copy(access = UserAccess.BLOCKED))
+
+        mockMvc.perform(get(ME_PATH).withTelegramAuth())
+            .andExpect(status().isForbidden)
+            .andExpect(jsonPath("$.code").value("USER_BLOCKED"))
+            .andExpect(jsonPath("$.message").value("Аккаунт заблокирован."))
     }
 
     @Test

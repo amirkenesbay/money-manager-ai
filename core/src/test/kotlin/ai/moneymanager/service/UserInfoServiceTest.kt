@@ -1,6 +1,11 @@
 package ai.moneymanager.service
 
 import ai.moneymanager.domain.event.NewUserRegistered
+import ai.moneymanager.domain.event.SubscriptionUpdated
+import ai.moneymanager.domain.model.PaidSubscription
+import ai.moneymanager.domain.model.SubscriptionChange
+import ai.moneymanager.domain.model.SubscriptionPeriod
+import ai.moneymanager.domain.model.UserAccess
 import ai.moneymanager.domain.model.AppHint
 import ai.moneymanager.domain.model.TelegramProfile
 import ai.moneymanager.domain.model.UserInfo
@@ -11,10 +16,13 @@ import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.springframework.dao.DuplicateKeyException
+import java.math.BigDecimal
+import java.time.LocalDateTime
 
 private const val RECYCLED_USERNAME = "amir"
 private const val FORMER_OWNER_ID = 1L
 private const val NEW_OWNER_ID = 2L
+private val NOW: LocalDateTime = LocalDateTime.of(2026, 11, 7, 12, 0)
 
 class UserInfoServiceTest {
     private val repository = FakeUserInfoRepository()
@@ -84,6 +92,45 @@ class UserInfoServiceTest {
     }
 
     @Test
+    fun `turns on premium for a buyer who never opened the bot and tells about it`() {
+        val expiresAt = NOW.plusYears(1)
+
+        val user = service.applyPaidSubscription(profile(NEW_OWNER_ID, username = null), paid(SubscriptionChange.STARTED, expiresAt), NOW)
+
+        assertThat(user.hasActivePaidSubscription(NOW)).isTrue()
+        assertThat(user.subscriptionExpiresAt).isEqualTo(expiresAt)
+        assertThat(user.subscriptionPeriod).isEqualTo(SubscriptionPeriod.YEAR)
+        assertThat(publishedEvents.filterIsInstance<SubscriptionUpdated>().single().user.telegramUserId).isEqualTo(NEW_OWNER_ID)
+    }
+
+    @Test
+    fun `never shortens a running premium when an older date arrives`() {
+        service.applyPaidSubscription(profile(FORMER_OWNER_ID, username = null), paid(SubscriptionChange.STARTED, NOW.plusYears(1)), NOW)
+
+        val user = service.applyPaidSubscription(profile(FORMER_OWNER_ID, username = null), paid(SubscriptionChange.CANCELLED, NOW.plusMonths(1)), NOW)
+
+        assertThat(user.subscriptionExpiresAt).isEqualTo(NOW.plusYears(1))
+    }
+
+    @Test
+    fun `keeps premium free forever for a whitelisted user and lists them`() {
+        repository.givenUser(telegramUserId = FORMER_OWNER_ID, username = RECYCLED_USERNAME)
+
+        val user = service.setAccess(FORMER_OWNER_ID, UserAccess.WHITELISTED)
+
+        assertThat(user?.hasActivePaidSubscription(NOW)).isTrue()
+        assertThat(service.usersWithAccess(UserAccess.WHITELISTED).map { it.telegramUserId }).containsExactly(FORMER_OWNER_ID)
+    }
+
+    @Test
+    fun `marks a blacklisted user as blocked and lets them back`() {
+        repository.givenUser(telegramUserId = FORMER_OWNER_ID, username = RECYCLED_USERNAME)
+
+        assertThat(service.setAccess(FORMER_OWNER_ID, UserAccess.BLOCKED)?.blocked).isTrue()
+        assertThat(service.setAccess(FORMER_OWNER_ID, UserAccess.REGULAR)?.blocked).isFalse()
+    }
+
+    @Test
     fun `names known users by full name and unknown ones by id`() {
         repository.givenUser(telegramUserId = FORMER_OWNER_ID, username = RECYCLED_USERNAME)
 
@@ -95,6 +142,9 @@ class UserInfoServiceTest {
 
     private fun notifiedUsers(): List<UserInfo> =
         publishedEvents.filterIsInstance<NewUserRegistered>().map { it.user }
+
+    private fun paid(change: SubscriptionChange, expiresAt: LocalDateTime) =
+        PaidSubscription(change, SubscriptionPeriod.YEAR, expiresAt, BigDecimal("49.69"), "USD")
 
     private fun profile(telegramUserId: Long, username: String?) = TelegramProfile(
         telegramUserId = telegramUserId,
@@ -133,6 +183,8 @@ private class FakeUserInfoRepository(
         val user = findFirstByTelegramUserIdOrderByIdAsc(telegramUserId) ?: return null
         return save(user.copy(seenHints = user.seenHints + hint))
     }
+
+    override fun findByAccess(access: UserAccess): List<UserInfoEntity> = users.filter { it.access == access }
 
     override fun findFirstByUsernameOrderByIdAsc(username: String): UserInfoEntity? =
         users.firstOrNull { it.username == username }

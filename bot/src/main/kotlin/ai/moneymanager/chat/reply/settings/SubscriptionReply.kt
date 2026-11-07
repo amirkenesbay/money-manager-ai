@@ -25,7 +25,9 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.subscriptionViewReply
             val hasPaidSubscription = userInfo?.hasActivePaidSubscription() == true
 
             val title = localizationService.t("subscription.view.title", lang)
-            val body = if (hasPaidSubscription) {
+            val body = if (userInfo?.whitelisted == true) {
+                localizationService.t("subscription.view.forever", lang, subscriptionLimitsService.maxAiRequestsPerDay(hasPaidSubscription = true))
+            } else if (hasPaidSubscription) {
                 val expiresAt = userInfo?.subscriptionExpiresAt?.toLocalDate()?.format(dateFormatter).orEmpty()
                 localizationService.t("subscription.view.paid", lang, expiresAt, subscriptionLimitsService.maxAiRequestsPerDay(hasPaidSubscription = true))
             } else {

@@ -30,6 +30,7 @@ class CurrentUserArgumentResolver(
             as? TelegramPrincipal
             ?: throw ApiException(ApiErrorCode.UNAUTHORIZED)
         val user = userInfoService.getOrCreate(principal.toTelegramProfile())
+        if (user.blocked) throw ApiException(ApiErrorCode.USER_BLOCKED)
         webRequest.setAttribute(CURRENT_USER_ATTRIBUTE, user, RequestAttributes.SCOPE_REQUEST)
         return user
     }

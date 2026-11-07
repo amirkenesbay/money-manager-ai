@@ -3,7 +3,9 @@ package ai.moneymanager.repository.entity
 import ai.moneymanager.domain.model.AppHint
 import ai.moneymanager.domain.model.DigestKind
 import ai.moneymanager.domain.model.GroupNoticeLevel
+import ai.moneymanager.domain.model.SubscriptionPeriod
 import ai.moneymanager.domain.model.SubscriptionTier
+import ai.moneymanager.domain.model.UserAccess
 import ai.moneymanager.repository.entity.common.AuditInfo
 import org.bson.types.ObjectId
 import org.springframework.data.mongodb.core.mapping.Document
@@ -29,5 +31,7 @@ data class UserInfoEntity(
     val recurringHeadsUp: Boolean = true,
     val subscriptionTier: SubscriptionTier = SubscriptionTier.FREE,
     val subscriptionExpiresAt: LocalDateTime? = null,
+    val subscriptionPeriod: SubscriptionPeriod? = null,
+    val access: UserAccess = UserAccess.REGULAR,
     val auditInfo: AuditInfo = AuditInfo()
 )

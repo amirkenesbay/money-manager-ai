@@ -1,5 +1,6 @@
 package ai.moneymanager.web.security
 
+import ai.moneymanager.web.subscription.TRIBUTE_WEBHOOK_PATH
 import ai.moneymanager.web.error.ApiErrorCode
 import ai.moneymanager.web.error.ApiErrorFactory
 import ai.moneymanager.web.error.ApiException
@@ -31,6 +32,8 @@ class TelegramAuthFilter(
         request.setAttribute(TelegramPrincipal.REQUEST_ATTRIBUTE, principal)
         filterChain.doFilter(request, response)
     }
+
+    override fun shouldNotFilter(request: HttpServletRequest): Boolean = request.requestURI == TRIBUTE_WEBHOOK_PATH
 
     private fun authenticate(request: HttpServletRequest): TelegramPrincipal? {
         val header = request.getHeader(HttpHeaders.AUTHORIZATION) ?: return null

@@ -1,5 +1,8 @@
 package ai.moneymanager.service
 
+import ai.moneymanager.domain.model.UserAccess
+import ai.moneymanager.domain.model.PaidSubscription
+import ai.moneymanager.domain.event.SubscriptionUpdated
 import ai.moneymanager.domain.event.NewUserRegistered
 import ai.moneymanager.domain.model.AppHint
 import ai.moneymanager.domain.model.DigestKind
@@ -108,6 +111,32 @@ class UserInfoService(
         return mapEntity(updated)
     }
 
+    fun applyPaidSubscription(profile: TelegramProfile, subscription: PaidSubscription, now: LocalDateTime = LocalDateTime.now()): UserInfo {
+        val userId = getOrCreate(profile).telegramUserId ?: profile.telegramUserId
+        val entity = checkNotNull(userRepository.findFirstByTelegramUserIdOrderByIdAsc(userId))
+        val currentExpiry = entity.subscriptionExpiresAt?.takeIf { it.isAfter(now) }
+        val newExpiry = listOfNotNull(currentExpiry, subscription.expiresAt).max()
+        val updated = mapEntity(
+            userRepository.save(
+                entity.copy(
+                    subscriptionTier = SubscriptionTier.PAID,
+                    subscriptionExpiresAt = newExpiry,
+                    subscriptionPeriod = subscription.period ?: entity.subscriptionPeriod,
+                )
+            )
+        )
+        eventPublisher.publishEvent(SubscriptionUpdated(updated, subscription))
+        return updated
+    }
+
+    fun setAccess(telegramUserId: Long, access: UserAccess): UserInfo? {
+        val entity = userRepository.findFirstByTelegramUserIdOrderByIdAsc(telegramUserId) ?: return null
+        if (entity.access == access) return mapEntity(entity)
+        return mapEntity(userRepository.save(entity.copy(access = access)))
+    }
+
+    fun usersWithAccess(access: UserAccess): List<UserInfo> = userRepository.findByAccess(access).map(::mapEntity)
+
     private fun mapUserModel(profile: TelegramProfile): UserInfoEntity {
         return UserInfoEntity(
             username = profile.username,
@@ -137,7 +166,9 @@ class UserInfoService(
             groupNotices = it.groupNotices,
             recurringHeadsUp = it.recurringHeadsUp,
             subscriptionTier = it.subscriptionTier,
-            subscriptionExpiresAt = it.subscriptionExpiresAt
+            subscriptionExpiresAt = it.subscriptionExpiresAt,
+            subscriptionPeriod = it.subscriptionPeriod,
+            access = it.access
         )
     }
 }

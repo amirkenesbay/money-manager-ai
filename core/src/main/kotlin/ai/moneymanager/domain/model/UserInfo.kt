@@ -23,10 +23,18 @@ data class UserInfo(
     val groupNotices: Map<String, GroupNoticeLevel> = emptyMap(),
     val recurringHeadsUp: Boolean = true,
     val subscriptionTier: SubscriptionTier = SubscriptionTier.FREE,
-    val subscriptionExpiresAt: LocalDateTime? = null
+    val subscriptionExpiresAt: LocalDateTime? = null,
+    val subscriptionPeriod: SubscriptionPeriod? = null,
+    val access: UserAccess = UserAccess.REGULAR
 ) {
+    val whitelisted: Boolean
+        get() = access == UserAccess.WHITELISTED
+
+    val blocked: Boolean
+        get() = access == UserAccess.BLOCKED
+
     fun hasActivePaidSubscription(now: LocalDateTime = LocalDateTime.now()): Boolean =
-        subscriptionTier == SubscriptionTier.PAID && subscriptionExpiresAt?.isAfter(now) == true
+        whitelisted || (subscriptionTier == SubscriptionTier.PAID && subscriptionExpiresAt?.isAfter(now) == true)
 
     fun noticeLevel(groupId: ObjectId): GroupNoticeLevel = groupNotices[groupId.toHexString()] ?: GroupNoticeLevel.ALL
 
@@ -45,3 +53,6 @@ fun formatUserDisplayName(userInfo: UserInfo?, fallbackId: Long): String {
         else -> "$USER_ID_LABEL $fallbackId"
     }
 }
+
+fun formatUserHandle(userInfo: UserInfo): String =
+    userInfo.username?.let { "$USERNAME_PREFIX$it" } ?: "$USER_ID_LABEL ${userInfo.telegramUserId}"
