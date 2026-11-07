@@ -33,7 +33,7 @@ const DEFAULT_PAGE_SIZE = 20
 const FILLER_OPERATIONS = 26
 
 type Body = { count: number } | string[] | AnswerCard | AskSuggestions | Debts | Settlement | Loan | ImportPreview | ImportResult | RecurringList | RecurringPayment | Budget[] | CategoryRule[] | Me | Group | Group[] | Balance | MonthSummary | Operation | OperationsPage | Category | Category[] | AnalyticsReport | ComparisonReport | MembersReport | CategoryReport | Member[] | Invite | Reminder | Reminder[] | VoiceResult | ApiErrorBody | null
-type MockResponse = { status: number; body: Body; delayMs?: number }
+export type MockResponse = { status: number; body: Body; delayMs?: number }
 
 const ok = (body: Body, delayMs?: number): MockResponse => ({ status: 200, body, delayMs })
 
@@ -58,7 +58,7 @@ const me = (activeGroupId: string | null, tier: SubscriptionTier): Me => ({
     limits: tier === 'PAID' ? PAID_LIMITS : FREE_LIMITS,
     freeLimits: FREE_LIMITS,
     paidLimits: PAID_LIMITS,
-    price: { amount: '990', currency: 'KZT' },
+    prices: [{ period: 'MONTH', amount: '4.41', currency: 'USD' }, { period: 'YEAR', amount: '49.69', currency: 'USD' }],
     subscribeUrl: SUBSCRIBE_URL,
   },
 })
@@ -749,7 +749,7 @@ function reminderRoute(reminderId: string | undefined, method: string, body: str
   return ok(reminders.find((reminder) => reminder.id === reminderId) ?? null)
 }
 
-function route(path: string, query: URLSearchParams, scenario: string, method: string, body: string): MockResponse | null {
+export function route(path: string, query: URLSearchParams, scenario: string, method: string, body: string): MockResponse | null {
   if (path === '/me') {
     if (method === 'PATCH') Object.assign(profile, JSON.parse(body))
     return meScenarios[scenario]()
