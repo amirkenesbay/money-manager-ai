@@ -31,11 +31,11 @@ class TributeWebhookController(
         @RequestHeader(SIGNATURE_HEADER, required = false) signatureHeader: String?,
     ): ResponseEntity<Void> {
         val verifier = signature ?: return status(HttpStatus.SERVICE_UNAVAILABLE).also { log.warn("Tribute webhook received but TRIBUTE_API_KEY is not set") }
-        if (!verifier.matches(body, signatureHeader)) {
-            log.warn("Tribute webhook with a wrong signature: header={}, body={}", signatureHeader, String(body))
-            return status(HttpStatus.UNAUTHORIZED)
+        if (!verifier.matches(body, signatureHeader)) return status(HttpStatus.UNAUTHORIZED).also { log.warn("Tribute webhook with a wrong signature") }
+        val event = runCatching { jsonMapper.readValue(body, TributeEvent::class.java) }.getOrElse {
+            log.warn("Tribute webhook with an unreadable body: {}", it.message)
+            return status(HttpStatus.BAD_REQUEST)
         }
-        val event = jsonMapper.readValue(body, TributeEvent::class.java)
         val change = event.change
         val payloadNode = event.payload
         if (change == null || payloadNode == null) {

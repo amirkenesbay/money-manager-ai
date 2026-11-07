@@ -75,6 +75,18 @@ class TributeWebhookControllerTest {
     }
 
     @Test
+    fun `accepts the dashboard test request that comes without an event name`() {
+        send("""{"name":null,"created_at":"2026-11-07T10:00:00Z","payload":null}""").andExpect(status().isOk)
+
+        assertThat(mockInvoked(userInfoService, "applyPaidSubscription")).isFalse()
+    }
+
+    @Test
+    fun `answers bad request to a body that is not json`() {
+        send("not json").andExpect(status().isBadRequest)
+    }
+
+    @Test
     fun `ignores events that are not about subscriptions`() {
         send("""{"name":"new_donation","payload":{}}""").andExpect(status().isOk)
 

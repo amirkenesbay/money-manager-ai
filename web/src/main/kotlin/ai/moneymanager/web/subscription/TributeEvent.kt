@@ -28,7 +28,7 @@ private val PERIODS = mapOf(
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class TributeEvent(
-    val name: String,
+    val name: String? = null,
     val payload: JsonNode? = null,
 ) {
     val change: SubscriptionChange? get() = CHANGES[name]
