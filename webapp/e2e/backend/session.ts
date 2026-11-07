@@ -2,7 +2,7 @@ import type { App, Screen } from 'e2e'
 import { expect } from 'e2e'
 import { launchParams } from '../../dev/launchParams.ts'
 import { authorizationHeader } from '../../src/api/auth.ts'
-import type { Category, CategoryType, Currency, Group, Operation } from '../../src/api/types.ts'
+import { APP_HINTS, type Category, type CategoryType, type Currency, type Group, type Operation } from '../../src/api/types.ts'
 import { ru } from '../../src/i18n/ru.ts'
 
 export const text = ru
@@ -68,6 +68,7 @@ export class Api {
 
 export async function seedGroup(api: Api, currency: Currency = 'KZT', name = DEFAULT_GROUP_NAME): Promise<{ group: Group; categories: Category[] }> {
   await api.json('/me')
+  await Promise.all(APP_HINTS.map((hint) => api.post('/me/hints', { hint })))
   const group = await api.post<Group>('/groups', { name, currency })
   await api.json(`/groups/${group.id}/activate`, { method: 'POST' })
   const defaults = await api.categories(group.id)

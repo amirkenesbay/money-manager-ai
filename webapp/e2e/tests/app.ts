@@ -1,6 +1,7 @@
 import type { App, Screen } from 'e2e'
-import type { Browser } from '@e2e-dev/web'
+import type { Browser, WebRoute } from '@e2e-dev/web'
 import { expect } from 'e2e'
+import { APP_HINTS } from '../../src/api/types.ts'
 import { ru } from '../../src/i18n/ru.ts'
 import { DEFAULT_LANGUAGE } from '../../src/i18n/languages.ts'
 import { PERSONAL_GROUP_ID } from '../../dev/mockApi.ts'
@@ -9,27 +10,34 @@ import { apiAuthorization, launchPath, type MockScenario } from './launch.ts'
 export const text = ru
 
 const ME_ENDPOINT = '**/api/v1/me'
+const ME_HINTS_ENDPOINT = '**/api/v1/me/hints'
+const API_PREFIX = '/api/v1'
 
 export async function waitForHome(screen: Screen): Promise<void> {
   await expect(screen.getByRole('navigation', text.tabBarLabel)).toBeVisible()
 }
 
 export async function openApp(app: App, screen: Screen, scenario: MockScenario = 'ok'): Promise<void> {
+  await markEveryHintSeen(app.baseUrl)
   await app.open(launchPath(scenario))
   await waitForHome(screen)
-  const tour = screen.getByRole('dialog', text.welcomeLabel)
-  if (await tour.isVisible()) {
-    await tour.getByRole('button', text.welcomeSkip).tap()
-    await expect(tour).toBeHidden()
-  }
+}
+
+const jsonHeaders = () => ({ 'Content-Type': 'application/json', Authorization: apiAuthorization() })
+
+async function markEveryHintSeen(baseUrl: string): Promise<void> {
+  await Promise.all(APP_HINTS.map((hint) => fetch(`${baseUrl}${API_PREFIX}/me/hints`, { method: 'POST', headers: jsonHeaders(), body: JSON.stringify({ hint }) })))
 }
 
 export async function forgetSeenHints(browser: Browser): Promise<void> {
-  await browser.route(ME_ENDPOINT, async (route) => {
-    const upstream = await route.fetch()
-    const me = await upstream.json() as Record<string, unknown>
-    await route.fulfill({ json: { ...me, seenHints: [] } })
-  })
+  const seen = new Set<string>()
+  const withSeen = async (route: WebRoute, hint?: string) => {
+    if (hint) seen.add(hint)
+    const me = await (await route.fetch()).json() as Record<string, unknown>
+    await route.fulfill({ json: { ...me, seenHints: [...seen] } })
+  }
+  await browser.route(ME_ENDPOINT, (route) => withSeen(route))
+  await browser.route(ME_HINTS_ENDPOINT, (route) => withSeen(route, (JSON.parse(route.request.postData ?? '{}') as { hint?: string }).hint))
 }
 
 export async function horizontalOverflow(browser: Browser): Promise<number> {
@@ -43,10 +51,7 @@ export async function bottomOverflow(browser: Browser, label: string): Promise<n
   }, label)
 }
 
-export async function resetProfile(browser: Browser): Promise<void> {
-  await browser.evaluate(async ({ groupId, language, authorization }: { groupId: string; language: string; authorization: string }) => {
-    const headers = { 'Content-Type': 'application/json', Authorization: authorization }
-    await fetch('/api/v1/me', { method: 'PATCH', headers, body: JSON.stringify({ language }) })
-    await fetch(`/api/v1/groups/${groupId}/activate`, { method: 'POST', headers })
-  }, { groupId: PERSONAL_GROUP_ID, language: DEFAULT_LANGUAGE, authorization: apiAuthorization() })
+export async function resetProfile(baseUrl: string): Promise<void> {
+  await fetch(`${baseUrl}${API_PREFIX}/me`, { method: 'PATCH', headers: jsonHeaders(), body: JSON.stringify({ language: DEFAULT_LANGUAGE }) })
+  await fetch(`${baseUrl}${API_PREFIX}/groups/${PERSONAL_GROUP_ID}/activate`, { method: 'POST', headers: jsonHeaders() })
 }

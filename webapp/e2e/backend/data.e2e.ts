@@ -51,7 +51,7 @@ test('tags and search narrow the operations list', async ({ app, screen, agent }
   await agent.assert('only the 2 500 ₸ «обед» operation is listed')
 })
 
-test('undo after recording removes the operation from the server', async ({ app, screen, agent }) => {
+test('undo after recording removes the operation from the server', async ({ app, screen }) => {
   const api = new Api(app.baseUrl, newUserId())
   const { group } = await seedGroup(api)
   await openAs(app, screen, api.userId)
@@ -60,7 +60,7 @@ test('undo after recording removes the operation from the server', async ({ app,
   await screen.getByRole('button', text.save).tap()
   await expect(screen.getByText(text.savedToast)).toBeVisible()
   await expect.poll(async () => (await api.operations(group.id)).length).toBe(1)
-  await agent.act('undo the operation that was just saved, using the notification')
+  await screen.getByRole('button', text.undo).tap()
   await expect.poll(async () => (await api.operations(group.id)).length).toBe(0)
 })
 

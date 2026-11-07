@@ -38,7 +38,7 @@ test('the recurring limit screen counts the payments that hit the limit', async 
   for (let index = 0; index < FREE_RECURRING; index += 1) await api.post(`/groups/${other.id}/recurring`, recurringSeed(otherCategories[0].id, `Платёж ${index}`))
   await seedGroup(api, 'KZT', 'Текущая')
   await openAs(app, screen, api.userId)
-  await agent.act('open recurring payments from the «Ещё» tab and try to add a new recurring payment of {amount} ₸, saving it', { params: { amount: '500' } })
+  await agent.act('open recurring payments from the «Ещё» tab and tap the button that adds a new recurring payment')
   await agent.assert(`the app says the Free limit of ${FREE_RECURRING} recurring payments is reached and shows ${FREE_RECURRING} of ${FREE_RECURRING} in use`)
 })
 

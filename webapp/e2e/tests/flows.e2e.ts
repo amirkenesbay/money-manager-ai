@@ -2,8 +2,8 @@ import { afterEach, test } from '@e2e-dev/web'
 import { expect } from 'e2e'
 import { openApp, resetProfile, text } from './app.ts'
 
-afterEach(async ({ browser }) => {
-  await resetProfile(browser)
+afterEach(async ({ app }) => {
+  await resetProfile(app.baseUrl)
 })
 
 test('creates a category in settings', async ({ app, screen, agent }) => {
