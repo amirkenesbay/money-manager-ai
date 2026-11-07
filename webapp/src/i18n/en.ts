@@ -346,6 +346,8 @@ export const en: Strings = {
   languageSheetHint: 'The language changes both in the app and in the bot messages',
   languageChangedToast: 'Language changed',
   monthStartLabel: 'Month starts',
+  timezoneLabel: 'Time zone',
+  timezoneSyncedToast: 'Time zone updated',
   monthStartValue: (day: number) => `day ${day}`,
   monthStartSheetTitle: 'Which day starts your month',
   monthStartOwnerHint: 'For example, your payday. Summary, reports and filters will start the month on this day',

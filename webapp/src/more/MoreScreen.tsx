@@ -12,8 +12,10 @@ import { isLanguage, LANGUAGE_NAMES } from '../i18n/languages'
 import { fetchReminders } from '../reminders/remindersApi'
 import { strings } from '../strings'
 import { useHomeScreen } from '../telegram/homeScreen'
+import { deviceTimezone, describeTimezone } from '../me/timezone'
+import { syncDeviceTimezone } from '../me/useDeviceTimezone'
 import { Button } from '../ui/Button'
-import { BellIcon, CalendarIcon, ChartIcon, DownloadIcon, CoinIcon, GlobeIcon, GridIcon, HelpIcon, PhoneIcon, RepeatIcon, UsersIcon, WalletIcon, SwapIcon, UploadIcon } from '../ui/icons'
+import { BellIcon, CalendarIcon, ClockIcon, ChartIcon, DownloadIcon, CoinIcon, GlobeIcon, GridIcon, HelpIcon, PhoneIcon, RepeatIcon, UsersIcon, WalletIcon, SwapIcon, UploadIcon } from '../ui/icons'
 import { SettingsRow } from '../ui/SettingsRow'
 import { DIGEST_KINDS } from './digestKinds'
 import { DigestsSheet } from './DigestsSheet'
@@ -40,6 +42,20 @@ export function MoreScreen({ me, group, groups, name, onMeChanged, onGroupUpdate
 }) {
   const [sheet, setSheet] = useState<SheetKind | null>(null)
   const homeScreen = useHomeScreen()
+
+  const syncTimezone = () => {
+    const syncing = syncDeviceTimezone(me)
+    if (!syncing) {
+      notify({ title: strings.timezoneLabel, detail: describeTimezone(deviceTimezone()) })
+      return
+    }
+    syncing
+      .then((next) => {
+        onMeChanged(next)
+        notify({ title: strings.timezoneSyncedToast, detail: describeTimezone(deviceTimezone()) })
+      })
+      .catch(() => notify({ title: strings.saveFailed }))
+  }
   const categories = useCategories(group.id)
   const reminders = useAsync(fetchReminders)
   const { subscription, language } = me
@@ -82,6 +98,7 @@ export function MoreScreen({ me, group, groups, name, onMeChanged, onGroupUpdate
       <ul className="settings-list" {...tourTarget('more-preferences')}>
         <li><SettingsRow icon={<GlobeIcon />} label={strings.languageLabel} value={isLanguage(language) ? LANGUAGE_NAMES[language] : language} onClick={() => setSheet('language')} /></li>
         <li><SettingsRow icon={<CoinIcon />} label={strings.currencyLabel} value={currencyBadge(group.currency)} onClick={() => setSheet('currency')} /></li>
+        <li><SettingsRow icon={<ClockIcon />} label={strings.timezoneLabel} value={describeTimezone(me.timezone ?? deviceTimezone())} onClick={syncTimezone} /></li>
         <li><SettingsRow icon={<CalendarIcon />} label={strings.monthStartLabel} value={strings.monthStartValue(group.monthStartDay)} onClick={() => setSheet('monthStart')} /></li>
         <li><SettingsRow icon={<WalletIcon />} label={strings.initialBalanceLabel} value={formatMoney(group.initialBalance, group.currency, language)} onClick={() => setSheet('balance')} /></li>
         {homeScreen.state === 'available' && <li><SettingsRow icon={<PhoneIcon />} label={strings.homeScreenRow} onClick={homeScreen.add} /></li>}

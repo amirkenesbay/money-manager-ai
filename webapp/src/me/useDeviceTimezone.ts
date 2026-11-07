@@ -1,12 +1,15 @@
 import { useEffect } from 'react'
 import type { Me } from '../api/types'
 import { updateMe } from './meApi'
+import { deviceTimezone } from './timezone'
 
-const deviceTimezone = (): string => Intl.DateTimeFormat().resolvedOptions().timeZone
+export function syncDeviceTimezone(me: Me): Promise<Me> | null {
+  const timezone = deviceTimezone()
+  return me.timezone === timezone ? null : updateMe({ timezone })
+}
 
 export function useDeviceTimezone(me: Me, onMeChanged: (me: Me) => void): void {
   useEffect(() => {
-    if (me.timezone !== null) return
-    updateMe({ timezone: deviceTimezone() }).then(onMeChanged).catch(() => undefined)
-  }, [me.timezone, onMeChanged])
+    syncDeviceTimezone(me)?.then(onMeChanged).catch(() => undefined)
+  }, [me, onMeChanged])
 }

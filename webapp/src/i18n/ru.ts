@@ -345,6 +345,8 @@ export const ru = {
   languageSheetHint: 'Язык сменится и в приложении, и в сообщениях бота',
   languageChangedToast: 'Язык изменён',
   monthStartLabel: 'Начало месяца',
+  timezoneLabel: 'Часовой пояс',
+  timezoneSyncedToast: 'Часовой пояс обновлён',
   monthStartValue: (day: number) => `${day}-е число`,
   monthStartSheetTitle: 'С какого числа считать месяц',
   monthStartOwnerHint: 'Например, со дня зарплаты. Сводка, отчёты и фильтры начнут месяц с этого числа',

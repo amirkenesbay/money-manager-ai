@@ -339,6 +339,8 @@ export const kk: Strings = {
   languageSheetHint: 'Тіл қолданбада да, бот хабарламаларында да ауысады',
   languageChangedToast: 'Тіл ауыстырылды',
   monthStartLabel: 'Ай басы',
+  timezoneLabel: 'Сағат белдеуі',
+  timezoneSyncedToast: 'Сағат белдеуі жаңартылды',
   monthStartValue: (day: number) => `${day}-күн`,
   monthStartSheetTitle: 'Айды қай күннен санаймыз',
   monthStartOwnerHint: 'Мысалы, жалақы күнінен. Жиынтық, есептер мен сүзгілер айды осы күннен бастайды',
