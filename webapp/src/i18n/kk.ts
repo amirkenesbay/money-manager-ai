@@ -514,6 +514,7 @@ export const kk: Strings = {
   voiceAskLater: 'Кейін',
   recordingTitle: 'Тыңдап тұрмын…',
   microphoneStarting: 'Микрофонды қосып жатырмын…',
+  recordingAutoStop: 'Үнсіз қалсаңыз, өзім жіберемін',
   voiceExamples: ['«Такси 2 000»', '«Кеше кофе 1 500»', '«Жалақы 450 000»'],
   stopRecording: 'Жазуды тоқтату',
   cancel: 'Бас тарту',

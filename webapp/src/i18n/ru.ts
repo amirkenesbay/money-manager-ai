@@ -520,6 +520,7 @@ export const ru = {
   voiceAskLater: 'Не сейчас',
   recordingTitle: 'Слушаю…',
   microphoneStarting: 'Включаю микрофон…',
+  recordingAutoStop: 'Замолчите — отправлю сам',
   voiceExamples: ['«Такси 2 000»', '«Вчера кофе 1 500»', '«Зарплата 450 000»'],
   stopRecording: 'Остановить запись',
   cancel: 'Отмена',

@@ -166,13 +166,18 @@ function RecordingScreen({ groupId, onAsk, onRecorded, onPaused, onSilence, onMi
     else deliver(recording.wav)
   }, [onSilence])
 
+  const finishOnPause = useRef<() => void>(() => undefined)
+  useEffect(() => {
+    finishOnPause.current = () => finish(onRecorded)
+  })
+
   useEffect(() => {
     let cancelled = false
     if (!microphoneSupported()) {
       onMicrophoneError('unsupported')
       return undefined
     }
-    startRecording()
+    startRecording(() => finishOnPause.current())
       .then((started) => {
         if (cancelled) {
           started.cancel()
@@ -217,6 +222,7 @@ function RecordingScreen({ groupId, onAsk, onRecorded, onPaused, onSilence, onMi
       <section className="voice-stage">
         <BreathingOrb level={level} waiting={!ready} />
         <p className="voice-listening" role="status">{ready ? strings.recordingTitle : strings.microphoneStarting}</p>
+        {ready && <p className="caption">{strings.recordingAutoStop}</p>}
         <RotatingHint items={hints} onAsk={onAsk} />
         {left <= WARNING_SECONDS && <p className="caption negative" role="timer">{strings.recordingEnds(left)}</p>}
         <button type="button" className="voice-stop-round pressable" aria-label={strings.stopRecording} disabled={!ready} onClick={() => finish(onRecorded)}>

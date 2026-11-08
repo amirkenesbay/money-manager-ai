@@ -521,6 +521,7 @@ export const en: Strings = {
   voiceAskLater: 'Not now',
   recordingTitle: 'Listening…',
   microphoneStarting: 'Turning on the microphone…',
+  recordingAutoStop: 'Pause and I will send it',
   voiceExamples: ['“Taxi 2,000”', '“Coffee yesterday 1,500”', '“Salary 450,000”'],
   stopRecording: 'Stop recording',
   cancel: 'Cancel',

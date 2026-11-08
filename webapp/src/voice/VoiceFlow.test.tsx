@@ -140,6 +140,24 @@ describe('VoiceFlow', () => {
     expect(screen.getByRole('status')).toHaveTextContent(strings.recordingTitle)
   })
 
+  it('sends the phrase on its own once the user stops talking', async () => {
+    let speechEnded: () => void = () => undefined
+    vi.mocked(startRecording).mockImplementation(async (onSpeechEnd) => {
+      speechEnded = onSpeechEnd ?? speechEnded
+      return recorderReturning({ kind: 'audio', wav })
+    })
+    vi.mocked(parseVoice).mockResolvedValue({ operations: [voiceOperation()] })
+    const user = userEvent.setup()
+    renderFlow()
+
+    await user.click(screen.getByRole('button', { name: strings.voiceAskAllow }))
+    expect(await screen.findByText(strings.recordingAutoStop)).toBeInTheDocument()
+    await act(async () => speechEnded())
+
+    expect(await screen.findByRole('heading', { name: strings.confirmOneTitle })).toBeInTheDocument()
+    expect(parseVoice).toHaveBeenCalledTimes(1)
+  })
+
   it('sends a recording once even when React mounts the screen twice', async () => {
     vi.mocked(parseVoice).mockResolvedValue({ operations: [voiceOperation()] })
 
