@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service
 import org.telegram.telegrambots.bots.DefaultAbsSender
 import org.telegram.telegrambots.bots.DefaultBotOptions
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
+import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
 import java.time.LocalDateTime
@@ -26,6 +27,7 @@ private const val OUTCOME_TAG = "outcome"
 private const val OUTCOME_SENT = "sent"
 private const val OUTCOME_FAILED = "failed"
 private const val OUTCOME_SKIPPED = "skipped"
+private const val BOT_BLOCKED_STATUS = 403
 
 
 @Service
@@ -73,10 +75,13 @@ class NotificationSchedulerService(
                 onSuccess = { OUTCOME_SENT },
                 onFailure = {
                     log.warn("Failed to send notification '{}' to user {}: {}", notification.name, notification.telegramUserId, it.message)
+                    if (it.isBotBlocked()) userInfoService.markBotBlocked(notification.telegramUserId, true)
                     OUTCOME_FAILED
                 },
             )
     }
+
+    private fun Throwable.isBotBlocked(): Boolean = this is TelegramApiRequestException && errorCode == BOT_BLOCKED_STATUS
 
     private fun sendNotification(notification: NotificationEntity, language: String?) {
         val icon = notification.icon ?: DEFAULT_NOTIFICATION_ICON

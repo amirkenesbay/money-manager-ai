@@ -5,6 +5,7 @@ import ai.moneymanager.domain.model.PaidSubscription
 import ai.moneymanager.domain.event.SubscriptionUpdated
 import ai.moneymanager.domain.event.TimezoneChanged
 import ai.moneymanager.domain.event.NewUserRegistered
+import ai.moneymanager.domain.event.BotMembershipChanged
 import ai.moneymanager.domain.model.AppHint
 import ai.moneymanager.domain.model.DigestKind
 import ai.moneymanager.domain.model.GroupNoticeLevel
@@ -144,6 +145,11 @@ class UserInfoService(
     fun markDailyReminderSeeded(telegramUserId: Long) {
         val entity = userRepository.findFirstByTelegramUserIdOrderByIdAsc(telegramUserId) ?: return
         if (!entity.dailyReminderSeeded) userRepository.save(entity.copy(dailyReminderSeeded = true))
+    }
+
+    fun markBotBlocked(telegramUserId: Long, blocked: Boolean) {
+        val changed = userRepository.setBotBlockedAt(telegramUserId, if (blocked) LocalDateTime.now() else null)
+        if (changed) eventPublisher.publishEvent(BotMembershipChanged(telegramUserId, blocked))
     }
 
     fun usersWithAccess(access: UserAccess): List<UserInfo> = userRepository.findByAccess(access).map(::mapEntity)

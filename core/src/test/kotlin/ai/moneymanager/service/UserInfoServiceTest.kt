@@ -15,6 +15,7 @@ import ai.moneymanager.repository.entity.UserInfoEntity
 import org.assertj.core.api.Assertions.assertThat
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
+import ai.moneymanager.domain.event.BotMembershipChanged
 import org.mockito.Mockito.mock
 import org.springframework.dao.DuplicateKeyException
 import java.math.BigDecimal
@@ -23,12 +24,24 @@ import java.time.LocalDateTime
 private const val RECYCLED_USERNAME = "amir"
 private const val FORMER_OWNER_ID = 1L
 private const val NEW_OWNER_ID = 2L
+private const val BLOCKER_ID = 777L
 private val NOW: LocalDateTime = LocalDateTime.of(2026, 11, 7, 12, 0)
 
 class UserInfoServiceTest {
     private val repository = FakeUserInfoRepository()
     private val publishedEvents = mutableListOf<Any>()
     private val service = UserInfoService(repository) { publishedEvents.add(it) }
+
+    @Test
+    fun `tells metrics once when a user blocks the bot and once when they come back`() {
+        repository.givenUser(BLOCKER_ID, username = null)
+
+        service.markBotBlocked(BLOCKER_ID, true)
+        service.markBotBlocked(BLOCKER_ID, true)
+        service.markBotBlocked(BLOCKER_ID, false)
+
+        assertThat(publishedEvents).containsExactly(BotMembershipChanged(BLOCKER_ID, true), BotMembershipChanged(BLOCKER_ID, false))
+    }
 
     @Test
     fun `returns existing user found by telegram id`() {
@@ -193,6 +206,13 @@ private class FakeUserInfoRepository(
     override fun addSeenHint(telegramUserId: Long, hint: AppHint): UserInfoEntity? {
         val user = findFirstByTelegramUserIdOrderByIdAsc(telegramUserId) ?: return null
         return save(user.copy(seenHints = user.seenHints + hint))
+    }
+
+    override fun setBotBlockedAt(telegramUserId: Long, blockedAt: LocalDateTime?): Boolean {
+        val user = findFirstByTelegramUserIdOrderByIdAsc(telegramUserId) ?: return false
+        if ((user.botBlockedAt == null) == (blockedAt == null)) return false
+        save(user.copy(botBlockedAt = blockedAt))
+        return true
     }
 
     override fun findByAccess(access: UserAccess): List<UserInfoEntity> = users.filter { it.access == access }

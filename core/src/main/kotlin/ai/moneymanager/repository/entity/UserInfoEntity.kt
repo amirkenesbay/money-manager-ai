@@ -34,5 +34,6 @@ data class UserInfoEntity(
     val subscriptionPeriod: SubscriptionPeriod? = null,
     val dailyReminderSeeded: Boolean = false,
     val access: UserAccess = UserAccess.REGULAR,
+    val botBlockedAt: LocalDateTime? = null,
     val auditInfo: AuditInfo = AuditInfo()
 )
