@@ -10,4 +10,5 @@ RUN npm run lint && npm test && npm run build
 
 FROM nginx:1.27-alpine
 
-COPY --from=builder /webapp/dist /usr/share/nginx/html
+COPY landing /usr/share/nginx/html
+COPY --from=builder /webapp/dist /usr/share/nginx/html/app

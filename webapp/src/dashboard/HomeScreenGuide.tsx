@@ -6,7 +6,10 @@ import { PhoneIcon } from '../ui/icons'
 import { Sheet } from '../ui/Sheet'
 
 const ANDROID_PLATFORM = 'android'
-const GUIDE_VIDEOS = { ios: '/guides/home-screen-ios.mp4', android: '/guides/home-screen-android.mp4' }
+const GUIDE_VIDEOS = {
+  ios: `${import.meta.env.BASE_URL}guides/home-screen-ios.mp4`,
+  android: `${import.meta.env.BASE_URL}guides/home-screen-android.mp4`,
+}
 
 const guideVideo = (): string => (telegramPlatform() === ANDROID_PLATFORM ? GUIDE_VIDEOS.android : GUIDE_VIDEOS.ios)
 

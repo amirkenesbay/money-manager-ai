@@ -1,0 +1,936 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<script>
+  if (/tgWebApp/.test(location.hash + location.search)) location.replace('/app/' + location.search + location.hash)
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Money Manager AI — учёт денег в Telegram</title>
+<meta name="description" content="Скажи «кофе 500» — и трата записана. Учёт денег голосом и текстом прямо в Telegram, на русском, казахском и английском.">
+<meta name="theme-color" content="#006666">
+<link rel="canonical" href="https://moneymanager.kz/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://moneymanager.kz/">
+<meta property="og:site_name" content="Money Manager AI">
+<meta property="og:title" content="Money Manager AI — учёт денег в Telegram">
+<meta property="og:description" content="Скажи «кофе 500» — и трата записана. Учёт денег голосом и текстом прямо в Telegram, на русском, казахском и английском.">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='16' fill='%23006666'/><text x='32' y='45' font-size='36' text-anchor='middle' fill='white' font-family='monospace'>₸</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<style>
+/* Layout: one calm column of product scenes; the phone in the hero is the live demo, every section after it shows one real screen. */
+:root {
+  --bg: #e7e5e4;
+  --surface: #edebea;
+  --shadow-dark: #c5c3c2;
+  --shadow-light: #ffffff;
+  --text: #1e2938;
+  --muted: #4b5563;
+  --line: #d6d3d1;
+  --accent: #006666;
+  --on-accent: #ffffff;
+  --accent-wash: rgba(0, 102, 102, 0.1);
+  --negative: #9f1239;
+  --island: #12161c;
+  --on-island: #f5f5f4;
+  --island-accent: #5fd4c4;
+  --screen: #2b2e33;
+  --screen-text: #e8eaed;
+  --screen-muted: #a7adb6;
+  --screen-dark: #1c1e22;
+  --screen-light: #3a3e45;
+  --screen-accent: #3cc4b4;
+  --font-display: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-text: 'Golos Text', system-ui, sans-serif;
+  --raise-sm: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+  --raise-md: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
+  --raise-lg: 16px 16px 32px var(--shadow-dark), -16px -16px 32px var(--shadow-light);
+  --inset-sm: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+  --screen-raise: 4px 4px 8px var(--screen-dark), -4px -4px 8px var(--screen-light);
+  --screen-inset: inset 3px 3px 6px var(--screen-dark), inset -3px -3px 6px var(--screen-light);
+  --column: 72rem;
+  --radius-card: 1.75rem;
+  --radius-pill: 999px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #23262a; --surface: #282b30; --shadow-dark: #17191c; --shadow-light: #31353b;
+    --text: #e8eaed; --muted: #a7adb6; --line: #3a3e44; --accent: #3cc4b4; --on-accent: #0b2421;
+    --accent-wash: rgba(60, 196, 180, 0.14); --negative: #fb8a9b;
+    --island: #0b0d10;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #23262a; --surface: #282b30; --shadow-dark: #17191c; --shadow-light: #31353b;
+  --text: #e8eaed; --muted: #a7adb6; --line: #3a3e44; --accent: #3cc4b4; --on-accent: #0b2421;
+  --accent-wash: rgba(60, 196, 180, 0.14); --negative: #fb8a9b;
+  --island: #0b0d10;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-text);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg);
+}
+.wrap {
+  max-width: var(--column);
+  margin-inline: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.02em; line-height: 1.12; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(2.25rem, 6vw, 4rem); font-weight: 700; }
+h2 { font-size: clamp(1.75rem, 4vw, 2.75rem); font-weight: 700; }
+h3 { font-size: 1.25rem; font-weight: 600; }
+p { margin: 0; }
+.lead { color: var(--muted); font-size: 1.1875rem; max-width: 34rem; }
+.eyebrow { font-family: var(--font-display); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 0.5rem; }
+
+/* header */
+.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(12px);
+}
+.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: 0.875rem; }
+.brand { display: flex; align-items: center; gap: 0.625rem; font-weight: 700; text-decoration: none; }
+.brand-mark {
+  width: 2.25rem; height: 2.25rem; border-radius: 0.75rem; display: grid; place-items: center;
+  background: var(--accent); color: var(--on-accent); font-family: var(--font-display); font-size: 1rem; box-shadow: var(--raise-sm);
+}
+.top-actions { display: flex; align-items: center; gap: 0.75rem; }
+.langs { display: flex; gap: 0.25rem; padding: 0.25rem; border-radius: var(--radius-pill); box-shadow: var(--inset-sm); }
+.langs button {
+  border: 0; background: transparent; color: var(--muted); font: 600 0.8125rem var(--font-display);
+  padding: 0.375rem 0.625rem; border-radius: var(--radius-pill); cursor: pointer;
+}
+.langs button[aria-pressed="true"] { background: var(--bg); color: var(--text); box-shadow: var(--raise-sm); }
+
+.cta {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.625rem;
+  min-height: 3.5rem; padding: 0 1.75rem; border-radius: var(--radius-pill);
+  background: var(--accent); color: var(--on-accent); text-decoration: none; font-weight: 700; font-size: 1.0625rem;
+  box-shadow: var(--raise-md), inset 3px 3px 6px rgba(255,255,255,.22), inset -4px -4px 8px rgba(0,0,0,.25);
+  transition: transform 120ms ease-out;
+}
+.cta:active { transform: scale(0.98); }
+.cta.small { min-height: 2.75rem; padding: 0 1.125rem; font-size: 0.9375rem; }
+.cta svg { width: 1.25rem; height: 1.25rem; }
+.cta-note { color: var(--muted); font-size: 0.875rem; }
+
+/* hero */
+.hero .wrap { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3rem; align-items: center; padding-block: 3.5rem 4rem; }
+.hero-copy { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
+.hero-copy h1 em { font-style: normal; color: var(--accent); }
+.hero-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 0.625rem; }
+.try { display: flex; flex-direction: column; gap: 0.625rem; }
+.try-label { font-size: 0.875rem; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 0.625rem; }
+.chip {
+  border: 0; cursor: pointer; padding: 0.625rem 1rem; border-radius: var(--radius-pill);
+  background: var(--bg); color: var(--text); font: 500 0.9375rem var(--font-text); box-shadow: var(--raise-sm);
+}
+.chip[aria-pressed="true"] { box-shadow: var(--inset-sm); color: var(--accent); }
+
+/* phone */
+.phone {
+  width: 19.5rem; max-width: 100%; aspect-ratio: 9 / 18.5; border-radius: 2.75rem; padding: 0.75rem;
+  background: var(--island); box-shadow: var(--raise-lg);
+}
+.phone-screen {
+  position: relative; height: 100%; border-radius: 2.125rem; overflow: hidden; background: var(--screen); color: var(--screen-text);
+  display: flex; flex-direction: column; padding: 2.75rem 1.125rem 1.25rem; gap: 0.875rem; font-size: 0.875rem;
+}
+.notch { position: absolute; top: 0.625rem; left: 50%; translate: -50% 0; width: 6rem; height: 1.5rem; border-radius: var(--radius-pill); background: var(--island); }
+.app-bar { display: flex; align-items: center; justify-content: space-between; color: var(--screen-muted); font-size: 0.75rem; }
+.app-bar b { color: var(--screen-text); font-size: 0.875rem; }
+.scene { flex: 1; display: flex; flex-direction: column; gap: 0.875rem; min-height: 0; }
+.scene-title { font-family: var(--font-display); font-size: 1.125rem; font-weight: 600; }
+.orb-stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; text-align: center; }
+.orb {
+  width: 7rem; height: 7rem; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #5fd4c4, var(--screen-accent) 55%, #004040);
+  box-shadow: var(--screen-raise); animation: breathe 2.2s ease-in-out infinite;
+}
+.orb.quiet { opacity: 0.35; animation: none; }
+.heard { min-height: 1.6em; font-family: var(--font-display); font-size: 1rem; color: var(--screen-text); }
+.heard-caption { font-size: 0.75rem; color: var(--screen-muted); }
+.card {
+  border-radius: 1.25rem; padding: 1rem; background: var(--screen); box-shadow: var(--screen-raise);
+  display: flex; flex-direction: column; gap: 0.75rem;
+}
+.amount { font-family: var(--font-display); font-weight: 700; font-size: 2rem; font-variant-numeric: tabular-nums; }
+.amount.income { color: var(--screen-accent); }
+.rows { border-radius: 1rem; box-shadow: var(--screen-inset); padding: 0.25rem 0.875rem; }
+.row { display: flex; justify-content: space-between; gap: 0.75rem; padding-block: 0.5rem; border-bottom: 1px solid var(--screen-light); }
+.row:last-child { border-bottom: 0; }
+.row span { color: var(--screen-muted); }
+.row b { font-weight: 500; }
+.save {
+  margin-top: auto; min-height: 2.75rem; border-radius: var(--radius-pill); display: grid; place-items: center;
+  background: var(--screen-accent); color: #0b2421; font-weight: 700;
+}
+.saved { color: var(--screen-accent); font-weight: 600; text-align: center; }
+.answer-head { font-size: 0.8125rem; color: var(--screen-muted); }
+.bars { display: flex; align-items: flex-end; gap: 0.3125rem; height: 4.5rem; }
+.bars i { flex: 1; border-radius: 0.25rem 0.25rem 0.125rem 0.125rem; background: var(--screen-accent); opacity: 0.8; }
+.bars i.dim { opacity: 0.3; }
+.scene-enter { animation: enter 320ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+/* facts */
+.facts .wrap { padding-block: 1rem 3rem; }
+.facts ul {
+  list-style: none; margin: 0; padding: 1.5rem; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem;
+  border-radius: var(--radius-card); box-shadow: var(--inset-sm);
+}
+.facts li { display: flex; flex-direction: column; gap: 0.125rem; min-width: 0; }
+.facts strong { font-family: var(--font-display); font-size: 1.375rem; }
+.facts span { color: var(--muted); font-size: 0.9375rem; }
+
+/* scenes */
+.section .wrap { padding-block: 4.5rem; display: flex; flex-direction: column; gap: 3rem; }
+.section-head { display: flex; flex-direction: column; gap: 1rem; max-width: 40rem; }
+.feature { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 3rem; align-items: center; }
+.feature.flip .feature-copy { order: 2; }
+.feature-copy { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+.feature-copy ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.5rem; color: var(--muted); }
+.feature-copy li::before { content: "·"; color: var(--accent); font-weight: 700; margin-right: 0.5rem; }
+.stage {
+  min-width: 0; border-radius: var(--radius-card); padding: 2rem; background: var(--surface); box-shadow: var(--raise-md);
+  display: grid; place-items: center;
+}
+.mini {
+  width: 100%; max-width: 21rem; border-radius: 1.5rem; padding: 1.25rem; background: var(--screen); color: var(--screen-text);
+  display: flex; flex-direction: column; gap: 0.875rem; font-size: 0.875rem;
+}
+.dots { display: flex; gap: 0.375rem; justify-content: center; }
+.dots i { width: 0.4375rem; height: 0.4375rem; border-radius: 50%; background: var(--screen-light); }
+.dots i.on { background: var(--screen-accent); width: 1.25rem; border-radius: var(--radius-pill); }
+.meter { height: 0.5rem; border-radius: var(--radius-pill); box-shadow: var(--screen-inset); overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--screen-accent); border-radius: inherit; }
+.meter.warn i { background: #f5b66b; }
+.budget { display: flex; flex-direction: column; gap: 0.375rem; }
+.budget div { display: flex; justify-content: space-between; }
+.budget span { color: var(--screen-muted); }
+.people { display: flex; flex-direction: column; gap: 0.625rem; }
+.person { display: flex; align-items: center; gap: 0.75rem; }
+.avatar { width: 2.25rem; height: 2.25rem; border-radius: 50%; display: grid; place-items: center; font-weight: 700; color: #0b2421; background: var(--screen-accent); flex: none; }
+.avatar.b { background: #f5b66b; }
+.avatar.c { background: #a7adb6; }
+.person p { flex: 1; min-width: 0; }
+.person small { display: block; color: var(--screen-muted); }
+.owe { border-radius: 1rem; padding: 0.875rem; box-shadow: var(--screen-inset); display: flex; justify-content: space-between; align-items: center; }
+.owe strong { font-family: var(--font-display); color: var(--screen-accent); font-size: 1.125rem; }
+
+/* more */
+.grid {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem;
+}
+.tile { border-radius: 1.25rem; padding: 1.5rem; background: var(--bg); box-shadow: var(--raise-sm); display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
+.tile-icon { font-size: 1.5rem; }
+.tile p { color: var(--muted); font-size: 0.9375rem; }
+
+/* trust */
+.trust .wrap { padding-block: 3rem; }
+.trust-box { border-radius: var(--radius-card); padding: 2.5rem; background: var(--island); color: var(--on-island); display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 2rem; align-items: center; }
+.trust-box h2 { color: var(--on-island); }
+.trust-box ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.875rem; }
+.trust-box li { display: flex; gap: 0.75rem; color: #c9ced6; }
+.trust-box li b { color: var(--island-accent); font-family: var(--font-display); }
+
+/* faq */
+.faq { display: flex; flex-direction: column; gap: 0.75rem; max-width: 46rem; }
+.faq details { border-radius: 1.125rem; background: var(--bg); box-shadow: var(--raise-sm); padding: 0 1.25rem; }
+.faq summary { cursor: pointer; list-style: none; padding-block: 1.125rem; font-weight: 600; display: flex; justify-content: space-between; gap: 1rem; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; font-family: var(--font-display); color: var(--accent); }
+.faq details[open] summary::after { content: "−"; }
+.faq details p { padding-bottom: 1.125rem; color: var(--muted); }
+
+/* final */
+.final .wrap { padding-block: 4rem 5rem; }
+.final-box { border-radius: 2rem; padding: 3rem 2rem; box-shadow: var(--inset-sm); display: flex; flex-direction: column; align-items: center; gap: 1.25rem; text-align: center; }
+footer .wrap { padding-block: 2rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; color: var(--muted); font-size: 0.875rem; border-top: 1px solid var(--line); }
+
+@keyframes breathe { 50% { scale: 1.06; } }
+@keyframes enter { from { opacity: 0; translate: 0 0.5rem; } }
+@media (prefers-reduced-motion: reduce) {
+  .orb { animation: none; }
+  .scene-enter { animation: none; }
+}
+
+@media (max-width: 56rem) {
+  .hero .wrap { grid-template-columns: minmax(0, 1fr); padding-block: 2rem 3rem; }
+  .hero .phone { justify-self: center; }
+  .feature, .trust-box { grid-template-columns: minmax(0, 1fr); gap: 1.75rem; }
+  .feature.flip .feature-copy { order: 0; }
+  .facts ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 34rem) {
+  .grid { grid-template-columns: minmax(0, 1fr); }
+  .langs { display: none; }
+  .stage { padding: 1.25rem; }
+  .trust-box { padding: 1.75rem; }
+}
+
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#top"><span class="brand-mark">₸</span>Money Manager AI</a>
+    <div class="top-actions">
+      <div class="langs" role="group" data-i18n-aria="lang.label" aria-label="Язык" id="langs">
+        <button type="button" data-lang="ru">RU</button>
+        <button type="button" data-lang="kk">KZ</button>
+        <button type="button" data-lang="en">EN</button>
+      </div>
+      <a class="cta small" href="https://t.me/moneyManagerAIbot" data-i18n="nav.open">Открыть</a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-copy">
+        <span class="eyebrow" data-i18n="hero.eyebrow">Учёт денег в Telegram</span>
+        <h1 data-i18n-html="hero.title">Скажи — и&nbsp;трата <em>записана</em></h1>
+        <p class="lead" data-i18n="hero.lead">Голосом или текстом. ИИ сам поставит сумму, категорию и дату, а ты видишь, куда уходят деньги.</p>
+        <div class="hero-actions">
+          <a class="cta" href="https://t.me/moneyManagerAIbot">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.9 4.3 18.7 19.4c-.2 1-.9 1.3-1.8.8l-4.8-3.6-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.9 8.9-8c.4-.3-.1-.5-.6-.2L6.4 13.1l-4.7-1.5c-1-.3-1-1 .2-1.5L20.5 2.9c.9-.3 1.6.2 1.4 1.4Z"/></svg>
+            <span data-i18n="cta.telegram">Открыть в Telegram</span>
+          </a>
+          <span class="cta-note" data-i18n="cta.note">Без скачивания и регистрации</span>
+        </div>
+        <div class="try">
+          <span class="try-label" id="try-label" data-i18n="try.label">Попробуй, нажми на фразу</span>
+          <div class="chips" role="group" aria-labelledby="try-label" id="chips"></div>
+        </div>
+      </div>
+      <div class="phone" data-i18n-aria="demo.label" aria-label="Демо приложения">
+        <div class="phone-screen">
+          <span class="notch" aria-hidden="true"></span>
+          <div class="app-bar"><b>AI Money Manager</b><span>mini app</span></div>
+          <div class="scene" id="scene" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="facts" data-i18n-aria="facts.label" aria-label="Коротко">
+    <div class="wrap">
+      <ul>
+        <li><strong data-i18n="fact1.value">~1 сек</strong><span data-i18n="fact1.label">на распознавание</span></li>
+        <li><strong data-i18n="fact2.value">Голос и текст</strong><span data-i18n="fact2.label">как удобно</span></li>
+        <li><strong data-i18n="fact3.value">3 языка</strong><span data-i18n="fact3.label">русский, қазақша, English</span></li>
+        <li><strong data-i18n="fact4.value">0 установок</strong><span data-i18n="fact4.label">всё внутри Telegram</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section" id="how">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow" data-i18n="how.eyebrow">Как это работает</span>
+        <h2 data-i18n="how.title">Три действия вместо таблиц</h2>
+      </div>
+
+      <div class="feature">
+        <div class="feature-copy">
+          <h3 data-i18n="record.title">Записать</h3>
+          <p class="lead" data-i18n="record.lead">«Кофе 500», «вчера такси 1800», «зарплата 450 000». Можно несколько трат в одной фразе.</p>
+          <ul><li data-i18n="record.p1">Сам выбирает категорию</li><li data-i18n="record.p2">Понимает «вчера» и «в понедельник»</li><li data-i18n="record.p3">Перед сохранением всё видно</li></ul>
+        </div>
+        <div class="stage">
+          <div class="mini">
+            <span class="answer-head" data-i18n="mock.check">Проверьте операцию</span>
+            <span class="amount">−1 800 ₸</span>
+            <div class="rows">
+              <div class="row"><span data-i18n="mock.category">Категория</span><b data-i18n="mock.transport">🚕 Транспорт</b></div>
+              <div class="row"><span data-i18n="mock.date">Дата</span><b data-i18n="mock.yesterday">Вчера</b></div>
+              <div class="row"><span data-i18n="mock.repeat">Повтор</span><b data-i18n="mock.once">Один раз</b></div>
+            </div>
+            <div class="save" data-i18n="mock.save">Сохранить</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature flip">
+        <div class="feature-copy">
+          <h3 data-i18n="ask.title">Спросить</h3>
+          <p class="lead" data-i18n="ask.lead">«Сколько ушло на такси?», «на что я трачу больше всего?» Ответ приходит карточкой с цифрами.</p>
+          <ul><li data-i18n="ask.p1">Сравнение с прошлым месяцем</li><li data-i18n="ask.p2">Сколько можно тратить в день</li><li data-i18n="ask.p3">Самые крупные покупки</li></ul>
+        </div>
+        <div class="stage">
+          <div class="mini">
+            <span class="answer-head" data-i18n="mock.question">Сколько ушло на такси в ноябре?</span>
+            <span class="scene-title" data-i18n="mock.taxi">🚕 Такси · Ноябрь</span>
+            <span class="amount">12 400 ₸</span>
+            <div class="rows">
+              <div class="row"><span data-i18n="mock.rides">Поездок</span><b>7</b></div>
+              <div class="row"><span data-i18n="mock.vsOctober">К октябрю</span><b>−18%</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature">
+        <div class="feature-copy">
+          <h3 data-i18n="understand.title">Понять</h3>
+          <p class="lead" data-i18n="understand.lead">На главной видно, сколько потрачено, сколько можно в день и что с бюджетами.</p>
+          <ul><li data-i18n="understand.p1">Лимиты по категориям</li><li data-i18n="understand.p2">Отчёт за любой месяц</li><li data-i18n="understand.p3">Регулярные платежи и подписки</li></ul>
+        </div>
+        <div class="stage">
+          <div class="mini">
+            <span class="answer-head" data-i18n="mock.perDay">Можно тратить в день</span>
+            <span class="amount income">6 850 ₸</span>
+            <div class="bars" aria-hidden="true">
+              <i style="height:40%"></i><i style="height:70%"></i><i style="height:25%"></i><i style="height:55%"></i><i style="height:90%"></i><i style="height:35%"></i><i style="height:60%"></i><i class="dim" style="height:20%"></i><i class="dim" style="height:20%"></i><i class="dim" style="height:20%"></i>
+            </div>
+            <div class="dots" aria-hidden="true"><i></i><i class="on"></i><i></i></div>
+            <div class="budget"><div><span data-i18n="mock.groceries">🛒 Продукты</span>62 000 / 80 000</div><div class="meter"><i style="width:78%"></i></div></div>
+            <div class="budget"><div><span data-i18n="mock.cafes">🍽️ Кафе</span>27 500 / 30 000</div><div class="meter warn"><i style="width:92%"></i></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="together">
+    <div class="wrap">
+      <div class="feature flip">
+        <div class="feature-copy">
+          <span class="eyebrow" data-i18n="together.eyebrow">Вместе</span>
+          <h2 data-i18n-html="together.title">Один бюджет на&nbsp;семью</h2>
+          <p class="lead" data-i18n="together.lead">Позови близких по ссылке. Общие траты, общий баланс и кто кому должен.</p>
+        </div>
+        <div class="stage">
+          <div class="mini">
+            <span class="scene-title" data-i18n="mock.family">👨‍👩‍👧 Семья</span>
+            <div class="people">
+              <div class="person"><span class="avatar">А</span><p>Аружан<small data-i18n="mock.p1">Продукты · 12 000 ₸</small></p></div>
+              <div class="person"><span class="avatar b">Д</span><p>Данияр<small data-i18n="mock.p2">Бензин · 8 000 ₸</small></p></div>
+              <div class="person"><span class="avatar c" aria-hidden="true">•</span><p><span data-i18n="mock.you">Ты</span><small data-i18n="mock.p3">Кафе · 9 000 ₸</small></p></div>
+            </div>
+            <div class="owe"><span data-i18n="mock.owed">Тебе должны</span><strong>8 500 ₸</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="more">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow" data-i18n="more.eyebrow">И ещё</span>
+        <h2 data-i18n="more.title">Всё для денег в одном месте</h2>
+      </div>
+      <div class="grid">
+        <div class="tile"><span class="tile-icon" aria-hidden="true">📊</span><h3 data-i18n="tile1.title">Бюджеты</h3><p data-i18n="tile1.text">Лимит на категорию и предупреждение заранее.</p></div>
+        <div class="tile"><span class="tile-icon" aria-hidden="true">🤝</span><h3 data-i18n="tile2.title">Долги</h3><p data-i18n="tile2.text">Кому дал, у кого взял, когда вернуть.</p></div>
+        <div class="tile"><span class="tile-icon" aria-hidden="true">🔁</span><h3 data-i18n="tile3.title">Регулярные</h3><p data-i18n="tile3.text">Аренда, подписки и связь по расписанию.</p></div>
+        <div class="tile"><span class="tile-icon" aria-hidden="true">🔔</span><h3 data-i18n="tile4.title">Напоминания</h3><p data-i18n="tile4.text">Вечером напомнит записать траты.</p></div>
+        <div class="tile"><span class="tile-icon" aria-hidden="true">📥</span><h3 data-i18n="tile5.title">Импорт</h3><p data-i18n="tile5.text">Загрузи выписку, операции появятся сами.</p></div>
+        <div class="tile"><span class="tile-icon" aria-hidden="true">🌐</span><h3 data-i18n="tile6.title">Три языка</h3><p data-i18n="tile6.text">Русский, қазақша, English.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="trust" aria-labelledby="trust-title">
+    <div class="wrap">
+      <div class="trust-box">
+        <h2 id="trust-title" data-i18n="trust.title">Твои деньги — только твои</h2>
+        <ul>
+          <li><b aria-hidden="true">✓</b><span data-i18n="trust.p1">Банк не подключаем. Видно только то, что записал ты.</span></li>
+          <li><b aria-hidden="true">✓</b><span data-i18n="trust.p2">Данные не продаём и не показываем рекламу.</span></li>
+          <li><b aria-hidden="true">✓</b><span data-i18n="trust.p3">Вход через Telegram. Без паролей и почты.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="faq">
+    <div class="wrap">
+      <div class="section-head"><span class="eyebrow" data-i18n="faq.eyebrow">Вопросы</span><h2 data-i18n="faq.title">Коротко о главном</h2></div>
+      <div class="faq">
+        <details><summary data-i18n="faq1.q">Нужно что-то скачивать?</summary><p data-i18n="faq1.a">Нет. Приложение открывается прямо в Telegram, на телефоне и на компьютере.</p></details>
+        <details><summary data-i18n="faq2.q">Как записать трату?</summary><p data-i18n="faq2.a">Нажми на микрофон и скажи, например, «кофе 500». Или напиши текстом. Перед сохранением покажем, что поняли.</p></details>
+        <details><summary data-i18n="faq3.q">Можно вести бюджет вместе?</summary><p data-i18n="faq3.a">Да. Создай группу и отправь ссылку близким. Траты и баланс у всех общие.</p></details>
+        <details><summary data-i18n="faq4.q">Какие языки?</summary><p data-i18n="faq4.a">Русский, казахский и английский. Голос понимает все три, даже вперемешку.</p></details>
+        <details><summary data-i18n="faq5.q">Кто видит мои траты?</summary><p data-i18n="faq5.a">Только ты и те, кого ты сам позвал в группу.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="final">
+    <div class="wrap">
+      <div class="final-box">
+        <h2 data-i18n="final.title">Начни с одной траты</h2>
+        <p class="lead" data-i18n="final.lead">Открой и скажи «кофе 500».</p>
+        <a class="cta" href="https://t.me/moneyManagerAIbot" data-i18n="cta.telegram">Открыть в Telegram</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 Money Manager AI</span>
+    <a href="https://t.me/moneyManagerAIbot">@moneyManagerAIbot</a>
+  </div>
+</footer>
+
+<script>
+const STRINGS = {
+  "ru": {
+    "meta.title": "Money Manager AI — учёт денег в Telegram",
+    "meta.description": "Скажи «кофе 500» — и трата записана. Учёт денег голосом и текстом прямо в Telegram, на русском, казахском и английском.",
+    "nav.open": "Открыть",
+    "hero.eyebrow": "Учёт денег в Telegram",
+    "hero.title": "Скажи — и&nbsp;трата <em>записана</em>",
+    "hero.lead": "Голосом или текстом. ИИ сам поставит сумму, категорию и дату, а ты видишь, куда уходят деньги.",
+    "cta.telegram": "Открыть в Telegram",
+    "cta.note": "Без скачивания и регистрации",
+    "try.label": "Попробуй, нажми на фразу",
+    "facts.label": "Коротко",
+    "fact1.value": "~1 сек",
+    "fact1.label": "на распознавание",
+    "fact2.value": "Голос и текст",
+    "fact2.label": "как удобно",
+    "fact3.value": "3 языка",
+    "fact3.label": "русский, қазақша, English",
+    "fact4.value": "0 установок",
+    "fact4.label": "всё внутри Telegram",
+    "how.eyebrow": "Как это работает",
+    "how.title": "Три действия вместо таблиц",
+    "record.title": "Записать",
+    "record.lead": "«Кофе 500», «вчера такси 1800», «зарплата 450 000». Можно несколько трат в одной фразе.",
+    "record.p1": "Сам выбирает категорию",
+    "record.p2": "Понимает «вчера» и «в понедельник»",
+    "record.p3": "Перед сохранением всё видно",
+    "ask.title": "Спросить",
+    "ask.lead": "«Сколько ушло на такси?», «на что я трачу больше всего?» Ответ приходит карточкой с цифрами.",
+    "ask.p1": "Сравнение с прошлым месяцем",
+    "ask.p2": "Сколько можно тратить в день",
+    "ask.p3": "Самые крупные покупки",
+    "understand.title": "Понять",
+    "understand.lead": "На главной видно, сколько потрачено, сколько можно в день и что с бюджетами.",
+    "understand.p1": "Лимиты по категориям",
+    "understand.p2": "Отчёт за любой месяц",
+    "understand.p3": "Регулярные платежи и подписки",
+    "mock.check": "Проверьте операцию",
+    "mock.category": "Категория",
+    "mock.date": "Дата",
+    "mock.repeat": "Повтор",
+    "mock.transport": "🚕 Транспорт",
+    "mock.yesterday": "Вчера",
+    "mock.today": "Сегодня",
+    "mock.once": "Один раз",
+    "mock.save": "Сохранить",
+    "mock.question": "Сколько ушло на такси в ноябре?",
+    "mock.taxi": "🚕 Такси · Ноябрь",
+    "mock.rides": "Поездок",
+    "mock.vsOctober": "К октябрю",
+    "mock.perDay": "Можно тратить в день",
+    "mock.groceries": "🛒 Продукты",
+    "mock.cafes": "🍽️ Кафе",
+    "mock.family": "👨‍👩‍👧 Семья",
+    "mock.p1": "Продукты · 12 000 ₸",
+    "mock.p2": "Бензин · 8 000 ₸",
+    "mock.you": "Ты",
+    "mock.p3": "Кафе · 9 000 ₸",
+    "mock.owed": "Тебе должны",
+    "mock.answer": "Ответ",
+    "mock.micStarting": "Включаю микрофон…",
+    "mock.listening": "Слушаю…",
+    "together.eyebrow": "Вместе",
+    "together.title": "Один бюджет на&nbsp;семью",
+    "together.lead": "Позови близких по ссылке. Общие траты, общий баланс и кто кому должен.",
+    "more.eyebrow": "И ещё",
+    "more.title": "Всё для денег в одном месте",
+    "tile1.title": "Бюджеты",
+    "tile1.text": "Лимит на категорию и предупреждение заранее.",
+    "tile2.title": "Долги",
+    "tile2.text": "Кому дал, у кого взял, когда вернуть.",
+    "tile3.title": "Регулярные",
+    "tile3.text": "Аренда, подписки и связь по расписанию.",
+    "tile4.title": "Напоминания",
+    "tile4.text": "Вечером напомнит записать траты.",
+    "tile5.title": "Импорт",
+    "tile5.text": "Загрузи выписку, операции появятся сами.",
+    "tile6.title": "Три языка",
+    "tile6.text": "Русский, қазақша, English.",
+    "trust.title": "Твои деньги — только твои",
+    "trust.p1": "Банк не подключаем. Видно только то, что записал ты.",
+    "trust.p2": "Данные не продаём и не показываем рекламу.",
+    "trust.p3": "Вход через Telegram. Без паролей и почты.",
+    "faq.eyebrow": "Вопросы",
+    "faq.title": "Коротко о главном",
+    "faq1.q": "Нужно что-то скачивать?",
+    "faq1.a": "Нет. Приложение открывается прямо в Telegram, на телефоне и на компьютере.",
+    "faq2.q": "Как записать трату?",
+    "faq2.a": "Нажми на микрофон и скажи, например, «кофе 500». Или напиши текстом. Перед сохранением покажем, что поняли.",
+    "faq3.q": "Можно вести бюджет вместе?",
+    "faq3.a": "Да. Создай группу и отправь ссылку близким. Траты и баланс у всех общие.",
+    "faq4.q": "Какие языки?",
+    "faq4.a": "Русский, казахский и английский. Голос понимает все три, даже вперемешку.",
+    "faq5.q": "Кто видит мои траты?",
+    "faq5.a": "Только ты и те, кого ты сам позвал в группу.",
+    "final.title": "Начни с одной траты",
+    "final.lead": "Открой и скажи «кофе 500».",
+    "demo.label": "Демо приложения",
+    "lang.label": "Язык"
+  },
+  "kk": {
+    "meta.title": "Money Manager AI — Telegram-дағы қаржы есебі",
+    "meta.description": "«Кофе 500» деп айт — шығын жазылды. Ақша есебін дауыспен және мәтінмен Telegram-да жүргіз: қазақша, орысша, ағылшынша.",
+    "nav.open": "Ашу",
+    "hero.eyebrow": "Telegram-дағы қаржы есебі",
+    "hero.title": "Айт — шығын <em>жазылды</em>",
+    "hero.lead": "Дауыспен немесе мәтінмен. ЖИ соманы, санатты және күнді өзі қояды, ал сен ақшаның қайда кететінін көресің.",
+    "cta.telegram": "Telegram-да ашу",
+    "cta.note": "Жүктеусіз және тіркеусіз",
+    "try.label": "Фразаны басып көр",
+    "facts.label": "Қысқаша",
+    "fact1.value": "~1 сек",
+    "fact1.label": "тануға",
+    "fact2.value": "Дауыс пен мәтін",
+    "fact2.label": "ыңғайлысын таңда",
+    "fact3.value": "3 тіл",
+    "fact3.label": "қазақша, орысша, English",
+    "fact4.value": "0 орнату",
+    "fact4.label": "бәрі Telegram ішінде",
+    "how.eyebrow": "Қалай жұмыс істейді",
+    "how.title": "Кестелердің орнына үш әрекет",
+    "record.title": "Жазу",
+    "record.lead": "«Кофе 500», «кеше такси 1800», «жалақы 450 000». Бір фразада бірнеше шығын айтуға болады.",
+    "record.p1": "Санатты өзі таңдайды",
+    "record.p2": "«Кеше» мен «дүйсенбіде» дегенді түсінеді",
+    "record.p3": "Сақтамас бұрын бәрі көрінеді",
+    "ask.title": "Сұрау",
+    "ask.lead": "«Таксиге қанша кетті?», «ең көп неге жұмсаймын?» Жауап сандары бар карточкамен келеді.",
+    "ask.p1": "Өткен аймен салыстыру",
+    "ask.p2": "Күніне қанша жұмсауға болады",
+    "ask.p3": "Ең ірі сатып алулар",
+    "understand.title": "Түсіну",
+    "understand.lead": "Басты бетте қанша жұмсалғаны, күніне қанша болатыны және бюджеттер көрінеді.",
+    "understand.p1": "Санаттар бойынша лимит",
+    "understand.p2": "Кез келген айдың есебі",
+    "understand.p3": "Тұрақты төлемдер мен жазылымдар",
+    "mock.check": "Операцияны тексеріңіз",
+    "mock.category": "Санат",
+    "mock.date": "Күні",
+    "mock.repeat": "Қайталау",
+    "mock.transport": "🚕 Көлік",
+    "mock.yesterday": "Кеше",
+    "mock.today": "Бүгін",
+    "mock.once": "Бір рет",
+    "mock.save": "Сақтау",
+    "mock.question": "Қарашада таксиге қанша кетті?",
+    "mock.taxi": "🚕 Такси · Қараша",
+    "mock.rides": "Сапар",
+    "mock.vsOctober": "Қазанмен салыстырғанда",
+    "mock.perDay": "Күніне жұмсауға болады",
+    "mock.groceries": "🛒 Азық-түлік",
+    "mock.cafes": "🍽️ Кафе",
+    "mock.family": "👨‍👩‍👧 Отбасы",
+    "mock.p1": "Азық-түлік · 12 000 ₸",
+    "mock.p2": "Бензин · 8 000 ₸",
+    "mock.you": "Сен",
+    "mock.p3": "Кафе · 9 000 ₸",
+    "mock.owed": "Саған қарыз",
+    "mock.answer": "Жауап",
+    "mock.micStarting": "Микрофонды қосып жатырмын…",
+    "mock.listening": "Тыңдап тұрмын…",
+    "together.eyebrow": "Бірге",
+    "together.title": "Бүкіл отбасыға бір&nbsp;бюджет",
+    "together.lead": "Жақындарыңды сілтемемен шақыр. Ортақ шығындар, ортақ баланс және кім кімге қарыз.",
+    "more.eyebrow": "Тағы",
+    "more.title": "Ақшаға қажеттінің бәрі бір жерде",
+    "tile1.title": "Бюджеттер",
+    "tile1.text": "Санатқа лимит және алдын ала ескерту.",
+    "tile2.title": "Қарыздар",
+    "tile2.text": "Кімге бердің, кімнен алдың, қашан қайтару керек.",
+    "tile3.title": "Тұрақты төлемдер",
+    "tile3.text": "Жалға алу, жазылымдар және байланыс кесте бойынша.",
+    "tile4.title": "Еске салу",
+    "tile4.text": "Кешке шығындарды жазуды еске салады.",
+    "tile5.title": "Импорт",
+    "tile5.text": "Үзінді көшірмені жүкте, операциялар өзі пайда болады.",
+    "tile6.title": "Үш тіл",
+    "tile6.text": "Қазақша, орысша, English.",
+    "trust.title": "Сенің ақшаң — тек сенікі",
+    "trust.p1": "Банкке қосылмаймыз. Тек өзің жазғаның көрінеді.",
+    "trust.p2": "Деректерді сатпаймыз, жарнама көрсетпейміз.",
+    "trust.p3": "Telegram арқылы кіру. Құпиясөз бен поштасыз.",
+    "faq.eyebrow": "Сұрақтар",
+    "faq.title": "Негізгісі қысқаша",
+    "faq1.q": "Бірдеңе жүктеу керек пе?",
+    "faq1.a": "Жоқ. Қосымша Telegram-да, телефонда да, компьютерде де ашылады.",
+    "faq2.q": "Шығынды қалай жазамын?",
+    "faq2.a": "Микрофонды басып, мысалы, «кофе 500» деп айт. Немесе мәтінмен жаз. Сақтамас бұрын не түсінгенімізді көрсетеміз.",
+    "faq3.q": "Бюджетті бірге жүргізуге бола ма?",
+    "faq3.a": "Иә. Топ құрып, сілтемені жақындарыңа жібер. Шығындар мен баланс бәріне ортақ.",
+    "faq4.q": "Қандай тілдер бар?",
+    "faq4.a": "Қазақша, орысша және ағылшынша. Дауысты үшеуінде де, тіпті араластырсаң да түсінеді.",
+    "faq5.q": "Шығындарымды кім көреді?",
+    "faq5.a": "Тек сен және өзің топқа шақырғандар.",
+    "final.title": "Бір шығыннан баста",
+    "final.lead": "Аш та, «кофе 500» деп айт.",
+    "demo.label": "Қосымша демосы",
+    "lang.label": "Тіл"
+  },
+  "en": {
+    "meta.title": "Money Manager AI — money tracking in Telegram",
+    "meta.description": "Say “coffee 500” and the expense is recorded. Track money by voice or text right in Telegram, in English, Russian and Kazakh.",
+    "nav.open": "Open",
+    "hero.eyebrow": "Money tracking in Telegram",
+    "hero.title": "Say it and it’s <em>recorded</em>",
+    "hero.lead": "By voice or text. AI fills in the amount, category and date, and you see where your money goes.",
+    "cta.telegram": "Open in Telegram",
+    "cta.note": "No download, no sign-up",
+    "try.label": "Tap a phrase to try",
+    "facts.label": "In short",
+    "fact1.value": "~1 sec",
+    "fact1.label": "to recognize",
+    "fact2.value": "Voice and text",
+    "fact2.label": "your choice",
+    "fact3.value": "3 languages",
+    "fact3.label": "English, Russian, Kazakh",
+    "fact4.value": "0 installs",
+    "fact4.label": "all inside Telegram",
+    "how.eyebrow": "How it works",
+    "how.title": "Three steps instead of spreadsheets",
+    "record.title": "Record",
+    "record.lead": "“Coffee 500”, “taxi 1800 yesterday”, “salary 450,000”. Several expenses in one phrase work too.",
+    "record.p1": "Picks the category itself",
+    "record.p2": "Understands “yesterday” and “on Monday”",
+    "record.p3": "You see everything before saving",
+    "ask.title": "Ask",
+    "ask.lead": "“How much went on taxis?”, “what do I spend most on?” The answer comes as a card with numbers.",
+    "ask.p1": "Comparison with last month",
+    "ask.p2": "How much you can spend per day",
+    "ask.p3": "Biggest purchases",
+    "understand.title": "Understand",
+    "understand.lead": "The home screen shows what you spent, what you can spend per day and how budgets are doing.",
+    "understand.p1": "Limits per category",
+    "understand.p2": "A report for any month",
+    "understand.p3": "Regular payments and subscriptions",
+    "mock.check": "Check the operation",
+    "mock.category": "Category",
+    "mock.date": "Date",
+    "mock.repeat": "Repeat",
+    "mock.transport": "🚕 Transport",
+    "mock.yesterday": "Yesterday",
+    "mock.today": "Today",
+    "mock.once": "Once",
+    "mock.save": "Save",
+    "mock.question": "How much went on taxis in November?",
+    "mock.taxi": "🚕 Taxi · November",
+    "mock.rides": "Rides",
+    "mock.vsOctober": "vs October",
+    "mock.perDay": "Can spend per day",
+    "mock.groceries": "🛒 Groceries",
+    "mock.cafes": "🍽️ Cafes",
+    "mock.family": "👨‍👩‍👧 Family",
+    "mock.p1": "Groceries · 12 000 ₸",
+    "mock.p2": "Fuel · 8 000 ₸",
+    "mock.you": "You",
+    "mock.p3": "Cafes · 9 000 ₸",
+    "mock.owed": "You are owed",
+    "mock.answer": "Answer",
+    "mock.micStarting": "Turning on the microphone…",
+    "mock.listening": "Listening…",
+    "together.eyebrow": "Together",
+    "together.title": "One budget for the&nbsp;family",
+    "together.lead": "Invite your people with a link. Shared expenses, a shared balance and who owes whom.",
+    "more.eyebrow": "And more",
+    "more.title": "Everything for your money in one place",
+    "tile1.title": "Budgets",
+    "tile1.text": "A limit per category and an early warning.",
+    "tile2.title": "Debts",
+    "tile2.text": "Who you lent to, who you borrowed from, when it’s due.",
+    "tile3.title": "Recurring",
+    "tile3.text": "Rent, subscriptions and phone on schedule.",
+    "tile4.title": "Reminders",
+    "tile4.text": "Reminds you to log expenses in the evening.",
+    "tile5.title": "Import",
+    "tile5.text": "Upload a bank statement and the operations appear.",
+    "tile6.title": "Three languages",
+    "tile6.text": "English, Russian, Kazakh.",
+    "trust.title": "Your money stays yours",
+    "trust.p1": "No bank connection. Only what you record is visible.",
+    "trust.p2": "We don’t sell data or show ads.",
+    "trust.p3": "Sign in with Telegram. No passwords or email.",
+    "faq.eyebrow": "Questions",
+    "faq.title": "The short version",
+    "faq1.q": "Do I need to download anything?",
+    "faq1.a": "No. The app opens right in Telegram, on your phone and on your computer.",
+    "faq2.q": "How do I record an expense?",
+    "faq2.a": "Tap the microphone and say, for example, “coffee 500”. Or type it. Before saving we show what we understood.",
+    "faq3.q": "Can we budget together?",
+    "faq3.a": "Yes. Create a group and send the link to your people. Expenses and balance are shared.",
+    "faq4.q": "Which languages?",
+    "faq4.a": "English, Russian and Kazakh. Voice understands all three, even mixed.",
+    "faq5.q": "Who sees my expenses?",
+    "faq5.a": "Only you and the people you invite to a group.",
+    "final.title": "Start with one expense",
+    "final.lead": "Open it and say “coffee 500”.",
+    "demo.label": "App demo",
+    "lang.label": "Language"
+  }
+}
+const SCENARIOS = {
+  ru: [
+    { chip: '«кофе 500»', heard: 'кофе пятьсот', kind: 'expense', amount: '−500 ₸', category: '☕ Кофе', date: 'mock.today' },
+    { chip: '«вчера такси 1800»', heard: 'вчера такси тысяча восемьсот', kind: 'expense', amount: '−1 800 ₸', category: '🚕 Транспорт', date: 'mock.yesterday' },
+    { chip: '«зарплата 450 000»', heard: 'зарплата четыреста пятьдесят тысяч', kind: 'income', amount: '+450 000 ₸', category: '💰 Зарплата', date: 'mock.today' },
+    { chip: '«сколько ушло на кафе?»', heard: 'сколько ушло на кафе', kind: 'answer', title: '🍽️ Кафе · Ноябрь', amount: '27 500 ₸', rows: [['Операций', '11'], ['Бюджет', '92%']] },
+  ],
+  kk: [
+    { chip: '«кофе 500»', heard: 'кофе бес жүз', kind: 'expense', amount: '−500 ₸', category: '☕ Кофе', date: 'mock.today' },
+    { chip: '«кеше такси 1800»', heard: 'кеше такси мың сегіз жүз', kind: 'expense', amount: '−1 800 ₸', category: '🚕 Көлік', date: 'mock.yesterday' },
+    { chip: '«жалақы 450 000»', heard: 'жалақы төрт жүз елу мың', kind: 'income', amount: '+450 000 ₸', category: '💰 Жалақы', date: 'mock.today' },
+    { chip: '«кафеге қанша кетті?»', heard: 'кафеге қанша кетті', kind: 'answer', title: '🍽️ Кафе · Қараша', amount: '27 500 ₸', rows: [['Операциялар', '11'], ['Бюджет', '92%']] },
+  ],
+  en: [
+    { chip: '“coffee 500”', heard: 'coffee five hundred', kind: 'expense', amount: '−500 ₸', category: '☕ Coffee', date: 'mock.today' },
+    { chip: '“taxi 1800 yesterday”', heard: 'taxi eighteen hundred yesterday', kind: 'expense', amount: '−1 800 ₸', category: '🚕 Transport', date: 'mock.yesterday' },
+    { chip: '“salary 450,000”', heard: 'salary four hundred fifty thousand', kind: 'income', amount: '+450 000 ₸', category: '💰 Salary', date: 'mock.today' },
+    { chip: '“how much on cafes?”', heard: 'how much went on cafes', kind: 'answer', title: '🍽️ Cafes · November', amount: '27 500 ₸', rows: [['Operations', '11'], ['Budget', '92%']] },
+  ],
+}
+const LANGS = Object.keys(STRINGS)
+const DEFAULT_LANG = 'ru'
+const BROWSER_LANG_KAZAKH = 'kk'
+const LANG_KEY = 'mm-landing-lang'
+const STEP_MS = { listen: 450, letter: 45, think: 600, rest: 3200 }
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
+const chips = document.getElementById('chips')
+let lang = DEFAULT_LANG
+let run = 0
+let autoplay = !reduced
+
+const t = (key) => STRINGS[lang][key] ?? STRINGS[DEFAULT_LANG][key] ?? key
+const sceneNode = () => document.getElementById('scene')
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, reduced ? 0 : ms))
+
+function storedLang() {
+  try { return localStorage.getItem(LANG_KEY) } catch { return null }
+}
+
+function rememberLang(value) {
+  try { localStorage.setItem(LANG_KEY, value) } catch { return }
+}
+
+function initialLang() {
+  const saved = storedLang()
+  if (LANGS.includes(saved)) return saved
+  const browser = (navigator.language || DEFAULT_LANG).slice(0, 2).toLowerCase()
+  return browser === BROWSER_LANG_KAZAKH ? browser : DEFAULT_LANG
+}
+
+function show(html) {
+  const box = document.createElement('div')
+  box.className = 'scene scene-enter'
+  box.id = 'scene'
+  box.setAttribute('aria-live', 'polite')
+  box.innerHTML = html
+  sceneNode().replaceWith(box)
+}
+
+function cardHtml(item) {
+  if (item.kind === 'answer') {
+    const rows = item.rows.map(([label, value]) => `<div class="row"><span>${label}</span>${value}</div>`).join('')
+    return `<span class="scene-title">${t('mock.answer')}</span><div class="card"><span class="answer-head">${item.title}</span><span class="amount">${item.amount}</span><div class="rows">${rows}</div></div>`
+  }
+  return `<span class="scene-title">${t('mock.check')}</span><div class="card"><span class="amount ${item.kind === 'income' ? 'income' : ''}">${item.amount}</span><div class="rows"><div class="row"><span>${t('mock.category')}</span>${item.category}</div><div class="row"><span>${t('mock.date')}</span>${t(item.date)}</div></div></div><div class="save">${t('mock.save')}</div>`
+}
+
+async function play(index) {
+  const token = ++run
+  const item = SCENARIOS[lang][index]
+  ;[...chips.children].forEach((chip, position) => chip.setAttribute('aria-pressed', String(position === index)))
+  if (reduced) {
+    show(cardHtml(item))
+    return
+  }
+  show(`<div class="orb-stage"><span class="orb quiet"></span><span class="heard"></span><span class="heard-caption">${t('mock.micStarting')}</span></div>`)
+  await wait(STEP_MS.listen)
+  if (token !== run) return
+  sceneNode().querySelector('.orb').classList.remove('quiet')
+  sceneNode().querySelector('.heard-caption').textContent = t('mock.listening')
+  const heard = sceneNode().querySelector('.heard')
+  for (const letter of item.heard) {
+    if (token !== run) return
+    heard.textContent += letter
+    await wait(STEP_MS.letter)
+  }
+  await wait(STEP_MS.think)
+  if (token !== run) return
+  show(cardHtml(item))
+  await wait(STEP_MS.rest)
+  if (token !== run || !autoplay) return
+  play((index + 1) % SCENARIOS[lang].length)
+}
+
+function renderChips() {
+  chips.replaceChildren(...SCENARIOS[lang].map((item, index) => {
+    const chip = document.createElement('button')
+    chip.type = 'button'
+    chip.className = 'chip'
+    chip.textContent = item.chip
+    chip.setAttribute('aria-pressed', 'false')
+    chip.addEventListener('click', () => {
+      autoplay = false
+      play(index)
+    })
+    return chip
+  }))
+}
+
+function applyLang(next) {
+  lang = next
+  document.documentElement.lang = next
+  document.title = t('meta.title')
+  document.querySelector('meta[name="description"]').setAttribute('content', t('meta.description'))
+  document.querySelectorAll('[data-i18n]').forEach((node) => { node.textContent = t(node.dataset.i18n) })
+  document.querySelectorAll('[data-i18n-html]').forEach((node) => { node.innerHTML = t(node.dataset.i18nHtml) })
+  document.querySelectorAll('[data-i18n-aria]').forEach((node) => { node.setAttribute('aria-label', t(node.dataset.i18nAria)) })
+  document.querySelectorAll('[data-lang]').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.lang === next)))
+  renderChips()
+  play(0)
+}
+
+document.querySelectorAll('[data-lang]').forEach((button) => {
+  button.addEventListener('click', () => {
+    rememberLang(button.dataset.lang)
+    applyLang(button.dataset.lang)
+  })
+})
+
+applyLang(initialLang())
+</script>
+</body>
+</html>
