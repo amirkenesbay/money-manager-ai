@@ -61,7 +61,7 @@ describe('OperationForm', () => {
     expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({ created: true }))
   })
 
-  it('creates a missing category right from the picker and records into it', async () => {
+  it('creates a missing category with a matching icon right from the picker and records into it', async () => {
     vi.mocked(createCategory).mockImplementation(async (_, { name, type }) => category({ id: 'cat-new', name, type }))
     renderForm()
     await userEvent.type(await screen.findByRole('textbox', { name: strings.amountLabel }), '1200')
@@ -70,7 +70,7 @@ describe('OperationForm', () => {
     await userEvent.type(within(sheet).getByRole('textbox', { name: strings.nameLabel }), 'Кафе')
     await userEvent.click(within(sheet).getByRole('button', { name: strings.save }))
 
-    expect(createCategory).toHaveBeenCalledWith(PERSONAL_GROUP_ID, { name: 'Кафе', icon: '🛒', type: 'EXPENSE' })
+    expect(createCategory).toHaveBeenCalledWith(PERSONAL_GROUP_ID, { name: 'Кафе', icon: '🍽️', type: 'EXPENSE' })
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Кафе/ })).toHaveAttribute('aria-pressed', 'true')
 

@@ -15,6 +15,7 @@ import { useNameInput } from '../ui/useNameInput'
 import { useSubmit } from '../ui/useSubmit'
 import { createCategory, deleteCategory, setCategoryLimit, updateCategory } from './categoriesApi'
 import { CATEGORY_TYPES, ICON_PRESETS, MAX_CATEGORY_NAME_LENGTH } from './categoryTypes'
+import { useCategoryIcon } from './useCategoryIcon'
 import { formatPeriod } from '../format'
 import { parseAmount } from '../operation/amount'
 import { currentPeriodMonth, monthRange } from '../operations/periods'
@@ -32,10 +33,10 @@ export function CategoryForm({ group, language, type, category, onBack, onSaved,
   onBudgetLimit: () => void
 }) {
   const [formType, setFormType] = useState(category?.type ?? type)
-  const [icon, setIcon] = useState(category?.icon ?? ICON_PRESETS[formType][0])
   const [deleteOpen, setDeleteOpen] = useState(false)
   const submit = useSubmit()
   const name = useNameInput(category?.name ?? '', submit.clearError)
+  const { icon, suggestion, pick } = useCategoryIcon(category?.icon ?? null, name.value, ICON_PRESETS[formType][0])
   const [limitText, setLimitText] = useState(category?.monthlyLimit ?? '')
   const shared = group.type === 'SHARED'
   const limit = parseAmount(limitText)
@@ -85,7 +86,7 @@ export function CategoryForm({ group, language, type, category, onBack, onSaved,
         error={nameError}
         onChange={name.change}
       />
-      <EmojiPicker value={icon} presets={ICON_PRESETS[formType]} onChange={setIcon} />
+      <EmojiPicker value={icon} presets={ICON_PRESETS[formType]} suggestion={category ? null : suggestion} onChange={pick} />
       {formType === 'EXPENSE' && (
         <>
           <AmountInput label={strings.budgetLimitLabel} value={limitText} currency={group.currency} invalid={limitInvalid} onChange={setLimitText} />

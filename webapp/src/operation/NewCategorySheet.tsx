@@ -1,7 +1,7 @@
-import { useState } from 'react'
 import type { Category, CategoryType } from '../api/types'
 import { createCategory } from '../categories/categoriesApi'
 import { ICON_PRESETS, MAX_CATEGORY_NAME_LENGTH } from '../categories/categoryTypes'
+import { useCategoryIcon } from '../categories/useCategoryIcon'
 import { strings } from '../strings'
 import { Button } from '../ui/Button'
 import { EmojiPicker } from '../ui/EmojiPicker'
@@ -16,9 +16,9 @@ export function NewCategorySheet({ groupId, type, onCreated, onClose }: {
   onCreated: (category: Category) => void
   onClose: () => void
 }) {
-  const [icon, setIcon] = useState(ICON_PRESETS[type][0])
   const submit = useSubmit()
   const name = useNameInput('', submit.clearError)
+  const { icon, suggestion, pick } = useCategoryIcon(null, name.value, ICON_PRESETS[type][0])
 
   const save = async () => {
     const trimmed = name.require()
@@ -38,7 +38,7 @@ export function NewCategorySheet({ groupId, type, onCreated, onClose }: {
         error={name.missingError ?? submit.error?.message ?? null}
         onChange={name.change}
       />
-      <EmojiPicker value={icon} presets={ICON_PRESETS[type]} onChange={setIcon} />
+      <EmojiPicker value={icon} presets={ICON_PRESETS[type]} suggestion={suggestion} onChange={pick} />
       <Button disabled={submit.pending} onClick={save}>{submit.pending ? strings.saving : strings.save}</Button>
     </Sheet>
   )

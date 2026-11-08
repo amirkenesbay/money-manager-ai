@@ -12,6 +12,8 @@ import { type HeroSlide, HERO_SLIDES, loadHeroSlide, saveHeroSlide } from './her
 import { dayBars, monthPace, safeToSpend } from './homeMath'
 
 const SCROLL_SETTLE_MS = 80
+const AUTO_ADVANCE_MS = 6000
+const IDLE_AFTER_TOUCH_MS = 12000
 
 export function HomeHero({ balance, summary, language, onAddIncome }: {
   balance: Balance
@@ -20,6 +22,8 @@ export function HomeHero({ balance, summary, language, onAddIncome }: {
   onAddIncome: () => void
 }) {
   const track = useRef<HTMLDivElement>(null)
+  const touchedAt = useRef(0)
+  const autoScrolling = useRef(false)
   const [current, setCurrent] = useState<HeroSlide>(loadHeroSlide)
   const today = new Date()
 
@@ -37,7 +41,8 @@ export function HomeHero({ balance, summary, language, onAddIncome }: {
       timer = window.setTimeout(() => {
         const slide = HERO_SLIDES[Math.round(element.scrollLeft / element.clientWidth)] ?? HERO_SLIDES[0]
         setCurrent(slide)
-        saveHeroSlide(slide)
+        if (!autoScrolling.current) saveHeroSlide(slide)
+        autoScrolling.current = false
       }, SCROLL_SETTLE_MS)
     }
     element.addEventListener('scroll', settle, { passive: true })
@@ -55,6 +60,21 @@ export function HomeHero({ balance, summary, language, onAddIncome }: {
     saveHeroSlide(slide)
   }
   const showNext = () => show(HERO_SLIDES[(HERO_SLIDES.indexOf(current) + 1) % HERO_SLIDES.length])
+  const markTouched = () => {
+    touchedAt.current = Date.now()
+  }
+
+  useEffect(() => {
+    if (prefersLessMotion()) return undefined
+    const timer = window.setInterval(() => {
+      const element = track.current
+      if (!element || document.visibilityState === 'hidden' || Date.now() - touchedAt.current < IDLE_AFTER_TOUCH_MS) return
+      const next = HERO_SLIDES[(Math.round(element.scrollLeft / element.clientWidth) + 1) % HERO_SLIDES.length]
+      autoScrolling.current = true
+      element.scrollTo({ left: HERO_SLIDES.indexOf(next) * element.clientWidth, behavior: 'smooth' })
+    }, AUTO_ADVANCE_MS)
+    return () => window.clearInterval(timer)
+  }, [])
 
   const slides: Record<HeroSlide, ReactNode> = {
     spent: <SpentSlide summary={summary} language={language} today={today} />,
@@ -63,7 +83,15 @@ export function HomeHero({ balance, summary, language, onAddIncome }: {
   }
 
   return (
-    <section className="home-hero" {...tourTarget('summary')} aria-roledescription="carousel" aria-label={strings.homeSummaryLabel}>
+    <section
+      className="home-hero"
+      {...tourTarget('summary')}
+      aria-roledescription="carousel"
+      aria-label={strings.homeSummaryLabel}
+      onPointerDown={markTouched}
+      onTouchStart={markTouched}
+      onFocus={markTouched}
+    >
       <div className="home-hero-track" ref={track}>
         {HERO_SLIDES.map((slide, index) => (
           <div
