@@ -8,6 +8,7 @@ import ai.moneymanager.domain.model.question.AskSuggestions
 import ai.moneymanager.service.question.AskService
 import ai.moneymanager.service.question.AskSuggestionService
 import ai.moneymanager.service.question.FinanceAnswerService
+import ai.moneymanager.service.question.financeQuestionOf
 import ai.moneymanager.web.time.UserCalendar
 import org.springframework.stereotype.Component
 
@@ -18,9 +19,11 @@ class AskAnswers(
     private val financeAnswerService: FinanceAnswerService,
     private val userCalendar: UserCalendar,
 ) {
-    fun answerOf(user: UserInfo, group: MoneyGroup, commands: List<BotCommand>): AnswerCard? =
-        commands.filterIsInstance<BotCommand.AskFinance>().firstOrNull()
-            ?.let { askService.answer(user, group, it.question, userCalendar.today(user)) }
+    fun answerOf(user: UserInfo, group: MoneyGroup, commands: List<BotCommand>): AnswerCard? {
+        val today = userCalendar.today(user)
+        return commands.firstNotNullOfOrNull { financeQuestionOf(it, today) }
+            ?.let { askService.answer(user, group, it, today) }
+    }
 
     fun notUnderstood(user: UserInfo, group: MoneyGroup): AnswerCard =
         financeAnswerService.notUnderstood(user.language, askSuggestionService.examples(suggestions(user, group)))

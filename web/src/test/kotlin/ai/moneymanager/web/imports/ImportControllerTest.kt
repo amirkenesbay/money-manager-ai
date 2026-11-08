@@ -21,6 +21,7 @@ import ai.moneymanager.testing.testUser
 import ai.moneymanager.web.ApiWebLayerSetup
 import ai.moneymanager.web.access.GroupAccessGuard
 import ai.moneymanager.web.ai.AiRequestGuard
+import ai.moneymanager.web.time.UserCalendar
 import ai.moneymanager.web.json
 import ai.moneymanager.web.security.TestInitData
 import ai.moneymanager.web.withTelegramAuth
@@ -45,7 +46,7 @@ private const val CATEGORY_LIMIT = 10
 
 @WebMvcTest(controllers = [ImportController::class])
 @ApiWebLayerSetup
-@Import(GroupAccessGuard::class, AiRequestGuard::class)
+@Import(GroupAccessGuard::class, UserCalendar::class, AiRequestGuard::class)
 class ImportControllerTest {
     @Autowired
     private lateinit var mockMvc: MockMvc

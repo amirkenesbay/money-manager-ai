@@ -22,6 +22,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.api.objects.Voice
+import java.time.LocalDate
+import java.time.ZoneOffset
 
 private const val MAX_VOICE_DURATION_SECONDS = 180
 
@@ -134,16 +136,17 @@ class AiRequestHandler(
         context.aiResultMessage = localizationService.t(key, lang, *args)
     }
 
-    private fun loadAndCacheCategoryContext(context: MoneyManagerContext): String? {
+    private fun loadAndCacheCategoryContext(context: MoneyManagerContext): String {
+        val today = LocalDate.now(context.userInfo?.zone ?: ZoneOffset.UTC)
         val groupId = context.userInfo?.activeGroupId ?: run {
             context.aiCategoriesCache = null
-            return null
+            return aiPromptService.currentDatePreamble(today)
         }
         val categories: List<Category> = categoryService.getCategoriesByGroup(groupId)
         context.aiCategoriesCache = categories
         val currency = resolveCurrency(groupService, groupId)
         val previousQuestion = context.userInfo?.let(askService::previousQuestion)
-        return aiPromptService.groupContext(currency, categories, categoryRuleService.rules(groupId), previousQuestion)
+        return aiPromptService.groupContext(today, currency, categories, categoryRuleService.rules(groupId), previousQuestion)
     }
 
     private fun showErrorStageIfNeeded(commands: List<BotCommand>, feedback: AiFeedback, language: String?) {

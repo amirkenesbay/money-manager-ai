@@ -66,8 +66,7 @@ class AiPromptService {
             .replace(PLACEHOLDER_USER_MESSAGE, userMessage)
             .replace(PLACEHOLDER_REPLY_LANGUAGE, replyLanguage)
 
-    fun currentDatePreamble(): String {
-        val today = LocalDate.now()
+    fun currentDatePreamble(today: LocalDate): String {
         val weekday = today.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
         return CURRENT_DATE_TEMPLATE.format(today, weekday)
     }
@@ -75,6 +74,7 @@ class AiPromptService {
     fun currencyPreamble(currency: Currency): String = CURRENCY_TEMPLATE.format(currency.name)
 
     fun groupContext(
+        today: LocalDate,
         currency: Currency,
         categories: List<Category>,
         rules: List<CategoryRule> = emptyList(),
@@ -82,6 +82,7 @@ class AiPromptService {
         sharedMembers: SharedMembers? = null,
     ): String =
         listOf(
+            currentDatePreamble(today),
             currencyPreamble(currency),
             categoryContextPreamble(categories),
             rememberedPlacesPreamble(categories, rules),

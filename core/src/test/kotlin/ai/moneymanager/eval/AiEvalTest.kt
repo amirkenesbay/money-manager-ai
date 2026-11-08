@@ -26,6 +26,7 @@ import java.time.temporal.TemporalAdjusters
 import kotlin.math.abs
 
 private const val CASES = "/ai-eval/cases.json"
+private const val LAST_WEEKDAY_PREFIX = "last-"
 private const val DEFAULT_MODEL = "gemini-3.5-flash-lite"
 private const val AMOUNT_TOLERANCE = 0.01
 private const val REPORT_DIR = "build/ai-eval"
@@ -54,10 +55,10 @@ class AiEvalTest {
         val prompts = AiPromptService()
         val parser = CommandParserService(GeminiProperties(apiKey, model), GeminiArgsMapper(jacksonObjectMapper()), prompts, GeminiMetrics(SimpleMeterRegistry()))
         parser.init()
-        val context = prompts.groupContext(Currency.KZT, categories)
+        val today = LocalDate.now()
+        val context = prompts.groupContext(today, Currency.KZT, categories)
         val cases = mapper.readValue<List<EvalCase>>(checkNotNull(javaClass.getResource(CASES)).readText())
             .filter { only == null || it.group in only || it.id in only }
-        val today = LocalDate.now()
         val results = cases.map { case ->
             val started = System.currentTimeMillis()
             val actual = parser.parseCommands(case.text, context).map { normalize(it, today) }
@@ -95,10 +96,11 @@ class AiEvalTest {
         is PeriodSpec.Range -> "RANGE"
     }
 
-    private fun expectedDate(token: String, today: LocalDate): String = when (token) {
-        "today" -> today
-        "yesterday" -> today.minusDays(1)
-        "last-monday" -> today.with(TemporalAdjusters.previous(DayOfWeek.MONDAY)).let { if (today.dayOfWeek == DayOfWeek.MONDAY) today.minusWeeks(1) else it }
+    private fun expectedDate(token: String, today: LocalDate): String = when {
+        token == "today" -> today
+        token == "yesterday" -> today.minusDays(1)
+        token.startsWith(LAST_WEEKDAY_PREFIX) ->
+            today.with(TemporalAdjusters.previousOrSame(DayOfWeek.valueOf(token.removePrefix(LAST_WEEKDAY_PREFIX).uppercase())))
         else -> if (token.endsWith("d")) today.plusDays(token.removeSuffix("d").toLong()) else LocalDate.parse(token)
     }.toString()
 

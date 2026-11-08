@@ -2,6 +2,7 @@ package ai.moneymanager.service.question
 
 import ai.moneymanager.domain.text.geminiValue
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.domain.model.nlp.arguments.AskFinanceArgs
 import ai.moneymanager.domain.model.question.FinanceIntent
 import ai.moneymanager.domain.model.question.FinanceQuestion
@@ -9,6 +10,7 @@ import ai.moneymanager.domain.model.question.PeriodPreset
 import ai.moneymanager.domain.model.question.PeriodSpec
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.Month
 import java.time.YearMonth
 import java.time.format.DateTimeParseException
 
@@ -22,7 +24,7 @@ fun financeQuestionOf(args: AskFinanceArgs): FinanceQuestion? {
     val intent = FinanceIntent.of(args.intent) ?: return null
     return FinanceQuestion(
         intent = intent,
-        type = CategoryType.entries.firstOrNull { it.name.equals(args.operationType?.trim(), ignoreCase = true) },
+        type = categoryTypeOf(args.operationType),
         categories = args.categories?.split(LIST_SEPARATOR)?.map { it.trim() }?.filter { it.isNotEmpty() }.orEmpty(),
         period = periodOf(args.period, args.month, args.from, args.to),
         comparePeriod = periodOf(args.comparePeriod, args.compareMonth, null, null),
@@ -34,6 +36,26 @@ fun financeQuestionOf(args: AskFinanceArgs): FinanceQuestion? {
         amount = args.amount?.takeIf { it > 0 }?.let { BigDecimal.valueOf(it) },
     )
 }
+
+fun financeQuestionOf(command: BotCommand, today: LocalDate): FinanceQuestion? = when (command) {
+    is BotCommand.AskFinance -> command.question
+    is BotCommand.ShowBalance -> FinanceQuestion(FinanceIntent.BALANCE)
+    is BotCommand.ShowReport -> FinanceQuestion(FinanceIntent.BREAKDOWN, period = reportPeriodOf(command, today))
+    is BotCommand.ShowHistory -> FinanceQuestion(
+        intent = FinanceIntent.BREAKDOWN,
+        type = categoryTypeOf(command.type),
+        categories = listOfNotNull(command.categoryFilter.geminiValue()),
+        period = periodOf(null, null, command.startDate, command.endDate),
+    )
+    else -> null
+}
+
+private fun categoryTypeOf(name: String?): CategoryType? =
+    CategoryType.entries.firstOrNull { it.name.equals(name?.trim(), ignoreCase = true) }
+
+private fun reportPeriodOf(command: BotCommand.ShowReport, today: LocalDate): PeriodSpec? =
+    command.month?.takeIf { it in Month.JANUARY.value..Month.DECEMBER.value }
+        ?.let { PeriodSpec.Month(YearMonth.of(command.year ?: today.year, it)) }
 
 private fun periodOf(preset: String?, month: String?, from: String?, to: String?): PeriodSpec? {
     month.parsedOrNull { YearMonth.parse(it) }?.let { return PeriodSpec.Month(it) }

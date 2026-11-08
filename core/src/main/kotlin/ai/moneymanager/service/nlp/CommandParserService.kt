@@ -45,6 +45,7 @@ import com.google.genai.types.ThinkingConfig
 import com.google.genai.types.ThinkingLevel
 import com.google.genai.types.Tool
 import jakarta.annotation.PostConstruct
+import java.time.LocalDate
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -72,8 +73,8 @@ class CommandParserService(
 
         val createGroupMethod = botFunctionMethod(GeminiFunction.CREATE_GROUP, String::class.java)
         val deleteGroupMethod = botFunctionMethod(GeminiFunction.DELETE_GROUP, String::class.java)
-        val addExpenseMethod = botFunctionMethod(GeminiFunction.ADD_EXPENSE, Double::class.java, String::class.java, String::class.java, String::class.java, String::class.java, String::class.java, Double::class.javaObjectType, String::class.java, String::class.java)
-        val addIncomeMethod = botFunctionMethod(GeminiFunction.ADD_INCOME, Double::class.java, String::class.java, String::class.java, String::class.java, String::class.java, String::class.java, Double::class.javaObjectType)
+        val addExpenseMethod = botFunctionMethod(GeminiFunction.ADD_EXPENSE, Double::class.java, String::class.java, String::class.java, String::class.java, String::class.java, String::class.java, Double::class.javaObjectType, String::class.java, String::class.java, String::class.java)
+        val addIncomeMethod = botFunctionMethod(GeminiFunction.ADD_INCOME, Double::class.java, String::class.java, String::class.java, String::class.java, String::class.java, String::class.java, Double::class.javaObjectType, String::class.java)
         val outOfContextMethod = botFunctionMethod(GeminiFunction.OUT_OF_CONTEXT, String::class.java)
 
         val createCategoryMethod = botFunctionMethod(GeminiFunction.CREATE_CATEGORY, String::class.java, String::class.java, String::class.java)
@@ -188,8 +189,7 @@ class CommandParserService(
 
     private fun contentWithCategoryContext(categoryContext: String?, vararg parts: Part): Content {
         val allParts = buildList {
-            add(Part.fromText(aiPromptService.currentDatePreamble()))
-            if (!categoryContext.isNullOrBlank()) add(Part.fromText(categoryContext))
+            add(Part.fromText(categoryContext?.takeIf { it.isNotBlank() } ?: aiPromptService.currentDatePreamble(LocalDate.now())))
             addAll(parts)
         }
         return Content.builder().parts(allParts).build()
@@ -246,17 +246,19 @@ class CommandParserService(
 
                 GeminiFunction.ADD_EXPENSE -> {
                     val dto = argsMapper.map<AddExpenseArgs>(args)
+                    val repeat = confirmedRepeat(dto.repeatUnit, dto.repeatInterval, dto.repeatPhrase, originalMessage, listOf(dto.description, dto.category))
                     BotCommand.AddExpense(
                         dto.amount, dto.category, dto.description,
-                        dto.suggestedCategoryIcon, dto.operationDate.geminiValue(), dto.repeatUnit, dto.repeatInterval, dto.paidBy, dto.splitWith,
+                        dto.suggestedCategoryIcon, dto.operationDate.geminiValue(), repeat.unit, repeat.interval, dto.paidBy, dto.splitWith,
                     )
                 }
 
                 GeminiFunction.ADD_INCOME -> {
                     val dto = argsMapper.map<AddIncomeArgs>(args)
+                    val repeat = confirmedRepeat(dto.repeatUnit, dto.repeatInterval, dto.repeatPhrase, originalMessage, listOf(dto.description, dto.category))
                     BotCommand.AddIncome(
                         dto.amount, dto.category, dto.description,
-                        dto.suggestedCategoryIcon, dto.operationDate.geminiValue(), dto.repeatUnit, dto.repeatInterval,
+                        dto.suggestedCategoryIcon, dto.operationDate.geminiValue(), repeat.unit, repeat.interval,
                     )
                 }
 
@@ -362,6 +364,15 @@ class CommandParserService(
         }
     }
 
+    private fun confirmedRepeat(unit: String?, interval: Double?, phrase: String?, originalMessage: String, itemNames: List<String?>): RepeatArgs {
+        val evidence = phrase.geminiValue() ?: return NO_REPEAT
+        val heard = originalMessage == VOICE_MESSAGE_PLACEHOLDER || originalMessage.contains(evidence, ignoreCase = true)
+        val namesItem = itemNames.any { it != null && (it.contains(evidence, ignoreCase = true) || evidence.contains(it, ignoreCase = true)) }
+        return if (heard && !namesItem) RepeatArgs(unit.geminiValue(), interval) else NO_REPEAT
+    }
+
+    private data class RepeatArgs(val unit: String?, val interval: Double?)
+
     private fun requireText(value: String, field: String): String {
         require(value.isNotBlank()) { "$field is blank" }
         return value.trim()
@@ -369,6 +380,7 @@ class CommandParserService(
 
     companion object {
         private const val VOICE_MESSAGE_PLACEHOLDER = "[voice message]"
+        private val NO_REPEAT = RepeatArgs(null, null)
         private val RETRY_AFTER_REGEX = Regex("""Please retry in (\d+(?:\.\d+)?)s""")
 
         private const val FIELD_GROUP_NAME = "groupName"

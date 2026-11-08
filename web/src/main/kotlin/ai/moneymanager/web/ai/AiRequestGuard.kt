@@ -13,6 +13,7 @@ import ai.moneymanager.service.UserInfoService
 import ai.moneymanager.service.question.AskService
 import ai.moneymanager.web.error.ApiErrorCode
 import ai.moneymanager.web.error.ApiException
+import ai.moneymanager.web.time.UserCalendar
 import org.springframework.stereotype.Component
 
 private const val LIMIT_DETAIL = "limit"
@@ -26,6 +27,7 @@ class AiRequestGuard(
     private val aiPromptService: AiPromptService,
     private val askService: AskService,
     private val userInfoService: UserInfoService,
+    private val userCalendar: UserCalendar,
 ) {
     fun requireQuota(user: UserInfo) {
         val result = aiRateLimitService.tryConsume(checkNotNull(user.telegramUserId), user.hasActivePaidSubscription())
@@ -49,7 +51,7 @@ class AiRequestGuard(
     }
 
     fun groupContext(user: UserInfo, group: MoneyGroup, categories: List<Category>, rules: List<CategoryRule>): String =
-        aiPromptService.groupContext(group.currency, categories, rules, askService.previousQuestion(user), sharedMembersOf(user, group))
+        aiPromptService.groupContext(userCalendar.today(user), group.currency, categories, rules, askService.previousQuestion(user), sharedMembersOf(user, group))
 
     fun memberNames(group: MoneyGroup): Map<Long, String> =
         if (group.splitsExpenses) userInfoService.displayNames(group.memberIds) else emptyMap()
