@@ -3,6 +3,7 @@ package ai.moneymanager.service
 import ai.moneymanager.domain.event.CategoryDeleted
 import ai.moneymanager.domain.event.CategoryUpdated
 import ai.moneymanager.domain.model.BudgetLimitResult
+import ai.moneymanager.domain.model.CategoryCreationResult
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.CategoryUpdateResult
 import ai.moneymanager.repository.CategoryRepository
@@ -21,6 +22,7 @@ import java.util.Optional
 
 private const val ACTOR_ID = 42L
 private const val FREE_BUDGETS = 3
+private const val FREE_CATEGORIES = 10
 private val TAXI_LIMIT = BigDecimal("20000")
 
 class CategoryServiceTest {
@@ -47,6 +49,17 @@ class CategoryServiceTest {
 
         assertThat(saved.map { it.position }).isEqualTo(saved.indices.toList())
         assertThat(saved.first { it.type == CategoryType.INCOME }.icon).isEqualTo("💰")
+    }
+
+    @Test
+    fun `counts only the user's own categories against the free limit`() {
+        `when`(repository.countByGroupIdAndTypeAndSeedKeyIsNull(groupId, CategoryType.EXPENSE)).thenReturn(FREE_CATEGORIES - 1L)
+
+        assertThat(service.createCategory(ACTOR_ID, "Хобби", "🎨", CategoryType.EXPENSE, groupId, FREE_CATEGORIES)).isInstanceOf(CategoryCreationResult.Created::class.java)
+
+        `when`(repository.countByGroupIdAndTypeAndSeedKeyIsNull(groupId, CategoryType.EXPENSE)).thenReturn(FREE_CATEGORIES.toLong())
+
+        assertThat(service.createCategory(ACTOR_ID, "Хобби", "🎨", CategoryType.EXPENSE, groupId, FREE_CATEGORIES)).isEqualTo(CategoryCreationResult.LimitReached(FREE_CATEGORIES))
     }
 
     @Test

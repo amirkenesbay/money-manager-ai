@@ -13,4 +13,5 @@ interface MoneyGroupRepository : MongoRepository<MoneyGroupEntity, ObjectId> {
     fun findByMemberIdsContaining(memberId: Long): List<MoneyGroupEntity>
     fun findByOwnerIdAndName(ownerId: Long, name: String): MoneyGroupEntity?
     fun countByOwnerIdAndType(ownerId: Long, type: GroupType): Long
+    fun findByDefaultCategoriesVersionNot(version: Int): List<MoneyGroupEntity>
 }

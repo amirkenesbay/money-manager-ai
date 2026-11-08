@@ -18,5 +18,6 @@ data class CategoryEntity(
     val monthlyLimit: BigDecimal? = null,
     val rollover: Boolean = false,
     val position: Int? = null,
+    val seedKey: String? = null,
     val auditInfo: AuditInfo = AuditInfo()
 )

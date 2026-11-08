@@ -7,6 +7,7 @@ import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryCreationResult
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.CategoryUpdateResult
+import ai.moneymanager.domain.model.DefaultCategory
 import ai.moneymanager.repository.CategoryRepository
 import ai.moneymanager.repository.entity.CategoryEntity
 import org.bson.types.ObjectId
@@ -15,21 +16,6 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import ai.moneymanager.domain.model.BudgetLimitResult
 import java.math.BigDecimal
-
-private data class DefaultCategorySeed(val nameKey: String, val icon: String, val type: CategoryType)
-
-private val DEFAULT_CATEGORY_SEEDS = listOf(
-    DefaultCategorySeed("category.default.expense.groceries.name", "🛒", CategoryType.EXPENSE),
-    DefaultCategorySeed("category.default.expense.transport.name", "🚗", CategoryType.EXPENSE),
-    DefaultCategorySeed("category.default.expense.entertainment.name", "🎬", CategoryType.EXPENSE),
-    DefaultCategorySeed("category.default.expense.health.name", "💊", CategoryType.EXPENSE),
-    DefaultCategorySeed("category.default.expense.clothes.name", "👕", CategoryType.EXPENSE),
-    DefaultCategorySeed("category.default.expense.education.name", "📚", CategoryType.EXPENSE),
-    DefaultCategorySeed("category.default.expense.other.name", "📦", CategoryType.EXPENSE),
-    DefaultCategorySeed("category.default.income.salary.name", "💰", CategoryType.INCOME),
-    DefaultCategorySeed("category.default.income.gifts.name", "🎁", CategoryType.INCOME),
-    DefaultCategorySeed("category.default.income.other.name", "📦", CategoryType.INCOME),
-)
 
 @Service
 class CategoryService(
@@ -45,7 +31,7 @@ class CategoryService(
             return CategoryCreationResult.Duplicate
         }
 
-        val currentCount = categoryRepository.countByGroupIdAndType(groupId, type)
+        val currentCount = categoryRepository.countByGroupIdAndTypeAndSeedKeyIsNull(groupId, type)
         if (currentCount >= maxCategoriesPerType.toLong()) {
             return CategoryCreationResult.LimitReached(maxCategoriesPerType)
         }
@@ -160,19 +146,20 @@ class CategoryService(
     }
 
     fun createDefaultCategories(groupId: ObjectId, language: String) {
-        val entities = DEFAULT_CATEGORY_SEEDS.mapIndexed { position, seed ->
-            CategoryEntity(
-                name = localizationService.t(seed.nameKey, language),
-                icon = seed.icon,
-                type = seed.type,
-                groupId = groupId,
-                position = position
-            )
-        }
+        val entities = DefaultCategory.entries.mapIndexed { position, seed -> defaultCategoryEntity(seed, groupId, language, position) }
         categoryRepository.saveAll(entities)
     }
 
-    private fun mapToModel(entity: CategoryEntity): Category {
+    fun defaultCategoryEntity(seed: DefaultCategory, groupId: ObjectId, language: String, position: Int) = CategoryEntity(
+        name = localizationService.t(seed.nameKey, language),
+        icon = seed.icon,
+        type = seed.type,
+        groupId = groupId,
+        position = position,
+        seedKey = seed.name,
+    )
+
+        private fun mapToModel(entity: CategoryEntity): Category {
         return Category(
             id = entity.id,
             name = entity.name,
