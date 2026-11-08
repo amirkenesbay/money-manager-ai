@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import ai.moneymanager.domain.model.nlp.enum.AiSurface
 
 const val MAX_QUESTION_LENGTH = 300
 
@@ -39,7 +40,7 @@ class AskController(
         val text = request.text?.trim()?.takeIf { it.isNotEmpty() && it.length <= MAX_QUESTION_LENGTH } ?: throw badRequest(INVALID_QUESTION_KEY, MAX_QUESTION_LENGTH)
         aiRequestGuard.requireQuota(user)
         val context = aiRequestGuard.groupContext(user, group, categoryService.getCategoriesByGroup(groupId), categoryRuleService.rules(groupId))
-        val commands = commandParserService.parseCommands(text, context)
+        val commands = commandParserService.parseCommands(text, context, AiSurface.MINI_APP)
         aiRequestGuard.requireParsed(commands)
         return askAnswers.answerOf(user, group, commands) ?: askAnswers.notUnderstood(user, group)
     }

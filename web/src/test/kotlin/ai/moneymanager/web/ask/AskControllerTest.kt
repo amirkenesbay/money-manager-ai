@@ -49,6 +49,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDate
+import ai.moneymanager.domain.model.nlp.enum.AiSurface
 
 private const val GROUP_CONTEXT = "context"
 private const val QUESTION = "сколько на такси в этом месяце?"
@@ -115,7 +116,7 @@ class AskControllerTest {
     @Test
     fun `answers a typed question with a card`() {
         val question = FinanceQuestion(FinanceIntent.SUM, categories = listOf("Такси"))
-        `when`(commandParserService.parseCommands(QUESTION, GROUP_CONTEXT)).thenReturn(listOf(BotCommand.AskFinance(question)))
+        `when`(commandParserService.parseCommands(QUESTION, GROUP_CONTEXT, AiSurface.MINI_APP)).thenReturn(listOf(BotCommand.AskFinance(question)))
         `when`(askService.answer(anyOf(UserInfo::class.java), anyOf(MoneyGroup::class.java), anyOf(FinanceQuestion::class.java), anyOf(LocalDate::class.java)))
             .thenReturn(AnswerCard("🚕 Такси", "12 000 ₸", followUps = listOf("А в прошлом месяце?")))
 
@@ -129,7 +130,7 @@ class AskControllerTest {
 
     @Test
     fun `offers examples when the text is not a question about money`() {
-        `when`(commandParserService.parseCommands(QUESTION, GROUP_CONTEXT)).thenReturn(listOf(BotCommand.OutOfContext(QUESTION)))
+        `when`(commandParserService.parseCommands(QUESTION, GROUP_CONTEXT, AiSurface.MINI_APP)).thenReturn(listOf(BotCommand.OutOfContext(QUESTION)))
         `when`(financeAnswerService.notUnderstood(testUser().language, listOf(EXAMPLE)))
             .thenReturn(AnswerCard("Пока не умею это 🙂", followUps = listOf(EXAMPLE), understood = false))
 

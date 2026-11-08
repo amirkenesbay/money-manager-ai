@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.math.BigDecimal
 import java.time.LocalDate
+import ai.moneymanager.domain.model.nlp.enum.AiSurface
 
 const val MAX_VOICE_BYTES = 2_500_000
 const val MAX_VOICE_OPERATIONS = 10
@@ -58,7 +59,7 @@ class VoiceController(
         aiRequestGuard.requireQuota(user)
         val categories = categoryService.getCategoriesByGroup(groupId)
         val rules = categoryRuleService.rules(groupId)
-        val commands = commandParserService.parseVoiceCommands(audio, aiRequestGuard.groupContext(user, group, categories, rules), WAV_MIME_TYPE)
+        val commands = commandParserService.parseVoiceCommands(audio, aiRequestGuard.groupContext(user, group, categories, rules), WAV_MIME_TYPE, AiSurface.MINI_APP)
         aiRequestGuard.requireParsed(commands)
         val today = userCalendar.today(user)
         val members = aiRequestGuard.memberNames(group)

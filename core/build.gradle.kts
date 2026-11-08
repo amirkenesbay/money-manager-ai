@@ -33,7 +33,7 @@ tasks.register<Test>("aiEval") {
     useJUnitPlatform { includeTags("ai-eval") }
     outputs.upToDateWhen { false }
     testLogging { showStandardStreams = true }
-    listOf("eval.model", "eval.label", "eval.only", "eval.delayMs").forEach { key ->
+    listOf("eval.model", "eval.label", "eval.only", "eval.delayMs", "eval.surface").forEach { key ->
         project.findProperty(key)?.let { systemProperty(key, it) }
     }
 }

@@ -48,6 +48,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDate
+import ai.moneymanager.domain.model.nlp.enum.AiSurface
 
 private const val GROUP_CONTEXT = "context"
 private const val FREE_AI_LIMIT = 10
@@ -112,7 +113,7 @@ class VoiceControllerTest {
 
     @Test
     fun `turns a phrase into operation drafts with matched and new categories`() {
-        `when`(commandParserService.parseVoiceCommands(audio, GROUP_CONTEXT, WAV_MIME_TYPE)).thenReturn(
+        `when`(commandParserService.parseVoiceCommands(audio, GROUP_CONTEXT, WAV_MIME_TYPE, AiSurface.MINI_APP)).thenReturn(
             listOf(
                 BotCommand.AddExpense(2000.0, "такси", null, null, null),
                 BotCommand.AddExpense(1500.0, "Кафе", "в центре", "☕", null),
@@ -133,7 +134,7 @@ class VoiceControllerTest {
 
     @Test
     fun `answers with no operations when the phrase is not about money`() {
-        `when`(commandParserService.parseVoiceCommands(audio, GROUP_CONTEXT, WAV_MIME_TYPE)).thenReturn(listOf(BotCommand.OutOfContext("[voice message]")))
+        `when`(commandParserService.parseVoiceCommands(audio, GROUP_CONTEXT, WAV_MIME_TYPE, AiSurface.MINI_APP)).thenReturn(listOf(BotCommand.OutOfContext("[voice message]")))
 
         mockMvc.perform(voice(audio))
             .andExpect(status().isOk)
@@ -143,7 +144,7 @@ class VoiceControllerTest {
     @Test
     fun `answers a spoken question with a card`() {
         val question = FinanceQuestion(FinanceIntent.SUM, categories = listOf("Такси"))
-        `when`(commandParserService.parseVoiceCommands(audio, GROUP_CONTEXT, WAV_MIME_TYPE)).thenReturn(listOf(BotCommand.AskFinance(question)))
+        `when`(commandParserService.parseVoiceCommands(audio, GROUP_CONTEXT, WAV_MIME_TYPE, AiSurface.MINI_APP)).thenReturn(listOf(BotCommand.AskFinance(question)))
         `when`(askService.answer(anyOf(UserInfo::class.java), anyOf(MoneyGroup::class.java), anyOf(FinanceQuestion::class.java), anyOf(LocalDate::class.java))).thenReturn(AnswerCard("🚕 Такси", "12 000 ₸"))
 
         mockMvc.perform(voice(audio))
@@ -155,7 +156,7 @@ class VoiceControllerTest {
 
     @Test
     fun `turns a spoken loan into a loan draft`() {
-        `when`(commandParserService.parseVoiceCommands(audio, GROUP_CONTEXT, WAV_MIME_TYPE))
+        `when`(commandParserService.parseVoiceCommands(audio, GROUP_CONTEXT, WAV_MIME_TYPE, AiSurface.MINI_APP))
             .thenReturn(listOf(BotCommand.AddLoan(LoanDirection.LENT, "Ерлан", java.math.BigDecimal("20000"), null, "на ремонт")))
 
         mockMvc.perform(voice(audio))
@@ -187,7 +188,7 @@ class VoiceControllerTest {
 
     @Test
     fun `tells the client to retry later when gemini is busy`() {
-        `when`(commandParserService.parseVoiceCommands(audio, GROUP_CONTEXT, WAV_MIME_TYPE)).thenReturn(listOf(BotCommand.RateLimitError(30)))
+        `when`(commandParserService.parseVoiceCommands(audio, GROUP_CONTEXT, WAV_MIME_TYPE, AiSurface.MINI_APP)).thenReturn(listOf(BotCommand.RateLimitError(30)))
 
         mockMvc.perform(voice(audio))
             .andExpect(status().isServiceUnavailable)

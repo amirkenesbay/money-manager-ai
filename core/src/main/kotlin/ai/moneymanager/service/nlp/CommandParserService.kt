@@ -6,7 +6,6 @@ import ai.moneymanager.metrics.GeminiMetrics
 import ai.moneymanager.domain.text.geminiValue
 import ai.moneymanager.config.GeminiProperties
 import ai.moneymanager.domain.model.nlp.BotCommand
-import ai.moneymanager.domain.model.nlp.BotFunctions
 import ai.moneymanager.domain.model.nlp.arguments.AddExpenseArgs
 import ai.moneymanager.service.AiPromptService
 import ai.moneymanager.domain.model.nlp.arguments.AddIncomeArgs
@@ -45,6 +44,7 @@ import com.google.genai.types.ThinkingConfig
 import com.google.genai.types.ThinkingLevel
 import com.google.genai.types.Tool
 import jakarta.annotation.PostConstruct
+import ai.moneymanager.domain.model.nlp.enum.AiSurface
 import java.time.LocalDate
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -61,7 +61,8 @@ class CommandParserService(
     private val geminiMetrics: GeminiMetrics
 ) {
     private lateinit var client: Client
-    private lateinit var config: GenerateContentConfig
+    private lateinit var botConfig: GenerateContentConfig
+    private lateinit var miniAppConfig: GenerateContentConfig
 
     private val log: Logger = LoggerFactory.getLogger(this::class.java)
 
@@ -71,75 +72,26 @@ class CommandParserService(
             .apiKey(geminiProperties.apiKey)
             .build()
 
-        val createGroupMethod = botFunctionMethod(GeminiFunction.CREATE_GROUP, String::class.java)
-        val deleteGroupMethod = botFunctionMethod(GeminiFunction.DELETE_GROUP, String::class.java)
-        val addExpenseMethod = botFunctionMethod(GeminiFunction.ADD_EXPENSE, Double::class.java, String::class.java, String::class.java, String::class.java, String::class.java, String::class.java, Double::class.javaObjectType, String::class.java, String::class.java, String::class.java)
-        val addIncomeMethod = botFunctionMethod(GeminiFunction.ADD_INCOME, Double::class.java, String::class.java, String::class.java, String::class.java, String::class.java, String::class.java, Double::class.javaObjectType, String::class.java)
-        val outOfContextMethod = botFunctionMethod(GeminiFunction.OUT_OF_CONTEXT, String::class.java)
-
-        val createCategoryMethod = botFunctionMethod(GeminiFunction.CREATE_CATEGORY, String::class.java, String::class.java, String::class.java)
-        val deleteCategoryMethod = botFunctionMethod(GeminiFunction.DELETE_CATEGORY, String::class.java, String::class.java)
-        val renameCategoryMethod = botFunctionMethod(GeminiFunction.RENAME_CATEGORY, String::class.java, String::class.java, String::class.java)
-        val changeCategoryIconMethod = botFunctionMethod(GeminiFunction.CHANGE_CATEGORY_ICON, String::class.java, String::class.java, String::class.java)
-        val deleteAllCategoriesMethod = botFunctionMethod(GeminiFunction.DELETE_ALL_CATEGORIES)
-        val listCategoriesMethod = botFunctionMethod(GeminiFunction.LIST_CATEGORIES, String::class.java)
-
-        val listGroupsMethod = botFunctionMethod(GeminiFunction.LIST_GROUPS)
-        val switchGroupMethod = botFunctionMethod(GeminiFunction.SWITCH_GROUP, String::class.java)
-        val showBalanceMethod = botFunctionMethod(GeminiFunction.SHOW_BALANCE)
-        val showReportMethod = botFunctionMethod(GeminiFunction.SHOW_REPORT, Double::class.javaObjectType, Double::class.javaObjectType)
-        val showHistoryMethod = botFunctionMethod(GeminiFunction.SHOW_HISTORY, String::class.java, String::class.java, String::class.java, String::class.java)
-        val listNotificationsMethod = botFunctionMethod(GeminiFunction.LIST_NOTIFICATIONS)
-        val createNotificationMethod = botFunctionMethod(GeminiFunction.CREATE_NOTIFICATION, String::class.java, Double::class.java, Double::class.javaObjectType)
-        val deleteNotificationMethod = botFunctionMethod(GeminiFunction.DELETE_NOTIFICATION, String::class.java)
-
-        val deleteLastOperationMethod = botFunctionMethod(GeminiFunction.DELETE_LAST_OPERATION, String::class.java)
-        val editLastOperationMethod = botFunctionMethod(
-            GeminiFunction.EDIT_LAST_OPERATION,
-            String::class.java, Double::class.javaObjectType, String::class.java, String::class.java
-        )
-
-        val askFinanceMethod = botFunctionMethod(
-            GeminiFunction.ASK_FINANCE,
-            String::class.java, String::class.java, String::class.java, String::class.java, String::class.java, String::class.java, String::class.java,
-            String::class.java, String::class.java, String::class.java, String::class.java, String::class.java,
-            Double::class.javaObjectType, Double::class.javaObjectType, Double::class.javaObjectType,
-        )
-
-        val addLoanMethod = botFunctionMethod(GeminiFunction.ADD_LOAN, String::class.java, String::class.java, Double::class.java, String::class.java, String::class.java)
-        val repayLoanMethod = botFunctionMethod(GeminiFunction.REPAY_LOAN, String::class.java, String::class.java, Double::class.javaObjectType)
-
+        val toolDocs = argsMapper.objectMapper.readValue(aiPromptService.toolDocsJson, GeminiToolDocs::class.java)
         val systemContent = Content.fromParts(Part.fromText(aiPromptService.systemPrompt))
+        botConfig = configOf(systemContent, toolDocs, AiSurface.BOT)
+        miniAppConfig = configOf(systemContent, toolDocs, AiSurface.MINI_APP)
+    }
 
-        config = GenerateContentConfig.builder()
-            .tools(
-                Tool.builder()
-                    .functions(
-                        createGroupMethod, deleteGroupMethod, addExpenseMethod, addIncomeMethod, outOfContextMethod,
-                        createCategoryMethod, deleteCategoryMethod, renameCategoryMethod,
-                        changeCategoryIconMethod, deleteAllCategoriesMethod, listCategoriesMethod,
-                        listGroupsMethod, switchGroupMethod, showBalanceMethod, showReportMethod, showHistoryMethod,
-                        listNotificationsMethod, createNotificationMethod, deleteNotificationMethod,
-                        deleteLastOperationMethod, editLastOperationMethod, askFinanceMethod, addLoanMethod, repayLoanMethod
-                    )
-                    .build()
-            )
+    private fun configOf(systemContent: Content, toolDocs: GeminiToolDocs, surface: AiSurface): GenerateContentConfig {
+        val declarations = GeminiFunction.entries.filter { surface.offers(it) }.map { toolDocs.declarationOf(it.method) }
+        return GenerateContentConfig.builder()
+            .tools(Tool.builder().functionDeclarations(declarations).build())
             .systemInstruction(systemContent)
-            .automaticFunctionCalling(
-                AutomaticFunctionCallingConfig.builder()
-                    .disable(true)
-                    .build()
-            )
-            .thinkingConfig(
-                ThinkingConfig.builder()
-                    .thinkingLevel(ThinkingLevel.Known.MINIMAL)
-                    .build()
-            )
+            .automaticFunctionCalling(AutomaticFunctionCallingConfig.builder().disable(true).build())
+            .thinkingConfig(ThinkingConfig.builder().thinkingLevel(ThinkingLevel.Known.MINIMAL).build())
             .build()
     }
 
-    private fun botFunctionMethod(function: GeminiFunction, vararg parameterTypes: Class<*>) =
-        BotFunctions::class.java.getMethod(function.functionName, *parameterTypes)
+    private fun configFor(surface: AiSurface): GenerateContentConfig = when (surface) {
+        AiSurface.BOT -> botConfig
+        AiSurface.MINI_APP -> miniAppConfig
+    }
 
     fun parseCommand(userMessage: String, categoryContext: String? = null): BotCommand =
         parseCommands(userMessage, categoryContext).first()
@@ -147,44 +99,31 @@ class CommandParserService(
     fun parseVoiceCommand(audioBytes: ByteArray, categoryContext: String? = null): BotCommand =
         parseVoiceCommands(audioBytes, categoryContext).first()
 
-    fun parseCommands(userMessage: String, categoryContext: String? = null): List<BotCommand> {
-        return try {
-            val content = contentWithCategoryContext(categoryContext, Part.fromText(userMessage))
-            val response = geminiMetrics.timed(GeminiCall.COMMAND) { client.models.generateContent(geminiProperties.model, content, config) }
-            processResponse(response, userMessage)
-        } catch (e: Exception) {
-            log.error("CommandParser error: ${e.message}", e)
-            listOf(classifyError(e))
-        }
-    }
+    fun parseCommands(userMessage: String, categoryContext: String? = null, surface: AiSurface = AiSurface.BOT): List<BotCommand> =
+        generate(GeminiCall.COMMAND, surface, userMessage) { contentWithCategoryContext(categoryContext, Part.fromText(userMessage)) }
 
     fun parseVoiceCommands(
         audioBytes: ByteArray,
         categoryContext: String? = null,
-        mimeType: String = TELEGRAM_VOICE_MIME_TYPE
+        mimeType: String = TELEGRAM_VOICE_MIME_TYPE,
+        surface: AiSurface = AiSurface.BOT,
     ): List<BotCommand> {
-        return try {
-            log.info("Processing voice message: ${audioBytes.size} bytes")
+        log.info("Processing voice message: ${audioBytes.size} bytes")
+        return generate(GeminiCall.VOICE, surface, VOICE_MESSAGE_PLACEHOLDER) {
+            val audioPart = Part.builder().inlineData(Blob.builder().mimeType(mimeType).data(audioBytes).build()).build()
+            contentWithCategoryContext(categoryContext, audioPart, Part.fromText(aiPromptService.voiceTranscriptionPrompt))
+        }
+    }
 
-            val audioPart = Part.builder()
-                .inlineData(
-                    Blob.builder()
-                        .mimeType(mimeType)
-                        .data(audioBytes)
-                        .build()
-                )
-                .build()
-
-            val textPart = Part.fromText(aiPromptService.voiceTranscriptionPrompt)
-
-            val content = contentWithCategoryContext(categoryContext, audioPart, textPart)
-            val response = geminiMetrics.timed(GeminiCall.VOICE) { client.models.generateContent(geminiProperties.model, content, config) }
-
-            processResponse(response, VOICE_MESSAGE_PLACEHOLDER)
+    private fun generate(call: GeminiCall, surface: AiSurface, originalMessage: String, content: () -> Content): List<BotCommand> {
+        val commands = try {
+            val response = geminiMetrics.timed(call) { client.models.generateContent(geminiProperties.model, content(), configFor(surface)) }
+            processResponse(response, originalMessage)
         } catch (e: Exception) {
-            log.error("Voice CommandParser error: ${e.message}", e)
+            log.error("CommandParser ${call.tag} error: ${e.message}", e)
             listOf(classifyError(e))
         }
+        return commands.also { geminiMetrics.recordResults(surface, it) }
     }
 
     private fun contentWithCategoryContext(categoryContext: String?, vararg parts: Part): Content {

@@ -1,0 +1,67 @@
+{
+  "parameters": {
+    "amount": "Positive amount in the group's currency as a plain number (5к = 5000, полторы тысячи = 1500, лям = 1000000). Taken from the message, never invented.",
+    "category": "Exact category name from the user's active list, or a new generalized name when nothing fits. Plain text, never an emoji.",
+    "description": "Short noun phrase (1-3 words) in the nominative case and the user's language; null when it would repeat the category.",
+    "suggestedCategoryIcon": "One emoji, only when proposing a new category; otherwise null.",
+    "operationDate": "ISO date YYYY-MM-DD only when the user named the day; null means today. A bare weekday is the most recent such day, never a future one.",
+    "repeatUnit": "Only when the message has an explicit frequency word («каждый месяц», «ежемесячно», \"weekly\"); otherwise null.",
+    "repeatInterval": "How many repeat units, 1 by default; null without repeatUnit.",
+    "repeatPhrase": "The exact frequency words copied from the message («каждый месяц», «раз в неделю»); null when there are none. Never the item name.",
+    "paidBy": "Who paid: a member name exactly as listed, or ME; null when the speaker paid. Only when members are listed.",
+    "splitWith": "Who the expense is for: comma-separated member names, ME or ALL; null when not said. Only when members are listed.",
+    "operationType": "EXPENSE for spending, INCOME for money received; null when the question is about both.",
+    "categories": "Comma-separated category names copied exactly from the active list.",
+    "period": "Preset period of the question; null when month or from/to is given.",
+    "month": "A specific month as YYYY-MM.",
+    "from": "Start of an explicit range, ISO YYYY-MM-DD.",
+    "to": "End of an explicit range, ISO YYYY-MM-DD.",
+    "comparePeriod": "Second preset period for COMPARE; null to compare with the previous period of the same length.",
+    "compareMonth": "Second month for COMPARE as YYYY-MM.",
+    "member": "Group member name as the user wrote it.",
+    "place": "Shop, merchant or place name.",
+    "tag": "Tag without the # sign.",
+    "minAmount": "Lower bound for the operation amount.",
+    "limit": "Number of items for LARGEST or BREAKDOWN («топ-3» = 3).",
+    "direction": "LENT when the user gave money, BORROWED when the user took money. For repayLoan it is the direction of the original loan.",
+    "person": "The other person's name in the nominative case («Косте» = «Костя»).",
+    "dueDate": "Return date as ISO YYYY-MM-DD only when it was said; otherwise null.",
+    "note": "What the loan is for; otherwise null.",
+    "type": "EXPENSE or INCOME."
+  },
+  "functions": {
+    "addExpense": {
+      "description": "Record money the user SPENT or paid for something. One call per operation. Requires an amount stated in the message.",
+      "parameters": {}
+    },
+    "addIncome": {
+      "description": "Record money the user RECEIVED: salary, advance, bonus, freelance, cashback, a gift, a transfer to the user. One call per operation. Requires an amount stated in the message.",
+      "parameters": {}
+    },
+    "askFinance": {
+      "description": "Answer a question about the user's existing records. Use it for every question and for any spending or income phrase without an amount.",
+      "parameters": {
+        "intent": "SUM: one number (сколько, how much, когда, сколько раз). BREAKDOWN: list by category (на что, куда, какие траты, покажи траты). COMPARE: a named thing in two periods. TRENDS: which categories grew or shrank. LARGEST: biggest operations. PLACE: spending at a place. BUDGETS: budget status. BALANCE: what is left to spend this month. RECURRING: subscriptions and regular payments. MEMBERS: who spent how much. FORECAST: expected month-end total. AVERAGE: average per day or month. AFFORDABILITY: can the user afford an amount. SAVINGS: income minus expenses.",
+        "amount": "The price to check for AFFORDABILITY."
+      }
+    },
+    "addLoan": {
+      "description": "Record a NEW loan: money lent to or borrowed from a person. Check this before addExpense or addIncome.",
+      "parameters": {
+        "amount": "Positive loan amount taken from the message."
+      }
+    },
+    "repayLoan": {
+      "description": "Money of an EXISTING loan came back: someone returned it to the user, or the user returned it.",
+      "parameters": {
+        "amount": "Returned amount; null means the whole loan."
+      }
+    },
+    "outOfContext": {
+      "description": "The message is not about the user's money, or its intent is unclear. Never use it when the message has an amount next to a spending or income word.",
+      "parameters": {
+        "originalMessage": "The user's message as written."
+      }
+    }
+  }
+}

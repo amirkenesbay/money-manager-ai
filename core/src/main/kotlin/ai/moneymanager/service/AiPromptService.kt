@@ -14,6 +14,7 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 private const val SYSTEM_PROMPT_PATH = "prompts/ai-system-prompt.md"
+private const val TOOL_DOCS_PATH = "prompts/ai-tools.json"
 private const val VOICE_TRANSCRIPTION_PROMPT_PATH = "prompts/ai-voice-transcription.md"
 private const val OUT_OF_CONTEXT_PROMPT_PATH = "prompts/ai-out-of-context.md"
 private const val IMPORT_COLUMNS_PROMPT_PATH = "prompts/ai-import-columns.md"
@@ -52,6 +53,8 @@ data class SharedMembers(val speaker: String, val names: List<String>)
 @Service
 class AiPromptService {
     val systemPrompt: String by lazy { loadPrompt(SYSTEM_PROMPT_PATH) }
+
+    val toolDocsJson: String by lazy { loadPrompt(TOOL_DOCS_PATH) }
 
     val voiceTranscriptionPrompt: String by lazy { loadPrompt(VOICE_TRANSCRIPTION_PROMPT_PATH) }
 

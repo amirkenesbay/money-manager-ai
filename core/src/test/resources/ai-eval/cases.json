@@ -1152,5 +1152,141 @@
         "period": "THIS_MONTH"
       }
     ]
+  },
+  {
+    "id": "voice-01",
+    "group": "voice",
+    "text": "вчера такси тысяча восемьсот",
+    "voice": "Milena",
+    "expect": [
+      {
+        "fn": "addExpense",
+        "amount": 1800,
+        "category": "Транспорт",
+        "date": "yesterday"
+      }
+    ]
+  },
+  {
+    "id": "voice-02",
+    "group": "voice",
+    "text": "кофе полторы тысячи",
+    "voice": "Milena",
+    "expect": [
+      {
+        "fn": "addExpense",
+        "amount": 1500,
+        "repeatUnit": null
+      }
+    ]
+  },
+  {
+    "id": "voice-03",
+    "group": "voice",
+    "text": "зарплата четыреста пятьдесят тысяч",
+    "voice": "Milena",
+    "expect": [
+      {
+        "fn": "addIncome",
+        "amount": 450000,
+        "category": "Зарплата"
+      }
+    ]
+  },
+  {
+    "id": "voice-04",
+    "group": "voice",
+    "text": "нетфликс три тысячи пятьсот каждый месяц",
+    "voice": "Milena",
+    "expect": [
+      {
+        "fn": "addExpense",
+        "amount": 3500,
+        "repeatUnit": "MONTH"
+      }
+    ]
+  },
+  {
+    "id": "voice-05",
+    "group": "voice",
+    "text": "аренда двести тысяч",
+    "voice": "Milena",
+    "expect": [
+      {
+        "fn": "addExpense",
+        "amount": 200000,
+        "repeatUnit": null
+      }
+    ]
+  },
+  {
+    "id": "voice-06",
+    "group": "voice",
+    "text": "продукты восемь тысяч и бензин десять тысяч",
+    "voice": "Milena",
+    "expect": [
+      {
+        "fn": "addExpense",
+        "amount": 8000,
+        "category": "Продукты"
+      },
+      {
+        "fn": "addExpense",
+        "amount": 10000,
+        "category": "Транспорт"
+      }
+    ]
+  },
+  {
+    "id": "voice-07",
+    "group": "voice",
+    "text": "сколько я потратил в этом месяце",
+    "voice": "Milena",
+    "expect": [
+      {
+        "fn": "askFinance",
+        "intent": "SUM",
+        "type": "EXPENSE",
+        "period": "THIS_MONTH"
+      }
+    ]
+  },
+  {
+    "id": "voice-08",
+    "group": "voice",
+    "text": "дал Косте в долг пять тысяч",
+    "voice": "Milena",
+    "expect": [
+      {
+        "fn": "addLoan",
+        "direction": "LENT",
+        "person": "Костя",
+        "amount": 5000
+      }
+    ]
+  },
+  {
+    "id": "voice-09",
+    "group": "voice",
+    "text": "coffee five hundred",
+    "voice": "Samantha",
+    "expect": [
+      {
+        "fn": "addExpense",
+        "amount": 500
+      }
+    ]
+  },
+  {
+    "id": "voice-10",
+    "group": "voice",
+    "text": "кофе бес жүз",
+    "voice": "Aru",
+    "expect": [
+      {
+        "fn": "addExpense",
+        "amount": 500
+      }
+    ]
   }
 ]

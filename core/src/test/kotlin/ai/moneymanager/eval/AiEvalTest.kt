@@ -5,12 +5,14 @@ import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.nlp.BotCommand
+import ai.moneymanager.domain.model.nlp.enum.AiSurface
 import ai.moneymanager.domain.model.question.PeriodPreset
 import ai.moneymanager.domain.model.question.PeriodSpec
 import ai.moneymanager.mapper.GeminiArgsMapper
 import ai.moneymanager.metrics.GeminiMetrics
 import ai.moneymanager.service.AiPromptService
 import ai.moneymanager.service.nlp.CommandParserService
+import ai.moneymanager.service.nlp.WAV_MIME_TYPE
 import ai.moneymanager.service.nlp.repeatOf
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -30,11 +32,15 @@ private const val LAST_WEEKDAY_PREFIX = "last-"
 private const val DEFAULT_MODEL = "gemini-3.5-flash-lite"
 private const val AMOUNT_TOLERANCE = 0.01
 private const val REPORT_DIR = "build/ai-eval"
+private const val AUDIO_DIR = "build/ai-eval/audio"
+private const val SAY_COMMAND = "say"
+private const val CONVERT_COMMAND = "afconvert"
+private const val WAV_FORMAT = "LEI16@16000"
 
 private val EXPENSES = listOf("🛒" to "Продукты", "🚗" to "Транспорт", "🎬" to "Развлечения", "💊" to "Здоровье", "👕" to "Одежда", "📚" to "Образование", "📦" to "Другое")
 private val INCOMES = listOf("💰" to "Зарплата", "🎁" to "Подарки", "📦" to "Другое")
 
-data class EvalCase(val id: String, val group: String, val text: String, val expect: List<Map<String, Any?>>)
+data class EvalCase(val id: String, val group: String, val text: String, val expect: List<Map<String, Any?>>, val voice: String? = null)
 
 data class EvalResult(val id: String, val group: String, val text: String, val passed: Boolean, val millis: Long, val actual: List<Map<String, Any?>>, val problems: List<String>)
 
@@ -45,6 +51,7 @@ class AiEvalTest {
     private val label = System.getProperty("eval.label") ?: model
     private val only = System.getProperty("eval.only")?.split(",")?.toSet()
     private val delayMs = System.getProperty("eval.delayMs")?.toLong() ?: 0
+    private val surface = System.getProperty("eval.surface")?.let { AiSurface.valueOf(it) } ?: AiSurface.MINI_APP
     private val groupId = ObjectId()
     private val categories = EXPENSES.map { (icon, name) -> Category(name = name, icon = icon, type = CategoryType.EXPENSE, groupId = groupId) } +
         INCOMES.map { (icon, name) -> Category(name = name, icon = icon, type = CategoryType.INCOME, groupId = groupId) }
@@ -61,7 +68,9 @@ class AiEvalTest {
             .filter { only == null || it.group in only || it.id in only }
         val results = cases.map { case ->
             val started = System.currentTimeMillis()
-            val actual = parser.parseCommands(case.text, context).map { normalize(it, today) }
+            val commands = case.voice?.let { parser.parseVoiceCommands(speech(case, it), context, WAV_MIME_TYPE, surface) }
+                ?: parser.parseCommands(case.text, context, surface)
+            val actual = commands.map { normalize(it, today) }
             val millis = System.currentTimeMillis() - started
             if (delayMs > 0) Thread.sleep(delayMs)
             val problems = compare(case.expect, actual, today)
@@ -82,6 +91,7 @@ class AiEvalTest {
         is BotCommand.AddLoan -> mapOf("fn" to "addLoan", "direction" to command.direction.name, "person" to command.person, "amount" to command.amount.toDouble())
         is BotCommand.RepayLoan -> mapOf("fn" to "repayLoan", "direction" to command.direction.name, "person" to command.person, "amount" to command.amount)
         is BotCommand.OutOfContext -> mapOf("fn" to "outOfContext")
+        is BotCommand.ParseError -> mapOf("fn" to "ParseError", "error" to command.error)
         else -> mapOf("fn" to command::class.simpleName)
     }
 
@@ -94,6 +104,20 @@ class AiEvalTest {
         is PeriodSpec.Preset -> period.preset.name
         is PeriodSpec.Month -> if (period.month == YearMonth.from(today)) PeriodPreset.THIS_MONTH.name else "MONTH:%02d".format(period.month.monthValue)
         is PeriodSpec.Range -> "RANGE"
+    }
+
+    private fun speech(case: EvalCase, voice: String): ByteArray {
+        val dir = File(AUDIO_DIR).apply { mkdirs() }
+        val aiff = File(dir, "${case.id}.aiff")
+        val wav = File(dir, "${case.id}.wav")
+        run(SAY_COMMAND, "-v", voice, "-o", aiff.path, case.text)
+        run(CONVERT_COMMAND, "-f", "WAVE", "-d", WAV_FORMAT, "-c", "1", aiff.path, wav.path)
+        return wav.readBytes()
+    }
+
+    private fun run(vararg command: String) {
+        val exit = ProcessBuilder(*command).inheritIO().start().waitFor()
+        check(exit == 0) { "${command.first()} failed with $exit" }
     }
 
     private fun expectedDate(token: String, today: LocalDate): String = when {
