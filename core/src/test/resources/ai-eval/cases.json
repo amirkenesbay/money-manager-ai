@@ -1287,6 +1287,20 @@
         "fn": "addExpense",
         "amount": 500
       }
+    ],
+    "language": "kk"
+  },
+  {
+    "id": "voice-11",
+    "group": "voice",
+    "text": "бес мың бес жүз такси",
+    "voice": "Aru",
+    "language": "kk",
+    "expect": [
+      {
+        "fn": "addExpense",
+        "amount": 5500
+      }
     ]
   }
 ]

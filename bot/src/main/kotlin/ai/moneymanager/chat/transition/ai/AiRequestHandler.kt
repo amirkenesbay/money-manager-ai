@@ -146,7 +146,7 @@ class AiRequestHandler(
         context.aiCategoriesCache = categories
         val currency = resolveCurrency(groupService, groupId)
         val previousQuestion = context.userInfo?.let(askService::previousQuestion)
-        return aiPromptService.groupContext(today, currency, categories, categoryRuleService.rules(groupId), previousQuestion)
+        return aiPromptService.groupContext(today, currency, categories, categoryRuleService.rules(groupId), previousQuestion, language = context.userInfo?.language)
     }
 
     private fun showErrorStageIfNeeded(commands: List<BotCommand>, feedback: AiFeedback, language: String?) {

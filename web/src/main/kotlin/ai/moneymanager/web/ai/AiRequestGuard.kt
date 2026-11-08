@@ -51,7 +51,7 @@ class AiRequestGuard(
     }
 
     fun groupContext(user: UserInfo, group: MoneyGroup, categories: List<Category>, rules: List<CategoryRule>): String =
-        aiPromptService.groupContext(userCalendar.today(user), group.currency, categories, rules, askService.previousQuestion(user), sharedMembersOf(user, group))
+        aiPromptService.groupContext(userCalendar.today(user), group.currency, categories, rules, askService.previousQuestion(user), sharedMembersOf(user, group), user.language)
 
     fun memberNames(group: MoneyGroup): Map<Long, String> =
         if (group.splitsExpenses) userInfoService.displayNames(group.memberIds) else emptyMap()

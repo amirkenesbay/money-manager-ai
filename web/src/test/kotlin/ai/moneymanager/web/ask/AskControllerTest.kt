@@ -107,7 +107,7 @@ class AskControllerTest {
         `when`(userInfoService.getOrCreate(TestInitData.profile())).thenReturn(testUser())
         `when`(groupService.getGroup(groupId)).thenReturn(group)
         `when`(categoryService.getCategoriesByGroup(groupId)).thenReturn(listOf(taxi))
-        `when`(aiPromptService.groupContext(userCalendar.today(testUser()), group.currency, listOf(taxi))).thenReturn(GROUP_CONTEXT)
+        `when`(aiPromptService.groupContext(userCalendar.today(testUser()), group.currency, listOf(taxi), language = testUser().language)).thenReturn(GROUP_CONTEXT)
         `when`(aiRateLimitService.tryConsume(TEST_USER_ID, false)).thenReturn(AiRateLimitResult.Allowed)
         `when`(askSuggestionService.suggestions(anyOf(MoneyGroup::class.java), nullable(String::class.java), anyOf(LocalDate::class.java))).thenReturn(suggestions)
         `when`(askSuggestionService.examples(suggestions)).thenReturn(listOf(EXAMPLE))

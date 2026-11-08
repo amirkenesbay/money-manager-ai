@@ -29,6 +29,7 @@ import kotlin.math.abs
 
 private const val CASES = "/ai-eval/cases.json"
 private const val LAST_WEEKDAY_PREFIX = "last-"
+private const val DEFAULT_LANGUAGE = "ru"
 private const val DEFAULT_MODEL = "gemini-3.5-flash-lite"
 private const val AMOUNT_TOLERANCE = 0.01
 private const val REPORT_DIR = "build/ai-eval"
@@ -40,7 +41,7 @@ private const val WAV_FORMAT = "LEI16@16000"
 private val EXPENSES = listOf("🛒" to "Продукты", "🚗" to "Транспорт", "🎬" to "Развлечения", "💊" to "Здоровье", "👕" to "Одежда", "📚" to "Образование", "📦" to "Другое")
 private val INCOMES = listOf("💰" to "Зарплата", "🎁" to "Подарки", "📦" to "Другое")
 
-data class EvalCase(val id: String, val group: String, val text: String, val expect: List<Map<String, Any?>>, val voice: String? = null)
+data class EvalCase(val id: String, val group: String, val text: String, val expect: List<Map<String, Any?>>, val voice: String? = null, val language: String = DEFAULT_LANGUAGE)
 
 data class EvalResult(val id: String, val group: String, val text: String, val passed: Boolean, val millis: Long, val actual: List<Map<String, Any?>>, val problems: List<String>)
 
@@ -63,11 +64,11 @@ class AiEvalTest {
         val parser = CommandParserService(GeminiProperties(apiKey, model), GeminiArgsMapper(jacksonObjectMapper()), prompts, GeminiMetrics(SimpleMeterRegistry()))
         parser.init()
         val today = LocalDate.now()
-        val context = prompts.groupContext(today, Currency.KZT, categories)
         val cases = mapper.readValue<List<EvalCase>>(checkNotNull(javaClass.getResource(CASES)).readText())
             .filter { only == null || it.group in only || it.id in only }
         val results = cases.map { case ->
             val started = System.currentTimeMillis()
+            val context = prompts.groupContext(today, Currency.KZT, categories, language = case.language)
             val commands = case.voice?.let { parser.parseVoiceCommands(speech(case, it), context, WAV_MIME_TYPE, surface) }
                 ?: parser.parseCommands(case.text, context, surface)
             val actual = commands.map { normalize(it, today) }

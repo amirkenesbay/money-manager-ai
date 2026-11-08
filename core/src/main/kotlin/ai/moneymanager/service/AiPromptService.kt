@@ -24,6 +24,7 @@ private const val PLACEHOLDER_USER_MESSAGE = "{userMessage}"
 private const val PLACEHOLDER_REPLY_LANGUAGE = "{replyLanguage}"
 
 private const val CURRENT_DATE_TEMPLATE = "Today is %s (%s)."
+private const val LANGUAGE_TEMPLATE = "The user's app language is %s. Voice messages are most likely spoken in it."
 private const val CURRENCY_TEMPLATE = "The group's currency is %s. Assume all amounts are in this currency; do not mention or convert to any other currency."
 
 private const val CATEGORY_CONTEXT_HEADER =
@@ -83,9 +84,11 @@ class AiPromptService {
         rules: List<CategoryRule> = emptyList(),
         previousQuestion: FinanceQuestion? = null,
         sharedMembers: SharedMembers? = null,
+        language: String? = null,
     ): String =
         listOf(
             currentDatePreamble(today),
+            language?.let { LANGUAGE_TEMPLATE.format(Locale.forLanguageTag(it).getDisplayLanguage(Locale.ENGLISH)) }.orEmpty(),
             currencyPreamble(currency),
             categoryContextPreamble(categories),
             rememberedPlacesPreamble(categories, rules),
