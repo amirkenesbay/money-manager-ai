@@ -1,6 +1,7 @@
 import { downsample, encodeWav, isSilent, joinChunks, rms, WAV_MIME_TYPE } from './wav'
 
 const BUFFER_SIZE = 4096
+const FIRST_SOUND_TIMEOUT_MS = 3000
 
 export type Recording = { kind: 'audio'; wav: Blob } | { kind: 'silence' }
 
@@ -21,14 +22,21 @@ export async function startRecording(): Promise<Recorder> {
   const processor = context.createScriptProcessor(BUFFER_SIZE, 1, 1)
   const chunks: Float32Array[] = []
   let level = 0
+  let heard: () => void = () => undefined
+  const firstSound = new Promise<void>((resolve) => {
+    heard = resolve
+    setTimeout(resolve, FIRST_SOUND_TIMEOUT_MS)
+  })
   processor.onaudioprocess = (event) => {
     const chunk = new Float32Array(event.inputBuffer.getChannelData(0))
     chunks.push(chunk)
     level = rms(chunk)
+    if (level > 0) heard()
   }
   source.connect(processor)
   processor.connect(context.destination)
   await context.resume()
+  await firstSound
 
   const release = () => {
     processor.disconnect()

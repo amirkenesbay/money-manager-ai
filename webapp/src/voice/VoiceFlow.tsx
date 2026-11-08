@@ -215,8 +215,8 @@ function RecordingScreen({ groupId, onAsk, onRecorded, onPaused, onSilence, onMi
     <>
       <ScreenHeader title={strings.recordVoice} onBack={onCancel} />
       <section className="voice-stage">
-        <BreathingOrb level={level} />
-        <p className="voice-listening">{strings.recordingTitle}</p>
+        <BreathingOrb level={level} waiting={!ready} />
+        <p className="voice-listening" role="status">{ready ? strings.recordingTitle : strings.microphoneStarting}</p>
         <RotatingHint items={hints} onAsk={onAsk} />
         {left <= WARNING_SECONDS && <p className="caption negative" role="timer">{strings.recordingEnds(left)}</p>}
         <button type="button" className="voice-stop-round pressable" aria-label={strings.stopRecording} disabled={!ready} onClick={() => finish(onRecorded)}>
@@ -228,7 +228,7 @@ function RecordingScreen({ groupId, onAsk, onRecorded, onPaused, onSilence, onMi
   )
 }
 
-function BreathingOrb({ level }: { level: () => number }) {
+function BreathingOrb({ level, waiting }: { level: () => number; waiting: boolean }) {
   const orb = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
@@ -242,7 +242,7 @@ function BreathingOrb({ level }: { level: () => number }) {
     return () => cancelAnimationFrame(frame)
   }, [level])
 
-  return <span ref={orb} className="voice-breath" aria-hidden="true" />
+  return <span ref={orb} className={waiting ? 'voice-breath waiting' : 'voice-breath'} aria-hidden="true" />
 }
 
 function ThinkingScreen({ groupId, request, onDone, onFailed, onCancel }: {

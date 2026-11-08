@@ -1,5 +1,5 @@
 import { StrictMode } from 'react'
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiRequestError } from '../api/client'
@@ -125,6 +125,20 @@ describe('VoiceFlow', () => {
     expect(await screen.findByRole('heading', { name: '🚕 Такси · Ноябрь' })).toBeInTheDocument()
     expect(askQuestion).toHaveBeenCalledWith(group().id, QUESTION, expect.anything())
   }, 8000)
+
+  it('asks to wait until the microphone really records, then says it is listening', async () => {
+    let ready: (recorder: Recorder) => void = () => undefined
+    vi.mocked(startRecording).mockReturnValue(new Promise((resolve) => { ready = resolve }))
+    const user = userEvent.setup()
+    renderFlow()
+
+    await user.click(screen.getByRole('button', { name: strings.voiceAskAllow }))
+
+    expect(screen.getByRole('status')).toHaveTextContent(strings.microphoneStarting)
+    expect(screen.getByRole('button', { name: strings.stopRecording })).toBeDisabled()
+    await act(async () => ready(recorderReturning({ kind: 'audio', wav })))
+    expect(screen.getByRole('status')).toHaveTextContent(strings.recordingTitle)
+  })
 
   it('sends a recording once even when React mounts the screen twice', async () => {
     vi.mocked(parseVoice).mockResolvedValue({ operations: [voiceOperation()] })

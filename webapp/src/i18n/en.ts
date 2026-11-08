@@ -510,6 +510,7 @@ export const en: Strings = {
   voiceAskAllow: 'Allow',
   voiceAskLater: 'Not now',
   recordingTitle: 'Listening…',
+  microphoneStarting: 'Turning on the microphone…',
   voiceExamples: ['“Taxi 2,000”', '“Coffee yesterday 1,500”', '“Salary 450,000”'],
   stopRecording: 'Stop recording',
   cancel: 'Cancel',

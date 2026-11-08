@@ -503,6 +503,7 @@ export const kk: Strings = {
   voiceAskAllow: 'Рұқсат беру',
   voiceAskLater: 'Кейін',
   recordingTitle: 'Тыңдап тұрмын…',
+  microphoneStarting: 'Микрофонды қосып жатырмын…',
   voiceExamples: ['«Такси 2 000»', '«Кеше кофе 1 500»', '«Жалақы 450 000»'],
   stopRecording: 'Жазуды тоқтату',
   cancel: 'Бас тарту',
