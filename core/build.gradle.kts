@@ -20,3 +20,20 @@ dependencies {
     testImplementation(kotlin("test"))
     testFixturesImplementation("org.springframework.boot:spring-boot-starter-test")
 }
+
+tasks.named<Test>("test") {
+    useJUnitPlatform { excludeTags("ai-eval") }
+}
+
+tasks.register<Test>("aiEval") {
+    description = "Runs the Gemini quality evaluation against the live API"
+    group = "verification"
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
+    useJUnitPlatform { includeTags("ai-eval") }
+    outputs.upToDateWhen { false }
+    testLogging { showStandardStreams = true }
+    listOf("eval.model", "eval.label", "eval.only", "eval.delayMs").forEach { key ->
+        project.findProperty(key)?.let { systemProperty(key, it) }
+    }
+}

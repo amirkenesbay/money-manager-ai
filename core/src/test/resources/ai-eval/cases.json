@@ -1,0 +1,1012 @@
+[
+ {
+  "id": "record-01",
+  "group": "record",
+  "text": "кофе 1500",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 1500,
+    "category": "Кофе",
+    "date": "today"
+   }
+  ]
+ },
+ {
+  "id": "record-02",
+  "group": "record",
+  "text": "такси 2000",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 2000,
+    "category": "Транспорт"
+   }
+  ]
+ },
+ {
+  "id": "record-03",
+  "group": "record",
+  "text": "купил продукты в магнуме на 8500",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 8500,
+    "category": "Продукты"
+   }
+  ]
+ },
+ {
+  "id": "record-04",
+  "group": "record",
+  "text": "потратил 3000 на бензин",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 3000,
+    "category": "Транспорт"
+   }
+  ]
+ },
+ {
+  "id": "record-05",
+  "group": "record",
+  "text": "обед 2400",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 2400
+   }
+  ]
+ },
+ {
+  "id": "record-06",
+  "group": "record",
+  "text": "5к на шоппинг",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 5000
+   }
+  ]
+ },
+ {
+  "id": "record-07",
+  "group": "record",
+  "text": "полторы тысячи на кофе",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 1500
+   }
+  ]
+ },
+ {
+  "id": "record-08",
+  "group": "record",
+  "text": "две с половиной тысячи такси",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 2500,
+    "category": "Транспорт"
+   }
+  ]
+ },
+ {
+  "id": "record-09",
+  "group": "record",
+  "text": "аптека 3200",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 3200,
+    "category": "Здоровье"
+   }
+  ]
+ },
+ {
+  "id": "record-10",
+  "group": "record",
+  "text": "скинул за интернет 6990",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 6990
+   }
+  ]
+ },
+ {
+  "id": "record-11",
+  "group": "record",
+  "text": "кино 4000",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 4000,
+    "category": "Развлечения"
+   }
+  ]
+ },
+ {
+  "id": "record-12",
+  "group": "record",
+  "text": "штраф 15000",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 15000
+   }
+  ]
+ },
+ {
+  "id": "record-13",
+  "group": "record",
+  "text": "Магнум 12350",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 12350,
+    "category": "Продукты"
+   }
+  ]
+ },
+ {
+  "id": "record-14",
+  "group": "record",
+  "text": "кроссовки 45000",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 45000,
+    "category": "Одежда"
+   }
+  ]
+ },
+ {
+  "id": "record-15",
+  "group": "record",
+  "text": "курсы английского 25000",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 25000,
+    "category": "Образование"
+   }
+  ]
+ },
+ {
+  "id": "record-16",
+  "group": "record",
+  "text": "заплатил за квартиру 180 тысяч",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 180000
+   }
+  ]
+ },
+ {
+  "id": "record-17",
+  "group": "record",
+  "text": "пятьсот тенге на автобус",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 500,
+    "category": "Транспорт"
+   }
+  ]
+ },
+ {
+  "id": "record-18",
+  "group": "record",
+  "text": "1 200 000 машина",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 1200000
+   }
+  ]
+ },
+ {
+  "id": "record-19",
+  "group": "record",
+  "text": "кафе с друзьями 18 500",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 18500
+   }
+  ]
+ },
+ {
+  "id": "record-20",
+  "group": "record",
+  "text": "яндекс го 1890",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 1890,
+    "category": "Транспорт"
+   }
+  ]
+ },
+ {
+  "id": "income-01",
+  "group": "income",
+  "text": "зарплата 450000",
+  "expect": [
+   {
+    "fn": "addIncome",
+    "amount": 450000,
+    "category": "Зарплата"
+   }
+  ]
+ },
+ {
+  "id": "income-02",
+  "group": "income",
+  "text": "получил аванс 200 тысяч",
+  "expect": [
+   {
+    "fn": "addIncome",
+    "amount": 200000,
+    "category": "Зарплата"
+   }
+  ]
+ },
+ {
+  "id": "income-03",
+  "group": "income",
+  "text": "мама подарила 20000",
+  "expect": [
+   {
+    "fn": "addIncome",
+    "amount": 20000,
+    "category": "Подарки"
+   }
+  ]
+ },
+ {
+  "id": "income-04",
+  "group": "income",
+  "text": "кэшбэк 3500",
+  "expect": [
+   {
+    "fn": "addIncome",
+    "amount": 3500
+   }
+  ]
+ },
+ {
+  "id": "income-05",
+  "group": "income",
+  "text": "фриланс 150к",
+  "expect": [
+   {
+    "fn": "addIncome",
+    "amount": 150000
+   }
+  ]
+ },
+ {
+  "id": "income-06",
+  "group": "income",
+  "text": "перевели 10000",
+  "expect": [
+   {
+    "fn": "addIncome",
+    "amount": 10000
+   }
+  ]
+ },
+ {
+  "id": "date-01",
+  "group": "date",
+  "text": "вчера такси 1800",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 1800,
+    "category": "Транспорт",
+    "date": "yesterday"
+   }
+  ]
+ },
+ {
+  "id": "date-02",
+  "group": "date",
+  "text": "позавчера купил продукты на 7000",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 7000,
+    "category": "Продукты",
+    "date": "-2d"
+   }
+  ]
+ },
+ {
+  "id": "date-03",
+  "group": "date",
+  "text": "в понедельник обед 3000",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 3000,
+    "date": "last-monday"
+   }
+  ]
+ },
+ {
+  "id": "date-04",
+  "group": "date",
+  "text": "сегодня кофе 1200",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 1200,
+    "date": "today"
+   }
+  ]
+ },
+ {
+  "id": "multi-01",
+  "group": "multi",
+  "text": "кофе 1500 и такси 2000",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 1500
+   },
+   {
+    "fn": "addExpense",
+    "amount": 2000,
+    "category": "Транспорт"
+   }
+  ]
+ },
+ {
+  "id": "multi-02",
+  "group": "multi",
+  "text": "продукты 8000, бензин 5000 и аптека 1500",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 8000
+   },
+   {
+    "fn": "addExpense",
+    "amount": 5000
+   },
+   {
+    "fn": "addExpense",
+    "amount": 1500
+   }
+  ]
+ },
+ {
+  "id": "multi-03",
+  "group": "multi",
+  "text": "получил зарплату 400000 и сразу потратил 30000 на одежду",
+  "expect": [
+   {
+    "fn": "addIncome",
+    "amount": 400000
+   },
+   {
+    "fn": "addExpense",
+    "amount": 30000
+   }
+  ]
+ },
+ {
+  "id": "multi-04",
+  "group": "multi",
+  "text": "такси туда 2000 и обратно 2500",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 2000
+   },
+   {
+    "fn": "addExpense",
+    "amount": 2500
+   }
+  ]
+ },
+ {
+  "id": "multi-05",
+  "group": "multi",
+  "text": "кофе 500 и ещё кофе 500",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 500
+   },
+   {
+    "fn": "addExpense",
+    "amount": 500
+   }
+  ]
+ },
+ {
+  "id": "repeat-01",
+  "group": "repeat",
+  "text": "нетфликс 3500 каждый месяц",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 3500,
+    "repeatUnit": "MONTH"
+   }
+  ]
+ },
+ {
+  "id": "repeat-02",
+  "group": "repeat",
+  "text": "аренда 200000 ежемесячно",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 200000,
+    "repeatUnit": "MONTH"
+   }
+  ]
+ },
+ {
+  "id": "repeat-03",
+  "group": "repeat",
+  "text": "спортзал 15000 раз в месяц",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 15000,
+    "repeatUnit": "MONTH"
+   }
+  ]
+ },
+ {
+  "id": "repeat-04",
+  "group": "repeat",
+  "text": "нетфликс 3500",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 3500,
+    "repeatUnit": null
+   }
+  ]
+ },
+ {
+  "id": "loan-01",
+  "group": "loan",
+  "text": "дал Косте в долг 5000",
+  "expect": [
+   {
+    "fn": "addLoan",
+    "direction": "LENT",
+    "person": "Костя",
+    "amount": 5000
+   }
+  ]
+ },
+ {
+  "id": "loan-02",
+  "group": "loan",
+  "text": "занял у брата 30000",
+  "expect": [
+   {
+    "fn": "addLoan",
+    "direction": "BORROWED",
+    "amount": 30000
+   }
+  ]
+ },
+ {
+  "id": "loan-03",
+  "group": "loan",
+  "text": "Ерлан вернул 5000",
+  "expect": [
+   {
+    "fn": "repayLoan",
+    "direction": "LENT",
+    "person": "Ерлан",
+    "amount": 5000
+   }
+  ]
+ },
+ {
+  "id": "loan-04",
+  "group": "loan",
+  "text": "вернул долг Маше",
+  "expect": [
+   {
+    "fn": "repayLoan",
+    "direction": "BORROWED",
+    "person": "Маша"
+   }
+  ]
+ },
+ {
+  "id": "loan-05",
+  "group": "loan",
+  "text": "одолжил Айгерим 10000 до пятницы",
+  "expect": [
+   {
+    "fn": "addLoan",
+    "direction": "LENT",
+    "person": "Айгерим",
+    "amount": 10000
+   }
+  ]
+ },
+ {
+  "id": "ask-01",
+  "group": "ask",
+  "text": "сколько я потратил на такси в этом месяце",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "SUM",
+    "type": "EXPENSE",
+    "categories": [
+     "Транспорт"
+    ],
+    "period": "THIS_MONTH"
+   }
+  ]
+ },
+ {
+  "id": "ask-02",
+  "group": "ask",
+  "text": "сколько я потратил сегодня",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "SUM",
+    "type": "EXPENSE",
+    "period": "TODAY"
+   }
+  ]
+ },
+ {
+  "id": "ask-03",
+  "group": "ask",
+  "text": "куда ушли деньги в этом месяце",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "BREAKDOWN",
+    "period": "THIS_MONTH"
+   }
+  ]
+ },
+ {
+  "id": "ask-04",
+  "group": "ask",
+  "text": "на что я больше всего трачу",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "BREAKDOWN"
+   }
+  ]
+ },
+ {
+  "id": "ask-05",
+  "group": "ask",
+  "text": "сравни траты с прошлым месяцем",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "COMPARE"
+   }
+  ]
+ },
+ {
+  "id": "ask-06",
+  "group": "ask",
+  "text": "я стал больше тратить на продукты?",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "COMPARE",
+    "categories": [
+     "Продукты"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "ask-07",
+  "group": "ask",
+  "text": "самая большая покупка в этом месяце",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "LARGEST"
+   }
+  ]
+ },
+ {
+  "id": "ask-08",
+  "group": "ask",
+  "text": "топ 3 трат за неделю",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "LARGEST",
+    "limit": 3
+   }
+  ]
+ },
+ {
+  "id": "ask-09",
+  "group": "ask",
+  "text": "сколько я оставил в магнуме",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "PLACE"
+   }
+  ]
+ },
+ {
+  "id": "ask-10",
+  "group": "ask",
+  "text": "сколько можно тратить в день",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "BALANCE"
+   }
+  ]
+ },
+ {
+  "id": "ask-11",
+  "group": "ask",
+  "text": "сколько у меня осталось до конца месяца",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "BALANCE"
+   }
+  ]
+ },
+ {
+  "id": "ask-12",
+  "group": "ask",
+  "text": "сколько я плачу за подписки",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "RECURRING"
+   }
+  ]
+ },
+ {
+  "id": "ask-13",
+  "group": "ask",
+  "text": "сколько я потрачу к концу месяца",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "FORECAST"
+   }
+  ]
+ },
+ {
+  "id": "ask-14",
+  "group": "ask",
+  "text": "сколько я в среднем трачу в день",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "AVERAGE"
+   }
+  ]
+ },
+ {
+  "id": "ask-15",
+  "group": "ask",
+  "text": "могу ли я купить телефон за 300000",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "AFFORDABILITY",
+    "amount": 300000
+   }
+  ]
+ },
+ {
+  "id": "ask-16",
+  "group": "ask",
+  "text": "сколько я отложил в этом месяце",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "SAVINGS"
+   }
+  ]
+ },
+ {
+  "id": "ask-17",
+  "group": "ask",
+  "text": "когда я получил зарплату",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "SUM",
+    "type": "INCOME",
+    "categories": [
+     "Зарплата"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "ask-18",
+  "group": "ask",
+  "text": "сколько я заработал в июле",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "SUM",
+    "type": "INCOME",
+    "period": "MONTH:07"
+   }
+  ]
+ },
+ {
+  "id": "ask-19",
+  "group": "ask",
+  "text": "сколько ушло на кафе вчера",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "SUM",
+    "type": "EXPENSE",
+    "period": "YESTERDAY"
+   }
+  ]
+ },
+ {
+  "id": "ask-20",
+  "group": "ask",
+  "text": "укладываюсь в бюджет?",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "BUDGETS"
+   }
+  ]
+ },
+ {
+  "id": "ask-21",
+  "group": "ask",
+  "text": "на что я стал тратить больше",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "TRENDS"
+   }
+  ]
+ },
+ {
+  "id": "ask-22",
+  "group": "ask",
+  "text": "покажи траты за прошлую неделю",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "BREAKDOWN",
+    "period": "LAST_WEEK"
+   }
+  ]
+ },
+ {
+  "id": "ask-23",
+  "group": "ask",
+  "text": "сколько раз я брал такси в этом месяце",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "SUM",
+    "categories": [
+     "Транспорт"
+    ],
+    "period": "THIS_MONTH"
+   }
+  ]
+ },
+ {
+  "id": "ask-24",
+  "group": "ask",
+  "text": "сколько я потратил на продукты в октябре",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "SUM",
+    "categories": [
+     "Продукты"
+    ],
+    "period": "MONTH:10"
+   }
+  ]
+ },
+ {
+  "id": "other-01",
+  "group": "other",
+  "text": "какая погода в Алматы",
+  "expect": [
+   {
+    "fn": "outOfContext"
+   }
+  ]
+ },
+ {
+  "id": "other-02",
+  "group": "other",
+  "text": "привет",
+  "expect": [
+   {
+    "fn": "outOfContext"
+   }
+  ]
+ },
+ {
+  "id": "other-03",
+  "group": "other",
+  "text": "сколько будет 2+2",
+  "expect": [
+   {
+    "fn": "outOfContext"
+   }
+  ]
+ },
+ {
+  "id": "other-04",
+  "group": "other",
+  "text": "расскажи анекдот",
+  "expect": [
+   {
+    "fn": "outOfContext"
+   }
+  ]
+ },
+ {
+  "id": "lang-01",
+  "group": "lang",
+  "text": "кофе 1500 жұмсадым",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 1500
+   }
+  ]
+ },
+ {
+  "id": "lang-02",
+  "group": "lang",
+  "text": "таксиге 2000 жұмсадым",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 2000,
+    "category": "Транспорт"
+   }
+  ]
+ },
+ {
+  "id": "lang-03",
+  "group": "lang",
+  "text": "жалақы 500000 алдым",
+  "expect": [
+   {
+    "fn": "addIncome",
+    "amount": 500000,
+    "category": "Зарплата"
+   }
+  ]
+ },
+ {
+  "id": "lang-04",
+  "group": "lang",
+  "text": "осы айда қанша жұмсадым",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "SUM",
+    "type": "EXPENSE",
+    "period": "THIS_MONTH"
+   }
+  ]
+ },
+ {
+  "id": "lang-05",
+  "group": "lang",
+  "text": "spent 3000 on taxi",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 3000,
+    "category": "Транспорт"
+   }
+  ]
+ },
+ {
+  "id": "lang-06",
+  "group": "lang",
+  "text": "how much did I spend this month",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "SUM",
+    "type": "EXPENSE",
+    "period": "THIS_MONTH"
+   }
+  ]
+ },
+ {
+  "id": "speech-01",
+  "group": "speech",
+  "text": "э ну короче купил продукты тысяч на пять",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 5000,
+    "category": "Продукты"
+   }
+  ]
+ },
+ {
+  "id": "speech-02",
+  "group": "speech",
+  "text": "запиши такси две тысячи триста",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 2300,
+    "category": "Транспорт"
+   }
+  ]
+ },
+ {
+  "id": "speech-03",
+  "group": "speech",
+  "text": "добавь расход кофе тысяча двести",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 1200
+   }
+  ]
+ },
+ {
+  "id": "speech-04",
+  "group": "speech",
+  "text": "сегодня в обед потратил три тысячи на еду",
+  "expect": [
+   {
+    "fn": "addExpense",
+    "amount": 3000
+   }
+  ]
+ },
+ {
+  "id": "speech-05",
+  "group": "speech",
+  "text": "а сколько я потратил на такси",
+  "expect": [
+   {
+    "fn": "askFinance",
+    "intent": "SUM",
+    "categories": [
+     "Транспорт"
+    ]
+   }
+  ]
+ }
+]
