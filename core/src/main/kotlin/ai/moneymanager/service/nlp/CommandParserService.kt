@@ -42,6 +42,7 @@ import com.google.genai.types.FunctionCall
 import com.google.genai.types.GenerateContentConfig
 import com.google.genai.types.Part
 import com.google.genai.types.ThinkingConfig
+import com.google.genai.types.ThinkingLevel
 import com.google.genai.types.Tool
 import jakarta.annotation.PostConstruct
 import org.slf4j.Logger
@@ -130,7 +131,7 @@ class CommandParserService(
             )
             .thinkingConfig(
                 ThinkingConfig.builder()
-                    .thinkingBudget(0)
+                    .thinkingLevel(ThinkingLevel.Known.MINIMAL)
                     .build()
             )
             .build()

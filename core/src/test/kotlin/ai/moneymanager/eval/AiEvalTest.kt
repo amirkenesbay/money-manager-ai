@@ -26,7 +26,7 @@ import java.time.temporal.TemporalAdjusters
 import kotlin.math.abs
 
 private const val CASES = "/ai-eval/cases.json"
-private const val DEFAULT_MODEL = "gemini-3.1-flash-lite"
+private const val DEFAULT_MODEL = "gemini-3.5-flash-lite"
 private const val AMOUNT_TOLERANCE = 0.01
 private const val REPORT_DIR = "build/ai-eval"
 
