@@ -8,6 +8,14 @@ export function isFlagStored(key: string): boolean {
   }
 }
 
+export function clearFlag(key: string): void {
+  try {
+    localStorage.removeItem(key)
+  } catch {
+    return
+  }
+}
+
 export function storeFlag(key: string): void {
   try {
     localStorage.setItem(key, FLAG_VALUE)

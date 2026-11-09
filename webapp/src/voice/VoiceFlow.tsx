@@ -248,7 +248,14 @@ function BreathingOrb({ level, waiting }: { level: () => number; waiting: boolea
     return () => cancelAnimationFrame(frame)
   }, [level])
 
-  return <span ref={orb} className={waiting ? 'voice-breath waiting' : 'voice-breath'} aria-hidden="true" />
+  return (
+    <span ref={orb} className={waiting ? 'voice-glow waiting' : 'voice-glow'} aria-hidden="true">
+      <i className="voice-ring" />
+      <i className="voice-ring" />
+      <i className="voice-ring" />
+      <span className="voice-breath" />
+    </span>
+  )
 }
 
 function ThinkingScreen({ groupId, request, onDone, onFailed, onCancel }: {

@@ -47,6 +47,27 @@
   border-radius: 0.5rem;
 }
 
+.home-header-side {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.home-privacy {
+  color: var(--muted);
+}
+
+.home-content {
+  display: contents;
+}
+
+.amounts-hidden :is(.amount, .home-hero-meta, .home-bars-label, .home-pace-labels, .budget-status, .budget-line.caption, .budget-carried) {
+  filter: blur(0.45em);
+  user-select: none;
+  transition: filter var(--fade-duration) ease-out;
+}
+
 .home-period {
   flex-shrink: 0;
   font-size: var(--text-sm);

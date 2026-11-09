@@ -1377,6 +1377,110 @@ button {
   width: 3rem;
 }
 
+.slide-confirm {
+  --slide-thumb: 3.25rem;
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: calc(var(--slide-thumb) + 0.5rem);
+  padding: 0.25rem;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--inset-sm);
+  overflow: hidden;
+  touch-action: none;
+}
+
+.slide-confirm-fill {
+  position: absolute;
+  inset: 0.25rem auto 0.25rem 0.25rem;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--negative) 22%, transparent);
+}
+
+.slide-confirm-label {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding-left: var(--slide-thumb);
+  color: var(--negative);
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.slide-confirm-thumb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--slide-thumb);
+  height: var(--slide-thumb);
+  border: none;
+  border-radius: 50%;
+  background: var(--negative);
+  color: var(--on-negative);
+  box-shadow: var(--raise-sm);
+  cursor: grab;
+  touch-action: none;
+}
+
+.slide-confirm.settled .slide-confirm-thumb,
+.slide-confirm.settled .slide-confirm-fill {
+  transition: transform var(--appear), width var(--appear);
+}
+
+.slide-confirm[aria-disabled='true'] {
+  opacity: 0.5;
+}
+
+.limit-slider {
+  width: 100%;
+  height: var(--touch);
+  margin: 0;
+  background: transparent;
+  appearance: none;
+  cursor: pointer;
+}
+
+.limit-slider::-webkit-slider-runnable-track {
+  height: 0.625rem;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(to right, var(--accent) var(--fill, 0%), transparent var(--fill, 0%));
+  box-shadow: var(--inset-sm);
+}
+
+.limit-slider::-moz-range-track {
+  height: 0.625rem;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(to right, var(--accent) var(--fill, 0%), transparent var(--fill, 0%));
+  box-shadow: var(--inset-sm);
+}
+
+.limit-slider::-webkit-slider-thumb {
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-top: -0.5625rem;
+  border-radius: 50%;
+  background: var(--bg);
+  box-shadow: var(--raise-sm);
+  appearance: none;
+}
+
+.limit-slider::-moz-range-thumb {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  border-radius: 50%;
+  background: var(--bg);
+  box-shadow: var(--raise-sm);
+}
+
+.limit-slider:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: var(--radius-pill);
+}
+
 .switch {
   display: inline-flex;
   flex-shrink: 0;
@@ -1549,10 +1653,7 @@ button {
 }
 
 .thinking-orb {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+  position: relative;
   width: 7.5rem;
   height: 7.5rem;
   border-radius: 50%;
@@ -1560,38 +1661,47 @@ button {
 }
 
 .thinking-orb i {
-  width: 0.75rem;
-  height: 0.75rem;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: -1.125rem 0 0 -1.125rem;
   border-radius: 50%;
-  background: var(--accent);
-  animation: thinking-bob 1.1s ease-in-out infinite;
+  background: radial-gradient(circle at 35% 30%, var(--chart-1), var(--accent) 60%);
+  filter: blur(1px);
+  opacity: 0.85;
+  animation: thinking-orbit 2.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 }
 
 .thinking-orb i:nth-child(2) {
-  animation-delay: 0.15s;
+  background: radial-gradient(circle at 35% 30%, var(--chart-3), var(--chart-2) 60%);
+  animation-delay: -0.8s;
 }
 
 .thinking-orb i:nth-child(3) {
-  animation-delay: 0.3s;
+  background: radial-gradient(circle at 35% 30%, var(--chart-4), var(--chart-3) 60%);
+  animation-delay: -1.6s;
+}
+
+@keyframes thinking-orbit {
+  0% {
+    transform: rotate(0deg) translateX(1.4rem) rotate(0deg) scale(0.8);
+  }
+
+  50% {
+    transform: rotate(180deg) translateX(0.6rem) rotate(-180deg) scale(1.15);
+  }
+
+  100% {
+    transform: rotate(360deg) translateX(1.4rem) rotate(-360deg) scale(0.8);
+  }
 }
 
 .thinking-stage {
   margin: 0;
   color: var(--muted);
   animation: appear var(--appear);
-}
-
-@keyframes thinking-bob {
-  0%,
-  100% {
-    opacity: 0.4;
-    transform: translateY(0);
-  }
-
-  50% {
-    opacity: 1;
-    transform: translateY(-0.625rem);
-  }
 }
 
 .shake {

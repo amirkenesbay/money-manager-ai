@@ -6,7 +6,7 @@ import { formatPeriod } from '../format'
 import { OperationDays } from '../operations/OperationDays'
 import type { OperationActions } from '../operations/operationActions'
 import { strings } from '../strings'
-import { ArrowDownIcon, ChevronDownIcon } from '../ui/icons'
+import { ArrowDownIcon, ChevronDownIcon, EyeIcon, EyeOffIcon } from '../ui/icons'
 import { LoadError } from '../ui/LoadError'
 import { SkeletonCard, SkeletonRows } from '../ui/Skeleton'
 import './Dashboard.css'
@@ -14,6 +14,7 @@ import { HomeHero } from './HomeHero'
 import { tourTarget } from '../onboarding/tourTarget'
 import { HomeScreenOffer } from './HomeScreenOffer'
 import { useDashboard } from './useDashboard'
+import { useHiddenAmounts } from './useHiddenAmounts'
 
 const RECENT_SKELETON_ROWS = 3
 const ASK_HINT_OPERATIONS = 5
@@ -36,18 +37,32 @@ export function Dashboard({ groups, groupId, userId, language, switchError, onSw
   const dashboard = useDashboard(groupId)
   const ready = dashboard.state.status === 'ready' ? dashboard.state.data : null
   const group = groups.find((candidate) => candidate.id === groupId)
+  const amounts = useHiddenAmounts()
 
   return (
     <>
       <header className="home-header">
         <GroupSwitch groups={groups} activeGroupId={groupId} onSwitch={onSwitchGroup} />
-        {ready && <span className="caption home-period">{formatPeriod(ready.summary.from, ready.summary.to, language)}</span>}
+        {ready && (
+          <span className="home-header-side">
+            <span className="caption home-period">{formatPeriod(ready.summary.from, ready.summary.to, language)}</span>
+            <button
+              type="button"
+              className="round-button home-privacy pressable"
+              aria-label={amounts.hidden ? strings.showAmounts : strings.hideAmounts}
+              aria-pressed={amounts.hidden}
+              onClick={amounts.toggle}
+            >
+              {amounts.hidden ? <EyeOffIcon /> : <EyeIcon />}
+            </button>
+          </span>
+        )}
       </header>
       {switchError && <p className="error-text" role="alert">{switchError}</p>}
       {dashboard.state.status === 'loading' && <DashboardSkeleton />}
       {dashboard.state.status === 'error' && <LoadError message={dashboard.state.message} onRetry={dashboard.reload} />}
       {ready && group && (
-        <>
+        <div className={amounts.hidden ? 'home-content amounts-hidden' : 'home-content'}>
           <HomeHero balance={ready.balance} summary={ready.summary} language={language} onAddIncome={onAddIncome} />
           <DebtsSummary groupId={groupId} currency={ready.balance.currency} language={language} showSettled={group.splitExpenses} onOpen={onOpenDebts} />
           <HomeScreenOffer />
@@ -62,7 +77,7 @@ export function Dashboard({ groups, groupId, userId, language, switchError, onSw
             onOpenOperations={onOpenOperations}
             onSelectOperation={onSelectOperation}
           />
-        </>
+        </div>
       )}
     </>
   )

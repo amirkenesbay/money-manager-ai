@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { strings } from '../strings'
 import { Button } from './Button'
 import { Sheet } from './Sheet'
+import { SlideToConfirm } from './SlideToConfirm'
 import { useSubmit } from './useSubmit'
 
 export function ConfirmSheet({ title, children, confirmLabel, onConfirm, onDone, onClose }: {
@@ -24,7 +25,7 @@ export function ConfirmSheet({ title, children, confirmLabel, onConfirm, onDone,
       <h2 className="sheet-title">{title}</h2>
       {children}
       {submit.error && <p className="error-text" role="alert">{submit.error.message}</p>}
-      <Button className="button-destructive" disabled={submit.pending} onClick={confirm}>{confirmLabel}</Button>
+      <SlideToConfirm label={confirmLabel} disabled={submit.pending} onConfirm={confirm} />
       <Button variant="secondary" onClick={onClose}>{strings.keep}</Button>
     </Sheet>
   )

@@ -20,6 +20,7 @@ import { formatPeriod } from '../format'
 import { parseAmount } from '../operation/amount'
 import { currentPeriodMonth, monthRange } from '../operations/periods'
 import { AmountInput } from '../ui/AmountInput'
+import { LimitSlider } from '../ui/LimitSlider'
 
 export function CategoryForm({ group, language, type, category, onBack, onSaved, onDeleted, onLimit, onBudgetLimit }: {
   group: Group
@@ -90,6 +91,7 @@ export function CategoryForm({ group, language, type, category, onBack, onSaved,
       {formType === 'EXPENSE' && (
         <>
           <AmountInput label={strings.budgetLimitLabel} value={limitText} currency={group.currency} invalid={limitInvalid} onChange={setLimitText} />
+          <LimitSlider label={strings.budgetLimitLabel} value={limit === null ? null : Number(limit)} currency={group.currency} language={language} onChange={setLimitText} />
           <p className="caption">{strings.budgetLimitHint(formatPeriod(range.from, range.to, language))}</p>
           {limit !== null && (
             <div className="switch-row">

@@ -87,7 +87,43 @@
   font-size: var(--text-lg);
 }
 
+.voice-glow {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 9.5rem;
+  height: 9.5rem;
+}
+
+.voice-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 55%, transparent) 30%, transparent 70%);
+  opacity: calc(0.15 + min(var(--voice-level, 0), 0.3) * 2.5);
+  transform: scale(calc(1 + min(var(--voice-level, 0), 0.3) * var(--ring-reach)));
+  transition: transform 120ms linear, opacity 160ms linear;
+  pointer-events: none;
+}
+
+.voice-ring:nth-child(1) {
+  --ring-reach: 1.5;
+}
+
+.voice-ring:nth-child(2) {
+  --ring-reach: 2.6;
+}
+
+.voice-ring:nth-child(3) {
+  --ring-reach: 3.8;
+}
+
+.voice-glow.waiting .voice-ring {
+  opacity: 0;
+}
+
 .voice-breath {
+  position: relative;
   width: 9.5rem;
   height: 9.5rem;
   border-radius: 50%;
@@ -98,7 +134,7 @@
   animation: voice-breathe 2.4s ease-in-out infinite;
 }
 
-.voice-breath.waiting {
+.voice-glow.waiting .voice-breath {
   opacity: 0.35;
   animation: none;
 }

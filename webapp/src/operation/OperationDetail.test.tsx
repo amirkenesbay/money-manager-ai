@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiRequestError } from '../api/client'
@@ -6,6 +6,7 @@ import { deleteOperation } from '../operations/operationsApi'
 import { strings } from '../strings'
 import { group, me, operation, PERSONAL_GROUP_ID } from '../test/fixtures'
 import { OperationDetail } from './OperationDetail'
+import { confirmBySlide } from '../test/slide'
 
 vi.mock('../operations/operationsApi', () => ({ deleteOperation: vi.fn() }))
 
@@ -42,7 +43,10 @@ describe('OperationDetail', () => {
     const sheet = screen.getByRole('dialog', { name: strings.deleteQuestion })
     expect(deleteOperation).not.toHaveBeenCalled()
 
-    await userEvent.click(sheet.querySelector('.button-destructive')!)
+    await userEvent.click(within(sheet).getByRole('button', { name: strings.delete }))
+    expect(deleteOperation).not.toHaveBeenCalled()
+
+    await confirmBySlide(sheet, strings.delete)
 
     expect(deleteOperation).toHaveBeenCalledWith(PERSONAL_GROUP_ID, 'op-1')
     expect(onDeleted).toHaveBeenCalledWith(operation())
@@ -63,7 +67,7 @@ describe('OperationDetail', () => {
     renderDetail()
 
     await userEvent.click(screen.getByRole('button', { name: strings.delete }))
-    await userEvent.click(screen.getByRole('dialog').querySelector('.button-destructive')!)
+    await confirmBySlide(screen.getByRole('dialog'), strings.delete)
 
     expect(await screen.findByText(strings.deleteFailed)).toBeInTheDocument()
     expect(onDeleted).not.toHaveBeenCalled()

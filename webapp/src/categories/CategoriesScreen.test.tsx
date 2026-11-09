@@ -6,6 +6,7 @@ import { strings } from '../strings'
 import { category, group, me, PERSONAL_GROUP_ID } from '../test/fixtures'
 import { createCategory, reorderCategories, deleteCategory, fetchCategories, fetchCategoryRules, forgetCategoryRule, updateCategory } from './categoriesApi'
 import { CategoriesScreen } from './CategoriesScreen'
+import { confirmBySlide } from '../test/slide'
 
 vi.mock('./categoriesApi', () => ({
   reorderCategories: vi.fn(),
@@ -136,7 +137,7 @@ describe('CategoriesScreen', () => {
 
     await user.click(await screen.findByRole('button', { name: /^Продукты/ }))
     await user.click(screen.getByRole('button', { name: strings.deleteCategory }))
-    await user.click(screen.getByRole('button', { name: strings.delete }))
+    await confirmBySlide(screen.getByRole('dialog'), strings.delete)
 
     expect(deleteCategory).toHaveBeenCalledWith(PERSONAL_GROUP_ID, groceries.id)
     expect(notify).toHaveBeenCalledWith({ title: strings.categoryDeletedToast, detail: '🛒 Продукты' })

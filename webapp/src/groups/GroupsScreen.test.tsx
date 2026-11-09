@@ -7,6 +7,7 @@ import { strings } from '../strings'
 import { FAMILY_GROUP_ID, group, me } from '../test/fixtures'
 import { createGroup, deleteGroup, fetchInvite, fetchMembers } from './groupsApi'
 import { type GroupActions, GroupsScreen } from './GroupsScreen'
+import { confirmBySlide } from '../test/slide'
 
 vi.mock('./groupsApi', () => ({
   createGroup: vi.fn(),
@@ -102,7 +103,7 @@ describe('GroupsScreen', () => {
 
     await user.click(screen.getByRole('button', { name: /Семья/ }))
     await user.click(screen.getByRole('button', { name: strings.deleteGroup }))
-    await user.click(screen.getAllByRole('button', { name: strings.deleteGroup }).at(-1)!)
+    await confirmBySlide(screen.getByRole('dialog'), strings.deleteGroup)
 
     expect(deleteGroup).toHaveBeenCalledWith(FAMILY_GROUP_ID)
     expect(actions.deleted).toHaveBeenCalledWith(owned)
