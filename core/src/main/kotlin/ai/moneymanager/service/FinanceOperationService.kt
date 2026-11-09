@@ -1,5 +1,7 @@
 package ai.moneymanager.service
 
+import ai.moneymanager.repository.entity.MoneyGroupEntity
+import ai.moneymanager.domain.model.SplitDefault
 import ai.moneymanager.domain.model.BalanceBreakdown
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.ExpenseShare
@@ -151,7 +153,12 @@ class FinanceOperationService(
         if (type != CategoryType.EXPENSE) return null
         val group = moneyGroupRepository.findById(groupId).orElse(null) ?: return null
         if (!group.splitExpenses || group.type != GroupType.SHARED) return null
-        return requested?.takeIf { it.fitsMembers(group.memberIds) } ?: ExpenseShare(defaultPayerId, group.memberIds)
+        return requested?.takeIf { it.fitsMembers(group.memberIds) } ?: defaultShare(group, defaultPayerId)
+    }
+
+    private fun defaultShare(group: MoneyGroupEntity, payerId: Long): ExpenseShare = when (group.splitDefault) {
+        SplitDefault.MINE -> ExpenseShare(payerId, setOf(payerId))
+        SplitDefault.EVERYONE -> ExpenseShare(payerId, group.memberIds)
     }
 
     fun getOperation(groupId: ObjectId, operationId: ObjectId): FinanceOperationEntity? =

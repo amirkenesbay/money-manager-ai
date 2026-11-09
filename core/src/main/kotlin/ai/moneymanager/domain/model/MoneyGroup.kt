@@ -16,9 +16,15 @@ data class MoneyGroup(
     val currency: Currency = Currency.DEFAULT,
     val monthStartDay: Int = DEFAULT_MONTH_START_DAY,
     val splitExpenses: Boolean = false,
+    val splitDefault: SplitDefault = SplitDefault.MINE,
 ) {
     val splitsExpenses: Boolean
         get() = splitExpenses && type == GroupType.SHARED
+}
+
+enum class SplitDefault {
+    MINE,
+    EVERYONE,
 }
 
 enum class GroupType {

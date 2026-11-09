@@ -1,5 +1,6 @@
 package ai.moneymanager.service
 
+import ai.moneymanager.domain.model.SplitDefault
 import ai.moneymanager.domain.event.CategoryCorrected
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
@@ -70,8 +71,17 @@ class FinanceOperationServiceTest {
     }
 
     @Test
-    fun `splits a new expense equally between all members when the group shares expenses`() {
+    fun `keeps a new expense on the payer alone unless the group splits everything in half`() {
         `when`(groupRepository.findById(groupId)).thenReturn(Optional.of(splitGroup(splitExpenses = true)))
+
+        val created = service.create(groupId, CREATOR_ID, OperationDraft(CategoryType.EXPENSE, BigDecimal("1120"), taxi, LocalDate.of(2026, 11, 9), null))
+
+        assertThat(created.share).isEqualTo(ExpenseShare(CREATOR_ID, setOf(CREATOR_ID)))
+    }
+
+    @Test
+    fun `splits a new expense between all members when the group splits everything`() {
+        `when`(groupRepository.findById(groupId)).thenReturn(Optional.of(splitGroup(splitExpenses = true).copy(splitDefault = SplitDefault.EVERYONE)))
 
         val created = service.create(groupId, CREATOR_ID, OperationDraft(CategoryType.EXPENSE, BigDecimal("3000"), taxi, LocalDate.of(2026, 11, 4), null))
 
@@ -88,7 +98,7 @@ class FinanceOperationServiceTest {
         val dropped = service.create(groupId, CREATOR_ID, OperationDraft(CategoryType.EXPENSE, BigDecimal("3000"), taxi, LocalDate.of(2026, 11, 4), null, stranger))
 
         assertThat(kept.share).isEqualTo(chosen)
-        assertThat(dropped.share).isEqualTo(ExpenseShare(CREATOR_ID, setOf(CREATOR_ID, PARTNER_ID)))
+        assertThat(dropped.share).isEqualTo(ExpenseShare(CREATOR_ID, setOf(CREATOR_ID)))
     }
 
     @Test

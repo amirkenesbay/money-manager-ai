@@ -1,10 +1,11 @@
-import type { Currency } from '../api/types'
+import type { Currency, SplitDefault } from '../api/types'
 import { useMembers } from '../groups/useMembers'
-import { everyoneShare, type Share } from './share'
+import { everyoneShare, onlyMeShare, type Share } from './share'
 import { SplitField } from './SplitField'
 
-export function ExpenseSplit({ groupId, userId, amount, currency, language, share, onChange }: {
+export function ExpenseSplit({ groupId, splitDefault, userId, amount, currency, language, share, onChange }: {
   groupId: string
+  splitDefault: SplitDefault
   userId: number
   amount: number | null
   currency: Currency
@@ -22,7 +23,7 @@ export function ExpenseSplit({ groupId, userId, amount, currency, language, shar
       amount={amount}
       currency={currency}
       language={language}
-      share={share ?? everyoneShare(list, userId)}
+      share={share ?? (splitDefault === 'EVERYONE' ? everyoneShare(list, userId) : onlyMeShare(userId))}
       onChange={onChange}
     />
   )

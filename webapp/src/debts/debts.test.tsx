@@ -59,18 +59,15 @@ describe('splitting', () => {
 
   it('picks who paid and for whom and shows my part', async () => {
     const onChange = vi.fn()
-    const view = render(<SplitField members={MEMBERS} userId={ME} amount={3000} currency="KZT" language="ru" share={{ payerId: ME, participantIds: [ME, ANYA, DANYA] }} onChange={onChange} />)
+    render(<SplitField members={MEMBERS} userId={ME} amount={3000} currency="KZT" language="ru" share={{ payerId: ME, participantIds: [ME, ANYA, DANYA] }} onChange={onChange} />)
 
+    await userEvent.click(screen.getByRole('button', { name: new RegExp(`${strings.paidForLabel}: ${strings.splitEveryone}`) }))
     expect(screen.getByRole('status')).toHaveTextContent(asRendered(strings.shareOwed(formatMoney('2000', 'KZT', 'ru'))))
     await userEvent.click(screen.getByRole('button', { name: new RegExp(strings.paidByLabel) }))
-    await userEvent.click(screen.getByRole('radio', { name: 'Даня' }))
-    expect(onChange).toHaveBeenLastCalledWith({ payerId: DANYA, participantIds: [ME, ANYA, DANYA] })
-
-    view.rerender(<SplitField members={MEMBERS} userId={ME} amount={3000} currency="KZT" language="ru" share={{ payerId: DANYA, participantIds: [ME, ANYA, DANYA] }} onChange={onChange} />)
-    await userEvent.click(screen.getByRole('button', { name: new RegExp(strings.paidForLabel) }))
-    await userEvent.click(screen.getByRole('checkbox', { name: /Аня/ }))
+    await userEvent.click(screen.getByRole('button', { name: /Аня/, pressed: true }))
     await userEvent.click(screen.getByRole('button', { name: strings.done }))
-    expect(onChange).toHaveBeenLastCalledWith({ payerId: DANYA, participantIds: [ME, DANYA] })
+
+    expect(onChange).toHaveBeenLastCalledWith({ payerId: ANYA, participantIds: [ME, DANYA] })
   })
 })
 

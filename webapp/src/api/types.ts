@@ -78,6 +78,8 @@ export interface Me {
   subscription: Subscription
 }
 
+export type SplitDefault = 'MINE' | 'EVERYONE'
+
 export type Currency = 'KZT' | 'USD' | 'RUB' | 'EUR' | 'KGS'
 
 export type CategoryType = 'EXPENSE' | 'INCOME'
@@ -96,6 +98,7 @@ export interface Group {
   monthStartDay: number
   noticeLevel: GroupNoticeLevel
   splitExpenses: boolean
+  splitDefault: SplitDefault
 }
 
 export type GroupNoticeLevel = 'ALL' | 'IMPORTANT' | 'OFF'

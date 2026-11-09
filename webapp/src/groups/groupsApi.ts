@@ -1,5 +1,5 @@
 import { apiRequest } from '../api/client'
-import type { Currency, Group, GroupNoticeLevel, Invite, Member } from '../api/types'
+import type { Currency, Group, GroupNoticeLevel, Invite, Member, SplitDefault } from '../api/types'
 
 const groupPath = (groupId: string) => `/groups/${groupId}`
 
@@ -11,7 +11,7 @@ export const activateGroup = (groupId: string): Promise<void> =>
 export const createGroup = (name: string, currency: Currency): Promise<Group> =>
   apiRequest<Group>('/groups', { method: 'POST', body: JSON.stringify({ name, currency }) })
 
-export const updateGroup = (groupId: string, changes: { name?: string; currency?: Currency; monthStartDay?: number; splitExpenses?: boolean }): Promise<Group> =>
+export const updateGroup = (groupId: string, changes: { name?: string; currency?: Currency; monthStartDay?: number; splitExpenses?: boolean; splitDefault?: SplitDefault }): Promise<Group> =>
   apiRequest<Group>(groupPath(groupId), { method: 'PATCH', body: JSON.stringify(changes) })
 
 export const deleteGroup = (groupId: string): Promise<void> =>

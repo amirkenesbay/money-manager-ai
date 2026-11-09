@@ -164,7 +164,7 @@ function FormFields({ group, userId, language, operation, initialType, initialCa
       </fieldset>
 
       {splitting && (
-        <ExpenseSplit groupId={group.id} userId={userId} amount={amount === null ? null : Number(amount)} currency={group.currency} language={language} share={share} onChange={setShare} />
+        <ExpenseSplit groupId={group.id} splitDefault={group.splitDefault} userId={userId} amount={amount === null ? null : Number(amount)} currency={group.currency} language={language} share={share} onChange={setShare} />
       )}
 
       <fieldset className="field-group" {...tourTarget('form-date')}>

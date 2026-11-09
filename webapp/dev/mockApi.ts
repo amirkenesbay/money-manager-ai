@@ -82,8 +82,8 @@ const premiumRequired: MockResponse = {
 }
 
 let groups: Group[] = [
-  { id: PERSONAL_GROUP_ID, name: 'Личное', type: 'PERSONAL', currency: 'KZT', isOwner: true, isActive: true, memberCount: 1, initialBalance: '50000', monthStartDay: 1, noticeLevel: 'ALL', splitExpenses: false },
-  { id: FAMILY_GROUP_ID, name: 'Семья', type: 'SHARED', currency: 'USD', isOwner: false, isActive: false, memberCount: 3, initialBalance: '0', monthStartDay: 1, noticeLevel: 'ALL', splitExpenses: true },
+  { id: PERSONAL_GROUP_ID, name: 'Личное', type: 'PERSONAL', currency: 'KZT', isOwner: true, isActive: true, memberCount: 1, initialBalance: '50000', monthStartDay: 1, noticeLevel: 'ALL', splitExpenses: false, splitDefault: 'MINE' },
+  { id: FAMILY_GROUP_ID, name: 'Семья', type: 'SHARED', currency: 'USD', isOwner: false, isActive: false, memberCount: 3, initialBalance: '0', monthStartDay: 1, noticeLevel: 'ALL', splitExpenses: true, splitDefault: 'MINE' },
 ]
 
 const groupOf = (groupId: string): Group => groups.find((group) => group.id === groupId) ?? groups[0]
@@ -384,7 +384,10 @@ let createdOperations = 0
 
 function toOperation(groupId: string, id: string, input: OperationInput): Operation {
   const category = categoriesOf(groupId).find((candidate) => candidate.id === input.categoryId)
-  const split = groupOf(groupId).splitExpenses && input.type === 'EXPENSE' && input.payerId == null ? { payerId: 1, participantIds: MEMBERS.map((member) => member.userId) } : {}
+  const group = groupOf(groupId)
+  const split = group.splitExpenses && input.type === 'EXPENSE' && input.payerId == null
+    ? { payerId: 1, participantIds: group.splitDefault === 'EVERYONE' ? MEMBERS.map((member) => member.userId) : [1] }
+    : {}
   return { id, ...input, ...split, categoryName: category?.name ?? input.categoryId, categoryIcon: category?.icon ?? '📌', creatorId: 1, creatorName: 'Dev' }
 }
 
@@ -707,7 +710,7 @@ function createGroup(body: string, scenario: string): MockResponse {
   }
   createdGroups += 1
   const id = `${GROUP_ID_PREFIX}${String(createdGroups).padStart(GROUP_ID_DIGITS, '0')}`
-  const created: Group = { id, name, type: 'SHARED', currency: input.currency, isOwner: true, isActive: true, memberCount: 1, initialBalance: '0', monthStartDay: 1, noticeLevel: 'ALL', splitExpenses: false }
+  const created: Group = { id, name, type: 'SHARED', currency: input.currency, isOwner: true, isActive: true, memberCount: 1, initialBalance: '0', monthStartDay: 1, noticeLevel: 'ALL', splitExpenses: false, splitDefault: 'MINE' }
   groups = [...groups, created]
   operations[id] = []
   activeGroupId = id

@@ -80,7 +80,11 @@ class GroupController(
             if (group.type == GroupType.PERSONAL) throw badRequest(PERSONAL_GROUP_LOCKED_KEY)
             checkNotNull(groupService.updateSplitExpenses(userId, groupId, enabled))
         } ?: updated
-        return split.toResponse(user)
+        val withDefault = request.splitDefault?.let { splitDefault ->
+            if (group.type == GroupType.PERSONAL) throw badRequest(PERSONAL_GROUP_LOCKED_KEY)
+            checkNotNull(groupService.updateSplitDefault(userId, groupId, splitDefault))
+        } ?: split
+        return withDefault.toResponse(user)
     }
 
     @DeleteMapping("/{groupId}")
@@ -145,6 +149,7 @@ class GroupController(
             monthStartDay = monthStartDay,
             noticeLevel = user.noticeLevel(groupId),
             splitExpenses = splitsExpenses,
+            splitDefault = splitDefault,
         )
     }
 }

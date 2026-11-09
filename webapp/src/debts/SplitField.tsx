@@ -2,12 +2,11 @@ import { useState } from 'react'
 import type { Currency, Member } from '../api/types'
 import { strings } from '../strings'
 import { Button } from '../ui/Button'
-import { ChevronDownIcon } from '../ui/icons'
 import { Sheet } from '../ui/Sheet'
-import { impactOf, impactText, memberName, moneyOf, partsOf, type Share } from './share'
+import { impactOf, impactText, memberName, type Share } from './share'
 import './debts.css'
 
-type Picker = 'payer' | 'people' | null
+const PAIR = 2
 
 export function SplitField({ members, userId, amount, currency, language, share, onChange }: {
   members: Member[]
@@ -18,90 +17,89 @@ export function SplitField({ members, userId, amount, currency, language, share,
   share: Share
   onChange: (share: Share) => void
 }) {
-  const [picker, setPicker] = useState<Picker>(null)
-  const nameOf = (id: number) => memberName(members, userId, id)
-  const everyone = share.participantIds.length === members.length
-  const onlyMe = share.participantIds.length === 1 && share.participantIds[0] === userId
-  const peopleLabel = everyone ? strings.forEveryone : onlyMe ? strings.forMyself : share.participantIds.map(nameOf).join(', ')
-
+  const [open, setOpen] = useState(false)
+  const label = shareLabel(members, userId, share)
   return (
     <>
-      <div className="split-field">
-        <button type="button" className="split-pick pressable" onClick={() => setPicker('payer')}>
-          <span className="caption">{strings.paidByLabel}</span>
-          <span className="split-value">{nameOf(share.payerId)}<ChevronDownIcon /></span>
-        </button>
-        <button type="button" className="split-pick pressable" onClick={() => setPicker('people')}>
-          <span className="caption">{strings.paidForLabel}</span>
-          <span className="split-value">{peopleLabel}<ChevronDownIcon /></span>
-        </button>
-      </div>
-      {amount !== null && <p className="caption split-outcome" role="status">{outcomeOf(amount, share, userId, currency, language)}</p>}
-      {picker === 'payer' && (
-        <Sheet label={strings.paidByLabel} onClose={() => setPicker(null)}>
-          <h2 className="sheet-title">{strings.paidByLabel}</h2>
-          <div className="split-options" role="radiogroup" aria-label={strings.paidByLabel}>
-            {members.map((member) => (
-              <button
-                key={member.userId}
-                type="button"
-                role="radio"
-                className="split-option"
-                aria-checked={member.userId === share.payerId}
-                onClick={() => {
-                  onChange({ ...share, payerId: member.userId })
-                  setPicker(null)
-                }}
-              >
-                {nameOf(member.userId)}
-              </button>
-            ))}
-          </div>
-        </Sheet>
-      )}
-      {picker === 'people' && (
-        <PeopleSheet members={members} userId={userId} amount={amount} currency={currency} language={language} share={share} nameOf={nameOf} onChange={onChange} onClose={() => setPicker(null)} />
+      <button type="button" className="chip split-chip pressable" aria-label={`${strings.paidForLabel}: ${label}`} onClick={() => setOpen(true)}>
+        <MemberFaces members={members} userId={userId} ids={share.participantIds} />
+        <span>{label}</span>
+      </button>
+      {open && (
+        <SplitSheet members={members} userId={userId} amount={amount} currency={currency} language={language} share={share} onChange={onChange} onClose={() => setOpen(false)} />
       )}
     </>
   )
 }
 
-function PeopleSheet({ members, userId, amount, currency, language, share, nameOf, onChange, onClose }: {
+function SplitSheet({ members, userId, amount, currency, language, share, onChange, onClose }: {
   members: Member[]
   userId: number
   amount: number | null
   currency: Currency
   language: string
   share: Share
-  nameOf: (id: number) => string
   onChange: (share: Share) => void
   onClose: () => void
 }) {
-  const [people, setPeople] = useState(share.participantIds)
-  const parts = amount !== null && people.length > 0 ? partsOf(amount, { ...share, participantIds: people }) : null
-  const toggle = (id: number) => setPeople((list) => (list.includes(id) ? list.filter((other) => other !== id) : [...list, id]))
+  const [draft, setDraft] = useState(share)
+  const nameOf = (id: number) => memberName(members, userId, id)
+  const toggle = (id: number) => {
+    const people = draft.participantIds.includes(id) ? draft.participantIds.filter((other) => other !== id) : [...draft.participantIds, id]
+    setDraft({ ...draft, participantIds: people })
+  }
+  const nextPayer = () => {
+    const index = members.findIndex((member) => member.userId === draft.payerId)
+    setDraft({ ...draft, payerId: members[(index + 1) % members.length].userId })
+  }
+  const empty = draft.participantIds.length === 0
   return (
     <Sheet label={strings.paidForLabel} onClose={onClose}>
       <h2 className="sheet-title">{strings.paidForLabel}</h2>
-      <div className="split-quick">
-        <button type="button" className="chip pressable" onClick={() => setPeople(members.map((member) => member.userId))}>{strings.forEveryone}</button>
-        <button type="button" className="chip pressable" onClick={() => setPeople([userId])}>{strings.forMyself}</button>
+      <div className="split-people">
+        {members.map((member) => (
+          <button
+            key={member.userId}
+            type="button"
+            className="split-person"
+            aria-pressed={draft.participantIds.includes(member.userId)}
+            onClick={() => toggle(member.userId)}
+          >
+            <MemberFace name={nameOf(member.userId)} />
+            <span>{nameOf(member.userId)}</span>
+          </button>
+        ))}
       </div>
-      <div className="split-options">
-        {members.map((member) => {
-          const part = parts?.get(member.userId)
-          return (
-            <button key={member.userId} type="button" role="checkbox" className="split-option" aria-checked={people.includes(member.userId)} onClick={() => toggle(member.userId)}>
-              <span>{nameOf(member.userId)}</span>
-              {part !== undefined && <span className="caption">{moneyOf(part, currency, language)}</span>}
-            </button>
-          )
-        })}
-      </div>
-      {people.length === 0 && <p className="field-message negative" role="alert">{strings.pickSomeone}</p>}
-      <Button disabled={people.length === 0} onClick={() => { onChange({ ...share, participantIds: people }); onClose() }}>{strings.done}</Button>
+      <p className="split-sentence">
+        {strings.paidByLabel}{' '}
+        <button type="button" className="split-word" aria-label={`${strings.paidByLabel}: ${nameOf(draft.payerId)}`} onClick={nextPayer}>{nameOf(draft.payerId)}</button>
+      </p>
+      {empty
+        ? <p className="field-message negative" role="alert">{strings.pickSomeone}</p>
+        : amount !== null && <p className="caption split-outcome" role="status">{outcomeOf(amount, draft, userId, currency, language)}</p>}
+      <Button disabled={empty} onClick={() => { onChange(draft); onClose() }}>{strings.done}</Button>
     </Sheet>
   )
+}
+
+function MemberFaces({ members, userId, ids }: { members: Member[]; userId: number; ids: number[] }) {
+  return (
+    <span className="member-faces" aria-hidden="true">
+      {ids.map((id) => <MemberFace key={id} name={memberName(members, userId, id)} />)}
+    </span>
+  )
+}
+
+function MemberFace({ name }: { name: string }) {
+  return <span className="member-face" aria-hidden="true">{name.slice(0, 1).toUpperCase()}</span>
+}
+
+function shareLabel(members: Member[], userId: number, share: Share): string {
+  const people = share.participantIds
+  if (people.length === members.length) return members.length === PAIR ? strings.splitHalf : strings.splitEveryone
+  if (people.length === 1 && people[0] === userId) return strings.forMyself
+  if (people.length === 1) return strings.splitFor(memberName(members, userId, people[0]))
+  return people.map((id) => memberName(members, userId, id)).join(', ')
 }
 
 function outcomeOf(amount: number, share: Share, userId: number, currency: Currency, language: string): string {

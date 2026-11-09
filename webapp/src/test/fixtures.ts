@@ -43,6 +43,7 @@ export const group = (overrides: Partial<Group> = {}): Group => ({
   monthStartDay: 1,
   noticeLevel: 'ALL',
   splitExpenses: false,
+  splitDefault: 'MINE',
   ...overrides,
 })
 

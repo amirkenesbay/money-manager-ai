@@ -1,5 +1,6 @@
 package ai.moneymanager.web.group
 
+import ai.moneymanager.domain.model.SplitDefault
 import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.GroupNoticeLevel
 import ai.moneymanager.domain.model.GroupType
@@ -18,6 +19,7 @@ data class GroupResponse(
     val monthStartDay: Int,
     val noticeLevel: GroupNoticeLevel,
     val splitExpenses: Boolean,
+    val splitDefault: SplitDefault,
 )
 
 data class GroupNoticesRequest(
@@ -34,6 +36,7 @@ data class UpdateGroupRequest(
     val currency: Currency?,
     val monthStartDay: Int?,
     val splitExpenses: Boolean? = null,
+    val splitDefault: SplitDefault? = null,
 )
 
 data class InitialBalanceRequest(

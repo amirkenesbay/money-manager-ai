@@ -83,10 +83,12 @@ describe('OperationForm', () => {
     vi.mocked(fetchMembers).mockResolvedValue([{ userId: me, name: 'Dev', isOwner: true }, { userId: 43, name: 'Аня', isOwner: false }])
     render(<OperationForm group={group({ id: 'family', type: 'SHARED', splitExpenses: true })} userId={me} language="ru" operation={null} onBack={vi.fn()} onSaved={onSaved} onDeleted={vi.fn()} />)
     await userEvent.type(await screen.findByRole('textbox', { name: strings.amountLabel }), '3000')
-    await userEvent.click(await screen.findByRole('button', { name: new RegExp(strings.paidByLabel) }))
-    await userEvent.click(screen.getByRole('radio', { name: 'Аня' }))
+    await userEvent.click(await screen.findByRole('button', { name: new RegExp(`${strings.paidForLabel}: ${strings.forMyself}`) }))
+    await userEvent.click(screen.getByRole('button', { name: /Аня/, pressed: false }))
+    await userEvent.click(screen.getByRole('button', { name: new RegExp(strings.paidByLabel) }))
 
     expect(screen.getByRole('status')).toHaveTextContent(asRendered(strings.shareMine(formatMoney('1500', 'KZT', 'ru'))))
+    await userEvent.click(screen.getByRole('button', { name: strings.done }))
     await userEvent.click(saveButton())
 
     expect(createOperation).toHaveBeenCalledWith('family', expect.objectContaining({ payerId: 43, participantIds: [me, 43] }))

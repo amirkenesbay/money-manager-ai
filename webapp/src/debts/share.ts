@@ -34,6 +34,8 @@ export function impactOf(amount: number, share: Share, userId: number): Impact {
   return mine === undefined ? { kind: 'none' } : { kind: 'mine', amount: mine }
 }
 
+export const onlyMeShare = (userId: number): Share => ({ payerId: userId, participantIds: [userId] })
+
 export const everyoneShare = (members: Member[], payerId: number): Share => ({ payerId, participantIds: members.map((member) => member.userId) })
 
 export const moneyOf = (value: number, currency: Currency, language: string): string => formatMoney(String(value), currency, language)

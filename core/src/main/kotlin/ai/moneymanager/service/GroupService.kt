@@ -9,6 +9,7 @@ import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.MONTH_START_DAYS
 import ai.moneymanager.domain.model.GroupCreationResult
 import ai.moneymanager.domain.model.GroupType
+import ai.moneymanager.domain.model.SplitDefault
 import ai.moneymanager.domain.model.MoneyGroup
 import ai.moneymanager.repository.MoneyGroupRepository
 import ai.moneymanager.repository.UserInfoRepository
@@ -160,6 +161,12 @@ class GroupService(
         return mapToModel(saved)
     }
 
+    fun updateSplitDefault(userId: Long, groupId: ObjectId, splitDefault: SplitDefault): MoneyGroup? {
+        val groupEntity = groupRepository.findById(groupId).orElse(null) ?: return null
+        if (groupEntity.ownerId != userId || groupEntity.type != GroupType.SHARED) return null
+        return mapToModel(groupRepository.save(groupEntity.copy(splitDefault = splitDefault)))
+    }
+
     fun updateSplitExpenses(userId: Long, groupId: ObjectId, enabled: Boolean): MoneyGroup? {
         val groupEntity = groupRepository.findById(groupId).orElse(null) ?: return null
         if (groupEntity.ownerId != userId || groupEntity.type != GroupType.SHARED) return null
@@ -267,6 +274,7 @@ class GroupService(
             currency = entity.currency,
             monthStartDay = entity.monthStartDay,
             splitExpenses = entity.splitExpenses,
+            splitDefault = entity.splitDefault,
         )
     }
 

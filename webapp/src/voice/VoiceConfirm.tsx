@@ -158,6 +158,7 @@ function DraftCard({ draft, group, userId, language, removable, repeated, onChan
       {group.splitExpenses && draft.type === 'EXPENSE' && (
         <ExpenseSplit
           groupId={group.id}
+          splitDefault={group.splitDefault}
           userId={userId}
           amount={Number(draft.amount)}
           currency={group.currency}
