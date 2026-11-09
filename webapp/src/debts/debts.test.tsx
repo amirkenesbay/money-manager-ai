@@ -111,8 +111,8 @@ describe('debts', () => {
     vi.mocked(undoSettlement).mockResolvedValue(undefined)
     render(<DebtsScreen me={me()} group={shared} notify={notify} onBack={vi.fn()} />)
 
-    await userEvent.click(await screen.findByRole('tab', { name: new RegExp(strings.debtsTabMine) }))
-    await userEvent.click(screen.getByRole('button', { name: strings.debtPaid }))
+    await userEvent.click(await screen.findByRole('button', { name: /Даня/ }))
+    await userEvent.click(screen.getByRole('button', { name: strings.debtSettle }))
     const amount = screen.getByRole('textbox', { name: strings.debtAmountTitle })
     await userEvent.clear(amount)
     await userEvent.type(amount, '2000')
@@ -152,14 +152,13 @@ describe('personal loans', () => {
     }))
   })
 
-  it('splits loans into what I am owed and what I owe, overdue ones marked', async () => {
+  it('lists loans in both directions with signed amounts, overdue ones marked', async () => {
     render(<DebtsScreen me={me()} group={shared} notify={notify} onBack={vi.fn()} />)
 
-    expect(await screen.findByRole('button', { name: /Ерлан/ })).toHaveTextContent(/просрочено/)
-    expect(screen.queryByRole('button', { name: /Мама/ })).not.toBeInTheDocument()
-    await userEvent.click(screen.getByRole('tab', { name: new RegExp(strings.debtsTabMine) }))
-
-    expect(screen.getByRole('button', { name: /Мама/ })).toBeInTheDocument()
+    const erlan = await screen.findByRole('button', { name: /Ерлан/ })
+    expect(erlan).toHaveTextContent(/просрочено/)
+    expect(erlan.querySelector('.debt-owed')).not.toBeNull()
+    expect(screen.getByRole('button', { name: /Мама/ }).querySelector('.debt-mine')).not.toBeNull()
   })
 
   it('takes everything back from a loan and says it is closed', async () => {

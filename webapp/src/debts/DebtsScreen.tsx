@@ -19,6 +19,7 @@ import { AmountSheet } from './AmountSheet'
 import { burstConfetti, flyCoins } from '../ui/celebrate'
 import { recordSettlement, remindDebtor, undoSettlement } from './debtsApi'
 import { LoanDetail } from './LoanDetail'
+import { MemberFace } from './MemberFace'
 import { overdueDays } from './loanDates'
 import { LoanForm } from './LoanForm'
 import { repayLoan, undoRepayment } from './loansApi'
@@ -27,8 +28,6 @@ import './debts.css'
 
 const SKELETON_ROWS = 3
 const EMPTY_ICON = '🤝'
-
-type Tab = 'owed' | 'mine'
 
 type View = { kind: 'list' } | { kind: 'new'; person?: string; direction?: LoanDirection } | { kind: 'loan'; loanId: string }
 
@@ -39,7 +38,7 @@ interface Repayment {
   origin: Element
 }
 
-const TAB_TOTAL_SELECTOR = '.debt-tab[aria-selected="true"] .debt-tab-total'
+const TOTAL_SELECTOR = '.debts-total-amount'
 
 export function DebtsScreen({ me, group, notify, onBack }: { me: Me; group: Group; notify: Notify; onBack: () => void }) {
   const debts = useDebts(group.id)
@@ -138,7 +137,7 @@ export function DebtsScreen({ me, group, notify, onBack }: { me: Me; group: Grou
           onSave={(amount) => {
             setRepayment(null)
             void run(() => recordSettlement(group.id, repayment.fromId, repayment.toId, amount).then((settlement) => {
-              const total = document.querySelector(TAB_TOTAL_SELECTOR)
+              const total = document.querySelector(TOTAL_SELECTOR)
               if (total && repayment.toId === me.userId) flyCoins(repayment.origin, total)
               else if (total) flyCoins(total, repayment.origin)
               return settlement
@@ -165,41 +164,41 @@ function DebtsBody({ debts, group, userId, language, onOpenLoan, onRemind, onRep
   onRepay: (repayment: Repayment) => void
   onUndo: (settlementId: string) => void
 }) {
-  const [tab, setTab] = useState<Tab>('owed')
   const currency = group.currency
   const money = (amount: string) => formatMoney(amount, currency, language)
   const today = new Date()
-  const direction: LoanDirection = tab === 'owed' ? 'LENT' : 'BORROWED'
-  const loans = debts.loans.filter((loan) => loan.open && loan.direction === direction).sort((left, right) => dueOrder(left) - dueOrder(right))
-  const groupDebts = debts.mine.filter((debt) => (tab === 'owed' ? Number(debt.amount) > 0 : Number(debt.amount) < 0))
+  const loans = debts.loans.filter((loan) => loan.open).sort((left, right) => dueOrder(left) - dueOrder(right))
+  const groupDebts = debts.mine.filter((debt) => Number(debt.amount) !== 0)
   const closed = debts.loans.filter((loan) => !loan.open)
   const empty = debts.loans.length === 0 && debts.mine.length === 0 && debts.others.length === 0
+  const net = Number(debts.owedToMe) - Number(debts.iOwe)
 
   if (empty) return <StateView icon={EMPTY_ICON} title={strings.debtsNone} />
   return (
     <>
-      <div className="debt-tabs" {...tourTarget('debts-tabs')} role="tablist" aria-label={strings.debtsTitle}>
-        {(['owed', 'mine'] as const).map((candidate) => (
-          <button key={candidate} type="button" role="tab" className="debt-tab" aria-selected={tab === candidate} onClick={() => setTab(candidate)}>
-            <span>{candidate === 'owed' ? strings.debtsTabOwed : strings.debtsTabMine}</span>
-            <span className="debt-tab-total">{money(candidate === 'owed' ? debts.owedToMe : debts.iOwe)}</span>
-          </button>
-        ))}
-      </div>
+      <section className="debts-total" {...tourTarget('debts-tabs')}>
+        <span className="debts-total-label">{net >= 0 ? strings.debtsOwedToMe : strings.debtsMine}</span>
+        <span className={`debts-total-amount amount ${net >= 0 ? 'debt-owed' : 'debt-mine'}`}>{money(String(Math.abs(net)))}</span>
+        <span className="caption">{strings.debtsSplit(money(debts.owedToMe), money(debts.iOwe))}</span>
+      </section>
       {loans.length === 0 && groupDebts.length === 0
         ? <p className="caption centered">{strings.debtsNone}</p>
         : (
-          <section className="card">
-            {loans.map((loan) => <LoanRow key={loan.id} loan={loan} currency={currency} language={language} onOpen={() => onOpenLoan(loan.id)} />)}
+          <ul className="debt-people">
             {groupDebts.map((debt) => (
-              <PersonDebt key={debt.userId} debt={debt} groupName={group.name} userId={userId} currency={currency} language={language} onRemind={onRemind} onRepay={onRepay} />
+              <li key={debt.userId}>
+                <PersonDebt debt={debt} groupName={group.name} userId={userId} currency={currency} language={language} onRemind={onRemind} onRepay={onRepay} />
+              </li>
             ))}
-          </section>
+            {loans.map((loan) => <li key={loan.id}><LoanRow loan={loan} currency={currency} language={language} onOpen={() => onOpenLoan(loan.id)} /></li>)}
+          </ul>
         )}
       {closed.length > 0 && (
         <details className="debt-more">
           <summary className="link-button">{strings.loansClosed(closed.length)}</summary>
-          {closed.map((loan) => <LoanRow key={loan.id} loan={loan} currency={currency} language={language} onOpen={() => onOpenLoan(loan.id)} />)}
+          <ul className="debt-people">
+            {closed.map((loan) => <li key={loan.id}><LoanRow loan={loan} currency={currency} language={language} onOpen={() => onOpenLoan(loan.id)} /></li>)}
+          </ul>
         </details>
       )}
       {debts.others.length > 0 && (
@@ -235,20 +234,23 @@ function DebtsBody({ debts, group, userId, language, onOpenLoan, onRemind, onRep
 
 const dueOrder = (loan: Loan): number => (loan.dueDate ? parseLocalDate(loan.dueDate).getTime() : Number.MAX_SAFE_INTEGER)
 
+const signedMoney = (owed: boolean, amount: string, currency: Currency, language: string): string =>
+  formatSignedMoney(owed ? 'INCOME' : 'EXPENSE', amount, currency, language)
+
 function LoanRow({ loan, currency, language, onOpen }: { loan: Loan; currency: Currency; language: string; onOpen: () => void }) {
   const today = new Date()
-  const money = (amount: string) => formatMoney(amount, currency, language)
   const late = loan.open ? overdueDays(loan.dueDate, today) : 0
-  const amount = Number(loan.repaid) > 0 && loan.open ? `${money(loan.remaining)} · ${strings.loanProgress(money(loan.repaid), money(loan.amount))}` : money(loan.amount)
+  const owed = loan.direction === 'LENT'
   return (
-    <button type="button" className="debt-person pressable" onClick={onOpen}>
-      <span className="debt-person-main">
+    <button type="button" className="debt-row pressable" onClick={onOpen}>
+      <MemberFace name={loan.person} size="large" />
+      <span className="debt-row-main">
         <span className="row-title">{loan.person}</span>
-        <span className="caption">{amount}</span>
+        {loan.open && loan.dueDate
+          ? <span className={`due-chip ${late > 0 ? 'overdue' : ''}`}>{late > 0 ? strings.loanOverdue(late) : strings.loanDueOn(formatDayLabel(loan.dueDate, today, language))}</span>
+          : <span className="caption">{loan.note ?? strings.loanLabel}</span>}
       </span>
-      {loan.open && loan.dueDate && (
-        <span className={`due-chip ${late > 0 ? 'overdue' : ''}`}>{late > 0 ? strings.loanOverdue(late) : strings.loanDueOn(formatDayLabel(loan.dueDate, today, language))}</span>
-      )}
+      <span className={`debt-row-amount amount ${owed ? 'debt-owed' : 'debt-mine'}`}>{signedMoney(owed, loan.open ? loan.remaining : loan.amount, currency, language)}</span>
     </button>
   )
 }
@@ -265,30 +267,29 @@ function PersonDebt({ debt, groupName, userId, currency, language, onRemind, onR
   const [open, setOpen] = useState(false)
   const amount = Number(debt.amount)
   const owed = amount > 0
-  const total = formatMoney(String(Math.abs(amount)), currency, language)
-  const repay = (fromId: number, toId: number, origin: Element) => onRepay({ fromId, toId, amount: String(Math.abs(amount)), origin })
+  const settle = (origin: Element) => onRepay({ fromId: owed ? debt.userId : userId, toId: owed ? userId : debt.userId, amount: String(Math.abs(amount)), origin })
   return (
-    <div>
-      <div className="debt-person">
-        <button type="button" className="debt-person-main" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
+    <>
+      <button type="button" className="debt-row pressable" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
+        <MemberFace name={debt.name} size="large" />
+        <span className="debt-row-main">
           <span className="row-title">{debt.name}</span>
-          <span className={`caption ${owed ? 'debt-owed' : 'debt-mine'}`}>{`${owed ? strings.debtOwesMe(total) : strings.debtIOwe(total)} · ${groupName}`}</span>
-        </button>
-        {owed
-          ? (
-            <>
-              <Button size="small" variant="secondary" onClick={() => onRemind(debt)}>{strings.debtRemind}</Button>
-              <Button size="small" variant="secondary" onClick={(event) => repay(debt.userId, userId, event.currentTarget)}>{strings.debtReceived}</Button>
-            </>
-          )
-          : <Button size="small" variant="secondary" onClick={(event) => repay(userId, debt.userId, event.currentTarget)}>{strings.debtPaid}</Button>}
-      </div>
+          <span className="caption">{groupName}</span>
+        </span>
+        <span className={`debt-row-amount amount ${owed ? 'debt-owed' : 'debt-mine'}`}>{signedMoney(owed, String(Math.abs(amount)), currency, language)}</span>
+      </button>
       {open && (
-        <ul className="debt-items">
-          {debt.items.map((item, index) => <DebtLine key={`${item.kind}-${index}`} item={item} currency={currency} language={language} />)}
-        </ul>
+        <div className="debt-details">
+          <ul className="debt-items">
+            {debt.items.map((item, index) => <DebtLine key={`${item.kind}-${index}`} item={item} currency={currency} language={language} />)}
+          </ul>
+          <div className="debt-actions">
+            {owed && <Button size="small" variant="secondary" onClick={() => onRemind(debt)}>{strings.debtRemind}</Button>}
+            <Button size="small" onClick={(event) => settle(event.currentTarget)}>{strings.debtSettle}</Button>
+          </div>
+        </div>
       )}
-    </div>
+    </>
   )
 }
 

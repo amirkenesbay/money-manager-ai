@@ -3,6 +3,7 @@ import type { Currency, Member } from '../api/types'
 import { strings } from '../strings'
 import { Button } from '../ui/Button'
 import { Sheet } from '../ui/Sheet'
+import { MemberFace } from './MemberFace'
 import { impactOf, impactText, memberName, type Share } from './share'
 import './debts.css'
 
@@ -65,7 +66,7 @@ function SplitSheet({ members, userId, amount, currency, language, share, onChan
             aria-pressed={draft.participantIds.includes(member.userId)}
             onClick={() => toggle(member.userId)}
           >
-            <MemberFace name={nameOf(member.userId)} />
+            <MemberFace name={nameOf(member.userId)} size="large" />
             <span>{nameOf(member.userId)}</span>
           </button>
         ))}
@@ -88,10 +89,6 @@ function MemberFaces({ members, userId, ids }: { members: Member[]; userId: numb
       {ids.map((id) => <MemberFace key={id} name={memberName(members, userId, id)} />)}
     </span>
   )
-}
-
-function MemberFace({ name }: { name: string }) {
-  return <span className="member-face" aria-hidden="true">{name.slice(0, 1).toUpperCase()}</span>
 }
 
 function shareLabel(members: Member[], userId: number, share: Share): string {

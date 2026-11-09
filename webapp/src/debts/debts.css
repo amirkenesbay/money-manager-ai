@@ -16,32 +16,6 @@
   color: var(--warning);
 }
 
-.debt-person {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  min-height: 3.5rem;
-  border: none;
-  background: none;
-  color: var(--text);
-  text-align: left;
-  width: 100%;
-}
-
-.debt-person-main {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: flex-start;
-  min-width: 0;
-  min-height: var(--touch);
-  padding: 0;
-  border: none;
-  background: none;
-  color: inherit;
-  text-align: left;
-}
-
 .debt-more {
   margin-top: 1rem;
 }
@@ -106,40 +80,6 @@
   background: var(--accent);
 }
 
-.debt-tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.375rem;
-  padding: 0.25rem;
-  border-radius: var(--radius-pill);
-  box-shadow: var(--inset-sm);
-}
-
-.debt-tab {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.125rem;
-  min-height: var(--touch);
-  padding: 0.5rem;
-  border: none;
-  border-radius: var(--radius-pill);
-  background: none;
-  color: var(--muted);
-  font-size: var(--text-sm);
-  font-weight: 600;
-}
-
-.debt-tab[aria-selected='true'] {
-  background: var(--bg);
-  box-shadow: var(--raise-sm);
-  color: var(--text);
-}
-
-.debt-tab-total {
-  font-family: var(--font-mono);
-}
-
 .due-chip {
   flex-shrink: 0;
   padding: 0.125rem 0.5rem;
@@ -200,11 +140,14 @@
   font-size: var(--text-sm);
 }
 
-.split-person .member-face {
+.member-face.large {
   width: 3.25rem;
   height: 3.25rem;
   font-size: 1.125rem;
   box-shadow: none;
+}
+
+.split-person .member-face {
   opacity: 0.35;
   transition: opacity var(--press);
 }
@@ -274,3 +217,72 @@
 .split-option[aria-checked='true']::after {
   content: '✓';
 }
+
+.debts-total {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem 0 1rem;
+}
+
+.debts-total-label {
+  color: var(--muted);
+}
+
+.debts-total-amount {
+  font-family: var(--font-mono);
+  font-size: 2.5rem;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+}
+
+.debt-people {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.debt-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.875rem;
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 0;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  background: none;
+  color: var(--text);
+  text-align: left;
+}
+
+.debt-row-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.debt-row-amount {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.debt-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.5rem 0 1rem 4.125rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.debt-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
