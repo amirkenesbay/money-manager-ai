@@ -23,7 +23,7 @@
   box-shadow: var(--inset-sm);
 }
 
-.group-panel {
+.well.group-panel {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
