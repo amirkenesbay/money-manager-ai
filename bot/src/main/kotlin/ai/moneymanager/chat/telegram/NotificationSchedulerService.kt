@@ -4,7 +4,11 @@ import ai.moneymanager.domain.model.FALLBACK_TIMEZONE
 import ai.moneymanager.domain.model.UserInfo
 import io.micrometer.core.instrument.MeterRegistry
 import ai.moneymanager.domain.model.DEFAULT_NOTIFICATION_ICON
+import ai.moneymanager.metrics.MessageMetrics
+import ai.moneymanager.metrics.MessageType
+import ai.moneymanager.service.DailyReminderService
 import ai.moneymanager.service.LocalizationService
+import ai.moneymanager.service.SpendingReminderService
 import ai.moneymanager.service.NotificationService
 import ai.moneymanager.service.UserInfoService
 import ai.moneymanager.domain.model.StartParameters
@@ -28,6 +32,8 @@ private const val OUTCOME_SENT = "sent"
 private const val OUTCOME_FAILED = "failed"
 private const val OUTCOME_SKIPPED = "skipped"
 private const val BOT_BLOCKED_STATUS = 403
+private const val PUSH_BODY_KEY = "notification.push.body"
+private const val SPENDING_EMPTY_KEY = "notification.spending.empty"
 
 
 @Service
@@ -36,6 +42,9 @@ class NotificationSchedulerService(
     private val userInfoService: UserInfoService,
     private val localizationService: LocalizationService,
     private val miniAppGateway: MiniAppGateway,
+    private val dailyReminderService: DailyReminderService,
+    private val spendingReminderService: SpendingReminderService,
+    private val messageMetrics: MessageMetrics,
     private val meterRegistry: MeterRegistry,
     @Value("\${chat-machinist.bot.token}")
     private val botToken: String,
@@ -70,7 +79,14 @@ class NotificationSchedulerService(
 
     private fun deliver(notification: NotificationEntity, userInfo: UserInfo?): String {
         if (userInfo?.blocked == true) return OUTCOME_SKIPPED
-        return runCatching { sendNotification(notification, userInfo?.language) }
+        val spending = userInfo != null && dailyReminderService.isSpendingReminder(notification)
+        val type = if (spending) MessageType.SPENDING_REMINDER else MessageType.REMINDER
+        if (spending && spendingReminderService.recordedToday(checkNotNull(userInfo))) {
+            messageMetrics.skipped(type)
+            return OUTCOME_SKIPPED
+        }
+        val message = if (spending) spendingMessage(notification, checkNotNull(userInfo)) else reminderMessage(notification, userInfo?.language)
+        return runCatching { messageMetrics.track(type, notification.telegramUserId) { execute(message) } }
             .fold(
                 onSuccess = { OUTCOME_SENT },
                 onFailure = {
@@ -83,22 +99,40 @@ class NotificationSchedulerService(
 
     private fun Throwable.isBotBlocked(): Boolean = this is TelegramApiRequestException && errorCode == BOT_BLOCKED_STATUS
 
-    private fun sendNotification(notification: NotificationEntity, language: String?) {
+    private fun reminderMessage(notification: NotificationEntity, language: String?): SendMessage {
         val icon = notification.icon ?: DEFAULT_NOTIFICATION_ICON
-        val messageText = localizationService.t("notification.push.body", language, icon, notification.name)
+        val text = localizationService.t(PUSH_BODY_KEY, language, icon, notification.name)
+        return message(notification, text, reminderKeyboard(language))
+    }
 
-        val sendMessage = SendMessage().apply {
-            chatId = notification.telegramUserId.toString()
-            text = messageText
-            replyMarkup = reminderKeyboard(language)
+    private fun spendingMessage(notification: NotificationEntity, userInfo: UserInfo): SendMessage {
+        val text = localizationService.t(SPENDING_EMPTY_KEY, userInfo.language)
+        val keyboard = if (miniAppGateway.enabled) spendingKeyboard(userInfo) else reminderKeyboard(userInfo.language)
+        return message(notification, text, keyboard)
+    }
+
+    private fun spendingKeyboard(userInfo: UserInfo): InlineKeyboardMarkup {
+        val categories = spendingReminderService.quickCategories(userInfo).mapNotNull { category ->
+            category.id?.let { id ->
+                miniAppGateway.linkButton(
+                    listOfNotNull(category.icon, category.name).joinToString(" "),
+                    MiniAppLink(MiniAppScreen.ADD_OPERATION, categoryId = id.toHexString(), source = MessageType.SPENDING_REMINDER),
+                )
+            }
         }
+        val record = miniAppGateway.button(ADD_OPERATION_BUTTON_KEY, userInfo.language, MiniAppScreen.ADD_OPERATION, source = MessageType.SPENDING_REMINDER)
+        return InlineKeyboardMarkup(listOf(categories, listOf(record)).filter { it.isNotEmpty() })
+    }
 
-        execute(sendMessage)
+    private fun message(notification: NotificationEntity, text: String, keyboard: InlineKeyboardMarkup) = SendMessage().apply {
+        chatId = notification.telegramUserId.toString()
+        this.text = text
+        replyMarkup = keyboard
     }
 
     private fun reminderKeyboard(language: String?): InlineKeyboardMarkup {
         if (miniAppGateway.enabled) {
-            return miniAppGateway.keyboard(ADD_OPERATION_BUTTON_KEY, language, MiniAppScreen.ADD_OPERATION)
+            return miniAppGateway.keyboard(ADD_OPERATION_BUTTON_KEY, language, MiniAppScreen.ADD_OPERATION, MessageType.REMINDER)
         }
         val openFinanceText = localizationService.t("notification.push.button.open_finance", language)
         val button = InlineKeyboardButton(openFinanceText).apply {

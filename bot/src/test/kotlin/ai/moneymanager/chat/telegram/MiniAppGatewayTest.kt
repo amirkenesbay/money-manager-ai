@@ -17,17 +17,17 @@ class MiniAppGatewayTest {
 
     @Test
     fun `opens the home screen at the bare app url`() {
-        assertThat(miniAppUrl(APP_URL, MiniAppScreen.HOME)).isEqualTo(APP_URL)
+        assertThat(miniAppUrl(APP_URL, MiniAppLink(MiniAppScreen.HOME))).isEqualTo(APP_URL)
     }
 
     @Test
     fun `passes the target screen as a query parameter`() {
-        assertThat(miniAppUrl(APP_URL, MiniAppScreen.ADD_OPERATION)).isEqualTo("$APP_URL?screen=add")
+        assertThat(miniAppUrl(APP_URL, MiniAppLink(MiniAppScreen.ADD_OPERATION))).isEqualTo("$APP_URL?screen=add")
     }
 
     @Test
     fun `opens the report of a given month`() {
-        assertThat(miniAppUrl(APP_URL, MiniAppScreen.REPORTS, YearMonth.of(2026, 10))).isEqualTo("$APP_URL?screen=reports&month=2026-10")
+        assertThat(miniAppUrl(APP_URL, MiniAppLink(MiniAppScreen.REPORTS, YearMonth.of(2026, 10)))).isEqualTo("$APP_URL?screen=reports&month=2026-10")
     }
 
     @Test

@@ -5,6 +5,7 @@ import ai.moneymanager.domain.model.FALLBACK_TIMEZONE
 import ai.moneymanager.domain.model.FrequencyType
 import ai.moneymanager.domain.model.NotificationCreationResult
 import ai.moneymanager.domain.model.UserInfo
+import ai.moneymanager.repository.entity.NotificationEntity
 import org.slf4j.LoggerFactory
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
@@ -23,6 +24,13 @@ class DailyReminderService(
     private val subscriptionLimitsService: SubscriptionLimitsService,
 ) {
     private val log = LoggerFactory.getLogger(this::class.java)
+
+    private val reminderNames: Set<String> by lazy {
+        LocalizationService.SUPPORTED_LANGUAGES.map { localizationService.t(REMINDER_NAME_KEY, it) }.toSet()
+    }
+
+    fun isSpendingReminder(notification: NotificationEntity): Boolean =
+        notification.frequencyType == FrequencyType.DAILY && notification.icon == REMINDER_ICON && notification.name in reminderNames
 
     @EventListener(ApplicationReadyEvent::class)
     fun remindEveryone() {

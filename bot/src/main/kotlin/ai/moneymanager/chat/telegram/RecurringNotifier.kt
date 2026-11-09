@@ -1,5 +1,7 @@
 package ai.moneymanager.chat.telegram
 
+import ai.moneymanager.metrics.MessageType
+import ai.moneymanager.metrics.MessageMetrics
 import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.chat.reply.common.formatIconPrefix
 import ai.moneymanager.chat.reply.common.formatSignedAmount
@@ -43,6 +45,7 @@ class RecurringNotifier(
     private val userInfoService: UserInfoService,
     private val groupService: GroupService,
     private val localizationService: LocalizationService,
+    private val messageMetrics: MessageMetrics,
     private val clock: Clock,
     @Value("\${chat-machinist.bot.token}")
     botToken: String,
@@ -113,7 +116,7 @@ class RecurringNotifier(
             parseMode = ParseMode.HTML
             replyMarkup = keyboard
         }
-        runCatching { execute(message) }.onFailure { log.warn("Failed to send recurring payment notice to {}: {}", chatId, it.message) }
+        runCatching { messageMetrics.track(MessageType.RECURRING, chatId) { execute(message) } }.onFailure { log.warn("Failed to send recurring payment notice to {}: {}", chatId, it.message) }
     }
 
     private fun paymentLabel(payment: RecurringPaymentEntity): String = label(payment.categoryIcon, payment.categoryName, payment.description)

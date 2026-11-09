@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo, useState } from 'react'
+import { type ReactNode, useEffect, useMemo, useState } from 'react'
 import { serverMessage } from '../api/client'
 import type { AnswerLink, AppHint, CategoryType, Group, Me, Operation } from '../api/types'
 import { AskTopicsSheet } from '../ask/AskTopicsSheet'
@@ -31,7 +31,8 @@ import { RemindersScreen } from '../reminders/RemindersScreen'
 import { RecurringScreen } from '../recurring/RecurringScreen'
 import { ReportsScreen } from '../reports/ReportsScreen'
 import { VoiceFlow, type VoiceStart } from '../voice/VoiceFlow'
-import { type LaunchScreen, launchImportToken, launchMonth, launchScreen } from './launchScreen'
+import { type LaunchScreen, launchCategoryId, launchImportToken, launchMonth, launchScreen } from './launchScreen'
+import { reportLaunchSource } from './launchSourceReport'
 import { strings } from '../strings'
 import { notifyOutcome } from '../telegram/haptics'
 import { LoadError } from '../ui/LoadError'
@@ -123,6 +124,7 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
   const hints = useHints()
   const [welcomeOpen, setWelcomeOpen] = useState(() => !hints.isSeen('WELCOME') && launchScreen() === null)
   const toast = useToast()
+  useEffect(() => reportLaunchSource(), [])
   const group = groups.find((candidate) => candidate.id === groupId)
   const refresh = () => setVersion((value) => value + 1)
   const summary = (operation: Operation) => group ? operationSummary(operation, group.currency, me.language) : undefined
@@ -489,7 +491,9 @@ function TabContent({ tab, workspace, navigation, reportsMonth, operationsSearch
 
 function launchOverlay(): Overlay | null {
   const screen = launchScreen()
-  return (screen && LAUNCH_OVERLAYS[screen]) ?? null
+  const overlay = (screen && LAUNCH_OVERLAYS[screen]) ?? null
+  const categoryId = launchCategoryId()
+  return overlay?.kind === 'form' && categoryId ? { ...overlay, categoryId } : overlay
 }
 
 function launchTab(): Tab {

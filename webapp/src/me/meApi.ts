@@ -9,5 +9,8 @@ export const updateMe = (changes: { language?: string; timezone?: string; recurr
 export const markHintSeen = (hint: AppHint): Promise<Me> =>
   apiRequest<Me>('/me/hints', { method: 'POST', body: JSON.stringify({ hint }) })
 
+export const reportOpenedFrom = (source: string): Promise<void> =>
+  apiRequest<void>('/me/opened', { method: 'POST', body: JSON.stringify({ source }) })
+
 export const setDigestMuted = (kind: DigestKind, muted: boolean): Promise<Me> =>
   apiRequest<Me>('/me/digests', { method: 'POST', body: JSON.stringify({ kind, muted }) })

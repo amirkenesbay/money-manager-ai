@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.telegram
 
+import ai.moneymanager.metrics.MessageType
 import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.UserInfoService
 import org.slf4j.LoggerFactory
@@ -45,13 +46,20 @@ class MiniAppGateway(
     val enabled: Boolean
         get() = properties.botGateway
 
-    fun keyboard(textKey: String, language: String?, screen: MiniAppScreen): InlineKeyboardMarkup =
-        InlineKeyboardMarkup(listOf(listOf(button(textKey, language, screen))))
+    fun keyboard(textKey: String, language: String?, screen: MiniAppScreen, source: MessageType? = null): InlineKeyboardMarkup =
+        InlineKeyboardMarkup(listOf(listOf(button(textKey, language, screen, source = source))))
 
-    fun button(textKey: String, language: String?, screen: MiniAppScreen, month: YearMonth? = null, importToken: String? = null): InlineKeyboardButton =
-        InlineKeyboardButton(localizationService.t(textKey, language)).apply {
-            webApp = WebAppInfo(miniAppUrl(properties.url, screen, month, importToken))
-        }
+    fun button(
+        textKey: String,
+        language: String?,
+        screen: MiniAppScreen,
+        month: YearMonth? = null,
+        importToken: String? = null,
+        source: MessageType? = null,
+    ): InlineKeyboardButton = linkButton(localizationService.t(textKey, language), MiniAppLink(screen, month, importToken, source = source))
+
+    fun linkButton(text: String, link: MiniAppLink): InlineKeyboardButton =
+        InlineKeyboardButton(text).apply { webApp = WebAppInfo(miniAppUrl(properties.url, link)) }
 
     fun sendHint(chatId: Long, telegramUserId: Long) {
         replyWithOpenButton(chatId, telegramUserId) { language -> localizationService.t(HINT_KEY, language) }

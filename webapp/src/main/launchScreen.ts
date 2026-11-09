@@ -1,6 +1,9 @@
 const SCREEN_PARAMETER = 'screen'
 const MONTH_PARAMETER = 'month'
 const IMPORT_PARAMETER = 'import'
+const CATEGORY_PARAMETER = 'category'
+const SOURCE_PARAMETER = 'src'
+const OBJECT_ID = /^[0-9a-f]{24}$/
 const ISO_MONTH = /^\d{4}-(0[1-9]|1[0-2])$/
 const LAUNCH_SCREENS = ['add', 'categories', 'groups', 'reports', 'operations', 'ask', 'debts', 'import'] as const
 
@@ -17,3 +20,10 @@ export function launchMonth(search: string = window.location.search): string | n
 }
 
 export const launchImportToken = (search: string = window.location.search): string | null => new URLSearchParams(search).get(IMPORT_PARAMETER)
+
+export function launchCategoryId(search: string = window.location.search): string | null {
+  const requested = new URLSearchParams(search).get(CATEGORY_PARAMETER)
+  return requested && OBJECT_ID.test(requested) ? requested : null
+}
+
+export const launchSource = (search: string = window.location.search): string | null => new URLSearchParams(search).get(SOURCE_PARAMETER)

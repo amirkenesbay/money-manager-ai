@@ -63,3 +63,5 @@ data class UpdateMeRequest(
     val timezone: String? = null,
     val recurringHeadsUp: Boolean? = null,
 )
+
+data class OpenedFromRequest(val source: String? = null)

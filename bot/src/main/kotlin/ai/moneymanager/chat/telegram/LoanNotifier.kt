@@ -1,5 +1,7 @@
 package ai.moneymanager.chat.telegram
 
+import ai.moneymanager.metrics.MessageType
+import ai.moneymanager.metrics.MessageMetrics
 import ai.moneymanager.chat.reply.common.resolveCurrency
 import ai.moneymanager.chat.reply.common.shortDateFormatter
 import ai.moneymanager.chat.reply.loan.LoanFormatter
@@ -40,6 +42,7 @@ class LoanNotifier(
     private val loanFormatter: LoanFormatter,
     private val localizationService: LocalizationService,
     private val miniAppGateway: MiniAppGateway,
+    private val messageMetrics: MessageMetrics,
     private val clock: Clock,
     @Value("\${chat-machinist.bot.token}")
     botToken: String,
@@ -82,7 +85,7 @@ class LoanNotifier(
 
     private fun keyboard(loanId: ObjectId, language: String?): InlineKeyboardMarkup {
         fun link(key: String, parameter: String) = InlineKeyboardButton(localizationService.t(key, language)).apply { url = startLink(botUsername, parameter) }
-        val open = if (miniAppGateway.enabled) miniAppGateway.button(OPEN_BUTTON_KEY, language, MiniAppScreen.DEBTS) else null
+        val open = if (miniAppGateway.enabled) miniAppGateway.button(OPEN_BUTTON_KEY, language, MiniAppScreen.DEBTS, source = MessageType.LOAN) else null
         return InlineKeyboardMarkup(
             listOfNotNull(
                 listOf(link(REPAID_BUTTON_KEY, loanRepaidParameter(loanId)), link(LATER_BUTTON_KEY, loanLaterParameter(loanId))),
@@ -101,6 +104,6 @@ class LoanNotifier(
             parseMode = ParseMode.HTML
             replyMarkup = keyboard
         }
-        runCatching { execute(message) }.onFailure { log.warn("Failed to send loan notice to {}: {}", chatId, it.message) }
+        runCatching { messageMetrics.track(MessageType.LOAN, chatId) { execute(message) } }.onFailure { log.warn("Failed to send loan notice to {}: {}", chatId, it.message) }
     }
 }

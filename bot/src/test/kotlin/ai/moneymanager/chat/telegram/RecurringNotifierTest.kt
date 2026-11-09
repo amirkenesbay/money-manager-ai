@@ -1,6 +1,8 @@
 package ai.moneymanager.chat.telegram
 
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.metrics.MessageMetrics
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import ai.moneymanager.domain.model.RecurrenceUnit
 import ai.moneymanager.domain.model.RecurringMode
 import ai.moneymanager.repository.entity.FinanceOperationEntity
@@ -90,7 +92,7 @@ class RecurringNotifierTest {
 
     private fun notifierAt(now: LocalDateTime): RecurringNotifier {
         val clock = Clock.fixed(now.toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
-        val notifier = spy(RecurringNotifier(service, userInfoService, groupService, testLocalizationService(), clock, BOT_TOKEN, BOT_NAME))
+        val notifier = spy(RecurringNotifier(service, userInfoService, groupService, testLocalizationService(), MessageMetrics(SimpleMeterRegistry()), clock, BOT_TOKEN, BOT_NAME))
         doReturn(Message()).`when`(notifier).execute(any(SendMessage::class.java))
         return notifier
     }

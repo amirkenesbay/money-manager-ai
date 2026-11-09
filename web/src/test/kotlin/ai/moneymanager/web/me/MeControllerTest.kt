@@ -1,5 +1,9 @@
 package ai.moneymanager.web.me
 
+import org.mockito.Mockito.verifyNoInteractions
+import org.mockito.Mockito.verify
+import ai.moneymanager.metrics.MessageType
+import ai.moneymanager.metrics.MessageMetrics
 import ai.moneymanager.domain.model.AppHint
 import ai.moneymanager.domain.model.DigestKind
 import ai.moneymanager.domain.model.PREMIUM_PRICES
@@ -44,6 +48,7 @@ private const val ME_PATH = "/api/v1/me"
 private const val UNSUPPORTED_LANGUAGE = "de"
 private const val DEVICE_TIMEZONE = "Asia/Almaty"
 private const val HINTS_PATH = "$ME_PATH/hints"
+private const val OPENED_PATH = "$ME_PATH/opened"
 private const val DIGESTS_PATH = "$ME_PATH/digests"
 
 @WebMvcTest(controllers = [MeController::class])
@@ -61,6 +66,29 @@ class MeControllerTest {
 
     @MockitoBean
     private lateinit var onboardingService: OnboardingService
+
+    @MockitoBean
+    private lateinit var messageMetrics: MessageMetrics
+
+    @Test
+    fun `counts an app opening that came from a reminder`() {
+        givenCurrentUser(testUser())
+
+        mockMvc.perform(post(OPENED_PATH).withTelegramAuth().contentType(MediaType.APPLICATION_JSON).content("""{"source":"spending_reminder"}"""))
+            .andExpect(status().isNoContent)
+
+        verify(messageMetrics).opened(MessageType.SPENDING_REMINDER)
+    }
+
+    @Test
+    fun `ignores an unknown opening source`() {
+        givenCurrentUser(testUser())
+
+        mockMvc.perform(post(OPENED_PATH).withTelegramAuth().contentType(MediaType.APPLICATION_JSON).content("""{"source":"anything"}"""))
+            .andExpect(status().isNoContent)
+
+        verifyNoInteractions(messageMetrics)
+    }
 
     @Test
     fun `returns profile, active group and free limits from the limits service`() {

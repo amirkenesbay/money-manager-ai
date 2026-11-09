@@ -1,5 +1,9 @@
 package ai.moneymanager.web.me
 
+import org.springframework.web.bind.annotation.ResponseStatus
+import org.springframework.http.HttpStatus
+import ai.moneymanager.metrics.MessageType
+import ai.moneymanager.metrics.MessageMetrics
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.OnboardingService
@@ -27,6 +31,7 @@ class MeController(
     private val onboardingService: OnboardingService,
     private val userInfoService: UserInfoService,
     private val meResponseFactory: MeResponseFactory,
+    private val messageMetrics: MessageMetrics,
 ) {
     @GetMapping
     fun me(user: UserInfo): MeResponse = meResponseFactory.create(user)
@@ -50,6 +55,12 @@ class MeController(
     @PostMapping("/digests")
     fun setDigest(user: UserInfo, @RequestBody request: DigestSettingRequest): MeResponse =
         meResponseFactory.create(found(userInfoService.setDigestMuted(checkNotNull(user.telegramUserId), request.kind, request.muted)))
+
+    @PostMapping("/opened")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun opened(user: UserInfo, @RequestBody request: OpenedFromRequest) {
+        MessageType.of(request.source)?.let(messageMetrics::opened)
+    }
 
     private fun found(user: UserInfo?): UserInfo = user ?: throw ApiException(ApiErrorCode.NOT_FOUND)
 

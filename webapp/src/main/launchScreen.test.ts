@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { launchMonth, launchScreen } from './launchScreen'
+import { launchCategoryId, launchMonth, launchScreen, launchSource } from './launchScreen'
 
 describe('launchScreen', () => {
   it('reads the screen the bot asked to open', () => {
@@ -21,3 +21,21 @@ describe('launchScreen', () => {
     expect(launchMonth('')).toBeNull()
   })
 })
+
+describe('launchCategoryId', () => {
+  it('opens the form with the category from a reminder button', () => {
+    expect(launchCategoryId('?screen=add&category=6650a1b2c3d4e5f6a7b8c9d0')).toBe('6650a1b2c3d4e5f6a7b8c9d0')
+  })
+
+  it('ignores anything that is not a category id', () => {
+    expect(launchCategoryId('?category=../../me')).toBeNull()
+  })
+})
+
+describe('launchSource', () => {
+  it('reads which message opened the app', () => {
+    expect(launchSource('?screen=add&src=spending_reminder')).toBe('spending_reminder')
+    expect(launchSource('?screen=add')).toBeNull()
+  })
+})
+

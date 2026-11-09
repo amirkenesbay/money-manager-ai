@@ -1,5 +1,7 @@
 package ai.moneymanager.chat.telegram
 
+import ai.moneymanager.metrics.MessageType
+import ai.moneymanager.metrics.MessageMetrics
 import ai.moneymanager.chat.reply.digest.DigestFormatter
 import ai.moneymanager.domain.model.Digest
 import ai.moneymanager.domain.model.DigestKind
@@ -34,6 +36,7 @@ class DigestNotifier(
     private val digestService: DigestService,
     private val digestFormatter: DigestFormatter,
     private val miniAppGateway: MiniAppGateway,
+    private val messageMetrics: MessageMetrics,
     private val clock: Clock,
     @Value("\${chat-machinist.bot.token}")
     botToken: String,
@@ -63,7 +66,7 @@ class DigestNotifier(
             val period = dueDigestPeriod(kind, now, group.monthStartDay) ?: return@forEach
             if (digestService.wasSent(telegramUserId, period)) return@forEach
             val digest = digestService.build(group, period, now.toLocalDate()) ?: return@forEach
-            if (digestService.claim(telegramUserId, period)) execute(message(telegramUserId, digest, user.language))
+            if (digestService.claim(telegramUserId, period)) messageMetrics.track(MessageType.DIGEST, telegramUserId) { execute(message(telegramUserId, digest, user.language)) }
         }
     }
 
@@ -79,14 +82,14 @@ class DigestNotifier(
             url = startLink(botUsername, digestMuteParameter(kind))
         }
         val open = if (miniAppGateway.enabled) openButton(digest, language) else null
-        val ask = if (miniAppGateway.enabled && digest.period.kind == DigestKind.MONTH) miniAppGateway.button(ASK_BUTTON_KEY, language, MiniAppScreen.ASK) else null
+        val ask = if (miniAppGateway.enabled && digest.period.kind == DigestKind.MONTH) miniAppGateway.button(ASK_BUTTON_KEY, language, MiniAppScreen.ASK, source = MessageType.DIGEST) else null
         return InlineKeyboardMarkup(listOfNotNull(open?.let { listOf(it) }, ask?.let { listOf(it) }, listOf(mute)))
     }
 
     private fun openButton(digest: Digest, language: String?): InlineKeyboardButton =
         if (digest.period.kind == DigestKind.MONTH) {
-            miniAppGateway.button(REPORT_BUTTON_KEY, language, MiniAppScreen.REPORTS, YearMonth.from(digest.period.start))
+            miniAppGateway.button(REPORT_BUTTON_KEY, language, MiniAppScreen.REPORTS, YearMonth.from(digest.period.start), source = MessageType.DIGEST)
         } else {
-            miniAppGateway.button(OPEN_BUTTON_KEY, language, MiniAppScreen.HOME)
+            miniAppGateway.button(OPEN_BUTTON_KEY, language, MiniAppScreen.HOME, source = MessageType.DIGEST)
         }
 }
