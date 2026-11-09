@@ -4,7 +4,7 @@ import { ScreenTour } from '../onboarding/ScreenTour'
 import type { Group, Me } from '../api/types'
 import { useAsync } from '../api/useAsync'
 import { useCategories } from '../categories/useCategories'
-import { formatDate, formatMoney } from '../format'
+import { formatDate } from '../format'
 import { currencyBadge } from '../groups/currencies'
 import { CurrencySheet } from '../groups/CurrencySheet'
 import { MonthStartSheet } from '../groups/MonthStartSheet'
@@ -20,7 +20,7 @@ import { SettingsRow } from '../ui/SettingsRow'
 import { DIGEST_KINDS } from './digestKinds'
 import { DigestsSheet } from './DigestsSheet'
 import { ExportSheet } from './ExportSheet'
-import { InitialBalanceSheet } from './InitialBalanceSheet'
+import { BalanceSheet } from './BalanceSheet'
 import { LanguageSheet } from './LanguageSheet'
 import type { Notify } from '../ui/useToast'
 import './more.css'
@@ -100,7 +100,7 @@ export function MoreScreen({ me, group, groups, name, onMeChanged, onGroupUpdate
         <li><SettingsRow icon={<CoinIcon />} label={strings.currencyLabel} value={currencyBadge(group.currency)} onClick={() => setSheet('currency')} /></li>
         <li><SettingsRow icon={<ClockIcon />} label={strings.timezoneLabel} value={describeTimezone(me.timezone ?? deviceTimezone())} onClick={syncTimezone} /></li>
         <li><SettingsRow icon={<CalendarIcon />} label={strings.monthStartLabel} value={strings.monthStartValue(group.monthStartDay)} onClick={() => setSheet('monthStart')} /></li>
-        <li><SettingsRow icon={<WalletIcon />} label={strings.initialBalanceLabel} value={formatMoney(group.initialBalance, group.currency, language)} onClick={() => setSheet('balance')} /></li>
+        <li><SettingsRow icon={<WalletIcon />} label={strings.balanceNowTitle} onClick={() => setSheet('balance')} /></li>
         {homeScreen.state === 'available' && <li><SettingsRow icon={<PhoneIcon />} label={strings.homeScreenRow} onClick={homeScreen.add} /></li>}
         <li {...tourTarget('more-help')}><SettingsRow icon={<HelpIcon />} label={strings.howToUse} onClick={onShowWelcome} /></li>
       </ul>
@@ -132,7 +132,7 @@ export function MoreScreen({ me, group, groups, name, onMeChanged, onGroupUpdate
       )}
       {sheet === 'currency' && <CurrencySheet group={group} onSaved={(next) => groupSaved(next, strings.currencyChangedToast)} onClose={() => setSheet(null)} />}
       {sheet === 'monthStart' && <MonthStartSheet group={group} onSaved={(next) => groupSaved(next, strings.monthStartChangedToast)} onClose={() => setSheet(null)} />}
-      {sheet === 'balance' && <InitialBalanceSheet group={group} onSaved={(next) => groupSaved(next, strings.initialBalanceSavedToast)} onClose={() => setSheet(null)} />}
+      {sheet === 'balance' && <BalanceSheet group={group} onSaved={(next) => groupSaved(next, strings.balanceSavedToast)} onClose={() => setSheet(null)} />}
     </>
   )
 }
