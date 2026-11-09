@@ -243,3 +243,121 @@
   font-size: var(--text-sm);
   outline: none;
 }
+
+.amount-hero {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 1.5rem 0 0.75rem;
+}
+
+.amount-hero-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.35rem;
+  max-width: 100%;
+}
+
+.amount-hero-input {
+  min-width: 1ch;
+  max-width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 3.5rem;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  text-align: center;
+  caret-color: var(--accent);
+}
+
+.amount-hero-input.long {
+  font-size: 2.25rem;
+}
+
+.amount-hero-input.income {
+  color: var(--accent);
+}
+
+.amount-hero-input::placeholder {
+  color: var(--muted);
+  opacity: 0.5;
+}
+
+.amount-hero-input:focus {
+  outline: none;
+}
+
+.amount-hero-currency {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+}
+
+.amount-hero-result {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+}
+
+.amount-hero-message {
+  text-align: center;
+}
+
+.form-chips {
+  display: flex;
+  gap: 0.5rem;
+  margin-inline: calc(-1 * var(--gutter));
+  padding: 0 var(--gutter) 0.25rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.form-chips .chip {
+  flex: none;
+  border: none;
+  background: var(--tint);
+  color: var(--text);
+  font-size: var(--text-md);
+  white-space: nowrap;
+}
+
+.form-keypad {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.amount-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) 3.5rem;
+}
+
+.pad-key {
+  display: grid;
+  place-items: center;
+  height: 3.25rem;
+  border: none;
+  border-radius: 1rem;
+  background: none;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 1.625rem;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pad-key:active {
+  background: var(--tint);
+}
+
+.pad-operator {
+  color: var(--accent);
+  font-size: 1.375rem;
+}

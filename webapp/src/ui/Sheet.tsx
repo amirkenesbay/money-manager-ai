@@ -6,18 +6,24 @@ export function Sheet({ label, onClose, children }: { label: string; onClose: ()
   const dialog = useRef<HTMLDivElement>(null)
   const drag = useDragDismiss(onClose)
 
+  const close = useRef(onClose)
+
+  useEffect(() => {
+    close.current = onClose
+  })
+
   useEffect(() => {
     const previousFocus = document.activeElement as HTMLElement | null
     dialog.current?.focus()
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') withMotion('dismiss', onClose)
+      if (event.key === 'Escape') withMotion('dismiss', close.current)
     }
     document.addEventListener('keydown', closeOnEscape)
     return () => {
       document.removeEventListener('keydown', closeOnEscape)
       previousFocus?.focus()
     }
-  }, [onClose])
+  }, [])
 
   return (
     <div className="sheet-scrim" onClick={(event) => event.target === event.currentTarget && withMotion('dismiss', onClose)}>

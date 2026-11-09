@@ -167,7 +167,7 @@ describe('MainScreen dashboard', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: strings.manualEntryLabel }))
     await userEvent.type(await screen.findByRole('textbox', { name: strings.amountLabel }), '700')
-    await userEvent.click(screen.getByRole('button', { name: strings.save }))
+    await userEvent.click(screen.getByRole('button', { name: strings.recordAmount(formatMoney('700', 'KZT', 'ru')) }))
 
     expect(await screen.findByText(strings.savedToast)).toBeInTheDocument()
     await vi.waitFor(() => expect(fetchBalance).toHaveBeenCalledTimes(2))
