@@ -13,6 +13,8 @@ import ai.moneymanager.service.nlp.WAV_MIME_TYPE
 import ai.moneymanager.service.nlp.expenseShareOf
 import ai.moneymanager.service.nlp.repeatOf
 import ai.moneymanager.service.nlp.suggestOperation
+import ai.moneymanager.service.nlp.ForeignCommands
+import ai.moneymanager.service.nlp.originalOf
 import ai.moneymanager.web.API_V1_PREFIX
 import ai.moneymanager.web.access.GroupAccessGuard
 import ai.moneymanager.web.ai.AiRequestGuard
@@ -51,6 +53,7 @@ class VoiceController(
     private val aiRequestGuard: AiRequestGuard,
     private val askAnswers: AskAnswers,
     private val voiceLoans: VoiceLoans,
+    private val foreignCommands: ForeignCommands,
 ) {
     @PostMapping(consumes = [WAV_MIME_TYPE])
     fun parse(user: UserInfo, @PathVariable groupId: ObjectId, @RequestBody audio: ByteArray): VoiceResponse {
@@ -59,14 +62,15 @@ class VoiceController(
         aiRequestGuard.requireQuota(user)
         val categories = categoryService.getCategoriesByGroup(groupId)
         val rules = categoryRuleService.rules(groupId)
-        val commands = commandParserService.parseVoiceCommands(audio, aiRequestGuard.groupContext(user, group, categories, rules), WAV_MIME_TYPE, AiSurface.MINI_APP)
-        aiRequestGuard.requireParsed(commands)
+        val parsed = commandParserService.parseVoiceCommands(audio, aiRequestGuard.groupContext(user, group, categories, rules), WAV_MIME_TYPE, AiSurface.MINI_APP)
+        aiRequestGuard.requireParsed(parsed)
         val today = userCalendar.today(user)
+        val commands = foreignCommands.inGroupCurrency(parsed, group.currency, today)
         val members = aiRequestGuard.memberNames(group)
         val speakerId = checkNotNull(user.telegramUserId)
         val operations = commands
             .mapNotNull { command ->
-                suggestOperation(command, categories, today, rules)?.toResponse()?.withRepeat(repeatOf(command))?.withShare(expenseShareOf(command, speakerId, members))
+                suggestOperation(command, categories, today, rules)?.toResponse()?.withRepeat(repeatOf(command))?.withShare(expenseShareOf(command, speakerId, members))?.copy(original = originalOf(command))
             }
             .take(MAX_VOICE_OPERATIONS)
         return VoiceResponse(operations, askAnswers.answerOf(user, group, commands), voiceLoans.loanOf(groupId, speakerId, commands, today))

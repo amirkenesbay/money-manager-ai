@@ -4,8 +4,12 @@ const AMOUNT_PATTERN = /^\d+(\.\d{1,2})?$/
 
 export const HUGE_AMOUNT = 1_000_000_000
 
+export function normalizeNumber(raw: string): string {
+  return raw.replace(SPACES, '').replace(DECIMAL_COMMA, '.')
+}
+
 export function parseBalance(raw: string): string | null {
-  const normalized = raw.replace(SPACES, '').replace(DECIMAL_COMMA, '.')
+  const normalized = normalizeNumber(raw)
   return AMOUNT_PATTERN.test(normalized) ? normalized : null
 }
 

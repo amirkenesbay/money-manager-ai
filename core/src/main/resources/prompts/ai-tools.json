@@ -27,7 +27,8 @@
     "person": "The other person's name in the nominative case («Косте» = «Костя»).",
     "dueDate": "Return date as ISO YYYY-MM-DD only when it was said; otherwise null.",
     "note": "What the loan is for; otherwise null.",
-    "type": "EXPENSE or INCOME."
+    "type": "EXPENSE or INCOME.",
+    "currency": "ISO 4217 code only when the user named a currency other than the group's («5 долларов» = USD, «10 евро» = EUR, «100 лир» = TRY); the amount stays as said. Null otherwise."
   },
   "functions": {
     "addExpense": {

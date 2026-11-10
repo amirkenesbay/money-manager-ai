@@ -5,6 +5,7 @@ import type { Category, Group, Operation, Repeat } from '../api/types'
 import { CATEGORY_TYPES } from '../categories/categoryTypes'
 import { useCategories } from '../categories/useCategories'
 import { formatDayLabel, formatSignedMoney, toIsoDate } from '../format'
+import { originalText } from '../operation/foreign'
 import { parseAmount } from '../operation/amount'
 import { CalendarSheet } from '../operation/CalendarSheet'
 import { strings } from '../strings'
@@ -144,6 +145,7 @@ function DraftCard({ draft, group, userId, language, removable, repeated, onChan
       <span className="draft-head">
         <button type="button" className={`amount draft-amount ${income ? 'income' : ''}`} onClick={() => onEdit('amount')}>
           {formatSignedMoney(draft.type, draft.amount, group.currency, language)}
+          {draft.original && <span className="row-original">{originalText(draft, language)}</span>}
         </button>
         {removable && <button type="button" className="link-button danger-link" onClick={onRemove}>{strings.removeOperation}</button>}
       </span>
@@ -227,7 +229,7 @@ function TextSheet({ field, draft, onDone, onClose }: { field: 'amount' | 'comme
   const invalid = amountField && amount === null
 
   const done = () => {
-    if (amountField && amount !== null) onDone({ ...draft, amount })
+    if (amountField && amount !== null) onDone({ ...draft, amount, original: amount === draft.amount ? draft.original : null })
     if (!amountField) onDone({ ...draft, description: text.trim() || null })
   }
 

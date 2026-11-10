@@ -1,5 +1,8 @@
 package ai.moneymanager.domain.model.nlp
 
+import ai.moneymanager.domain.model.Currency
+import ai.moneymanager.domain.model.ForeignAmount
+
 import java.time.LocalDate
 import java.math.BigDecimal
 import ai.moneymanager.domain.model.loan.LoanDirection
@@ -25,6 +28,8 @@ sealed class BotCommand {
         val repeatInterval: Double? = null,
         val paidBy: String? = null,
         val splitWith: String? = null,
+        val currency: Currency? = null,
+        val original: ForeignAmount? = null,
     ) : BotCommand()
 
     data class AddIncome(
@@ -35,6 +40,8 @@ sealed class BotCommand {
         val operationDate: String?,
         val repeatUnit: String? = null,
         val repeatInterval: Double? = null,
+        val currency: Currency? = null,
+        val original: ForeignAmount? = null,
     ) : BotCommand()
 
     data class OutOfContext(

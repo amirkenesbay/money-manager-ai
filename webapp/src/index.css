@@ -178,6 +178,15 @@ button {
   color: var(--accent);
 }
 
+.row-original {
+  display: block;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
 .negative {
   color: var(--negative);
 }

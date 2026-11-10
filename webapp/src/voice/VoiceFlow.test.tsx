@@ -1,4 +1,6 @@
 import { StrictMode } from 'react'
+import { formatMoney } from '../format'
+import { asRendered } from '../test/text'
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -191,6 +193,18 @@ describe('VoiceFlow', () => {
     expect(parseVoice).toHaveBeenCalledWith(PERSONAL_GROUP_ID, wav, expect.anything())
     expect(createOperation).toHaveBeenCalledWith(PERSONAL_GROUP_ID, expect.objectContaining({ amount: '2000.0', categoryId: taxi.id, categoryCorrected: false }))
     expect(onSaved).toHaveBeenCalledWith([saved], undefined)
+  })
+
+  it('keeps the dollars a phrase was said in', async () => {
+    vi.mocked(parseVoice).mockResolvedValue({ operations: [voiceOperation({ amount: '2421.5', original: { amount: '5', currency: 'USD' } })] })
+    vi.mocked(createOperation).mockResolvedValue(operation({ id: 'voice-op', amount: '2421.5' }))
+
+    const user = await recordPhrase()
+
+    expect(await screen.findByText(asRendered(formatMoney('5', 'USD', 'ru')))).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: strings.save }))
+
+    expect(createOperation).toHaveBeenCalledWith(PERSONAL_GROUP_ID, expect.objectContaining({ amount: '2421.5', original: { amount: '5', currency: 'USD' } }))
   })
 
   it('keeps a phrase that repeats as a recurring payment', async () => {

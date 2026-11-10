@@ -35,6 +35,10 @@ import ai.moneymanager.web.mockInvoked
 import ai.moneymanager.web.security.TestInitData
 import ai.moneymanager.web.time.UserCalendar
 import ai.moneymanager.web.withTelegramAuth
+import ai.moneymanager.service.nlp.ForeignCommands
+import ai.moneymanager.service.fx.ExchangeRateService
+import ai.moneymanager.domain.model.Currency
+import java.math.BigDecimal
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -56,7 +60,7 @@ private const val PARSE_VOICE = "parseVoiceCommands"
 
 @WebMvcTest(controllers = [VoiceController::class])
 @ApiWebLayerSetup
-@Import(GroupAccessGuard::class, UserCalendar::class, AiRequestGuard::class, AskAnswers::class, VoiceLoans::class)
+@Import(GroupAccessGuard::class, UserCalendar::class, AiRequestGuard::class, AskAnswers::class, VoiceLoans::class, ForeignCommands::class)
 class VoiceControllerTest {
     @Autowired
     private lateinit var mockMvc: MockMvc
@@ -97,6 +101,9 @@ class VoiceControllerTest {
     @MockitoBean
     private lateinit var loanService: LoanService
 
+    @MockitoBean
+    private lateinit var exchangeRateService: ExchangeRateService
+
     private val groupId = ObjectId()
     private val group = testGroup(groupId)
     private val taxi = Category(ObjectId(), "Такси", "🚕", CategoryType.EXPENSE, groupId)
@@ -130,6 +137,20 @@ class VoiceControllerTest {
             .andExpect(jsonPath("$.operations[1].categoryIcon").value("☕"))
             .andExpect(jsonPath("$.operations[1].isNewCategory").value(true))
             .andExpect(jsonPath("$.operations[1].description").value("в центре"))
+    }
+
+    @Test
+    fun `converts an amount said in another currency and keeps it`() {
+        val today = userCalendar.today(testUser())
+        `when`(commandParserService.parseVoiceCommands(audio, GROUP_CONTEXT, WAV_MIME_TYPE, AiSurface.MINI_APP))
+            .thenReturn(listOf(BotCommand.AddExpense(5.0, "такси", null, null, null, currency = Currency.USD)))
+        `when`(exchangeRateService.convert(BigDecimal.valueOf(5.0), Currency.USD, group.currency, today)).thenReturn(BigDecimal("2421.5"))
+
+        mockMvc.perform(voice(audio))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.operations[0].amount").value("2421.5"))
+            .andExpect(jsonPath("$.operations[0].original.amount").value("5.0"))
+            .andExpect(jsonPath("$.operations[0].original.currency").value("USD"))
     }
 
     @Test

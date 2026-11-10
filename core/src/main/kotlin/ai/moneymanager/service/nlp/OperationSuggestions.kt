@@ -4,6 +4,7 @@ import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryRule
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.DEFAULT_CATEGORY_ICON
+import ai.moneymanager.domain.model.ForeignAmount
 import ai.moneymanager.domain.model.Recurrence
 import ai.moneymanager.domain.model.RecurrenceUnit
 import ai.moneymanager.domain.model.nlp.BotCommand
@@ -75,6 +76,12 @@ private fun resolveSingleMatch(matches: List<Category>, rawSearch: String, clean
     matches.firstOrNull { it.name.equals(cleanSearch, ignoreCase = true) }?.let { return it }
     val leadingIcon = extractLeadingNonLetters(rawSearch) ?: return null
     return matches.firstOrNull { it.icon == leadingIcon }
+}
+
+fun originalOf(command: BotCommand): ForeignAmount? = when (command) {
+    is BotCommand.AddExpense -> command.original
+    is BotCommand.AddIncome -> command.original
+    else -> null
 }
 
 fun repeatOf(command: BotCommand): Recurrence? {

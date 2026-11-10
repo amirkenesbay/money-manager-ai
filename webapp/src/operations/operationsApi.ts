@@ -1,5 +1,5 @@
 import { apiRequest } from '../api/client'
-import type { CategoryType, Operation, OperationsPage } from '../api/types'
+import type { CategoryType, Currency, ExchangeRate, ForeignAmount, Operation, OperationsPage } from '../api/types'
 import type { DateRange } from './periods'
 
 export const OPERATIONS_PAGE_SIZE = 20
@@ -41,6 +41,7 @@ export interface OperationInput {
   categoryCorrected?: boolean
   payerId?: number | null
   participantIds?: number[] | null
+  original?: ForeignAmount | null
 }
 
 export const createOperation = (groupId: string, input: OperationInput): Promise<Operation> =>
@@ -54,3 +55,6 @@ export const deleteOperation = (groupId: string, operationId: string): Promise<v
 
 export const fetchRecentTags = (groupId: string, signal?: AbortSignal): Promise<string[]> =>
   apiRequest<string[]>(`/groups/${groupId}/tags`, {}, signal)
+
+export const fetchRate = (from: Currency, to: Currency, date: string, signal?: AbortSignal): Promise<ExchangeRate> =>
+  apiRequest<ExchangeRate>(`/rates?${new URLSearchParams({ from, to, date })}`, {}, signal)

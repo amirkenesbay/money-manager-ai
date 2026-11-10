@@ -1,5 +1,6 @@
 package ai.moneymanager.service.nlp
 
+import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.metrics.GEMINI_QUOTA_STATUS
 import ai.moneymanager.metrics.GeminiCall
 import ai.moneymanager.metrics.GeminiMetrics
@@ -170,6 +171,11 @@ class CommandParserService(
         }
     }
 
+    private fun currencyOf(code: String?): Currency? {
+        val value = code.geminiValue()?.uppercase() ?: return null
+        return Currency.entries.find { it.name == value }
+    }
+
     private fun parseFunctionCall(functionCall: FunctionCall, originalMessage: String): BotCommand {
         val args = functionCall.args().orElse(emptyMap())
         val function = GeminiFunction.from(functionCall.name().orElse(null))
@@ -189,6 +195,7 @@ class CommandParserService(
                     BotCommand.AddExpense(
                         dto.amount, dto.category, dto.description,
                         dto.suggestedCategoryIcon, dto.operationDate.geminiValue(), repeat.unit, repeat.interval, dto.paidBy, dto.splitWith,
+                        currencyOf(dto.currency),
                     )
                 }
 
@@ -198,6 +205,7 @@ class CommandParserService(
                     BotCommand.AddIncome(
                         dto.amount, dto.category, dto.description,
                         dto.suggestedCategoryIcon, dto.operationDate.geminiValue(), repeat.unit, repeat.interval,
+                        currency = currencyOf(dto.currency),
                     )
                 }
 

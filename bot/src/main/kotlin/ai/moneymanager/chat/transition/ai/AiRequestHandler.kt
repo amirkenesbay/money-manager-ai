@@ -7,6 +7,7 @@ import ai.moneymanager.chat.state.MoneyManagerState
 import ai.moneymanager.domain.model.nlp.BotCommand
 import ai.moneymanager.chat.telegram.AiFeedback
 import ai.moneymanager.service.AiPromptService
+import ai.moneymanager.service.nlp.ForeignCommands
 import ai.moneymanager.service.AiRateLimitResult
 import ai.moneymanager.service.AiRateLimitService
 import ai.moneymanager.service.CategoryRuleService
@@ -48,6 +49,7 @@ class AiRequestHandler(
     private val aiRateLimitService: AiRateLimitService,
     private val actionExecutor: AiActionExecutor,
     private val askService: AskService,
+    private val foreignCommands: ForeignCommands,
 ) {
     private val log = LoggerFactory.getLogger(AiRequestHandler::class.java)
 
@@ -107,7 +109,7 @@ class AiRequestHandler(
         lang: String?,
         parse: (categoryContext: String?) -> List<BotCommand>
     ) {
-        val commands = parse(loadAndCacheCategoryContext(context))
+        val commands = inGroupCurrency(parse(loadAndCacheCategoryContext(context)), context)
         showErrorStageIfNeeded(commands, feedback, lang)
         actionExecutor.processCommands(commands, context)
     }
@@ -136,8 +138,15 @@ class AiRequestHandler(
         context.aiResultMessage = localizationService.t(key, lang, *args)
     }
 
+    private fun todayOf(context: MoneyManagerContext): LocalDate = LocalDate.now(context.userInfo?.zone ?: ZoneOffset.UTC)
+
+    private fun inGroupCurrency(commands: List<BotCommand>, context: MoneyManagerContext): List<BotCommand> {
+        val groupId = context.userInfo?.activeGroupId ?: return commands
+        return foreignCommands.inGroupCurrency(commands, resolveCurrency(groupService, groupId), todayOf(context))
+    }
+
     private fun loadAndCacheCategoryContext(context: MoneyManagerContext): String {
-        val today = LocalDate.now(context.userInfo?.zone ?: ZoneOffset.UTC)
+        val today = todayOf(context)
         val groupId = context.userInfo?.activeGroupId ?: run {
             context.aiCategoriesCache = null
             return aiPromptService.currentDatePreamble(today)

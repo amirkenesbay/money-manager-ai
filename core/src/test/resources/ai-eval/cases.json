@@ -1302,5 +1302,79 @@
         "amount": 5500
       }
     ]
+  },
+  {
+    "id": "currency-01",
+    "group": "currency",
+    "text": "кофе 5 долларов",
+    "expect": [
+      {
+        "fn": "addExpense",
+        "amount": 5,
+        "currency": "USD"
+      }
+    ]
+  },
+  {
+    "id": "currency-02",
+    "group": "currency",
+    "text": "вчера такси 10 евро",
+    "expect": [
+      {
+        "fn": "addExpense",
+        "amount": 10,
+        "currency": "EUR",
+        "date": "yesterday"
+      }
+    ]
+  },
+  {
+    "id": "currency-03",
+    "group": "currency",
+    "text": "получил зарплату 2000 долларов",
+    "expect": [
+      {
+        "fn": "addIncome",
+        "amount": 2000,
+        "currency": "USD"
+      }
+    ]
+  },
+  {
+    "id": "currency-04",
+    "group": "currency",
+    "text": "ужин 450 лир",
+    "expect": [
+      {
+        "fn": "addExpense",
+        "amount": 450,
+        "currency": "TRY"
+      }
+    ]
+  },
+  {
+    "id": "currency-05",
+    "group": "currency",
+    "text": "обед 2400",
+    "expect": [
+      {
+        "fn": "addExpense",
+        "amount": 2400,
+        "currency": null
+      }
+    ]
+  },
+  {
+    "id": "currency-06",
+    "group": "currency",
+    "text": "кофе пять долларов",
+    "voice": "Milena",
+    "expect": [
+      {
+        "fn": "addExpense",
+        "amount": 5,
+        "currency": "USD"
+      }
+    ]
   }
 ]

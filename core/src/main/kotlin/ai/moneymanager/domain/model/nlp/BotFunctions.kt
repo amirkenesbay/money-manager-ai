@@ -6,11 +6,11 @@ object BotFunctions {
     }
 
     @JvmStatic
-    fun addExpense(amount: Double, category: String?, description: String?, suggestedCategoryIcon: String?, operationDate: String?, repeatUnit: String?, repeatInterval: Double?, repeatPhrase: String?, paidBy: String?, splitWith: String?) {
+    fun addExpense(amount: Double, category: String?, description: String?, suggestedCategoryIcon: String?, operationDate: String?, repeatUnit: String?, repeatInterval: Double?, repeatPhrase: String?, paidBy: String?, splitWith: String?, currency: String?) {
     }
 
     @JvmStatic
-    fun addIncome(amount: Double, category: String?, description: String?, suggestedCategoryIcon: String?, operationDate: String?, repeatUnit: String?, repeatInterval: Double?, repeatPhrase: String?) {
+    fun addIncome(amount: Double, category: String?, description: String?, suggestedCategoryIcon: String?, operationDate: String?, repeatUnit: String?, repeatInterval: Double?, repeatPhrase: String?, currency: String?) {
     }
 
     @JvmStatic

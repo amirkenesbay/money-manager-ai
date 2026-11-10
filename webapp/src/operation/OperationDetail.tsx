@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Group, Operation } from '../api/types'
 import { formatDayLabel, formatSignedMoney } from '../format'
+import { originalText } from './foreign'
 import { strings } from '../strings'
 import { BottomBar } from '../ui/BottomBar'
 import { Button } from '../ui/Button'
@@ -35,6 +36,7 @@ export function OperationDetail({ group, userId, language, operation, onBack, on
       <section className="card detail-card" style={{ viewTransitionName: OPERATION_CARD }}>
         <span className="detail-icon" aria-hidden="true">{operation.categoryIcon}</span>
         <p className={`amount detail-amount ${income ? 'income' : ''}`}>{formatSignedMoney(operation.type, operation.amount, group.currency, language)}</p>
+        {operation.original && <p className="caption detail-original">{originalText(operation, language)}</p>}
         <span className={`detail-badge ${income ? 'income' : 'negative'}`}>{`${strings.operationType(operation.type)} · ${operation.categoryName}`}</span>
       </section>
       <dl className="detail-fields">

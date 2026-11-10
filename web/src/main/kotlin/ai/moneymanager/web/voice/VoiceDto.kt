@@ -1,6 +1,7 @@
 package ai.moneymanager.web.voice
 
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.ForeignAmount
 import ai.moneymanager.domain.model.RecurrenceUnit
 import ai.moneymanager.domain.model.question.AnswerCard
 import ai.moneymanager.web.loan.VoiceLoanResponse
@@ -26,6 +27,7 @@ data class VoiceOperationResponse(
     val repeat: VoiceRepeatResponse? = null,
     val payerId: Long? = null,
     val participantIds: Set<Long>? = null,
+    val original: ForeignAmount? = null,
 )
 
 data class VoiceRepeatResponse(

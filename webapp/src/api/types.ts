@@ -126,6 +126,19 @@ export interface Operation {
   creatorName: string
   payerId?: number | null
   participantIds?: number[] | null
+  original?: ForeignAmount | null
+}
+
+export interface ForeignAmount {
+  amount: string
+  currency: Currency
+}
+
+export interface ExchangeRate {
+  from: Currency
+  to: Currency
+  rate: string
+  date: string
 }
 
 export interface OperationsPage {
@@ -327,6 +340,7 @@ export interface VoiceOperation {
   repeat?: Repeat | null
   payerId?: number | null
   participantIds?: number[] | null
+  original?: ForeignAmount | null
 }
 
 export type DebtItemKind = 'EXPENSE' | 'SETTLEMENT' | 'OFFSET' | 'EARLIER'

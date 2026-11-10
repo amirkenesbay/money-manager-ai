@@ -81,8 +81,8 @@ class AiEvalTest {
     }
 
     private fun normalize(command: BotCommand, today: LocalDate): Map<String, Any?> = when (command) {
-        is BotCommand.AddExpense -> operation("addExpense", command.amount, command.category, command.operationDate, repeatOf(command)?.unit?.name, today)
-        is BotCommand.AddIncome -> operation("addIncome", command.amount, command.category, command.operationDate, repeatOf(command)?.unit?.name, today)
+        is BotCommand.AddExpense -> operation("addExpense", command.amount, command.category, command.operationDate, repeatOf(command)?.unit?.name, today) + ("currency" to command.currency?.name)
+        is BotCommand.AddIncome -> operation("addIncome", command.amount, command.category, command.operationDate, repeatOf(command)?.unit?.name, today) + ("currency" to command.currency?.name)
         is BotCommand.AskFinance -> command.question.let { q ->
             mapOf(
                 "fn" to "askFinance", "intent" to q.intent.name, "type" to q.type?.name, "categories" to q.categories,

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiRequestError } from '../api/client'
 import { formatMoney, toIsoDate } from '../format'
 import { createCategory, fetchCategories } from '../categories/categoriesApi'
-import { createOperation, fetchRecentTags, replaceOperation } from '../operations/operationsApi'
+import { createOperation, fetchRate, fetchRecentTags, replaceOperation } from '../operations/operationsApi'
 import { createRecurring } from '../recurring/recurringApi'
 import { fetchMembers } from '../groups/groupsApi'
 import { strings } from '../strings'
@@ -17,6 +17,7 @@ vi.mock('../operations/operationsApi', () => ({
   replaceOperation: vi.fn(),
   deleteOperation: vi.fn(),
   fetchRecentTags: vi.fn(),
+  fetchRate: vi.fn(),
 }))
 
 vi.mock('../categories/categoriesApi', () => ({ fetchCategories: vi.fn(), createCategory: vi.fn() }))
@@ -48,6 +49,7 @@ const closeDetails = async () => userEvent.click(within(screen.getByRole('dialog
 describe('OperationForm', () => {
   beforeEach(() => {
     vi.resetAllMocks()
+    localStorage.clear()
     vi.mocked(fetchRecentTags).mockResolvedValue(['ремонт', 'отпуск'])
     vi.mocked(fetchCategories).mockResolvedValue([
       category(),
@@ -262,5 +264,60 @@ describe('OperationForm', () => {
 
     expect(replaceOperation).toHaveBeenCalledWith(PERSONAL_GROUP_ID, 'op-1', expect.objectContaining({ amount: '4000', categoryId: 'cat-1', description: 'Магнум' }))
     expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({ created: false }))
+  })
+  describe('in another currency', () => {
+    const pickEuro = async () => {
+      await userEvent.click(await screen.findByRole('button', { name: `${strings.currencyFieldLabel}: KZT` }))
+      await userEvent.click(within(screen.getByRole('dialog', { name: strings.currencyFieldLabel })).getByRole('radio', { name: `${strings.currencyName('EUR')} EUR` }))
+    }
+
+    beforeEach(() => {
+      vi.mocked(fetchRate).mockResolvedValue({ from: 'EUR', to: 'KZT', rate: '521.6', date: today() })
+    })
+
+    it('records the tenge amount by the bank rate and keeps the euros', async () => {
+      renderForm()
+      await pickEuro()
+      await typeAmount('100')
+
+      expect(await screen.findByText(asRendered(`≈ ${formatMoney('52160', 'KZT', 'ru')}`))).toBeInTheDocument()
+      await userEvent.click(recordButton())
+
+      expect(createOperation).toHaveBeenCalledWith(PERSONAL_GROUP_ID, expect.objectContaining({ amount: '52160', original: { amount: '100', currency: 'EUR' } }))
+    })
+
+    it('records what the card was actually charged', async () => {
+      renderForm()
+      await pickEuro()
+      await typeAmount('100')
+      await userEvent.click(await screen.findByRole('button', { name: /1 € = 521,6/ }))
+      const total = screen.getByRole('textbox', { name: strings.rateTotal('₸') })
+      await userEvent.clear(total)
+      await userEvent.type(total, '53000')
+      await userEvent.click(within(screen.getByRole('dialog', { name: strings.rateTitle })).getByRole('button', { name: strings.done }))
+
+      await userEvent.click(recordButton())
+
+      expect(createOperation).toHaveBeenCalledWith(PERSONAL_GROUP_ID, expect.objectContaining({ amount: '53000', original: { amount: '100', currency: 'EUR' } }))
+    })
+
+    it('asks for a rate when the bank has none', async () => {
+      vi.mocked(fetchRate).mockRejectedValue(new Error('no rate'))
+      renderForm()
+      await pickEuro()
+      await typeAmount('100')
+
+      await userEvent.click(await screen.findByRole('button', { name: strings.rateMissing }))
+
+      expect(screen.getByRole('dialog', { name: strings.rateTitle })).toBeInTheDocument()
+    })
+
+    it('opens a foreign expense in the currency it was typed in', async () => {
+      renderForm(operation({ amount: '52160', original: { amount: '100', currency: 'EUR' } }))
+
+      expect(await screen.findByRole('button', { name: `${strings.currencyFieldLabel}: EUR` })).toBeInTheDocument()
+      expect(amountInput()).toHaveValue('100')
+      expect(fetchRate).not.toHaveBeenCalled()
+    })
   })
 })

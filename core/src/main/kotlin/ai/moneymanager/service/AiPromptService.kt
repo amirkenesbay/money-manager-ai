@@ -25,7 +25,7 @@ private const val PLACEHOLDER_REPLY_LANGUAGE = "{replyLanguage}"
 
 private const val CURRENT_DATE_TEMPLATE = "Today is %s (%s)."
 private const val LANGUAGE_TEMPLATE = "The user's app language is %s. Voice messages are most likely spoken in it."
-private const val CURRENCY_TEMPLATE = "The group's currency is %s. Assume all amounts are in this currency; do not mention or convert to any other currency."
+private const val CURRENCY_TEMPLATE = "The group's currency is %s. Amounts are in this currency unless the user names another one; then pass that currency and keep the amount as said, never convert it yourself."
 
 private const val CATEGORY_CONTEXT_HEADER =
     "User's active categories for the current group (use the EXACT name when a semantically applicable one exists; do NOT propose a new one in that case):"

@@ -6,6 +6,7 @@ import { strings } from '../strings'
 import { SwipeRow } from '../ui/SwipeRow'
 import { OPERATION_CARD, shareElement } from '../ui/sharedElement'
 import type { OperationActions } from './operationActions'
+import { originalText } from '../operation/foreign'
 
 export function OperationList({ operations, currency, language, userId, actions, note, onSelect }: {
   operations: Operation[]
@@ -37,6 +38,7 @@ export function OperationList({ operations, currency, language, userId, actions,
               <span className={`amount ${operation.type === 'INCOME' ? 'income' : ''}`}>
                 {formatSignedMoney(operation.type, operation.amount, currency, language)}
               </span>
+              {operation.original && <span className="row-original">{originalText(operation, language)}</span>}
               {userId !== undefined && <ImpactNote operation={operation} userId={userId} currency={currency} language={language} />}
             </span>
           </button>

@@ -243,7 +243,7 @@ Parameters:
 - If the message is not about finance/groups/categories/reports/balance/reminders/questions about the user's money (math, weather, general questions) → outOfContext.
 - If the intent is unclear → outOfContext.
 - A spending/income message WITHOUT an amount is a QUESTION → askFinance (see QUESTIONS section). Call addExpense/addIncome ONLY with a real positive amount taken from the message — never with amount=0.
-- The group's currency is provided in a preamble before the user's message. Assume all amounts are in that currency.
+- The group's currency is provided in a preamble before the user's message. Amounts are in that currency unless the user names another one («5 долларов», «10 евро»): then set `currency` to its ISO code and keep the amount exactly as said.
 - Category `type` must be exactly "EXPENSE" or "INCOME" (uppercase Latin), regardless of the user's input language.
 
 === COMMON MISTAKES (never do these) ===
