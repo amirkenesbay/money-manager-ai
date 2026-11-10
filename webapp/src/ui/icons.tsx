@@ -13,6 +13,8 @@ export const ChevronDownIcon = () => <Icon size={14}><path d="M6 9l6 6 6-6" /></
 
 export const ChevronRightIcon = () => <Icon size={16} strokeWidth={2.2}><path d="M9 18l6-6-6-6" /></Icon>
 
+export const PencilIcon = () => <Icon size={14}><path d="M4 20h4L19 9l-4-4L4 16z" /></Icon>
+
 export const PlusIcon = () => <Icon size={20} strokeWidth={2.2}><path d="M12 5v14M5 12h14" /></Icon>
 
 export const CalendarIcon = () => <Icon size={14}><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></Icon>

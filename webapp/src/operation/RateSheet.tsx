@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { type FocusEvent, useState } from 'react'
 import type { Currency } from '../api/types'
 import { currencySymbol } from '../format'
 import { strings } from '../strings'
@@ -7,6 +7,8 @@ import { Sheet } from '../ui/Sheet'
 import { Switch } from '../ui/Switch'
 import { parseAmount } from './amount'
 import { convertAmount, parseRate, rateInputText } from './foreign'
+
+const selectAll = (event: FocusEvent<HTMLInputElement>) => event.target.select()
 
 export function RateSheet({ from, to, amount, rate, custom, remembered, language, onDone, onReset, onClose }: {
   from: Currency
@@ -47,11 +49,11 @@ export function RateSheet({ from, to, amount, rate, custom, remembered, language
       <h2 className="sheet-title">{strings.rateTitle}</h2>
       <label className="rate-line">
         <span>{`1 ${currencySymbol(from)} =`}</span>
-        <input className="rate-input" inputMode="decimal" autoComplete="off" aria-label={strings.rateTitle} value={rateText} onChange={(event) => changeRate(event.target.value)} />
+        <input className="rate-input" inputMode="decimal" autoComplete="off" aria-label={strings.rateTitle} value={rateText} onFocus={selectAll} onChange={(event) => changeRate(event.target.value)} />
       </label>
       <label className="rate-line">
         <span>{strings.rateTotal(currencySymbol(to))}</span>
-        <input className="rate-input" inputMode="decimal" autoComplete="off" aria-label={strings.rateTotal(currencySymbol(to))} disabled={amount === null} value={totalText} onChange={(event) => changeTotal(event.target.value)} />
+        <input className="rate-input" inputMode="decimal" autoComplete="off" aria-label={strings.rateTotal(currencySymbol(to))} disabled={amount === null} value={totalText} onFocus={selectAll} onChange={(event) => changeTotal(event.target.value)} />
       </label>
       {custom && <button type="button" className="link-button" onClick={() => { onReset(); onClose() }}>{strings.rateReset}</button>}
       <div className="rate-remember">

@@ -4,12 +4,7 @@ import ai.moneymanager.domain.text.formatAmount
 import ai.moneymanager.chat.reply.common.formatDescriptionSuffix
 import ai.moneymanager.chat.reply.common.formatIconPrefix
 import ai.moneymanager.chat.reply.common.escapeHtml
-import ai.moneymanager.chat.telegram.widget.OperationCard
-import ai.moneymanager.chat.telegram.widget.WidgetOutbox
-import ai.moneymanager.domain.model.UserInfo
-import ai.moneymanager.domain.model.Budget
-import ai.moneymanager.domain.model.MoneyGroup
-import ai.moneymanager.service.BudgetService
+import ai.moneymanager.chat.reply.common.resolveCurrency
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryCreationResult
 import ai.moneymanager.domain.model.CategoryType
@@ -43,9 +38,7 @@ class TransactionAiHandler(
     private val financeOperationService: FinanceOperationService,
     private val groupService: GroupService,
     private val subscriptionLimitsService: SubscriptionLimitsService,
-    private val localizationService: LocalizationService,
-    private val budgetService: BudgetService,
-    private val widgetOutbox: WidgetOutbox,
+    private val localizationService: LocalizationService
 ) : AiDomainHandler {
     override fun canHandle(command: BotCommand): Boolean = when (command) {
         is BotCommand.AddExpense,
@@ -105,12 +98,12 @@ class TransactionAiHandler(
         val lang = context.userInfo?.language
         if (action !is AiPendingAction.TransactionAction) return localizationService.t("ai.error.unknown_command", lang)
         return when (action) {
-            is AiPendingAction.TransactionAction.Add -> executeAdd(action, context)
-            is AiPendingAction.TransactionAction.AddWithNewCategory -> executeAddWithNewCategory(action, context)
+            is AiPendingAction.TransactionAction.Add -> executeAdd(action, lang)
+            is AiPendingAction.TransactionAction.AddWithNewCategory -> executeAddWithNewCategory(action, context, lang)
         }
     }
 
-    private fun executeAdd(action: AiPendingAction.TransactionAction.Add, context: MoneyManagerContext): String =
+    private fun executeAdd(action: AiPendingAction.TransactionAction.Add, lang: String?): String =
         saveAndReport(
             groupId = action.groupId,
             creatorId = action.creatorId,
@@ -120,14 +113,14 @@ class TransactionAiHandler(
             operationDate = action.operationDate,
             description = action.description,
             isNewCategory = false,
-            user = context.userInfo
+            lang = lang
         )
 
     private fun executeAddWithNewCategory(
         action: AiPendingAction.TransactionAction.AddWithNewCategory,
         context: MoneyManagerContext,
+        lang: String?
     ): String {
-        val lang = context.userInfo?.language
         val hasPaidSubscription = context.userInfo?.hasActivePaidSubscription() == true
         val maxPerType = subscriptionLimitsService.maxCategoriesPerType(hasPaidSubscription)
 
@@ -143,7 +136,7 @@ class TransactionAiHandler(
                 operationDate = action.operationDate,
                 description = action.description,
                 isNewCategory = ensured.isNew,
-                user = context.userInfo
+                lang = lang
             )
         }
     }
@@ -157,9 +150,8 @@ class TransactionAiHandler(
         operationDate: LocalDate,
         description: String?,
         isNewCategory: Boolean,
-        user: UserInfo?
+        lang: String?
     ): String {
-        val lang = user?.language
         val categoryId = category.id ?: return localizationService.t(NO_CATEGORY_ID_KEY, lang)
         financeOperationService.save(
             groupId = groupId,
@@ -172,19 +164,8 @@ class TransactionAiHandler(
             operationDate = operationDate,
             description = description
         )
-        val group = groupService.getGroup(groupId)
-        val currency = group?.currency ?: Currency.DEFAULT
-        val message = successMessage(type, category, amount, description, currency, lang, isNewCategory)
-        user?.telegramUserId?.let { chatId ->
-            val card = OperationCard(message, type, BigDecimal.valueOf(amount), currency, category, description, operationDate, LocalDate.now(user.zone), budgetOf(group, type, categoryId), lang)
-            widgetOutbox.add(chatId, card)
-        }
-        return message
-    }
-
-    private fun budgetOf(group: MoneyGroup?, type: CategoryType, categoryId: ObjectId): Budget? {
-        if (group == null || type != CategoryType.EXPENSE) return null
-        return budgetService.budgets(group).find { it.category.id == categoryId }
+        val currency = resolveCurrency(groupService, groupId)
+        return successMessage(type, category, amount, description, currency, lang, isNewCategory)
     }
 
     private sealed class EnsureCategoryResult {

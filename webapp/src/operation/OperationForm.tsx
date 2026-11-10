@@ -17,6 +17,7 @@ import { useConfirmClosing } from '../ui/useConfirmClosing'
 import { useShake } from '../ui/useShake'
 import { HoldButton } from '../ui/HoldButton'
 import { SkeletonRows } from '../ui/Skeleton'
+import { PencilIcon } from '../ui/icons'
 import { Sheet } from '../ui/Sheet'
 import { HUGE_AMOUNT } from './amount'
 import { AmountPad, BACKSPACE, type PadKey } from './AmountPad'
@@ -203,6 +204,7 @@ function FormFields({ group, userId, language, operation, initialType, initialCa
           {amount !== null && <output className="amount-foreign-sum">{`${APPROXIMATELY} ${formatMoney(amount, group.currency, language)}`}</output>}
           <button type="button" className={`chip rate-chip pressable ${rateChoice?.custom ? 'custom' : ''}`} onClick={() => setSheet('rate')}>
             {rateChipLabel(rate, rateChoice, officialRate.status === 'loading', currency, group.currency, language)}
+            <PencilIcon />
           </button>
         </div>
       )}
