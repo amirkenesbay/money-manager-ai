@@ -6,6 +6,9 @@ import ai.moneymanager.domain.event.GroupSettingChanged
 import ai.moneymanager.domain.event.MemberJoined
 import org.springframework.context.ApplicationEventPublisher
 import ai.moneymanager.domain.model.Currency
+import ai.moneymanager.domain.model.CurrencyUpdateResult
+import ai.moneymanager.domain.event.OperationsChanged
+import ai.moneymanager.service.fx.GroupCurrencyConverter
 import ai.moneymanager.domain.model.MONTH_START_DAYS
 import ai.moneymanager.domain.model.GroupCreationResult
 import ai.moneymanager.domain.model.GroupType
@@ -26,6 +29,7 @@ class GroupService(
     private val groupRepository: MoneyGroupRepository,
     private val userRepository: UserInfoRepository,
     private val categoryService: CategoryService,
+    private val currencyConverter: GroupCurrencyConverter,
     private val eventPublisher: ApplicationEventPublisher,
 ) {
     private val log = LoggerFactory.getLogger(GroupService::class.java)
@@ -139,17 +143,17 @@ class GroupService(
         return mapToModel(savedGroup)
     }
 
-    fun updateCurrency(userId: Long, groupId: ObjectId, currency: Currency): MoneyGroup? {
-        val groupEntity = groupRepository.findById(groupId).orElse(null) ?: return null
-
-        if (groupEntity.ownerId != userId) {
-            return null
-        }
-
-        val savedGroup = groupRepository.save(groupEntity.copy(currency = currency))
+    fun updateCurrency(userId: Long, groupId: ObjectId, currency: Currency): CurrencyUpdateResult {
+        val groupEntity = groupRepository.findById(groupId).orElse(null) ?: return CurrencyUpdateResult.NotAllowed
+        if (groupEntity.ownerId != userId) return CurrencyUpdateResult.NotAllowed
+        val converted = currencyConverter.convert(groupEntity, currency) ?: return CurrencyUpdateResult.RateUnavailable
+        val savedGroup = groupRepository.save(converted)
         log.info("Currency updated: groupId=$groupId, currency=$currency")
-        if (groupEntity.currency != currency) publishSetting(groupId, userId, GroupSettingChange.CurrencyChanged(groupEntity.currency, currency))
-        return mapToModel(savedGroup)
+        if (groupEntity.currency != currency) {
+            publishSetting(groupId, userId, GroupSettingChange.CurrencyChanged(groupEntity.currency, currency))
+            eventPublisher.publishEvent(OperationsChanged(groupId))
+        }
+        return CurrencyUpdateResult.Updated(mapToModel(savedGroup))
     }
 
     fun updateMonthStartDay(userId: Long, groupId: ObjectId, day: Int): MoneyGroup? {

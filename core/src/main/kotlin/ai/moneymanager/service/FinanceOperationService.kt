@@ -140,6 +140,7 @@ class FinanceOperationService(
                 payerId = share?.payerId,
                 participantIds = share?.participantIds,
                 original = draft.original,
+                recorded = null,
             )
         }
 
@@ -159,7 +160,7 @@ class FinanceOperationService(
         financeOperationRepository.findByGroupIdAndIdIn(groupId, listOf(operationId)).firstOrNull()
 
     fun updateAmount(actorId: Long, groupId: ObjectId, operationId: ObjectId, amount: BigDecimal): FinanceOperationEntity? =
-        updateOperation(actorId, groupId, operationId) { it.copy(amount = amount, original = null) }
+        updateOperation(actorId, groupId, operationId) { it.copy(amount = amount, original = null, recorded = null) }
 
     fun updateType(actorId: Long, groupId: ObjectId, operationId: ObjectId, type: CategoryType): FinanceOperationEntity? =
         updateOperation(actorId, groupId, operationId) { it.copy(type = type) }

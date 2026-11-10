@@ -1,5 +1,6 @@
 package ai.moneymanager.web.group
 
+import ai.moneymanager.domain.model.CurrencyUpdateResult
 import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.domain.model.GroupCreationResult
 import ai.moneymanager.domain.model.GroupNoticeLevel
@@ -132,12 +133,21 @@ class GroupControllerTest {
     fun `lets the owner rename a group and change its currency`() {
         val renamed = ownedGroup.copy(name = "Отпуск")
         `when`(groupService.updateGroupName(TEST_USER_ID, ownedGroup.id!!, "Отпуск")).thenReturn(renamed)
-        `when`(groupService.updateCurrency(TEST_USER_ID, ownedGroup.id!!, Currency.USD)).thenReturn(renamed.copy(currency = Currency.USD))
+        `when`(groupService.updateCurrency(TEST_USER_ID, ownedGroup.id!!, Currency.USD)).thenReturn(CurrencyUpdateResult.Updated(renamed.copy(currency = Currency.USD)))
 
         mockMvc.perform(patch("/api/v1/groups/${ownedGroup.id}").withTelegramAuth().json("""{"name":"Отпуск","currency":"USD"}"""))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.name").value("Отпуск"))
             .andExpect(jsonPath("$.currency").value("USD"))
+    }
+
+    @Test
+    fun `refuses a currency without an exchange rate`() {
+        `when`(groupService.updateCurrency(TEST_USER_ID, ownedGroup.id!!, Currency.TMT)).thenReturn(CurrencyUpdateResult.RateUnavailable)
+
+        mockMvc.perform(patch("/api/v1/groups/${ownedGroup.id}").withTelegramAuth().json("""{"currency":"TMT"}"""))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.message").value("Нет курса для этой валюты. Выбери другую."))
     }
 
     @Test

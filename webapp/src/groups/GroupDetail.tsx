@@ -17,7 +17,7 @@ import { SettingsRow } from '../ui/SettingsRow'
 import { SkeletonRows } from '../ui/Skeleton'
 import type { Notify } from '../ui/useToast'
 import { currencyBadge } from './currencies'
-import { CurrencySheet } from './CurrencySheet'
+import { CurrencySheet, type UndoAction } from './CurrencySheet'
 import { groupMeta } from './groupMeta'
 import { deleteGroup, fetchInvite } from './groupsApi'
 import { useMembers } from './useMembers'
@@ -41,10 +41,10 @@ export function GroupDetail({ me, group, onBack, onActivate, onUpdated, onDelete
   const [sheet, setSheet] = useState<SheetKind | null>(null)
   const shared = group.type === 'SHARED'
 
-  const updated = (next: Group, title: string) => {
+  const updated = (next: Group, title: string, action?: UndoAction) => {
     setSheet(null)
     onUpdated(next)
-    notify({ title, detail: next.name })
+    notify({ title, detail: next.name, action })
   }
 
   return (
@@ -72,7 +72,7 @@ export function GroupDetail({ me, group, onBack, onActivate, onUpdated, onDelete
         : <p className="caption centered">{strings.ownerOnlyHint}</p>}
       {sheet === 'rename' && <RenameSheet group={group} onSaved={(next) => updated(next, strings.groupRenamedToast)} onClose={() => setSheet(null)} />}
       {sheet === 'notices' && <NoticesSheet group={group} onSaved={(next) => updated(next, strings.groupNoticesSavedToast)} onClose={() => setSheet(null)} />}
-      {sheet === 'currency' && <CurrencySheet group={group} onSaved={(next) => updated(next, strings.currencyChangedToast)} onClose={() => setSheet(null)} />}
+      {sheet === 'currency' && <CurrencySheet group={group} language={me.language} onSaved={(next, undo) => updated(next, strings.currencyChangedToast, undo)} onClose={() => setSheet(null)} />}
       {sheet === 'delete' && (
         <ConfirmSheet
           title={strings.deleteGroupQuestion(group.name)}

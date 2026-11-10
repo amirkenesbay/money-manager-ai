@@ -1,5 +1,6 @@
 package ai.moneymanager.service
 
+import ai.moneymanager.service.fx.GroupCurrencyConverter
 import ai.moneymanager.domain.event.GroupDeleted
 import ai.moneymanager.domain.event.GroupSettingChange
 import ai.moneymanager.domain.event.GroupSettingChanged
@@ -27,7 +28,7 @@ class GroupServiceEventsTest {
     private val family = MoneyGroupEntity(groupId, "Семья", INVITE_TOKEN, OWNER_ID, setOf(OWNER_ID), GroupType.SHARED)
     private val groupRepository = mock(MoneyGroupRepository::class.java)
     private val publishedEvents = mutableListOf<Any>()
-    private val service = GroupService(groupRepository, mock(UserInfoRepository::class.java), mock(CategoryService::class.java)) { publishedEvents.add(it) }
+    private val service = GroupService(groupRepository, mock(UserInfoRepository::class.java), mock(CategoryService::class.java), mock(GroupCurrencyConverter::class.java)) { publishedEvents.add(it) }
 
     @BeforeEach
     fun givenFamilyGroup() {

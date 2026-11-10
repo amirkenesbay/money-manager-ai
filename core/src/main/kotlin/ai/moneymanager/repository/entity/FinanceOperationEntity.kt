@@ -32,6 +32,7 @@ data class FinanceOperationEntity(
     val participantIds: Set<Long>? = null,
     val importId: ObjectId? = null,
     val original: ForeignAmount? = null,
+    val recorded: ForeignAmount? = null,
     val auditInfo: AuditInfo = AuditInfo()
 ) {
     val share: ExpenseShare?

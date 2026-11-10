@@ -1,5 +1,6 @@
 package ai.moneymanager.service
 
+import ai.moneymanager.service.fx.GroupCurrencyConverter
 import ai.moneymanager.domain.model.GroupCreationResult
 import ai.moneymanager.repository.MoneyGroupRepository
 import ai.moneymanager.repository.UserInfoRepository
@@ -21,7 +22,7 @@ class GroupServiceCreationTest {
     private val groupRepository = mock(MoneyGroupRepository::class.java)
     private val userRepository = mock(UserInfoRepository::class.java)
     private val categoryService = mock(CategoryService::class.java)
-    private val service = GroupService(groupRepository, userRepository, categoryService) {}
+    private val service = GroupService(groupRepository, userRepository, categoryService, mock(GroupCurrencyConverter::class.java)) {}
 
     @BeforeEach
     fun givenRepositoriesThatSave() {

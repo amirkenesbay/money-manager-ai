@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.transition.settings
 
+import ai.moneymanager.domain.model.CurrencyUpdateResult
 import ai.moneymanager.chat.transition.common.handleGroupCreated
 import ai.moneymanager.domain.model.Currency
 import ai.moneymanager.chat.state.MoneyManagerButtonType
@@ -55,8 +56,8 @@ private fun DialogBuilder<MoneyManagerState, MoneyManagerContext>.selectCurrency
                 val activeGroupId = groupService.getActiveGroup(user.id)?.id
                 if (activeGroupId != null) {
                     val updated = groupService.updateCurrency(user.id, activeGroupId, choice.currency)
-                    if (updated != null) {
-                        context.currentGroup = updated
+                    if (updated is CurrencyUpdateResult.Updated) {
+                        context.currentGroup = updated.group
                         context.currencyJustChanged = true
                     }
                 }

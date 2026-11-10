@@ -17,6 +17,8 @@ import java.util.concurrent.ConcurrentHashMap
 private val RETRY_AFTER: Duration = Duration.ofMinutes(30)
 private const val AMOUNT_SCALE = 2
 
+fun BigDecimal.atRate(rate: BigDecimal): BigDecimal = multiply(rate).setScale(AMOUNT_SCALE, RoundingMode.HALF_UP).stripTrailingZeros()
+
 @Service
 class ExchangeRateService(
     private val repository: KztRatesRepository,
@@ -35,8 +37,12 @@ class ExchangeRateService(
         return ExchangeRate(from, to, fromKzt.divide(toKzt, RATE_SCALE, RoundingMode.HALF_UP).stripTrailingZeros(), rates.date)
     }
 
+    fun preload(date: LocalDate) {
+        ratesOn(minOf(date, LocalDate.now(clock)))
+    }
+
     fun convert(amount: BigDecimal, from: Currency, to: Currency, date: LocalDate): BigDecimal? =
-        rate(from, to, date)?.let { amount.multiply(it.rate).setScale(AMOUNT_SCALE, RoundingMode.HALF_UP).stripTrailingZeros() }
+        rate(from, to, date)?.let { amount.atRate(it.rate) }
 
     private fun ratesOn(day: LocalDate): KztRatesEntity? =
         repository.findById(KztRatesEntity.dayOf(day)).orElse(null)

@@ -1,5 +1,6 @@
 package ai.moneymanager.web.group
 
+import ai.moneymanager.domain.model.CurrencyUpdateResult
 import ai.moneymanager.domain.model.GroupCreationResult
 import ai.moneymanager.domain.model.GroupType
 import ai.moneymanager.domain.model.MAX_GROUP_NAME_LENGTH
@@ -35,6 +36,7 @@ private const val PERSONAL_GROUP_LOCKED_KEY = "${API_ERROR_KEY_PREFIX}personal_g
 private const val PERSONAL_GROUP_INVITE_KEY = "${API_ERROR_KEY_PREFIX}personal_group_invite"
 private const val NEGATIVE_BALANCE_KEY = "${API_ERROR_KEY_PREFIX}negative_balance"
 private const val MONTH_START_DAY_KEY = "${API_ERROR_KEY_PREFIX}month_start_day"
+private const val CURRENCY_RATE_UNAVAILABLE_KEY = "${API_ERROR_KEY_PREFIX}currency_rate_unavailable"
 
 @RestController
 @RequestMapping("$API_V1_PREFIX/groups")
@@ -71,7 +73,13 @@ class GroupController(
             val name = requireName(raw, MAX_GROUP_NAME_LENGTH)
             groupService.updateGroupName(userId, groupId, name) ?: throw duplicate(name)
         } ?: group
-        val withCurrency = request.currency?.let { checkNotNull(groupService.updateCurrency(userId, groupId, it)) } ?: renamed
+        val withCurrency = request.currency?.let { currency ->
+            when (val result = groupService.updateCurrency(userId, groupId, currency)) {
+                is CurrencyUpdateResult.Updated -> result.group
+                CurrencyUpdateResult.RateUnavailable -> throw badRequest(CURRENCY_RATE_UNAVAILABLE_KEY)
+                CurrencyUpdateResult.NotAllowed -> error("owner checked above")
+            }
+        } ?: renamed
         val updated = request.monthStartDay?.let { day ->
             if (day !in MONTH_START_DAYS) throw badRequest(MONTH_START_DAY_KEY)
             checkNotNull(groupService.updateMonthStartDay(userId, groupId, day))

@@ -6,7 +6,7 @@ import { useAsync } from '../api/useAsync'
 import { useCategories } from '../categories/useCategories'
 import { formatDate } from '../format'
 import { currencyBadge } from '../groups/currencies'
-import { CurrencySheet } from '../groups/CurrencySheet'
+import { CurrencySheet, type UndoAction } from '../groups/CurrencySheet'
 import { MonthStartSheet } from '../groups/MonthStartSheet'
 import { isLanguage, LANGUAGE_NAMES } from '../i18n/languages'
 import { fetchReminders } from '../reminders/remindersApi'
@@ -63,10 +63,10 @@ export function MoreScreen({ me, group, groups, name, onMeChanged, onGroupUpdate
   const categoryCount = categories.state.status === 'ready' ? String(categories.state.data.length) : undefined
   const activeReminders = reminders.state.status === 'ready' ? strings.remindersOn(reminders.state.data.filter((reminder) => reminder.isActive).length) : undefined
 
-  const groupSaved = (next: Group, title: string) => {
+  const groupSaved = (next: Group, title: string, action?: UndoAction) => {
     setSheet(null)
     onGroupUpdated(next)
-    notify({ title, detail: next.name })
+    notify({ title, detail: next.name, action })
   }
 
   return (
@@ -130,7 +130,7 @@ export function MoreScreen({ me, group, groups, name, onMeChanged, onGroupUpdate
       {sheet === 'digests' && (
         <DigestsSheet me={me} onChanged={onMeChanged} onFailed={() => notify({ title: strings.toggleFailed })} onClose={() => setSheet(null)} />
       )}
-      {sheet === 'currency' && <CurrencySheet group={group} onSaved={(next) => groupSaved(next, strings.currencyChangedToast)} onClose={() => setSheet(null)} />}
+      {sheet === 'currency' && <CurrencySheet group={group} language={me.language} onSaved={(next, undo) => groupSaved(next, strings.currencyChangedToast, undo)} onClose={() => setSheet(null)} />}
       {sheet === 'monthStart' && <MonthStartSheet group={group} onSaved={(next) => groupSaved(next, strings.monthStartChangedToast)} onClose={() => setSheet(null)} />}
       {sheet === 'balance' && <BalanceSheet group={group} onSaved={(next) => groupSaved(next, strings.balanceSavedToast)} onClose={() => setSheet(null)} />}
     </>
