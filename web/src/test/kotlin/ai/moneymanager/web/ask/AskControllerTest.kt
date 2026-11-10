@@ -28,7 +28,7 @@ import ai.moneymanager.testing.testUser
 import ai.moneymanager.web.ApiWebLayerSetup
 import ai.moneymanager.web.access.GroupAccessGuard
 import ai.moneymanager.web.ai.AiRequestGuard
-import ai.moneymanager.web.anyOf
+import ai.moneymanager.testing.anyOf
 import ai.moneymanager.web.json
 import ai.moneymanager.web.mockInvoked
 import ai.moneymanager.web.security.TestInitData

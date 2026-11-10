@@ -7,7 +7,7 @@ import ai.moneymanager.domain.model.TelegramProfile
 import ai.moneymanager.service.UserInfoService
 import ai.moneymanager.testing.testUser
 import ai.moneymanager.web.ApiWebLayerSetup
-import ai.moneymanager.web.anyOf
+import ai.moneymanager.testing.anyOf
 import ai.moneymanager.web.mockInvoked
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

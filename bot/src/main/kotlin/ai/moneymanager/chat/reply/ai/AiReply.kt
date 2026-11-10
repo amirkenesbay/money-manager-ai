@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.reply.ai
 
+import ai.moneymanager.chat.reply.common.DOT_SEPARATOR
 import ai.moneymanager.domain.model.DEFAULT_CATEGORY_ICON
 import ai.moneymanager.chat.reply.common.backButton
 import ai.moneymanager.chat.reply.common.bold
@@ -23,7 +24,6 @@ import java.math.BigDecimal
 private const val PICKER_TOP_N = 5
 private const val BATCH_LINE_SEPARATOR = "\n"
 private const val BATCH_SECTION_SEPARATOR = "\n\n"
-private const val BATCH_TOTALS_SEPARATOR = " · "
 private const val CONFIRM_YES_KEY = "ai.confirm.button.yes"
 private const val HINTS_BUTTON_KEY = "ai.mode.button.hints"
 private const val CONFIRM_SAVE_ALL_KEY = "ai.confirm.button.save_all"
@@ -323,7 +323,7 @@ private fun batchTotalsLine(
         batchTotalPart(transactions, CategoryType.EXPENSE, BATCH_TOTALS_EXPENSE_KEY, localizationService, currency, lang),
         batchTotalPart(transactions, CategoryType.INCOME, BATCH_TOTALS_INCOME_KEY, localizationService, currency, lang)
     )
-    return parts.joinToString(BATCH_TOTALS_SEPARATOR)
+    return parts.joinToString(DOT_SEPARATOR)
 }
 
 private fun batchTotalPart(

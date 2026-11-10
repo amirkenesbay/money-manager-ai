@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.telegram
 
+import ai.moneymanager.chat.reply.common.DOT_SEPARATOR
 import ai.moneymanager.metrics.MessageType
 import ai.moneymanager.metrics.MessageMetrics
 import ai.moneymanager.chat.reply.common.escapeHtml
@@ -36,8 +37,6 @@ private const val RECURRING_CHECK_INTERVAL_MS = 300_000L
 private const val LOOKAHEAD_DAYS = 2L
 private val RECORD_TIME: LocalTime = LocalTime.of(10, 0)
 private val HEADS_UP_TIME: LocalTime = LocalTime.of(19, 0)
-private const val DESCRIPTION_SEPARATOR = " · "
-private const val DATE_PREFIX = " · "
 
 @Service
 class RecurringNotifier(
@@ -94,7 +93,7 @@ class RecurringNotifier(
         val currency = currencyOf(payment.groupId)
         val operation = occurrence.operation
         if (operation != null) {
-            val date = if (occurrence.date == today) "" else DATE_PREFIX + occurrence.date.format(shortDateFormatter)
+            val date = if (occurrence.date == today) "" else DOT_SEPARATOR + occurrence.date.format(shortDateFormatter)
             send(chatId, t("recurring.recorded", language, paymentLabel(payment), amount(operation, currency), date), button("recurring.button.undo", language, undoOperationParameter(checkNotNull(operation.id))))
             return
         }
@@ -124,7 +123,7 @@ class RecurringNotifier(
     private fun operationLabel(operation: FinanceOperationEntity): String = label(operation.categoryIcon, operation.categoryName, operation.description)
 
     private fun label(icon: String?, category: String, description: String?): String =
-        escapeHtml(formatIconPrefix(icon) + category + (description?.let { DESCRIPTION_SEPARATOR + it } ?: ""))
+        escapeHtml(formatIconPrefix(icon) + category + (description?.let { DOT_SEPARATOR + it } ?: ""))
 
     private fun paymentAmount(payment: RecurringPaymentEntity, currency: Currency): String = formatSignedAmount(payment.type, payment.amount, currency)
 

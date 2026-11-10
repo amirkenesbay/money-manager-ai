@@ -30,7 +30,7 @@ import ai.moneymanager.web.ask.AskAnswers
 import ai.moneymanager.web.loan.VoiceLoans
 import ai.moneymanager.service.loan.LoanService
 import ai.moneymanager.domain.model.loan.LoanDirection
-import ai.moneymanager.web.anyOf
+import ai.moneymanager.testing.anyOf
 import ai.moneymanager.web.mockInvoked
 import ai.moneymanager.web.security.TestInitData
 import ai.moneymanager.web.time.UserCalendar

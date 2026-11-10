@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.reply.group
 
+import ai.moneymanager.chat.reply.common.DOT_SEPARATOR
 import ai.moneymanager.chat.reply.common.LINE_BREAK
 import ai.moneymanager.chat.reply.common.escapeHtml
 import ai.moneymanager.domain.text.formatAmount
@@ -15,7 +16,6 @@ import org.springframework.stereotype.Component
 
 private const val MAX_OPERATION_LINES = 10
 private const val DETAIL_SEPARATOR = ", "
-private const val DESCRIPTION_PREFIX = " · "
 private const val CURRENCY_LABEL_TEMPLATE = "%s %s"
 
 enum class NoticeTopic(val emoji: String) {
@@ -86,7 +86,7 @@ class GroupNoticeFormatter(
     private fun amount(operation: FinanceOperationEntity, currency: Currency): String = formatSignedAmount(operation.type, operation.amount, currency)
 
     private fun description(operation: FinanceOperationEntity): String =
-        operation.description?.takeIf { it.isNotBlank() }?.let { DESCRIPTION_PREFIX + escapeHtml(it) }.orEmpty()
+        operation.description?.takeIf { it.isNotBlank() }?.let { DOT_SEPARATOR + escapeHtml(it) }.orEmpty()
 
     private fun categoryLabel(icon: String?, name: String): String = escapeHtml(formatIconPrefix(icon) + name)
 

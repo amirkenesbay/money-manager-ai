@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.reply.group
 
+import ai.moneymanager.chat.reply.common.DOT_SEPARATOR
 import ai.moneymanager.chat.reply.common.backButton
 import ai.moneymanager.domain.model.buildInviteLink
 import ai.moneymanager.chat.reply.common.cancelButton
@@ -277,7 +278,7 @@ fun RepliesBuilder<MoneyManagerState, MoneyManagerContext>.groupActionsReply(
                 val isPersonal = group.type == GroupType.PERSONAL
                 val ownerText = if (isOwner) localizationService.t("group.actions.owner", lang) else ""
                 val activeText = if (isActive) localizationService.t("group.actions.active", lang) else ""
-                val statusLine = listOf(ownerText, activeText).filter { it.isNotEmpty() }.joinToString(" · ")
+                val statusLine = listOf(ownerText, activeText).filter { it.isNotEmpty() }.joinToString(DOT_SEPARATOR)
 
                 val confirmation = context.renameConfirmation?.let { "\n\n$it" } ?: ""
                 context.renameConfirmation = null
