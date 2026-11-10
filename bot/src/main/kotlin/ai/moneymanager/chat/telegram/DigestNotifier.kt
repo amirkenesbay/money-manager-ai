@@ -3,6 +3,8 @@ package ai.moneymanager.chat.telegram
 import ai.moneymanager.metrics.MessageType
 import ai.moneymanager.metrics.MessageMetrics
 import ai.moneymanager.chat.reply.digest.DigestFormatter
+import ai.moneymanager.chat.telegram.widget.DigestCardRenderer
+import ai.moneymanager.chat.telegram.widget.WidgetSender
 import ai.moneymanager.domain.model.Digest
 import ai.moneymanager.domain.model.DigestKind
 import ai.moneymanager.domain.model.UserInfo
@@ -35,6 +37,8 @@ class DigestNotifier(
     private val groupService: GroupService,
     private val digestService: DigestService,
     private val digestFormatter: DigestFormatter,
+    private val digestCardRenderer: DigestCardRenderer,
+    private val widgetSender: WidgetSender,
     private val miniAppGateway: MiniAppGateway,
     private val messageMetrics: MessageMetrics,
     private val clock: Clock,
@@ -66,9 +70,12 @@ class DigestNotifier(
             val period = dueDigestPeriod(kind, now, group.monthStartDay) ?: return@forEach
             if (digestService.wasSent(telegramUserId, period)) return@forEach
             val digest = digestService.build(group, period, now.toLocalDate()) ?: return@forEach
-            if (digestService.claim(telegramUserId, period)) messageMetrics.track(MessageType.DIGEST, telegramUserId) { execute(message(telegramUserId, digest, user.language)) }
+            if (digestService.claim(telegramUserId, period)) messageMetrics.track(MessageType.DIGEST, telegramUserId) { send(telegramUserId, digest, user.language) }
         }
     }
+
+    private fun send(telegramUserId: Long, digest: Digest, language: String?): Int =
+        widgetSender.sendCard(message(telegramUserId, digest, language), digestCardRenderer.render(digest, language))
 
     private fun message(telegramUserId: Long, digest: Digest, language: String?): SendMessage =
         SendMessage(telegramUserId.toString(), digestFormatter.format(digest, language)).apply {

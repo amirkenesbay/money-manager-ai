@@ -9,6 +9,7 @@ import kz.rmr.chatmachinist.service.TelegramClient
 import org.assertj.core.api.Assertions.assertThat
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito
 import org.mockito.Mockito.anyString
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
@@ -39,10 +40,24 @@ class WidgetTelegramClientTest {
 
     private fun message(text: String) = SendMessage(CHAT_ID.toString(), text)
 
+    private fun anyFallback(): () -> Int {
+        Mockito.any(Function0::class.java)
+        return { 0 }
+    }
+
+    private fun givenCardSent() {
+        `when`(sender.sendCard(anyOf(SendMessage::class.java), anyString(), anyFallback())).thenReturn(WIDGET_MESSAGE_ID)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun givenCardRefused() {
+        `when`(sender.sendCard(anyOf(SendMessage::class.java), anyString(), anyFallback())).thenAnswer { (it.getArgument<Any>(2) as () -> Int)() }
+    }
+
     @Test
     fun `sends the saved operation as a card`() {
         queueCard()
-        `when`(sender.send(anyString(), anyString(), anyOf(SendMessage::class.java))).thenReturn(WIDGET_MESSAGE_ID)
+        givenCardSent()
 
         assertThat(client.sendMessage(message(SAVED_TEXT))).isEqualTo(WIDGET_MESSAGE_ID)
         verify(delegate, never()).sendMessage(anyOf(SendMessage::class.java))
@@ -51,7 +66,7 @@ class WidgetTelegramClientTest {
     @Test
     fun `falls back to text when telegram refuses the card`() {
         queueCard()
-        `when`(sender.send(anyString(), anyString(), anyOf(SendMessage::class.java))).thenThrow(IllegalStateException("Bad Request"))
+        givenCardRefused()
         `when`(delegate.sendMessage(anyOf(SendMessage::class.java))).thenReturn(TEXT_MESSAGE_ID)
 
         assertThat(client.sendMessage(message(SAVED_TEXT))).isEqualTo(TEXT_MESSAGE_ID)
@@ -63,13 +78,13 @@ class WidgetTelegramClientTest {
         `when`(delegate.sendMessage(anyOf(SendMessage::class.java))).thenReturn(TEXT_MESSAGE_ID)
 
         assertThat(client.sendMessage(message("📋 Меню"))).isEqualTo(TEXT_MESSAGE_ID)
-        verify(sender, never()).send(anyString(), anyString(), anyOf(SendMessage::class.java))
+        verify(sender, never()).sendCard(anyOf(SendMessage::class.java), anyString(), anyFallback())
     }
 
     @Test
     fun `does not touch an edit of the same message number in another chat`() {
         queueCard()
-        `when`(sender.send(anyString(), anyString(), anyOf(SendMessage::class.java))).thenReturn(WIDGET_MESSAGE_ID)
+        givenCardSent()
         client.sendMessage(message(SAVED_TEXT))
         val elsewhere = EditMessageText.builder().chatId(CHAT_ID + 1).messageId(WIDGET_MESSAGE_ID).text("📋 Меню").build()
 
@@ -82,7 +97,7 @@ class WidgetTelegramClientTest {
     @Test
     fun `answers an edit of the card with a new text message and keeps editing it`() {
         queueCard()
-        `when`(sender.send(anyString(), anyString(), anyOf(SendMessage::class.java))).thenReturn(WIDGET_MESSAGE_ID)
+        givenCardSent()
         `when`(delegate.sendMessage(anyOf(SendMessage::class.java))).thenReturn(TEXT_MESSAGE_ID)
         client.sendMessage(message(SAVED_TEXT))
 

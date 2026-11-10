@@ -19,8 +19,12 @@ class WidgetSender(
     @Value("\${chat-machinist.bot.token}")
     botToken: String,
 ) : DefaultAbsSender(DefaultBotOptions(), botToken) {
-    fun send(chatId: String, html: String, message: SendMessage): Int =
-        execute(SendWidget(chatId, html, message.replyMarkup)).messageId
+    private val log = LoggerFactory.getLogger(javaClass)
+
+    fun sendCard(message: SendMessage, html: String, fallback: () -> Int = { execute(message).messageId }): Int =
+        runCatching { execute(SendWidget(message.chatId, html, message.replyMarkup)).messageId }
+            .onFailure { log.warn("Widget send failed, falling back to text: {}", it.message) }
+            .getOrElse { fallback() }
 }
 
 @Component
@@ -39,7 +43,6 @@ class WidgetTelegramClient(
     private val renderer: () -> OperationCardRenderer,
     private val sender: () -> WidgetSender,
 ) : TelegramClient by delegate {
-    private val log = LoggerFactory.getLogger(javaClass)
     private val replacements: MutableMap<Pair<String, Int>, Int> = Collections.synchronizedMap(
         object : LinkedHashMap<Pair<String, Int>, Int>() {
             override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Pair<String, Int>, Int>?): Boolean = size > MAX_TRACKED_CARDS
@@ -48,9 +51,10 @@ class WidgetTelegramClient(
 
     override fun sendMessage(message: SendMessage): Int {
         val cards = outbox().take(message.chatId, message.text) ?: return delegate.sendMessage(message)
-        return runCatching { sender().send(message.chatId, renderer().render(cards), message).also { replacements[message.chatId to it] = it } }
-            .onFailure { log.warn("Widget send failed, falling back to text: {}", it.message) }
-            .getOrElse { delegate.sendMessage(message) }
+        var sentAsText = false
+        val sent = sender().sendCard(message, renderer().render(cards)) { sentAsText = true; delegate.sendMessage(message) }
+        if (!sentAsText) replacements[message.chatId to sent] = sent
+        return sent
     }
 
     override fun editMessage(message: EditMessageText) {

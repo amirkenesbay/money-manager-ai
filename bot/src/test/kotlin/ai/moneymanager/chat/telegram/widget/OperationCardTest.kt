@@ -9,16 +9,11 @@ import ai.moneymanager.testing.testLocalizationService
 import org.assertj.core.api.Assertions.assertThat
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
-import java.io.ByteArrayOutputStream
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.YearMonth
-import java.util.zip.Deflater
-import java.util.zip.DeflaterOutputStream
 
 private val TODAY: LocalDate = LocalDate.of(2026, 11, 10)
-private const val MAX_COMPRESSED_BYTES = 4096
-private const val MAX_HTML_BYTES = 32768
 
 class OperationCardTest {
     private val renderer = OperationCardRenderer(testLocalizationService())
@@ -75,13 +70,7 @@ class OperationCardTest {
     fun `fits the telegram widget limits`() {
         val html = renderer.render(listOf(card(budget = Budget(cafe, BigDecimal("40000"), BigDecimal("32400"), period))))
 
-        assertThat(html.toByteArray().size).isLessThanOrEqualTo(MAX_HTML_BYTES)
-        assertThat(compressed(html)).isLessThanOrEqualTo(MAX_COMPRESSED_BYTES)
+        assertFitsWidgetLimits(html)
     }
 
-    private fun compressed(html: String): Int {
-        val bytes = ByteArrayOutputStream()
-        DeflaterOutputStream(bytes, Deflater(Deflater.BEST_COMPRESSION)).use { it.write(html.toByteArray()) }
-        return bytes.size()
-    }
 }

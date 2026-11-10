@@ -12,18 +12,10 @@ import ai.moneymanager.domain.model.DigestKind
 import ai.moneymanager.domain.model.MonthLeft
 import ai.moneymanager.domain.model.report.CategoryTotal
 import ai.moneymanager.service.LocalizationService
-import ai.moneymanager.service.localeFor
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
-import java.math.RoundingMode
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.format.TextStyle
 
-private const val WEEK_DAY_PATTERN = "d MMM"
-private const val ABBREVIATION_DOT = "."
 private const val PARAGRAPH_BREAK = "\n\n"
-private val HUNDRED = BigDecimal(100)
 
 @Component
 class DigestFormatter(
@@ -47,22 +39,21 @@ class DigestFormatter(
             t("digest.day.count", language, digest.operationCount),
             topSingle(digest, language),
         ),
-        monthLeft(digest, language) { left -> t("digest.tomorrow", language, money(digest, perDay(left))) },
+        monthLeft(digest, language) { left -> t("digest.tomorrow", language, money(digest, left.perDay())) },
         t("digest.day.forgot", language),
     )
 
     private fun week(digest: Digest, language: String?): String {
-        val days = digest.period.end.toEpochDay() - digest.period.start.toEpochDay() + 1
         return paragraphs(
             lines(
                 t("digest.week.title", language, weekDay(digest.period.start, language), weekDay(digest.period.end, language), groupName(digest)),
                 "",
                 t("digest.spent", language, money(digest, digest.spent)),
-                t("digest.average", language, money(digest, digest.spent.divide(BigDecimal(days), 0, RoundingMode.HALF_UP))),
+                t("digest.average", language, money(digest, digest.dailyAverage())),
                 topSingle(digest, language),
             ),
             monthLeft(digest, language) { left ->
-                t("digest.month_left", language, money(digest, left.amount), money(digest, perDay(left)))
+                t("digest.month_left", language, money(digest, left.amount), money(digest, left.perDay()))
             },
         )
     }
@@ -80,8 +71,7 @@ class DigestFormatter(
     )
 
     private fun comparison(digest: Digest, language: String?): String? {
-        val previous = digest.previousSpent ?: return null
-        val change = (digest.spent - previous).multiply(HUNDRED).divide(previous, 0, RoundingMode.HALF_UP).toInt()
+        val change = digest.changePercent() ?: return null
         return when {
             change < 0 -> t("digest.compare.less", language, -change)
             change > 0 -> t("digest.compare.more", language, change)
@@ -99,8 +89,7 @@ class DigestFormatter(
     private fun topExpenses(digest: Digest, language: String?): String? {
         if (digest.topExpenses.isEmpty() || digest.spent.signum() <= 0) return null
         val rows = digest.topExpenses.map { category ->
-            val share = category.total.multiply(HUNDRED).divide(digest.spent, 0, RoundingMode.HALF_UP)
-            t("digest.top.line", language, categoryLabel(category), money(digest, category.total), share)
+            t("digest.top.line", language, categoryLabel(category), money(digest, category.total), digest.sharePercent(category))
         }
         return expandableBlockquote(lines(t("digest.top.title", language), *rows.toTypedArray()))
     }
@@ -123,13 +112,6 @@ class DigestFormatter(
         return blockquote(line(left))
     }
 
-    private fun perDay(left: MonthLeft): BigDecimal = left.amount.divide(BigDecimal(left.days), 0, RoundingMode.DOWN)
-
-    private fun monthName(digest: Digest, language: String?): String =
-        digest.period.start.month.getDisplayName(TextStyle.FULL_STANDALONE, localeFor(language)).replaceFirstChar { it.uppercaseChar() }
-
-    private fun weekDay(date: LocalDate, language: String?): String =
-        date.format(DateTimeFormatter.ofPattern(WEEK_DAY_PATTERN, localeFor(language))).removeSuffix(ABBREVIATION_DOT)
 
     private fun groupName(digest: Digest): String = escapeHtml(digest.group.name)
 
