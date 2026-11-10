@@ -74,8 +74,10 @@ class DigestNotifier(
         }
     }
 
-    private fun send(telegramUserId: Long, digest: Digest, language: String?): Int =
-        widgetSender.sendCard(message(telegramUserId, digest, language), digestCardRenderer.render(digest, language))
+    private fun send(telegramUserId: Long, digest: Digest, language: String?): Int {
+        val message = message(telegramUserId, digest, language)
+        return widgetSender.sendCard(message, digestCardRenderer.render(digest, language)) { execute(message).messageId }
+    }
 
     private fun message(telegramUserId: Long, digest: Digest, language: String?): SendMessage =
         SendMessage(telegramUserId.toString(), digestFormatter.format(digest, language)).apply {

@@ -5,6 +5,8 @@ import ai.moneymanager.chat.reply.common.formatIconPrefix
 import ai.moneymanager.chat.reply.common.shortDateFormatter
 import ai.moneymanager.chat.reply.group.GroupNoticeFormatter
 import ai.moneymanager.chat.reply.group.NoticeTopic
+import ai.moneymanager.chat.telegram.widget.NoticeCardRenderer
+import ai.moneymanager.chat.telegram.widget.WidgetSender
 import ai.moneymanager.domain.event.CategoryCreated
 import ai.moneymanager.domain.event.CategoryDeleted
 import ai.moneymanager.domain.event.CategoryUpdated
@@ -60,6 +62,8 @@ class GroupActivityNotifier(
     private val miniAppGateway: MiniAppGateway,
     private val noticeFormatter: GroupNoticeFormatter,
     private val operationBuffer: OperationNoticeBuffer,
+    private val noticeCardRenderer: NoticeCardRenderer,
+    private val widgetSender: WidgetSender,
     @Value("\${chat-machinist.bot.token}")
     botToken: String,
 ) : DefaultAbsSender(DefaultBotOptions(), botToken) {
@@ -117,7 +121,8 @@ class GroupActivityNotifier(
     @Scheduled(fixedDelay = OPERATION_FLUSH_INTERVAL_MS)
     fun flushOperationNotices() {
         operationBuffer.drainReady().forEach { batch ->
-            notifyOthers(batch.groupId, batch.actorId, NoticeTopic.OPERATIONS, OPERATIONS_BUTTON, OPERATION_LEVELS) { group, language ->
+            val card = { group: MoneyGroup, actorName: String -> noticeCardRenderer.added(batch.changes, actorName, group) }
+            notifyOthers(batch.groupId, batch.actorId, NoticeTopic.OPERATIONS, OPERATIONS_BUTTON, OPERATION_LEVELS, card) { group, language ->
                 noticeFormatter.operations(batch.changes, group.currency, language)
             }
         }
@@ -129,7 +134,8 @@ class GroupActivityNotifier(
             val group = groupService.getGroup(event.groupId) ?: return
             budgetAlertService.claimNewAlerts(group).forEach { alert ->
                 recipients(event.groupId, group.memberIds, IMPORTANT_LEVELS).forEach { member ->
-                    send(member, event.groupId, budgetNotice(alert, group, member.language), BUDGETS_BUTTON, parseHtml = false)
+                    val card = noticeCardRenderer.budget(alert.budget, alert.threshold, group, member.language)
+                    send(member, event.groupId, budgetNotice(alert, group, member.language), BUDGETS_BUTTON, parseHtml = false, card = card)
                 }
             }
         }.onFailure { log.warn("Failed to check budgets of group {}: {}", event.groupId, it.message) }
@@ -158,6 +164,7 @@ class GroupActivityNotifier(
         topic: NoticeTopic,
         button: NoticeButton,
         levels: Set<GroupNoticeLevel> = IMPORTANT_LEVELS,
+        card: ((MoneyGroup, String) -> String?)? = null,
         body: (MoneyGroup, String?) -> String,
     ) {
         runCatching {
@@ -165,7 +172,7 @@ class GroupActivityNotifier(
             val actorName = actorName(actorId)
             recipients(groupId, group.memberIds - actorId, levels).forEach { member ->
                 val text = noticeFormatter.notice(topic, group.name, actorName, body(group, member.language), member.language)
-                send(member, groupId, text, button)
+                send(member, groupId, text, button, card = card?.invoke(group, actorName))
             }
         }.onFailure { log.warn("Failed to notify group {} about {}: {}", groupId, topic, it.message) }
     }
@@ -175,13 +182,13 @@ class GroupActivityNotifier(
 
     private fun actorName(actorId: Long): String = userInfoService.displayNames(setOf(actorId)).getValue(actorId)
 
-    private fun send(member: UserInfo, groupId: ObjectId, text: String, button: NoticeButton?, parseHtml: Boolean = true) {
+    private fun send(member: UserInfo, groupId: ObjectId, text: String, button: NoticeButton?, parseHtml: Boolean = true, card: String? = null) {
         val chatId = checkNotNull(member.telegramUserId).toString()
         val message = SendMessage(chatId, text).apply {
             if (parseHtml) parseMode = ParseMode.HTML
             if (button != null && miniAppGateway.enabled) replyMarkup = miniAppGateway.keyboard(button.textKey, member.language, button.screen)
         }
-        runCatching { execute(message) }
+        runCatching { if (card == null) execute(message) else widgetSender.sendCard(message, card) { execute(message).messageId } }
             .onFailure { log.warn("Failed to notify member {} of group {}: {}", chatId, groupId, it.message) }
     }
 }

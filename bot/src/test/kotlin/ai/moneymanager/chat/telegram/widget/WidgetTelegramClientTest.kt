@@ -9,7 +9,6 @@ import kz.rmr.chatmachinist.service.TelegramClient
 import org.assertj.core.api.Assertions.assertThat
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito
 import org.mockito.Mockito.anyString
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
@@ -39,11 +38,6 @@ class WidgetTelegramClientTest {
         outbox.add(CHAT_ID, OperationCard(SAVED_TEXT, CategoryType.EXPENSE, BigDecimal("1500"), Currency.KZT, cafe, null, today, today, null, "ru"))
 
     private fun message(text: String) = SendMessage(CHAT_ID.toString(), text)
-
-    private fun anyFallback(): () -> Int {
-        Mockito.any(Function0::class.java)
-        return { 0 }
-    }
 
     private fun givenCardSent() {
         `when`(sender.sendCard(anyOf(SendMessage::class.java), anyString(), anyFallback())).thenReturn(WIDGET_MESSAGE_ID)

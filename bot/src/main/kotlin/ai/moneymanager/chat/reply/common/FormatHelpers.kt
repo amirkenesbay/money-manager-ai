@@ -74,8 +74,9 @@ fun formatDescriptionSuffix(description: String?): String =
 fun operationListButtonText(index: Int, date: String, icon: String?, categoryName: String, signedAmount: String): String =
     "${index + 1}. $date ${icon ?: DEFAULT_CATEGORY_ICON} $categoryName $signedAmount"
 
-fun categoryButtonText(category: Category): String =
-    "${category.icon ?: DEFAULT_CATEGORY_ICON} ${category.name}"
+fun iconLabel(icon: String?, name: String): String = "${icon ?: DEFAULT_CATEGORY_ICON} $name"
+
+fun categoryButtonText(category: Category): String = iconLabel(category.icon, category.name)
 
 fun formatSignedAmount(type: CategoryType, amount: BigDecimal, currency: Currency): String {
     val sign = when (type) {

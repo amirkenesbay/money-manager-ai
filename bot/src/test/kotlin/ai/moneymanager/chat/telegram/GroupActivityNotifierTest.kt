@@ -1,6 +1,8 @@
 package ai.moneymanager.chat.telegram
 
 import ai.moneymanager.chat.reply.group.GroupNoticeFormatter
+import ai.moneymanager.chat.telegram.widget.NoticeCardRenderer
+import ai.moneymanager.chat.telegram.widget.textOnlyWidgetSender
 import ai.moneymanager.domain.event.CategoryCreated
 import ai.moneymanager.domain.event.OperationChange
 import ai.moneymanager.domain.event.OperationChanged
@@ -58,7 +60,7 @@ class GroupActivityNotifierTest {
         GroupActivityNotifier(
             groupService, budgetAlertService, userInfoService, localization,
             MiniAppGateway(MiniAppProperties(), userInfoService, localization, BOT_TOKEN),
-            GroupNoticeFormatter(localization), OperationNoticeBuffer(clock), BOT_TOKEN,
+            GroupNoticeFormatter(localization), OperationNoticeBuffer(clock), NoticeCardRenderer(localization), textOnlyWidgetSender(), BOT_TOKEN,
         )
     )
 

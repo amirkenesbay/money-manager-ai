@@ -32,3 +32,16 @@ body{margin:0;font:15px/1.3 system-ui,sans-serif;color:var(--tg-theme-text-color
 .v{color:#4fd18b}
 .x{color:#ef6b6b}
 @media (prefers-reduced-motion:reduce){.c .b i,.k i{animation:none}}
+.y{display:flex;align-items:center;gap:14px}
+.y svg{flex:none}
+.y circle{fill:none;stroke-width:7}
+.y .rb{stroke:rgba(139,154,168,.22)}
+.y .rf{stroke:#f0b34a;stroke-linecap:round;transform:rotate(-90deg);transform-origin:center;animation:a .9s cubic-bezier(.2,.8,.2,1) both}
+.y .rf.o{stroke:#ef6b6b}
+.y text{fill:currentColor;font:600 15px system-ui,sans-serif;text-anchor:middle;dominant-baseline:central}
+.z{display:flex;flex-direction:column;gap:3px}
+.z b{font-size:20px;font-weight:600}
+.f{display:flex;align-items:center;gap:8px}
+.f i{width:24px;height:24px;border-radius:50%;background:#b46fd6;color:#fff;font:700 12px system-ui,sans-serif;font-style:normal;display:grid;place-items:center}
+@keyframes a{from{stroke-dashoffset:188.5}}
+@media (prefers-reduced-motion:reduce){.y .rf{animation:none}}

@@ -21,7 +21,7 @@ class WidgetSender(
 ) : DefaultAbsSender(DefaultBotOptions(), botToken) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    fun sendCard(message: SendMessage, html: String, fallback: () -> Int = { execute(message).messageId }): Int =
+    fun sendCard(message: SendMessage, html: String, fallback: () -> Int): Int =
         runCatching { execute(SendWidget(message.chatId, html, message.replyMarkup)).messageId }
             .onFailure { log.warn("Widget send failed, falling back to text: {}", it.message) }
             .getOrElse { fallback() }
