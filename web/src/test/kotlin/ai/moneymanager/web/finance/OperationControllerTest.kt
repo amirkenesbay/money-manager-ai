@@ -2,6 +2,8 @@ package ai.moneymanager.web.finance
 
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.Currency
+import ai.moneymanager.domain.model.ForeignAmount
 import ai.moneymanager.domain.model.ExpenseShare
 import ai.moneymanager.domain.model.OperationDraft
 import ai.moneymanager.repository.entity.FinanceOperationEntity
@@ -130,15 +132,44 @@ class OperationControllerTest {
         val draft = OperationDraft(CategoryType.EXPENSE, BigDecimal("5000"), groceries, TODAY, null, ExpenseShare(PARTNER_ID, setOf(TEST_USER_ID, PARTNER_ID)))
         `when`(financeOperationService.create(groupId, TEST_USER_ID, draft)).thenReturn(saved(draft).copy(payerId = PARTNER_ID, participantIds = setOf(TEST_USER_ID, PARTNER_ID)))
 
-        mockMvc.perform(post("/api/v1/groups/$groupId/operations").withTelegramAuth().json(body(share = shareJson(PARTNER_ID, TEST_USER_ID, PARTNER_ID))))
+        mockMvc.perform(post("/api/v1/groups/$groupId/operations").withTelegramAuth().json(body(extra = shareJson(PARTNER_ID, TEST_USER_ID, PARTNER_ID))))
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.payerId").value(PARTNER_ID))
             .andExpect(jsonPath("$.participantIds.length()").value(2))
     }
 
     @Test
+    fun `keeps the amount as typed in a foreign currency`() {
+        val draft = OperationDraft(CategoryType.EXPENSE, BigDecimal("52160"), groceries, TODAY, null, original = ForeignAmount(BigDecimal("100"), Currency.EUR))
+        `when`(financeOperationService.create(groupId, TEST_USER_ID, draft)).thenReturn(saved(draft))
+
+        mockMvc.perform(post("/api/v1/groups/$groupId/operations").withTelegramAuth().json(body(amount = "52160", extra = originalJson("100", Currency.EUR))))
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.amount").value("52160"))
+            .andExpect(jsonPath("$.original.amount").value("100"))
+            .andExpect(jsonPath("$.original.currency").value("EUR"))
+    }
+
+    @Test
+    fun `ignores an original amount already in the group currency`() {
+        val draft = OperationDraft(CategoryType.EXPENSE, BigDecimal("5000"), groceries, TODAY, null)
+        `when`(financeOperationService.create(groupId, TEST_USER_ID, draft)).thenReturn(saved(draft))
+
+        mockMvc.perform(post("/api/v1/groups/$groupId/operations").withTelegramAuth().json(body(extra = originalJson("5000", Currency.KZT))))
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.original").doesNotExist())
+    }
+
+    @Test
+    fun `rejects a zero amount in a foreign currency`() {
+        mockMvc.perform(post("/api/v1/groups/$groupId/operations").withTelegramAuth().json(body(extra = originalJson("0", Currency.EUR))))
+            .andExpect(status().isBadRequest)
+        verifyNoInteractions(financeOperationService)
+    }
+
+    @Test
     fun `rejects a share with someone outside the group`() {
-        expectRejected(body(share = shareJson(TEST_USER_ID, STRANGER_ID)), "Выбери участников группы.")
+        expectRejected(body(extra = shareJson(TEST_USER_ID, STRANGER_ID)), "Выбери участников группы.")
     }
 
     @Test
@@ -228,11 +259,11 @@ class OperationControllerTest {
         date: LocalDate = TODAY,
         description: String? = null,
         categoryCorrected: Boolean = false,
-        share: String = "",
+        extra: String = "",
     ): String {
         val descriptionJson = description?.let { "\"$it\"" } ?: "null"
         val correctedJson = if (categoryCorrected) ",\"categoryCorrected\":true" else ""
-        return """{"type":"$type","amount":$amount,"categoryId":"${categoryId.toHexString()}","operationDate":"$date","description":$descriptionJson$correctedJson$share}"""
+        return """{"type":"$type","amount":$amount,"categoryId":"${categoryId.toHexString()}","operationDate":"$date","description":$descriptionJson$correctedJson$extra}"""
     }
 
     private fun shareJson(payerId: Long, vararg participantIds: Long) =
@@ -249,5 +280,8 @@ class OperationControllerTest {
         categoryIcon = draft.category.icon,
         operationDate = draft.operationDate,
         description = draft.description,
+        original = draft.original,
     )
+
+    private fun originalJson(amount: String, currency: Currency) = ",\"original\":{\"amount\":$amount,\"currency\":\"$currency\"}"
 }

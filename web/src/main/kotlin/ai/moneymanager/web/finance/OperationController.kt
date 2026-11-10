@@ -1,6 +1,7 @@
 package ai.moneymanager.web.finance
 
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.ForeignAmount
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.service.FinanceOperationService
 import ai.moneymanager.web.API_V1_PREFIX
@@ -32,6 +33,7 @@ data class OperationRequest(
     val categoryCorrected: Boolean = false,
     val payerId: Long? = null,
     val participantIds: Set<Long>? = null,
+    val original: ForeignAmount? = null,
 )
 
 @RestController

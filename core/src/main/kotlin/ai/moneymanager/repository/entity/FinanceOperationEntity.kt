@@ -2,6 +2,7 @@ package ai.moneymanager.repository.entity
 
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.ExpenseShare
+import ai.moneymanager.domain.model.ForeignAmount
 import ai.moneymanager.repository.entity.common.AuditInfo
 import org.bson.types.ObjectId
 import org.springframework.data.mongodb.core.index.CompoundIndex
@@ -30,6 +31,7 @@ data class FinanceOperationEntity(
     val payerId: Long? = null,
     val participantIds: Set<Long>? = null,
     val importId: ObjectId? = null,
+    val original: ForeignAmount? = null,
     val auditInfo: AuditInfo = AuditInfo()
 ) {
     val share: ExpenseShare?

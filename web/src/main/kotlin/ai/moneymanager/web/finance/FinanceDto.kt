@@ -1,6 +1,7 @@
 package ai.moneymanager.web.finance
 
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.ForeignAmount
 import ai.moneymanager.domain.model.Currency
 import org.bson.types.ObjectId
 import java.math.BigDecimal
@@ -29,6 +30,7 @@ data class OperationResponse(
     val creatorName: String,
     val payerId: Long? = null,
     val participantIds: Set<Long>? = null,
+    val original: ForeignAmount? = null,
 )
 
 data class OperationsPageResponse(

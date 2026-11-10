@@ -3,6 +3,7 @@ package ai.moneymanager.web.finance
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.ExpenseShare
+import ai.moneymanager.domain.model.ForeignAmount
 import ai.moneymanager.domain.model.MoneyGroup
 import ai.moneymanager.domain.model.OperationDraft
 import ai.moneymanager.domain.model.Recurrence
@@ -35,7 +36,7 @@ class OperationDraftFactory(
         requirePositive(request.amount)
         if (request.operationDate.isAfter(userCalendar.today(user))) throw badRequest(FUTURE_DATE_KEY)
         val category = requireCategory(checkNotNull(group.id), request.categoryId, request.type)
-        return OperationDraft(request.type, request.amount, category, request.operationDate, descriptionOf(request.description), shareOf(group, request))
+        return OperationDraft(request.type, request.amount, category, request.operationDate, descriptionOf(request.description), shareOf(group, request), originalOf(group, request.original))
     }
 
     private fun shareOf(group: MoneyGroup, request: OperationRequest): ExpenseShare? {
@@ -43,6 +44,12 @@ class OperationDraftFactory(
         val share = runCatching { ExpenseShare(payerId, request.participantIds.orEmpty()) }.getOrNull()
         if (share == null || !share.fitsMembers(group.memberIds)) throw badRequest(INVALID_SHARE_KEY)
         return share
+    }
+
+    private fun originalOf(group: MoneyGroup, original: ForeignAmount?): ForeignAmount? {
+        if (original == null || original.currency == group.currency) return null
+        requirePositive(original.amount)
+        return original
     }
 
     fun recurring(groupId: ObjectId, request: RecurringRequest): RecurringDraft {

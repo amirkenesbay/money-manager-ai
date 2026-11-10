@@ -10,4 +10,5 @@ data class OperationDraft(
     val operationDate: LocalDate,
     val description: String?,
     val share: ExpenseShare? = null,
+    val original: ForeignAmount? = null,
 )

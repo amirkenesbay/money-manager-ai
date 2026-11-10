@@ -4,6 +4,8 @@ import ai.moneymanager.domain.model.SplitDefault
 import ai.moneymanager.domain.event.CategoryCorrected
 import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
+import ai.moneymanager.domain.model.Currency
+import ai.moneymanager.domain.model.ForeignAmount
 import ai.moneymanager.domain.model.ExpenseShare
 import ai.moneymanager.domain.model.GroupType
 import ai.moneymanager.domain.model.OperationDraft
@@ -68,6 +70,24 @@ class FinanceOperationServiceTest {
         assertThat(created.categoryName).isEqualTo("Такси")
         assertThat(created.categoryIcon).isEqualTo("🚕")
         assertThat(created.amount).isEqualByComparingTo("1800")
+    }
+
+    @Test
+    fun `remembers the amount as it was typed in a foreign currency`() {
+        val original = ForeignAmount(BigDecimal("100"), Currency.EUR)
+
+        val created = service.create(groupId, CREATOR_ID, OperationDraft(CategoryType.EXPENSE, BigDecimal("52160"), taxi, LocalDate.of(2026, 11, 10), null, original = original))
+
+        assertThat(created.original).isEqualTo(original)
+    }
+
+    @Test
+    fun `forgets the foreign amount once the amount is edited by hand`() {
+        `when`(repository.findByGroupIdAndIdIn(groupId, listOf(operationId))).thenReturn(listOf(existing.copy(original = ForeignAmount(BigDecimal("10"), Currency.USD))))
+
+        val updated = service.updateAmount(CREATOR_ID, groupId, operationId, BigDecimal("5000"))
+
+        assertThat(updated?.original).isNull()
     }
 
     @Test

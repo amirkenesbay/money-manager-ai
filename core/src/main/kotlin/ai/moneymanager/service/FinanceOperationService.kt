@@ -3,6 +3,7 @@ package ai.moneymanager.service
 import ai.moneymanager.repository.entity.MoneyGroupEntity
 import ai.moneymanager.domain.model.SplitDefault
 import ai.moneymanager.domain.model.BalanceBreakdown
+import ai.moneymanager.domain.model.Category
 import ai.moneymanager.domain.model.CategoryType
 import ai.moneymanager.domain.model.ExpenseShare
 import ai.moneymanager.domain.model.GroupType
@@ -90,45 +91,37 @@ class FinanceOperationService(
         operationDate: LocalDate,
         description: String?
     ): FinanceOperationEntity =
-        saveOperation(groupId, creatorId, type, BigDecimal.valueOf(amount), categoryId, categoryName, categoryIcon, operationDate, description, null)
+        saveOperation(
+            groupId, creatorId,
+            OperationDraft(type, BigDecimal.valueOf(amount), Category(categoryId, categoryName, categoryIcon, type, groupId), operationDate, description),
+        )
 
-    private fun saveOperation(
-        groupId: ObjectId,
-        creatorId: Long,
-        type: CategoryType,
-        amount: BigDecimal,
-        categoryId: ObjectId,
-        categoryName: String,
-        categoryIcon: String?,
-        operationDate: LocalDate,
-        description: String?,
-        requestedShare: ExpenseShare?,
-    ): FinanceOperationEntity {
-        val share = shareOf(groupId, type, requestedShare, creatorId)
+    private fun saveOperation(groupId: ObjectId, creatorId: Long, draft: OperationDraft): FinanceOperationEntity {
+        val share = shareOf(groupId, draft.type, draft.share, creatorId)
         val entity = FinanceOperationEntity(
             groupId = groupId,
             creatorId = creatorId,
-            type = type,
-            amount = amount,
-            categoryId = categoryId,
-            categoryName = categoryName,
-            categoryIcon = categoryIcon,
-            operationDate = operationDate,
-            description = description,
+            type = draft.type,
+            amount = draft.amount,
+            categoryId = checkNotNull(draft.category.id),
+            categoryName = draft.category.name,
+            categoryIcon = draft.category.icon,
+            operationDate = draft.operationDate,
+            description = draft.description,
             payerId = share?.payerId,
             participantIds = share?.participantIds,
+            original = draft.original,
         )
 
         val saved = financeOperationRepository.save(entity)
-        log.info("Saved finance operation: type={}, amount={}, category={}, groupId={}", type, amount, categoryName, groupId)
+        log.info("Saved finance operation: type={}, amount={}, category={}, groupId={}", draft.type, draft.amount, draft.category.name, groupId)
         eventPublisher.publishEvent(OperationsChanged(groupId))
         eventPublisher.publishEvent(OperationChanged(groupId, creatorId, OperationChange.Added(saved)))
         return saved
     }
 
     fun create(groupId: ObjectId, creatorId: Long, draft: OperationDraft, categoryCorrected: Boolean = false): FinanceOperationEntity {
-        val categoryId = checkNotNull(draft.category.id)
-        val saved = saveOperation(groupId, creatorId, draft.type, draft.amount, categoryId, draft.category.name, draft.category.icon, draft.operationDate, draft.description, draft.share)
+        val saved = saveOperation(groupId, creatorId, draft)
         if (categoryCorrected) publishCorrection(saved)
         return saved
     }
@@ -146,6 +139,7 @@ class FinanceOperationService(
                 description = draft.description,
                 payerId = share?.payerId,
                 participantIds = share?.participantIds,
+                original = draft.original,
             )
         }
 
@@ -165,7 +159,7 @@ class FinanceOperationService(
         financeOperationRepository.findByGroupIdAndIdIn(groupId, listOf(operationId)).firstOrNull()
 
     fun updateAmount(actorId: Long, groupId: ObjectId, operationId: ObjectId, amount: BigDecimal): FinanceOperationEntity? =
-        updateOperation(actorId, groupId, operationId) { it.copy(amount = amount) }
+        updateOperation(actorId, groupId, operationId) { it.copy(amount = amount, original = null) }
 
     fun updateType(actorId: Long, groupId: ObjectId, operationId: ObjectId, type: CategoryType): FinanceOperationEntity? =
         updateOperation(actorId, groupId, operationId) { it.copy(type = type) }
