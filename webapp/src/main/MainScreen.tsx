@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useMemo, useState } from 'react'
+import { ConverterScreen } from '../converter/ConverterScreen'
 import { serverMessage } from '../api/client'
-import type { AnswerLink, AppHint, CategoryType, Group, Me, Operation } from '../api/types'
+import type { AnswerLink, AppHint, CategoryType, Currency, Group, Me, Operation } from '../api/types'
 import { AskTopicsSheet } from '../ask/AskTopicsSheet'
 import { useAsync } from '../api/useAsync'
 import { CategoriesScreen } from '../categories/CategoriesScreen'
@@ -53,7 +54,7 @@ const SECONDARY_TABS = TABS.filter((candidate): candidate is SecondaryTab => can
 const WELCOME_COVERS: AppHint[] = ['WELCOME', 'ASK']
 
 type Overlay =
-  | { kind: 'form'; operation: Operation | null; type?: CategoryType; categoryId?: string }
+  | { kind: 'form'; operation: Operation | null; type?: CategoryType; categoryId?: string; currency?: Currency; amount?: string }
   | { kind: 'detail'; operation: Operation }
   | { kind: 'section'; section: Section }
   | { kind: 'voice'; start?: VoiceStart }
@@ -309,6 +310,7 @@ function GroupScreens({ me, initialGroups, initialGroupId, onMeChanged }: {
               setImportToken(null)
               closeSection()
             }}
+            onRecord={(currency, amount) => open({ kind: 'form', operation: null, currency, amount })}
             onOpenOperations={() => goBack(null, () => {
               setImportToken(null)
               refresh()
@@ -417,6 +419,8 @@ function OperationOverlay({ overlay, group, me, onClose, onEdit, onBackToDetail,
       operation={editing}
       initialType={overlay.type}
       initialCategoryId={overlay.categoryId}
+      initialCurrency={overlay.currency}
+      initialAmount={overlay.amount}
       onBack={editing ? () => onBackToDetail(editing) : onClose}
       onSaved={onSaved}
       onDeleted={onDeleted}
@@ -424,11 +428,12 @@ function OperationOverlay({ overlay, group, me, onClose, onEdit, onBackToDetail,
   )
 }
 
-function SectionScreen({ section, workspace, importToken, onBack, onOpenOperations }: {
+function SectionScreen({ section, workspace, importToken, onBack, onRecord, onOpenOperations }: {
   section: Section
   workspace: Workspace
   importToken: string | null
   onBack: () => void
+  onRecord: (currency: Currency, amount: string) => void
   onOpenOperations: () => void
 }) {
   const { me, group, groups, actions, notify, onMeChanged } = workspace
@@ -443,6 +448,8 @@ function SectionScreen({ section, workspace, importToken, onBack, onOpenOperatio
       return <RecurringScreen me={me} group={group} onMeChanged={onMeChanged} notify={notify} onBack={onBack} />
     case 'debts':
       return <DebtsScreen me={me} group={group} notify={notify} onBack={onBack} />
+    case 'converter':
+      return <ConverterScreen group={group} language={me.language} onBack={onBack} onRecord={onRecord} />
     case 'import':
       return <ImportScreen me={me} group={group} initialToken={importToken} notify={notify} onBack={onBack} onOpenOperations={onOpenOperations} />
     default:

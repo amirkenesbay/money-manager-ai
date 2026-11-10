@@ -45,13 +45,15 @@ type FormSheet = 'category' | 'date' | 'details' | 'currency' | 'rate'
 
 export type SaveResult = { operation: Operation; created: boolean; note?: string }
 
-export function OperationForm({ group, userId, language, operation, initialType = 'EXPENSE', initialCategoryId, onBack, onSaved, onDeleted }: {
+export function OperationForm({ group, userId, language, operation, initialType = 'EXPENSE', initialCategoryId, initialCurrency, initialAmount, onBack, onSaved, onDeleted }: {
   group: Group
   userId: number
   language: string
   operation: Operation | null
   initialType?: CategoryType
   initialCategoryId?: string
+  initialCurrency?: Currency
+  initialAmount?: string
   onBack: () => void
   onSaved: (result: SaveResult) => void
   onDeleted: (operation: Operation) => void
@@ -64,19 +66,21 @@ export function OperationForm({ group, userId, language, operation, initialType 
       {categories.state.status === 'loading' && <SkeletonRows count={CATEGORY_SKELETON_ROWS} />}
       {categories.state.status === 'error' && <LoadError message={categories.state.message} onRetry={categories.reload} />}
       {categories.state.status === 'ready' && (
-        <FormFields group={group} userId={userId} language={language} operation={operation} initialType={initialType} initialCategoryId={initialCategoryId} categories={categories.state.data} onCategoryCreated={categories.add} onSaved={onSaved} onDeleted={onDeleted} />
+        <FormFields group={group} userId={userId} language={language} operation={operation} initialType={initialType} initialCategoryId={initialCategoryId} initialCurrency={initialCurrency} initialAmount={initialAmount} categories={categories.state.data} onCategoryCreated={categories.add} onSaved={onSaved} onDeleted={onDeleted} />
       )}
     </>
   )
 }
 
-function FormFields({ group, userId, language, operation, initialType, initialCategoryId, categories, onCategoryCreated, onSaved, onDeleted }: {
+function FormFields({ group, userId, language, operation, initialType, initialCategoryId, initialCurrency, initialAmount, categories, onCategoryCreated, onSaved, onDeleted }: {
   group: Group
   userId: number
   language: string
   operation: Operation | null
   initialType: CategoryType
   initialCategoryId?: string
+  initialCurrency?: Currency
+  initialAmount?: string
   categories: Category[]
   onCategoryCreated: (category: Category) => void
   onSaved: (result: SaveResult) => void
@@ -84,9 +88,9 @@ function FormFields({ group, userId, language, operation, initialType, initialCa
 }) {
   const today = toIsoDate(new Date())
   const [type, setType] = useState<CategoryType>(operation?.type ?? initialType)
-  const [amountText, setAmountText] = useState(operation ? operation.original?.amount ?? operation.amount : '')
-  const [currency, setCurrency] = useState<Currency>(() => initialCurrency(group, operation))
-  const [rateChoice, setRateChoice] = useState<RateChoice | null>(() => initialRate(group.id, operation))
+  const [amountText, setAmountText] = useState(operation ? operation.original?.amount ?? operation.amount : initialAmount ?? '')
+  const [currency, setCurrency] = useState<Currency>(() => initialCurrency ?? startingCurrency(group, operation))
+  const [rateChoice, setRateChoice] = useState<RateChoice | null>(() => startingRate(group.id, operation, initialCurrency ?? startingCurrency(group, operation)))
   const [categoryId, setCategoryId] = useState<string | null>(operation?.categoryId ?? initialCategoryId ?? null)
   const [date, setDate] = useState(operation?.operationDate ?? today)
   const [comment, setComment] = useState(withoutTags(operation?.description ?? null))
@@ -302,16 +306,15 @@ function FormFields({ group, userId, language, operation, initialType, initialCa
   )
 }
 
-function initialCurrency(group: Group, operation: Operation | null): Currency {
+function startingCurrency(group: Group, operation: Operation | null): Currency {
   if (operation) return operation.original?.currency ?? group.currency
   return lastCurrency(group.id) ?? group.currency
 }
 
-function initialRate(groupId: string, operation: Operation | null): RateChoice | null {
+function startingRate(groupId: string, operation: Operation | null, currency: Currency): RateChoice | null {
   if (operation?.original) return { value: Number(operation.amount) / Number(operation.original.amount), custom: false }
   if (operation) return null
-  const currency = lastCurrency(groupId)
-  const remembered = currency === null ? null : rememberedRate(groupId, currency)
+  const remembered = rememberedRate(groupId, currency)
   return remembered === null ? null : { value: remembered, custom: true }
 }
 

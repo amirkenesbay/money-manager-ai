@@ -15,7 +15,7 @@ import { useHomeScreen } from '../telegram/homeScreen'
 import { deviceTimezone, describeTimezone } from '../me/timezone'
 import { syncDeviceTimezone } from '../me/useDeviceTimezone'
 import { Button } from '../ui/Button'
-import { BellIcon, CalendarIcon, ClockIcon, ChartIcon, DownloadIcon, CoinIcon, GlobeIcon, GridIcon, HelpIcon, PhoneIcon, RepeatIcon, UsersIcon, WalletIcon, SwapIcon, UploadIcon } from '../ui/icons'
+import { BellIcon, CalendarIcon, ClockIcon, ChartIcon, DownloadIcon, CoinIcon, GlobeIcon, GridIcon, HelpIcon, PhoneIcon, RepeatIcon, UsersIcon, WalletIcon, ConvertIcon, SwapIcon, UploadIcon } from '../ui/icons'
 import { SettingsRow } from '../ui/SettingsRow'
 import { DIGEST_KINDS } from './digestKinds'
 import { DigestsSheet } from './DigestsSheet'
@@ -25,7 +25,7 @@ import { LanguageSheet } from './LanguageSheet'
 import type { Notify } from '../ui/useToast'
 import './more.css'
 
-export type Section = 'categories' | 'groups' | 'reminders' | 'recurring' | 'premium' | 'debts' | 'import'
+export type Section = 'categories' | 'groups' | 'reminders' | 'recurring' | 'premium' | 'debts' | 'import' | 'converter'
 
 type SheetKind = 'language' | 'currency' | 'balance' | 'monthStart' | 'digests' | 'export'
 
@@ -89,6 +89,7 @@ export function MoreScreen({ me, group, groups, name, onMeChanged, onGroupUpdate
         <li><SettingsRow icon={<BellIcon />} label={strings.remindersTitle} value={activeReminders} onClick={() => onOpenSection('reminders')} /></li>
         <li><SettingsRow icon={<RepeatIcon />} label={strings.recurringTitle} onClick={() => onOpenSection('recurring')} /></li>
         <li><SettingsRow icon={<SwapIcon />} label={strings.debtsTitle} onClick={() => onOpenSection('debts')} /></li>
+        <li><SettingsRow icon={<ConvertIcon />} label={strings.converterTitle} onClick={() => onOpenSection('converter')} /></li>
         <li><SettingsRow icon={<DownloadIcon />} label={strings.exportTitle} onClick={() => setSheet('export')} /></li>
         <li><SettingsRow icon={<UploadIcon />} label={strings.importRow} onClick={() => onOpenSection('import')} /></li>
         <li><SettingsRow icon={<ChartIcon />} label={strings.digestsTitle} value={strings.digestsOn(DIGEST_KINDS.length - me.mutedDigests.length)} onClick={() => setSheet('digests')} /></li>
