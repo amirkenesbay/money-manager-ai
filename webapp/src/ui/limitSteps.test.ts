@@ -16,6 +16,11 @@ describe('limitSteps', () => {
     expect(limitSteps('USD').at(-1)).toBe(2_000)
   })
 
+  it('scales the range to the size of the currency', () => {
+    expect(limitSteps('BYN').at(-1)).toBe(10_000)
+    expect(limitSteps('UZS')[1]).toBe(100_000)
+  })
+
   it('puts the slider on the closest step and at the start without a limit', () => {
     const steps = limitSteps('KZT')
 

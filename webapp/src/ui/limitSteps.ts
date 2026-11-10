@@ -1,20 +1,18 @@
 import type { Currency } from '../api/types'
+import { CURRENCY_CATALOG } from '../currencies'
 
 const MANTISSAS = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 7.5]
 const DECIMAL_BASE = 10
 
-const LIMIT_RANGE: Record<Currency, { min: number; max: number }> = {
-  KZT: { min: 5_000, max: 1_000_000 },
-  RUB: { min: 500, max: 200_000 },
-  KGS: { min: 500, max: 200_000 },
-  USD: { min: 10, max: 2_000 },
-  EUR: { min: 10, max: 2_000 },
-}
+const MIN_UNITS = 10
+const MAX_UNITS = 2_000
 
 export const NO_LIMIT_STEP = 0
 
 export function limitSteps(currency: Currency): number[] {
-  const { min, max } = LIMIT_RANGE[currency]
+  const unit = CURRENCY_CATALOG[currency].unit
+  const min = unit * MIN_UNITS
+  const max = unit * MAX_UNITS
   const steps = [NO_LIMIT_STEP]
   for (let power = Math.floor(Math.log10(min)); power <= Math.ceil(Math.log10(max)); power += 1) {
     for (const mantissa of MANTISSAS) {

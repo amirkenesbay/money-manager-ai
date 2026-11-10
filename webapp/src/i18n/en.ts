@@ -4,6 +4,7 @@ import type { IntervalUnit, RepeatOption } from '../reminders/schedule'
 import type { ReportTab } from '../reports/reportTabs'
 import { pluralOf } from './plural'
 import type { Strings } from './ru'
+import { currencyDisplayName } from '../currencies'
 
 const rules = new Intl.PluralRules('en')
 
@@ -42,14 +43,6 @@ const REPORT_TAB_LABELS: Record<ReportTab, string> = {
   comparison: 'Comparison',
   members: 'Members',
   category: 'Category',
-}
-
-const CURRENCY_NAMES: Record<Currency, string> = {
-  KZT: 'Tenge',
-  USD: 'US dollar',
-  RUB: 'Ruble',
-  EUR: 'Euro',
-  KGS: 'Som',
 }
 
 const REPEAT_LABELS: Record<RepeatOption, string> = {
@@ -360,7 +353,8 @@ export const en: Strings = {
   monthStartNonOwnerHint: 'Only the group owner can change this. Ask them if you need another day',
   monthStartChangedToast: 'Month start updated',
   currencyLabel: 'Group currency',
-  currencyName: (currency: Currency) => CURRENCY_NAMES[currency],
+  currencySearchLabel: 'Search currency',
+  currencyName: (currency: Currency) => currencyDisplayName(currency, 'en'),
   currencySheetTitle: (group: string) => `Currency of «${group}»`,
   currencyOwnerHint: 'Amounts are not converted — only the currency sign changes',
   currencyNonOwnerHint: 'Only the group owner can change the currency. Ask the owner if you need another one',

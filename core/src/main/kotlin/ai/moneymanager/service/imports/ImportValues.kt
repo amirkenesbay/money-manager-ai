@@ -25,6 +25,11 @@ private val CURRENCY_ALIASES: Map<Currency, Set<String>> = mapOf(
     Currency.USD to setOf("usd", "$", "доллар"),
     Currency.EUR to setOf("eur", "€", "евро"),
     Currency.KGS to setOf("kgs", "сом", "с"),
+    Currency.BYN to setOf("byn", "br", "бел. руб", "бел.руб", "белорусский рубль"),
+    Currency.UAH to setOf("uah", "₴", "грн", "гривна"),
+    Currency.UZS to setOf("uzs", "сум", "сўм", "so'm"),
+    Currency.GBP to setOf("gbp", "£", "фунт"),
+    Currency.TRY to setOf("try", "₺", "лира"),
 )
 
 enum class TypeWord {

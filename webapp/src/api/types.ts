@@ -80,7 +80,9 @@ export interface Me {
 
 export type SplitDefault = 'MINE' | 'EVERYONE'
 
-export type Currency = 'KZT' | 'USD' | 'RUB' | 'EUR' | 'KGS'
+import type { Currency } from '../currencies.ts'
+
+export type { Currency }
 
 export type CategoryType = 'EXPENSE' | 'INCOME'
 

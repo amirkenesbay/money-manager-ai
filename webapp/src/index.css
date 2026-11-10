@@ -1597,36 +1597,49 @@ button {
   font-family: var(--font-mono);
 }
 
-.currency-grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0.625rem;
-}
-
-.currency-tile {
+.currency-picker {
   display: flex;
   flex-direction: column;
+  gap: 0.75rem;
+}
+
+.currency-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 17rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.currency-row {
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr) auto;
+  gap: 0.5rem;
   align-items: center;
-  justify-content: center;
-  gap: 0.125rem;
-  min-height: 4rem;
-  padding: 0;
+  min-height: 3rem;
+  padding: 0 0.25rem;
   border: none;
-  border-radius: 1.125rem;
-  background: var(--bg);
-  box-shadow: var(--raise-sm);
-  font-size: var(--text-xs);
+  border-bottom: 1px solid var(--line);
+  background: none;
+  color: var(--text);
+  font-size: var(--text-lg);
+  text-align: left;
+}
+
+.currency-row[aria-checked='true'] {
+  color: var(--accent);
   font-weight: 700;
 }
 
-.currency-tile[aria-checked='true'] {
-  color: var(--accent);
-  box-shadow: var(--inset-sm);
-}
-
-.currency-tile:disabled {
+.currency-row:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.currency-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .currency-symbol {

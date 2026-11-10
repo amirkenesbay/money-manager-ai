@@ -1,4 +1,5 @@
 import type { CategoryType, Currency } from './api/types'
+import { CURRENCY_CATALOG } from './currencies'
 import { strings } from './strings'
 
 const FRACTION_DIGITS = 2
@@ -7,15 +8,7 @@ const NEGATIVE_SIGN = '−'
 const NO_BREAK_SPACE = '\u00A0'
 const ISO_MONTH_LENGTH = 7
 
-const CURRENCY_SYMBOLS: Record<Currency, string> = {
-  KZT: '₸',
-  USD: '$',
-  RUB: '₽',
-  EUR: '€',
-  KGS: 'с',
-}
-
-export const currencySymbol = (currency: Currency): string => CURRENCY_SYMBOLS[currency]
+export const currencySymbol = (currency: Currency): string => CURRENCY_CATALOG[currency].symbol
 
 export function formatMoney(amount: string, currency: Currency, language: string): string {
   const value = Math.abs(Number(amount))

@@ -3,6 +3,7 @@ import type { Period } from '../operations/periods'
 import type { IntervalUnit, RepeatOption } from '../reminders/schedule'
 import type { ReportTab } from '../reports/reportTabs'
 import { pluralOf } from './plural'
+import { currencyDisplayName } from '../currencies'
 
 const rules = new Intl.PluralRules('ru')
 
@@ -41,14 +42,6 @@ const REPORT_TAB_LABELS: Record<ReportTab, string> = {
   comparison: 'Сравнение',
   members: 'Участники',
   category: 'Категория',
-}
-
-const CURRENCY_NAMES: Record<Currency, string> = {
-  KZT: 'Тенге',
-  USD: 'Доллар США',
-  RUB: 'Рубль',
-  EUR: 'Евро',
-  KGS: 'Сом',
 }
 
 const REPEAT_LABELS: Record<RepeatOption, string> = {
@@ -359,7 +352,8 @@ export const ru = {
   monthStartNonOwnerHint: 'Начало месяца меняет только владелец группы. Попроси его, если нужно другое число',
   monthStartChangedToast: 'Месяц теперь начинается с другого числа',
   currencyLabel: 'Валюта группы',
-  currencyName: (currency: Currency) => CURRENCY_NAMES[currency],
+  currencySearchLabel: 'Поиск валюты',
+  currencyName: (currency: Currency) => currencyDisplayName(currency, 'ru'),
   currencySheetTitle: (group: string) => `Валюта группы «${group}»`,
   currencyOwnerHint: 'Суммы не пересчитываются — меняется только знак валюты',
   currencyNonOwnerHint: 'Валюту меняет только владелец группы. Попроси его, если нужна другая',

@@ -3,6 +3,7 @@ import type { Period } from '../operations/periods'
 import type { IntervalUnit, RepeatOption } from '../reminders/schedule'
 import type { ReportTab } from '../reports/reportTabs'
 import type { Strings } from './ru'
+import { currencyDisplayName } from '../currencies'
 
 const INTERVAL_FORMS: Record<IntervalUnit, string> = {
   days: 'күн',
@@ -35,14 +36,6 @@ const REPORT_TAB_LABELS: Record<ReportTab, string> = {
   comparison: 'Салыстыру',
   members: 'Қатысушылар',
   category: 'Санат',
-}
-
-const CURRENCY_NAMES: Record<Currency, string> = {
-  KZT: 'Теңге',
-  USD: 'АҚШ доллары',
-  RUB: 'Рубль',
-  EUR: 'Еуро',
-  KGS: 'Сом',
 }
 
 const REPEAT_LABELS: Record<RepeatOption, string> = {
@@ -353,7 +346,8 @@ export const kk: Strings = {
   monthStartNonOwnerHint: 'Ай басын тек топ иесі өзгерте алады. Басқа күн керек болса, одан сұра',
   monthStartChangedToast: 'Ай басы өзгертілді',
   currencyLabel: 'Топ валютасы',
-  currencyName: (currency: Currency) => CURRENCY_NAMES[currency],
+  currencySearchLabel: 'Валюта іздеу',
+  currencyName: (currency: Currency) => currencyDisplayName(currency, 'kk'),
   currencySheetTitle: (group: string) => `«${group}» тобының валютасы`,
   currencyOwnerHint: 'Сомалар қайта есептелмейді — тек валюта белгісі өзгереді',
   currencyNonOwnerHint: 'Валютаны тек топ иесі өзгерте алады. Басқа валюта керек болса, иесінен сұра',
