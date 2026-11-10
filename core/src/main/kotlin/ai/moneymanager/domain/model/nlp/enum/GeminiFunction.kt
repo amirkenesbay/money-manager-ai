@@ -10,8 +10,8 @@ private val OPTIONAL_NUMBER = Double::class.javaObjectType
 enum class GeminiFunction(val functionName: String, val inMiniApp: Boolean, private vararg val parameterTypes: Class<*>) {
     CREATE_GROUP("createGroup", false, STRING),
     DELETE_GROUP("deleteGroup", false, STRING),
-    ADD_EXPENSE("addExpense", true, NUMBER, STRING, STRING, STRING, STRING, STRING, OPTIONAL_NUMBER, STRING, STRING, STRING),
-    ADD_INCOME("addIncome", true, NUMBER, STRING, STRING, STRING, STRING, STRING, OPTIONAL_NUMBER, STRING),
+    ADD_EXPENSE("addExpense", true, NUMBER, STRING, STRING, STRING, STRING, STRING, OPTIONAL_NUMBER, STRING, STRING, STRING, STRING),
+    ADD_INCOME("addIncome", true, NUMBER, STRING, STRING, STRING, STRING, STRING, OPTIONAL_NUMBER, STRING, STRING),
     OUT_OF_CONTEXT("outOfContext", true, STRING),
 
     CREATE_CATEGORY("createCategory", false, STRING, STRING, STRING),
