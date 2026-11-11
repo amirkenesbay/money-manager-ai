@@ -10,4 +10,6 @@ private const val THOUSANDS_SEPARATOR = ' '
 
 private val amountFormat = DecimalFormat(AMOUNT_PATTERN, DecimalFormatSymbols().apply { groupingSeparator = THOUSANDS_SEPARATOR })
 
-fun formatAmount(amount: BigDecimal, currency: Currency): String = "${amountFormat.format(amount)}${currency.symbol}"
+fun formatNumber(amount: BigDecimal): String = amountFormat.format(amount)
+
+fun formatAmount(amount: BigDecimal, currency: Currency): String = "${formatNumber(amount)}${currency.symbol}"

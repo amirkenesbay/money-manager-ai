@@ -16,6 +16,7 @@ import ai.moneymanager.domain.model.monthPeriod
 import ai.moneymanager.repository.entity.FinanceOperationEntity
 import ai.moneymanager.service.BudgetAlert
 import ai.moneymanager.service.BudgetAlertService
+import ai.moneymanager.service.BudgetService
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.UserInfoService
 import ai.moneymanager.testing.TEST_USER_ID
@@ -60,7 +61,7 @@ class GroupActivityNotifierTest {
         GroupActivityNotifier(
             groupService, budgetAlertService, userInfoService, localization,
             MiniAppGateway(MiniAppProperties(), userInfoService, localization, BOT_TOKEN),
-            GroupNoticeFormatter(localization), OperationNoticeBuffer(clock), NoticeCardRenderer(localization), textOnlyWidgetSender(), BOT_TOKEN,
+            GroupNoticeFormatter(localization), OperationNoticeBuffer(clock), NoticeCardRenderer(localization, clock), mock(BudgetService::class.java), textOnlyWidgetSender(), BOT_TOKEN,
         )
     )
 

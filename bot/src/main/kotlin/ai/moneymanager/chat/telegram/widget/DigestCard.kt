@@ -1,5 +1,6 @@
 package ai.moneymanager.chat.telegram.widget
 
+import ai.moneymanager.chat.reply.common.DOT_SEPARATOR
 import ai.moneymanager.chat.reply.common.NEGATIVE_SIGN
 import ai.moneymanager.chat.reply.common.POSITIVE_SIGN
 import ai.moneymanager.chat.reply.common.escapeHtml
@@ -10,6 +11,7 @@ import ai.moneymanager.chat.reply.digest.monthName
 import ai.moneymanager.chat.reply.digest.perDay
 import ai.moneymanager.chat.reply.digest.sharePercent
 import ai.moneymanager.chat.reply.digest.weekDay
+import ai.moneymanager.chat.telegram.widget.WidgetHtml.hero
 import ai.moneymanager.chat.telegram.widget.WidgetHtml.row
 import ai.moneymanager.chat.telegram.widget.WidgetHtml.span
 import ai.moneymanager.domain.model.Digest
@@ -51,14 +53,14 @@ class DigestCardRenderer(private val localizationService: LocalizationService) {
 
     private fun day(digest: Digest, language: String?): String = buildString {
         append(span("l", "$DAY_ICON ${digest.period.start.format(DateTimeFormatter.ofPattern(DAY_PATTERN, localeFor(language)))}"))
-        append(span("h", money(digest, digest.spent)))
+        append(hero(money(digest, digest.spent), digest.spent))
         append(categories(digest))
         append(monthLeft(digest, language, t("widget.tomorrow", language)) { it.perDay() })
     }
 
     private fun week(digest: Digest, language: String?): String = buildString {
         append(span("l", "$WEEK_ICON ${weekDay(digest.period.start, language)}$RANGE_SEPARATOR${weekDay(digest.period.end, language)}"))
-        append(span("h", money(digest, digest.spent)))
+        append(hero(money(digest, digest.spent), digest.spent))
         append(span("s", t("widget.per_day", language, money(digest, digest.dailyAverage()))))
         append(categories(digest))
         append(monthLeft(digest, language, t("widget.month_left", language)) { it.amount })
@@ -66,7 +68,7 @@ class DigestCardRenderer(private val localizationService: LocalizationService) {
 
     private fun month(digest: Digest, language: String?): String = buildString {
         append(span("l", "$MONTH_ICON ${monthName(digest, language)}"))
-        append(span("h", money(digest, digest.spent)))
+        append(hero(money(digest, digest.spent), digest.spent))
         digest.changePercent()?.let { append(change(it, language)) }
         append(shares(digest))
         append(balance(digest, language))
@@ -78,11 +80,12 @@ class DigestCardRenderer(private val localizationService: LocalizationService) {
     private fun categories(digest: Digest): String {
         val top = digest.topExpenses.take(SHORT_TOP)
         val max = top.maxOfOrNull { it.total }?.takeIf { it.signum() > 0 } ?: return ""
-        return top.joinToString("") { category ->
+        val rows = top.joinToString("") { category ->
             val width = category.total.multiply(HUNDRED).divide(max, 0, RoundingMode.HALF_UP)
-            "<div class=\"c\"><span>${escapeHtml(category.icon)}</span><span>${escapeHtml(category.name)}</span><b>${money(digest, category.total)}</b>" +
+            "<div class=\"c\"><span>${escapeHtml(category.icon)}</span><span>${escapeHtml(category.name)} <em>$DOT_SEPARATOR${digest.sharePercent(category)}%</em></span><b>${money(digest, category.total)}</b>" +
                 "<div class=\"b\"><i style=\"width:$width%\"></i></div></div>"
         }
+        return "<div>$rows</div>"
     }
 
     private fun shares(digest: Digest): String {

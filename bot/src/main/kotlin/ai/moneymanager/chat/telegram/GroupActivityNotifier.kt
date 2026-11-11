@@ -21,6 +21,7 @@ import ai.moneymanager.domain.model.MoneyGroup
 import ai.moneymanager.domain.model.UserInfo
 import ai.moneymanager.service.BudgetAlert
 import ai.moneymanager.service.BudgetAlertService
+import ai.moneymanager.service.BudgetService
 import ai.moneymanager.service.GroupService
 import ai.moneymanager.service.LocalizationService
 import ai.moneymanager.service.UserInfoService
@@ -63,6 +64,7 @@ class GroupActivityNotifier(
     private val noticeFormatter: GroupNoticeFormatter,
     private val operationBuffer: OperationNoticeBuffer,
     private val noticeCardRenderer: NoticeCardRenderer,
+    private val budgetService: BudgetService,
     private val widgetSender: WidgetSender,
     @Value("\${chat-machinist.bot.token}")
     botToken: String,
@@ -71,7 +73,8 @@ class GroupActivityNotifier(
 
     @EventListener
     fun onCategoryCreated(event: CategoryCreated) {
-        notifyOthers(event.groupId, event.actorId, NoticeTopic.CATEGORIES, CATEGORIES_BUTTON) { _, language ->
+        val card = { group: MoneyGroup, actorName: String, language: String? -> noticeCardRenderer.categoryCreated(actorName, group, event.icon, event.name, language) }
+        notifyOthers(event.groupId, event.actorId, NoticeTopic.CATEGORIES, CATEGORIES_BUTTON, card = card) { _, language ->
             noticeFormatter.categoryCreated(event.icon, event.name, language)
         }
     }
@@ -121,7 +124,7 @@ class GroupActivityNotifier(
     @Scheduled(fixedDelay = OPERATION_FLUSH_INTERVAL_MS)
     fun flushOperationNotices() {
         operationBuffer.drainReady().forEach { batch ->
-            val card = { group: MoneyGroup, actorName: String -> noticeCardRenderer.added(batch.changes, actorName, group) }
+            val card = { group: MoneyGroup, actorName: String, language: String? -> noticeCardRenderer.added(batch.changes, actorName, group, budgetService.budgets(group), language) }
             notifyOthers(batch.groupId, batch.actorId, NoticeTopic.OPERATIONS, OPERATIONS_BUTTON, OPERATION_LEVELS, card) { group, language ->
                 noticeFormatter.operations(batch.changes, group.currency, language)
             }
@@ -164,7 +167,7 @@ class GroupActivityNotifier(
         topic: NoticeTopic,
         button: NoticeButton,
         levels: Set<GroupNoticeLevel> = IMPORTANT_LEVELS,
-        card: ((MoneyGroup, String) -> String?)? = null,
+        card: ((MoneyGroup, String, String?) -> String?)? = null,
         body: (MoneyGroup, String?) -> String,
     ) {
         runCatching {
@@ -172,7 +175,7 @@ class GroupActivityNotifier(
             val actorName = actorName(actorId)
             recipients(groupId, group.memberIds - actorId, levels).forEach { member ->
                 val text = noticeFormatter.notice(topic, group.name, actorName, body(group, member.language), member.language)
-                send(member, groupId, text, button, card = card?.invoke(group, actorName))
+                send(member, groupId, text, button, card = card?.invoke(group, actorName, member.language))
             }
         }.onFailure { log.warn("Failed to notify group {} about {}: {}", groupId, topic, it.message) }
     }
